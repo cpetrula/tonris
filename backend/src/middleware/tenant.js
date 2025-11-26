@@ -29,9 +29,9 @@ const extractTenantId = (req) => {
  * Validate tenant ID format
  */
 const isValidTenantId = (tenantId) => {
-  // Basic validation - alphanumeric with hyphens and underscores
+  // Basic validation - alphanumeric with hyphens and underscores, max 64 chars
   const validPattern = /^[a-zA-Z0-9_-]+$/;
-  return validPattern.test(tenantId) && tenantId.length >= 1 && tenantId.length <= 64;
+  return validPattern.test(tenantId) && tenantId.length <= 64;
 };
 
 /**
