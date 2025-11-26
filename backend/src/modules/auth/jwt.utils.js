@@ -69,8 +69,8 @@ const generateTokenPair = (user) => {
 const decodeToken = (token) => {
   try {
     return jwt.decode(token);
+  // eslint-disable-next-line no-unused-vars
   } catch (err) {
-    void err;
     return null;
   }
 };

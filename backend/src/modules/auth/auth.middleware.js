@@ -64,9 +64,9 @@ const optionalAuthMiddleware = (req, res, next) => {
     }
     
     next();
+  // eslint-disable-next-line no-unused-vars
   } catch (err) {
     // Ignore errors for optional auth
-    void err;
     next();
   }
 };
