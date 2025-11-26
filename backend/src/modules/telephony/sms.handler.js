@@ -36,7 +36,7 @@ const handleIncomingSms = async (params) => {
       };
     }
     
-    logger.info(`SMS received for tenant: ${tenant.tenantId} - Message: ${Body.substring(0, 50)}...`);
+    logger.info(`SMS received for tenant: ${tenant.tenantId} - MessageSid: ${MessageSid}, Length: ${Body.length} chars`);
     
     // Process the SMS based on content
     const response = await processIncomingSms({
@@ -279,25 +279,31 @@ const sendAppointmentConfirmation = async ({
  */
 const findTenantByPhoneNumber = async (phoneNumber) => {
   try {
-    const tenant = await Tenant.findOne({
+    const normalizedNumber = normalizePhoneNumber(phoneNumber);
+    
+    // Find all active tenants
+    const tenants = await Tenant.findAll({
       where: {
         status: 'active',
       },
     });
     
-    if (!tenant) {
+    if (!tenants || tenants.length === 0) {
       return null;
     }
     
-    // Check if tenant has this phone number configured
-    const twilioPhone = tenant.metadata?.twilioPhoneNumber || tenant.settings?.twilioPhoneNumber;
-    
-    if (twilioPhone && normalizePhoneNumber(twilioPhone) === normalizePhoneNumber(phoneNumber)) {
-      return tenant;
+    // Find tenant with matching phone number in metadata or settings
+    for (const tenant of tenants) {
+      const twilioPhone = tenant.metadata?.twilioPhoneNumber || tenant.settings?.twilioPhoneNumber;
+      
+      if (twilioPhone && normalizePhoneNumber(twilioPhone) === normalizedNumber) {
+        return tenant;
+      }
     }
     
-    // For demo/development: return first active tenant
-    return tenant;
+    // No tenant found with matching phone number
+    logger.warn(`No tenant found with phone number: ${phoneNumber}`);
+    return null;
   } catch (error) {
     logger.error(`Error finding tenant by phone number: ${error.message}`);
     return null;

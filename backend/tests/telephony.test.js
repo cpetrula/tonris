@@ -57,6 +57,9 @@ jest.mock('../src/modules/tenants/tenant.model', () => ({
   },
 }));
 
+// Add findAll mock to tenant model
+mockTenantModel.findAll = jest.fn();
+
 // Mock the models index
 jest.mock('../src/models', () => ({
   User: {
@@ -121,14 +124,14 @@ describe('Telephony Module', () => {
 
   describe('POST /api/webhooks/twilio/voice', () => {
     it('should handle incoming voice call and return TwiML', async () => {
-      // Mock tenant lookup
-      mockTenantModel.findOne.mockResolvedValue({
+      // Mock tenant lookup - findAll for matching phone number
+      mockTenantModel.findAll.mockResolvedValue([{
         tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},
-      });
+      }]);
 
       // Mock call log creation
       mockCallLogModel.create.mockResolvedValue({
@@ -159,7 +162,7 @@ describe('Telephony Module', () => {
     });
 
     it('should return error TwiML when no tenant found', async () => {
-      mockTenantModel.findOne.mockResolvedValue(null);
+      mockTenantModel.findAll.mockResolvedValue([]);
 
       const response = await request(app)
         .post('/api/webhooks/twilio/voice')
@@ -179,14 +182,14 @@ describe('Telephony Module', () => {
 
   describe('POST /api/webhooks/twilio/sms', () => {
     it('should handle incoming SMS and return TwiML', async () => {
-      // Mock tenant lookup
-      mockTenantModel.findOne.mockResolvedValue({
+      // Mock tenant lookup - findAll for matching phone number
+      mockTenantModel.findAll.mockResolvedValue([{
         tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},
-      });
+      }]);
 
       const response = await request(app)
         .post('/api/webhooks/twilio/sms')
@@ -206,13 +209,13 @@ describe('Telephony Module', () => {
     });
 
     it('should handle CONFIRM command', async () => {
-      mockTenantModel.findOne.mockResolvedValue({
+      mockTenantModel.findAll.mockResolvedValue([{
         tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
-        metadata: {},
+        metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},
-      });
+      }]);
 
       const response = await request(app)
         .post('/api/webhooks/twilio/sms')
@@ -233,13 +236,13 @@ describe('Telephony Module', () => {
     });
 
     it('should handle HELP command', async () => {
-      mockTenantModel.findOne.mockResolvedValue({
+      mockTenantModel.findAll.mockResolvedValue([{
         tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
-        metadata: {},
+        metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},
-      });
+      }]);
 
       const response = await request(app)
         .post('/api/webhooks/twilio/sms')
@@ -260,7 +263,7 @@ describe('Telephony Module', () => {
     });
 
     it('should return error TwiML when no tenant found', async () => {
-      mockTenantModel.findOne.mockResolvedValue(null);
+      mockTenantModel.findAll.mockResolvedValue([]);
 
       const response = await request(app)
         .post('/api/webhooks/twilio/sms')
@@ -286,8 +289,8 @@ describe('Telephony Module', () => {
         tenantId: 'test-tenant',
         twilioCallSid: 'CA123456789',
         status: 'in-progress',
-        updateFromTwilio: jest.fn().mockResolvedValue(this),
-        save: jest.fn().mockResolvedValue(this),
+        updateFromTwilio: jest.fn().mockImplementation(function() { return Promise.resolve(this); }),
+        save: jest.fn().mockImplementation(function() { return Promise.resolve(this); }),
       };
       mockCallLogModel.findOne.mockResolvedValue(mockCallLog);
 

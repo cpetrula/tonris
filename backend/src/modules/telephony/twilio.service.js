@@ -255,10 +255,15 @@ const validateWebhookSignature = (signature, url, params) => {
  * Generate TwiML for forwarding a call to AI
  * @param {Object} params - TwiML parameters
  * @param {string} params.message - Optional welcome message
- * @param {string} params.aiWebhookUrl - URL to forward AI response
+ * @param {string} params.aiWebhookUrl - URL to forward AI response (required)
  * @returns {string} - TwiML XML string
+ * @throws {Error} If aiWebhookUrl is not provided
  */
 const generateForwardToAiTwiml = ({ message, aiWebhookUrl }) => {
+  if (!aiWebhookUrl) {
+    throw new Error('aiWebhookUrl is required for AI forwarding');
+  }
+  
   const VoiceResponse = Twilio.twiml.VoiceResponse;
   const response = new VoiceResponse();
   

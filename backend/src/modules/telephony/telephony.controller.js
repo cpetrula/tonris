@@ -5,6 +5,7 @@
 const twilioService = require('./twilio.service');
 const callHandler = require('./call.handler');
 const smsHandler = require('./sms.handler');
+const { Tenant } = require('../tenants/tenant.model');
 const logger = require('../../utils/logger');
 
 /**
@@ -287,7 +288,6 @@ const makeCall = async (req, res, next) => {
     }
     
     // Get tenant's phone number
-    const { Tenant } = require('../tenants/tenant.model');
     const tenant = await Tenant.findOne({
       where: { tenantId: req.tenantId },
     });
