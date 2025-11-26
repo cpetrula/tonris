@@ -1,0 +1,370 @@
+/**
+ * Appointment Controller
+ * Handles HTTP requests for appointment endpoints
+ */
+const appointmentService = require('./appointment.service');
+const availabilityService = require('./availability.service');
+
+/**
+ * Validation patterns
+ */
+const VALIDATION = {
+  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  UUID_REGEX: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+};
+
+/**
+ * GET /api/appointments
+ * Get all appointments for tenant
+ */
+const getAppointments = async (req, res, next) => {
+  try {
+    const { status, employeeId, startDate, endDate, customerEmail, limit, offset } = req.query;
+
+    const result = await appointmentService.getAppointments(req.tenantId, {
+      status,
+      employeeId,
+      startDate,
+      endDate,
+      customerEmail,
+      limit,
+      offset,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/appointments/:id
+ * Get appointment by ID
+ */
+const getAppointment = async (req, res, next) => {
+  try {
+    const appointment = await appointmentService.getAppointmentById(req.params.id, req.tenantId);
+
+    res.status(200).json({
+      success: true,
+      data: { appointment },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/appointments
+ * Create a new appointment
+ */
+const createAppointment = async (req, res, next) => {
+  try {
+    const {
+      employeeId,
+      serviceId,
+      customerName,
+      customerEmail,
+      customerPhone,
+      startTime,
+      addOns,
+      notes,
+    } = req.body;
+
+    // Validate required fields
+    if (!employeeId || !serviceId || !customerName || !customerEmail || !startTime) {
+      return res.status(400).json({
+        success: false,
+        error: 'Employee ID, service ID, customer name, customer email, and start time are required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate email format
+    if (!VALIDATION.EMAIL_REGEX.test(customerEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid customer email format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate UUID formats
+    if (!VALIDATION.UUID_REGEX.test(employeeId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid employee ID format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (!VALIDATION.UUID_REGEX.test(serviceId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid service ID format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate start time is in the future
+    const startDateTime = new Date(startTime);
+    if (isNaN(startDateTime.getTime())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid start time format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (startDateTime <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Start time must be in the future',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const appointment = await appointmentService.createAppointment({
+      employeeId,
+      serviceId,
+      customerName,
+      customerEmail,
+      customerPhone,
+      startTime,
+      addOns,
+      notes,
+    }, req.tenantId);
+
+    res.status(201).json({
+      success: true,
+      data: { appointment },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/appointments/:id
+ * Update appointment (reschedule)
+ */
+const updateAppointment = async (req, res, next) => {
+  try {
+    const {
+      employeeId,
+      startTime,
+      addOns,
+      notes,
+      status,
+      customerName,
+      customerEmail,
+      customerPhone,
+    } = req.body;
+
+    // Validate email format if provided
+    if (customerEmail && !VALIDATION.EMAIL_REGEX.test(customerEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid customer email format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate UUID format if employee ID provided
+    if (employeeId && !VALIDATION.UUID_REGEX.test(employeeId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid employee ID format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate start time if provided
+    if (startTime) {
+      const startDateTime = new Date(startTime);
+      if (isNaN(startDateTime.getTime())) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid start time format',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+
+      if (startDateTime <= new Date()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Start time must be in the future',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+    }
+
+    const appointment = await appointmentService.updateAppointment(req.params.id, req.tenantId, {
+      employeeId,
+      startTime,
+      addOns,
+      notes,
+      status,
+      customerName,
+      customerEmail,
+      customerPhone,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { appointment },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/appointments/:id
+ * Cancel or delete appointment
+ */
+const deleteAppointment = async (req, res, next) => {
+  try {
+    const { reason, notes, hardDelete } = req.body;
+
+    // If hardDelete is true, permanently delete the appointment
+    if (hardDelete === true) {
+      const result = await appointmentService.deleteAppointment(req.params.id, req.tenantId);
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    }
+
+    // Otherwise, cancel the appointment (soft delete)
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cancellation reason is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const appointment = await appointmentService.cancelAppointment(
+      req.params.id,
+      req.tenantId,
+      reason,
+      notes
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { appointment },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/availability
+ * Get availability for scheduling
+ */
+const getAvailability = async (req, res, next) => {
+  try {
+    const { serviceId, employeeId, date, startDate, endDate } = req.query;
+
+    // Validate required fields
+    if (!serviceId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Service ID is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate UUID format
+    if (!VALIDATION.UUID_REGEX.test(serviceId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid service ID format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (employeeId && !VALIDATION.UUID_REGEX.test(employeeId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid employee ID format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // If date range is provided
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid date format',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+
+      if (start > end) {
+        return res.status(400).json({
+          success: false,
+          error: 'Start date must be before end date',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+
+      const availability = await availabilityService.getAvailabilityForDateRange(
+        req.tenantId,
+        start,
+        end,
+        serviceId,
+        employeeId
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: { availability },
+      });
+    }
+
+    // Single date query
+    const targetDate = date ? new Date(date) : new Date();
+    if (isNaN(targetDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const employeeIds = employeeId ? [employeeId] : null;
+    const availability = await availabilityService.getAvailabilityForDate(
+      req.tenantId,
+      targetDate,
+      serviceId,
+      employeeIds
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { availability },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getAppointments,
+  getAppointment,
+  createAppointment,
+  updateAppointment,
+  deleteAppointment,
+  getAvailability,
+};

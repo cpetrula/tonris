@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const env = require('./config/env');
 const logger = require('./utils/logger');
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes } = require('./routes');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -47,6 +47,8 @@ app.use('/api/me', meRoutes);
 app.use('/api/tenant', tenantRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/availability', availabilityRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
