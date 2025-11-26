@@ -272,7 +272,7 @@ describe('AssistantService', () => {
 
   describe('processMessage - Staff Schedule', () => {
     it('should show all staff when asking generically', async () => {
-      const response = await service.processMessage(context, 'Who are your stylists?');
+      const response = await service.processMessage(context, 'Who is on your staff?');
       
       expect(response.message).toContain('Jane');
       expect(response.message).toContain('Mike');

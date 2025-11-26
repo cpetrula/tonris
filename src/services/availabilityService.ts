@@ -117,6 +117,9 @@ export class AvailabilityService {
       staffToCheck = dataStore.getStaffByBusiness(businessId).map(s => s.id);
     }
 
+    // Get slot interval from tenant settings (default: 30 minutes)
+    const slotInterval = tenant?.settings.slotInterval ?? 30;
+
     // For each staff member
     for (const currentStaffId of staffToCheck) {
       const staff = dataStore.getStaffMember(currentStaffId);
@@ -129,7 +132,6 @@ export class AvailabilityService {
       // Generate time slots
       const workStart = this.parseTimeToMinutes(workingHours.start);
       const workEnd = this.parseTimeToMinutes(workingHours.end);
-      const slotInterval = 30; // 30-minute intervals
 
       for (let minutes = workStart; minutes + serviceDuration <= workEnd; minutes += slotInterval) {
         const slotStart = this.setTimeOnDate(date, `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`);

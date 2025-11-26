@@ -114,11 +114,9 @@ export class AssistantService {
 
     // Staff schedule
     if (
-      lowerMessage.includes('when is') ||
-      lowerMessage.includes('working') ||
+      (lowerMessage.includes('when is') && lowerMessage.includes('working')) ||
       lowerMessage.includes('schedule') ||
-      lowerMessage.includes('stylist') ||
-      lowerMessage.includes('hairdresser')
+      lowerMessage.includes('staff')
     ) {
       return { type: 'get_staff_schedule', confidence: 0.8, entities: {} };
     }

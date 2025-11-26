@@ -21,6 +21,7 @@ export interface TenantSettings {
   maxAdvanceBooking: number; // days in advance bookings allowed
   cancellationPolicy: string;
   customGreeting?: string;
+  slotInterval?: number; // minutes between available slots (default: 30)
 }
 
 export interface Business {
