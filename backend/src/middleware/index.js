@@ -10,6 +10,7 @@ const {
   validationErrorHandler,
   databaseErrorHandler,
 } = require('./errorHandler');
+const { authMiddleware, optionalAuthMiddleware } = require('../modules/auth/auth.middleware');
 
 module.exports = {
   // Tenant middleware
@@ -23,4 +24,8 @@ module.exports = {
   errorHandler,
   validationErrorHandler,
   databaseErrorHandler,
+  
+  // Authentication middleware
+  authMiddleware,
+  optionalAuthMiddleware,
 };

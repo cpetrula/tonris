@@ -22,6 +22,11 @@ const env = {
   // Multi-tenant Configuration
   DEFAULT_TENANT_ID: process.env.DEFAULT_TENANT_ID || 'default',
   
+  // JWT Configuration
+  JWT_SECRET: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h',
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  
   // Validation helper
   isProduction: () => env.NODE_ENV === 'production',
   isDevelopment: () => env.NODE_ENV === 'development',
@@ -30,7 +35,7 @@ const env = {
 
 // Validate required environment variables in production
 const validateEnv = () => {
-  const required = ['DB_HOST', 'DB_NAME', 'DB_USER'];
+  const required = ['DB_HOST', 'DB_NAME', 'DB_USER', 'JWT_SECRET'];
   const missing = required.filter(key => !process.env[key]);
   
   if (env.isProduction() && missing.length > 0) {
