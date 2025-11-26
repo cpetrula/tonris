@@ -125,6 +125,10 @@ jest.mock('../src/models', () => ({
   },
   SERVICE_CATEGORIES: {
     HAIR: 'hair',
+    NAILS: 'nails',
+    SKIN: 'skin',
+    MAKEUP: 'makeup',
+    MASSAGE: 'massage',
     OTHER: 'other',
   },
   Tenant: {

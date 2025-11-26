@@ -173,7 +173,9 @@ const getAvailableSlots = async (employeeId, tenantId, date, duration, slotInter
   let currentSlotStart = workStart;
 
   if (isToday) {
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    // Add a 15-minute buffer to prevent booking slots that may be in the past by submission time
+    const bufferMinutes = 15;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes() + bufferMinutes;
     // Round up to next slot interval
     currentSlotStart = Math.max(workStart, Math.ceil(currentMinutes / slotInterval) * slotInterval);
   }
