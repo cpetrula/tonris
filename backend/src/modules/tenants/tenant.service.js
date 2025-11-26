@@ -146,9 +146,10 @@ const updateTenantStatus = async (tenantId, newStatus) => {
     );
   }
 
+  const previousStatus = tenant.status;
   await tenant.transitionTo(newStatus);
 
-  logger.info(`Tenant status changed: ${tenantId} from ${tenant.status} to ${newStatus}`);
+  logger.info(`Tenant status changed: ${tenantId} from ${previousStatus} to ${newStatus}`);
 
   return tenant.toSafeObject();
 };

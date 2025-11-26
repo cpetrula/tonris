@@ -95,7 +95,7 @@ jest.mock('../src/models', () => ({
 // Now require the app AFTER the mocks are in place
 const { app } = require('../src/app');
 const jwtUtils = require('../src/modules/auth/jwt.utils');
-const { TENANT_STATUS, PLAN_TYPES, VALID_TRANSITIONS } = require('../src/modules/tenants/tenant.model');;
+const { TENANT_STATUS, PLAN_TYPES, VALID_TRANSITIONS } = require('../src/modules/tenants/tenant.model');
 
 describe('Tenant Module', () => {
   beforeEach(() => {

@@ -5,6 +5,16 @@
 const tenantService = require('./tenant.service');
 
 /**
+ * Validation patterns
+ */
+const VALIDATION = {
+  // Email validation regex
+  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  // Slug validation - lowercase letters, numbers, and hyphens only
+  SLUG_REGEX: /^[a-z0-9-]+$/,
+};
+
+/**
  * GET /api/me
  * Get current user and tenant context
  */
@@ -89,8 +99,7 @@ const createTenant = async (req, res, next) => {
     }
 
     // Validate slug format
-    const slugRegex = /^[a-z0-9-]+$/;
-    if (!slugRegex.test(slug)) {
+    if (!VALIDATION.SLUG_REGEX.test(slug)) {
       return res.status(400).json({
         success: false,
         error: 'Slug must contain only lowercase letters, numbers, and hyphens',
@@ -99,8 +108,7 @@ const createTenant = async (req, res, next) => {
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(contactEmail)) {
+    if (!VALIDATION.EMAIL_REGEX.test(contactEmail)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid email format',
@@ -152,8 +160,7 @@ const updateTenant = async (req, res, next) => {
 
     // Validate email format if provided
     if (contactEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(contactEmail)) {
+      if (!VALIDATION.EMAIL_REGEX.test(contactEmail)) {
         return res.status(400).json({
           success: false,
           error: 'Invalid email format',
