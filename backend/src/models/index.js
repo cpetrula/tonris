@@ -7,6 +7,7 @@ const { Tenant, TENANT_STATUS, PLAN_TYPES, VALID_TRANSITIONS } = require('../mod
 const { Employee, EMPLOYEE_STATUS, EMPLOYEE_TYPES } = require('../modules/employees/employee.model');
 const { Service, SERVICE_STATUS, SERVICE_CATEGORIES } = require('../modules/services/service.model');
 const { Appointment, APPOINTMENT_STATUS, CANCELLATION_REASONS } = require('../modules/appointments/appointment.model');
+const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = require('../modules/billing/subscription.model');
 
 module.exports = {
   User,
@@ -23,4 +24,8 @@ module.exports = {
   Appointment,
   APPOINTMENT_STATUS,
   CANCELLATION_REASONS,
+  Subscription,
+  SUBSCRIPTION_STATUS,
+  BILLING_INTERVAL,
+  PLAN_CONFIG,
 };

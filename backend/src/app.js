@@ -8,7 +8,8 @@ const cors = require('cors');
 
 const env = require('./config/env');
 const logger = require('./utils/logger');
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes } = require('./routes');
+const { billingController } = require('./modules/billing');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -21,6 +22,16 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors());
+
+// Stripe webhook route needs raw body - must be before express.json()
+app.post('/api/webhooks/stripe', 
+  express.raw({ type: 'application/json' }),
+  (req, res, next) => {
+    req.rawBody = req.body;
+    next();
+  },
+  billingController.handleStripeWebhook
+);
 
 // Body parsing middleware
 app.use(express.json());
@@ -49,6 +60,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
