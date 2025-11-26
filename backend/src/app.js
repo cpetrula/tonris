@@ -8,8 +8,9 @@ const cors = require('cors');
 
 const env = require('./config/env');
 const logger = require('./utils/logger');
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
+const { telephonyController } = require('./modules/telephony');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -31,6 +32,23 @@ app.post('/api/webhooks/stripe',
     next();
   },
   billingController.handleStripeWebhook
+);
+
+// Twilio webhook routes - use urlencoded body parsing
+// These are placed before the general body parser
+app.post('/api/webhooks/twilio/voice',
+  express.urlencoded({ extended: false }),
+  telephonyController.handleVoiceWebhook
+);
+
+app.post('/api/webhooks/twilio/sms',
+  express.urlencoded({ extended: false }),
+  telephonyController.handleSmsWebhook
+);
+
+app.post('/api/webhooks/twilio/status',
+  express.urlencoded({ extended: false }),
+  telephonyController.handleStatusWebhook
 );
 
 // Body parsing middleware
@@ -61,6 +79,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/telephony', telephonyRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

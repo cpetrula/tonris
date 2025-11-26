@@ -33,6 +33,11 @@ const env = {
   STRIPE_MONTHLY_PRICE_ID: process.env.STRIPE_MONTHLY_PRICE_ID || '',
   STRIPE_YEARLY_PRICE_ID: process.env.STRIPE_YEARLY_PRICE_ID || '',
   
+  // Twilio Configuration
+  TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
+  TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
+  APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
+  
   // Validation helper
   isProduction: () => env.NODE_ENV === 'production',
   isDevelopment: () => env.NODE_ENV === 'development',

@@ -8,6 +8,7 @@ const { Employee, EMPLOYEE_STATUS, EMPLOYEE_TYPES } = require('../modules/employ
 const { Service, SERVICE_STATUS, SERVICE_CATEGORIES } = require('../modules/services/service.model');
 const { Appointment, APPOINTMENT_STATUS, CANCELLATION_REASONS } = require('../modules/appointments/appointment.model');
 const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = require('../modules/billing/subscription.model');
+const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../modules/telephony/callLog.model');
 
 module.exports = {
   User,
@@ -28,4 +29,7 @@ module.exports = {
   SUBSCRIPTION_STATUS,
   BILLING_INTERVAL,
   PLAN_CONFIG,
+  CallLog,
+  CALL_DIRECTION,
+  CALL_STATUS,
 };
