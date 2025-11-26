@@ -3,6 +3,7 @@
  * Defines the Service schema for salon services management
  */
 const { DataTypes } = require('sequelize');
+const crypto = require('crypto');
 const { sequelize } = require('../../config/db');
 
 /**
@@ -107,8 +108,8 @@ Service.prototype.toSafeObject = function() {
  */
 Service.prototype.addAddOn = async function(addOn) {
   const addOns = [...this.addOns];
-  addOn.id = require('uuid').v4();
-  addOns.push(addOn);
+  const newAddOn = { ...addOn, id: crypto.randomUUID() };
+  addOns.push(newAddOn);
   this.addOns = addOns;
   await this.save();
   return this;
@@ -138,8 +139,8 @@ Service.generateDefaultServices = function() {
       duration: 45,
       price: 35.00,
       addOns: [
-        { id: require('uuid').v4(), name: 'Blow Dry', price: 15.00, duration: 15 },
-        { id: require('uuid').v4(), name: 'Deep Conditioning', price: 20.00, duration: 20 },
+        { id: crypto.randomUUID(), name: 'Blow Dry', price: 15.00, duration: 15 },
+        { id: crypto.randomUUID(), name: 'Deep Conditioning', price: 20.00, duration: 20 },
       ],
     },
     {
@@ -149,8 +150,8 @@ Service.generateDefaultServices = function() {
       duration: 120,
       price: 85.00,
       addOns: [
-        { id: require('uuid').v4(), name: 'Highlights', price: 40.00, duration: 30 },
-        { id: require('uuid').v4(), name: 'Toner', price: 25.00, duration: 15 },
+        { id: crypto.randomUUID(), name: 'Highlights', price: 40.00, duration: 30 },
+        { id: crypto.randomUUID(), name: 'Toner', price: 25.00, duration: 15 },
       ],
     },
     {
@@ -160,8 +161,8 @@ Service.generateDefaultServices = function() {
       duration: 30,
       price: 25.00,
       addOns: [
-        { id: require('uuid').v4(), name: 'Gel Polish', price: 15.00, duration: 10 },
-        { id: require('uuid').v4(), name: 'Nail Art', price: 10.00, duration: 15 },
+        { id: crypto.randomUUID(), name: 'Gel Polish', price: 15.00, duration: 10 },
+        { id: crypto.randomUUID(), name: 'Nail Art', price: 10.00, duration: 15 },
       ],
     },
     {
@@ -171,8 +172,8 @@ Service.generateDefaultServices = function() {
       duration: 45,
       price: 35.00,
       addOns: [
-        { id: require('uuid').v4(), name: 'Callus Removal', price: 10.00, duration: 10 },
-        { id: require('uuid').v4(), name: 'Hot Stone Massage', price: 15.00, duration: 15 },
+        { id: crypto.randomUUID(), name: 'Callus Removal', price: 10.00, duration: 10 },
+        { id: crypto.randomUUID(), name: 'Hot Stone Massage', price: 15.00, duration: 15 },
       ],
     },
     {
@@ -182,8 +183,8 @@ Service.generateDefaultServices = function() {
       duration: 60,
       price: 65.00,
       addOns: [
-        { id: require('uuid').v4(), name: 'Microdermabrasion', price: 30.00, duration: 20 },
-        { id: require('uuid').v4(), name: 'LED Light Therapy', price: 25.00, duration: 15 },
+        { id: crypto.randomUUID(), name: 'Microdermabrasion', price: 30.00, duration: 20 },
+        { id: crypto.randomUUID(), name: 'LED Light Therapy', price: 25.00, duration: 15 },
       ],
     },
     {
@@ -193,8 +194,8 @@ Service.generateDefaultServices = function() {
       duration: 45,
       price: 55.00,
       addOns: [
-        { id: require('uuid').v4(), name: 'Lash Extensions', price: 35.00, duration: 30 },
-        { id: require('uuid').v4(), name: 'Bridal Upgrade', price: 50.00, duration: 30 },
+        { id: crypto.randomUUID(), name: 'Lash Extensions', price: 35.00, duration: 30 },
+        { id: crypto.randomUUID(), name: 'Bridal Upgrade', price: 50.00, duration: 30 },
       ],
     },
     {
@@ -204,8 +205,8 @@ Service.generateDefaultServices = function() {
       duration: 60,
       price: 75.00,
       addOns: [
-        { id: require('uuid').v4(), name: 'Hot Stones', price: 20.00, duration: 15 },
-        { id: require('uuid').v4(), name: 'Aromatherapy', price: 10.00, duration: 0 },
+        { id: crypto.randomUUID(), name: 'Hot Stones', price: 20.00, duration: 15 },
+        { id: crypto.randomUUID(), name: 'Aromatherapy', price: 10.00, duration: 0 },
       ],
     },
   ];
