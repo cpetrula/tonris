@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const env = require('./config/env');
 const logger = require('./utils/logger');
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
 const {
@@ -80,6 +80,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/telephony', telephonyRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

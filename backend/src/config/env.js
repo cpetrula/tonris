@@ -38,6 +38,15 @@ const env = {
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
   APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
   
+  // ElevenLabs Configuration
+  ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY || '',
+  ELEVENLABS_AGENT_ID: process.env.ELEVENLABS_AGENT_ID || '',
+  ELEVENLABS_VOICE_ID: process.env.ELEVENLABS_VOICE_ID || '',
+  
+  // OpenAI Configuration
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4',
+  
   // Validation helper
   isProduction: () => env.NODE_ENV === 'production',
   isDevelopment: () => env.NODE_ENV === 'development',
