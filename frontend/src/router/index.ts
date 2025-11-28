@@ -6,6 +6,10 @@ import { useAuthStore } from '@/stores/auth'
 const Home = () => import('@/pages/Home.vue')
 const Login = () => import('@/pages/Login.vue')
 const Register = () => import('@/pages/Register.vue')
+const SignUpPage = () => import('@/pages/SignUpPage.vue')
+const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
+const HowItWorksPage = () => import('@/pages/HowItWorksPage.vue')
+const FAQPage = () => import('@/pages/FAQPage.vue')
 const Dashboard = () => import('@/pages/Dashboard.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
 
@@ -36,6 +40,30 @@ const routes: RouteRecordRaw[] = [
         name: 'register',
         component: Register,
         meta: { requiresAuth: false, guestOnly: true }
+      },
+      {
+        path: 'signup',
+        name: 'signup',
+        component: SignUpPage,
+        meta: { requiresAuth: false, guestOnly: true }
+      },
+      {
+        path: 'forgot-password',
+        name: 'forgot-password',
+        component: ForgotPasswordPage,
+        meta: { requiresAuth: false }
+      },
+      {
+        path: 'how-it-works',
+        name: 'how-it-works',
+        component: HowItWorksPage,
+        meta: { requiresAuth: false }
+      },
+      {
+        path: 'faq',
+        name: 'faq',
+        component: FAQPage,
+        meta: { requiresAuth: false }
       }
     ]
   },
