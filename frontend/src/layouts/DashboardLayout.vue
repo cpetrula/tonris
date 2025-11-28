@@ -31,7 +31,7 @@ const userMenuItems: MenuItem[] = [
   {
     label: 'Sign Out',
     icon: 'pi pi-sign-out',
-    command: handleLogout
+    command: () => handleLogout()
   }
 ]
 
