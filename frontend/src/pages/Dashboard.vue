@@ -65,7 +65,7 @@ const recentActivity = [
         <template #title>
           <div class="flex items-center justify-between">
             <span>Recent Activity</span>
-            <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500">View all</a>
+            <a href="#" class="text-sm text-violet-600 hover:text-violet-500">View all</a>
           </div>
         </template>
         <template #content>
@@ -75,7 +75,7 @@ const recentActivity = [
               :key="index"
               class="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0"
             >
-              <div class="w-2 h-2 mt-2 rounded-full bg-indigo-500"></div>
+              <div class="w-2 h-2 mt-2 rounded-full bg-violet-500"></div>
               <div class="ml-3">
                 <p class="text-sm font-medium text-gray-900">{{ activity.action }}</p>
                 <p class="text-sm text-gray-500">{{ activity.item }}</p>
@@ -92,15 +92,15 @@ const recentActivity = [
         <template #content>
           <div class="grid grid-cols-2 gap-4">
             <button class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-              <i class="pi pi-plus-circle text-2xl text-indigo-600 mb-2 block"></i>
+              <i class="pi pi-plus-circle text-2xl text-violet-600 mb-2 block"></i>
               <span class="text-sm font-medium text-gray-900">New Project</span>
             </button>
             <button class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-              <i class="pi pi-user-plus text-2xl text-green-600 mb-2 block"></i>
+              <i class="pi pi-user-plus text-2xl text-cyan-600 mb-2 block"></i>
               <span class="text-sm font-medium text-gray-900">Invite Team</span>
             </button>
             <button class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">
-              <i class="pi pi-key text-2xl text-orange-600 mb-2 block"></i>
+              <i class="pi pi-key text-2xl text-fuchsia-600 mb-2 block"></i>
               <span class="text-sm font-medium text-gray-900">API Keys</span>
             </button>
             <button class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left">

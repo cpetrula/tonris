@@ -6,13 +6,13 @@ import Button from 'primevue/button'
 <template>
   <div>
     <!-- Hero Section -->
-    <section class="bg-gradient-to-br from-indigo-600 to-purple-700 text-white py-20">
+    <section class="bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white py-20">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
           <h1 class="text-4xl md:text-6xl font-bold mb-6">
             Welcome to TONRIS
           </h1>
-          <p class="text-xl md:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto">
+          <p class="text-xl md:text-2xl text-violet-100 mb-8 max-w-3xl mx-auto">
             Your intelligent AI assistant platform for streamlined workflows and enhanced productivity.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -54,8 +54,8 @@ import Button from 'primevue/button'
         <div class="grid md:grid-cols-3 gap-8">
           <!-- Feature 1 -->
           <div class="text-center p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow">
-            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-              <i class="pi pi-bolt text-3xl text-indigo-600"></i>
+            <div class="w-16 h-16 mx-auto mb-4 bg-violet-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-bolt text-3xl text-violet-600"></i>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">Lightning Fast</h3>
             <p class="text-gray-600">
@@ -65,8 +65,8 @@ import Button from 'primevue/button'
 
           <!-- Feature 2 -->
           <div class="text-center p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow">
-            <div class="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-              <i class="pi pi-shield text-3xl text-green-600"></i>
+            <div class="w-16 h-16 mx-auto mb-4 bg-cyan-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-shield text-3xl text-cyan-600"></i>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">Secure & Private</h3>
             <p class="text-gray-600">
@@ -76,8 +76,8 @@ import Button from 'primevue/button'
 
           <!-- Feature 3 -->
           <div class="text-center p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow">
-            <div class="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-              <i class="pi pi-users text-3xl text-purple-600"></i>
+            <div class="w-16 h-16 mx-auto mb-4 bg-fuchsia-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-users text-3xl text-fuchsia-600"></i>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">Team Collaboration</h3>
             <p class="text-gray-600">

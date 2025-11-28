@@ -10,6 +10,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* TONRIS Brand Colors */
+  --tonris-navy: #1e3a5f;
+  --tonris-navy-dark: #1a2744;
+  --tonris-purple: #7c3aed;
+  --tonris-purple-light: #8b5cf6;
+  --tonris-magenta: #c026d3;
+  --tonris-cyan: #06b6d4;
+  --tonris-cyan-light: #00d4ff;
 }
 
 body {

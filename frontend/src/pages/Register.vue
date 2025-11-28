@@ -145,14 +145,14 @@ onMounted(() => {
             <input
               id="terms"
               type="checkbox"
-              class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              class="h-4 w-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
               required
             />
             <label for="terms" class="ml-2 text-sm text-gray-600">
               I agree to the
-              <a href="#" class="text-indigo-600 hover:text-indigo-500">Terms of Service</a>
+              <a href="#" class="text-violet-600 hover:text-violet-500">Terms of Service</a>
               and
-              <a href="#" class="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>
+              <a href="#" class="text-violet-600 hover:text-violet-500">Privacy Policy</a>
             </label>
           </div>
 
@@ -168,7 +168,7 @@ onMounted(() => {
         <!-- Sign In Link -->
         <p class="mt-6 text-center text-sm text-gray-600">
           Already have an account?
-          <RouterLink to="/login" class="text-indigo-600 hover:text-indigo-500 font-medium">
+          <RouterLink to="/login" class="text-violet-600 hover:text-violet-500 font-medium">
             Sign in
           </RouterLink>
         </p>

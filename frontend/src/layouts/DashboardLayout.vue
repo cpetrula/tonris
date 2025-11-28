@@ -83,8 +83,8 @@ onMounted(async () => {
     >
       <!-- Logo -->
       <div class="h-16 flex items-center justify-center border-b border-gray-200">
-        <RouterLink to="/app" class="text-2xl font-bold text-indigo-600">
-          TONRIS
+        <RouterLink to="/app" class="flex items-center">
+          <img src="/logo.svg" alt="TONRIS" class="h-8" />
         </RouterLink>
       </div>
 
@@ -95,8 +95,8 @@ onMounted(async () => {
             v-for="item in navigationItems"
             :key="item.path"
             :to="item.path"
-            class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-            active-class="bg-indigo-50 text-indigo-600"
+            class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-violet-50 hover:text-violet-600 transition-colors"
+            active-class="bg-violet-50 text-violet-600"
           >
             <i :class="[item.icon, 'mr-3']"></i>
             {{ item.name }}
@@ -145,7 +145,7 @@ onMounted(async () => {
               class="flex items-center space-x-2"
               @click="toggleUserMenu"
             >
-              <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
+              <div class="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center text-white font-medium">
                 {{ authStore.user?.firstName?.charAt(0) || 'U' }}
               </div>
               <span class="hidden md:block text-gray-700">{{ authStore.fullName || 'User' }}</span>
