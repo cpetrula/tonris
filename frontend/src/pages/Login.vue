@@ -85,13 +85,13 @@ onMounted(() => {
               <input
                 id="remember"
                 type="checkbox"
-                class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                class="h-4 w-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
               />
               <label for="remember" class="ml-2 text-sm text-gray-600">
                 Remember me
               </label>
             </div>
-            <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500">
+            <a href="#" class="text-sm text-violet-600 hover:text-violet-500">
               Forgot password?
             </a>
           </div>
@@ -108,7 +108,7 @@ onMounted(() => {
         <!-- Sign Up Link -->
         <p class="mt-6 text-center text-sm text-gray-600">
           Don't have an account?
-          <RouterLink to="/register" class="text-indigo-600 hover:text-indigo-500 font-medium">
+          <RouterLink to="/register" class="text-violet-600 hover:text-violet-500 font-medium">
             Create one now
           </RouterLink>
         </p>

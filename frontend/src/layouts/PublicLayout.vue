@@ -14,7 +14,7 @@ const authStore = useAuthStore()
           <!-- Logo -->
           <div class="flex items-center">
             <RouterLink to="/" class="flex items-center space-x-2">
-              <span class="text-2xl font-bold text-indigo-600">TONRIS</span>
+              <img src="/logo.svg" alt="TONRIS" class="h-10" />
             </RouterLink>
           </div>
 
@@ -23,7 +23,7 @@ const authStore = useAuthStore()
             <template v-if="authStore.isAuthenticated">
               <RouterLink
                 to="/app"
-                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors"
+                class="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-md hover:bg-violet-700 transition-colors"
               >
                 Dashboard
               </RouterLink>
@@ -31,13 +31,13 @@ const authStore = useAuthStore()
             <template v-else>
               <RouterLink
                 to="/login"
-                class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
+                class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
               >
                 Sign In
               </RouterLink>
               <RouterLink
                 to="/register"
-                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors"
+                class="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-md hover:bg-violet-700 transition-colors"
               >
                 Get Started
               </RouterLink>
