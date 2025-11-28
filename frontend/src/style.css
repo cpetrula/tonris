@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+
+/* Custom styles */
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* PrimeVue Password component full width fix */
+.p-password {
+  width: 100%;
+}
+
+.p-password-input {
+  width: 100%;
+}
+
+/* PrimeVue InputText full width */
+.p-inputtext {
+  width: 100%;
+}
