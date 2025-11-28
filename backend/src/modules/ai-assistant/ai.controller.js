@@ -89,7 +89,12 @@ const queryAvailability = async (req, res, next) => {
       data: {
         availability,
         serviceId,
-        queryDate: date || (startDate && endDate ? { startDate, endDate } : new Date().toISOString()),
+        query: {
+          type: startDate && endDate ? 'range' : 'single',
+          date: date || null,
+          startDate: startDate || null,
+          endDate: endDate || null,
+        },
       },
     });
   } catch (error) {
@@ -495,9 +500,11 @@ const handleElevenLabsToolCall = async (toolData, tenantId) => {
   const { tool_name, parameters } = toolData;
 
   if (tool_name === 'check_availability') {
+    // Default to tomorrow if no date provided
+    const queryDate = parameters.date ? new Date(parameters.date) : getNextBusinessDay();
     const availability = await availabilityService.getAvailabilityForDate(
       tenantId,
-      new Date(parameters.date || Date.now()),
+      queryDate,
       parameters.serviceId
     );
     return { availability };

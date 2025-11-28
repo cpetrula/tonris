@@ -141,7 +141,7 @@ const handleBookAppointment = async (entities, context, tenantId) => {
       customerEmail: entities.customerEmail,
       customerPhone: entities.customerPhone,
       startTime: entities.startTime,
-      notes: entities.notes || `Booked via AI assistant - Session: ${context.sessionId}`,
+      notes: entities.notes || `Booked via AI assistant`,
     }, tenantId);
     
     return {

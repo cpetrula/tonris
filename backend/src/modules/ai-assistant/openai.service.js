@@ -160,13 +160,15 @@ class OpenAIService extends AIProviderInterface {
   }
 
   /**
-   * Generate response using OpenAI (placeholder for actual API call)
+   * Generate response using OpenAI (placeholder - requires API integration)
    * @param {Object} context - Conversation context
    * @returns {Promise<string>} - Generated response
+   * @note In production, this would call OpenAI API:
+   *       POST https://api.openai.com/v1/chat/completions
    */
   async _generateResponse(context) {
-    // In production, this would make an API call to OpenAI
-    // POST https://api.openai.com/v1/chat/completions
+    // PLACEHOLDER: Actual implementation would make OpenAI API call
+    // For now, use local intent detection to generate appropriate responses
     
     const lastMessage = context.history[context.history.length - 1];
     if (lastMessage && lastMessage.role === 'user') {
@@ -178,45 +180,49 @@ class OpenAIService extends AIProviderInterface {
   }
 
   /**
-   * Generate text-to-speech audio using OpenAI TTS
+   * Generate text-to-speech audio using OpenAI TTS (placeholder - requires API integration)
    * @param {string} text - Text to convert
    * @param {Object} options - TTS options
-   * @returns {Promise<Buffer>} - Audio buffer (placeholder)
+   * @returns {Promise<Buffer|null>} - Audio buffer or null if not available
+   * @note In production, this would call OpenAI TTS API:
+   *       POST https://api.openai.com/v1/audio/speech
    */
   async textToSpeech(text, options = {}) {
     if (!await this.isAvailable()) {
-      logger.warn('OpenAI TTS not available');
+      logger.warn('OpenAI TTS not available - API key not configured');
       return null;
     }
 
     const voice = options.voice || 'alloy';
     const model = options.model || 'tts-1';
     
-    logger.info(`OpenAI TTS requested: voice=${voice}, model=${model}, text length=${text.length}`);
+    logger.info(`OpenAI TTS placeholder: voice=${voice}, model=${model}, text length=${text.length}`);
     
-    // In production, this would call OpenAI TTS endpoint
-    // POST https://api.openai.com/v1/audio/speech
-    return Buffer.from('audio-placeholder');
+    // PLACEHOLDER: Return null to indicate TTS is not yet implemented
+    // In production, this would return actual audio data from OpenAI
+    return null;
   }
 
   /**
-   * Transcribe speech to text using OpenAI Whisper
-   * @param {Buffer} audio - Audio buffer
-   * @param {Object} options - Transcription options
-   * @returns {Promise<string>} - Transcribed text
+   * Transcribe speech to text using OpenAI Whisper (placeholder - requires API integration)
+   * @param {Buffer} _audio - Audio buffer (unused in placeholder)
+   * @param {Object} _options - Transcription options (unused in placeholder)
+   * @returns {Promise<string>} - Transcribed text (empty string if not available)
+   * @note In production, this would call OpenAI Whisper API:
+   *       POST https://api.openai.com/v1/audio/transcriptions
    */
-  async speechToText(audio, options = {}) {
+  async speechToText(_audio, _options = {}) {
     if (!await this.isAvailable()) {
-      logger.warn('OpenAI Whisper not available');
+      logger.warn('OpenAI Whisper not available - API key not configured');
       return '';
     }
 
-    const model = options.model || 'whisper-1';
+    const model = _options.model || 'whisper-1';
     
-    logger.info(`OpenAI Whisper STT requested: model=${model}`);
+    logger.info(`OpenAI Whisper placeholder: model=${model}`);
     
-    // In production, this would call OpenAI Whisper endpoint
-    // POST https://api.openai.com/v1/audio/transcriptions
+    // PLACEHOLDER: Return empty string to indicate STT is not yet implemented
+    // In production, this would return transcribed text from OpenAI Whisper
     return '';
   }
 

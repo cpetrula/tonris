@@ -207,8 +207,9 @@ class ElevenLabsService extends AIProviderInterface {
     
     // In production, this would call ElevenLabs API to get a signed WebSocket URL
     // POST https://api.elevenlabs.io/v1/convai/conversation/get_signed_url
+    const encodedAgentId = encodeURIComponent(effectiveAgentId);
     return {
-      signedUrl: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${effectiveAgentId}`,
+      signedUrl: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${encodedAgentId}`,
       agentId: effectiveAgentId,
       expiresIn: 3600,
     };
