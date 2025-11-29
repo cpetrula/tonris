@@ -38,7 +38,8 @@ async function handleSubmit() {
     }
 
     // Login successful
-    const { token, user } = response.data.data
+    const { tokens, user } = response.data.data
+    const token = tokens.accessToken
     localStorage.setItem('token', token)
     authStore.$patch({ token, user })
 

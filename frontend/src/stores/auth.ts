@@ -43,11 +43,11 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await api.post('/api/auth/login', credentials)
-      const { token: authToken, user: userData } = response.data
+      const { tokens, user: userData } = response.data.data
 
-      token.value = authToken
+      token.value = tokens.accessToken
       user.value = userData
-      localStorage.setItem('token', authToken)
+      localStorage.setItem('token', tokens.accessToken)
 
       return true
     } catch (err: unknown) {
@@ -69,11 +69,11 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await api.post('/api/auth/register', data)
-      const { token: authToken, user: userData } = response.data
+      const { tokens, user: userData } = response.data.data
 
-      token.value = authToken
+      token.value = tokens.accessToken
       user.value = userData
-      localStorage.setItem('token', authToken)
+      localStorage.setItem('token', tokens.accessToken)
 
       return true
     } catch (err: unknown) {
@@ -100,7 +100,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await api.get('/api/auth/me')
-      user.value = response.data.user
+      user.value = response.data.data.user
     } catch {
       // Token is invalid, clear auth state
       await logout()
