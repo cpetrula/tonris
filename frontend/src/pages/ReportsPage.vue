@@ -1,0 +1,483 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import Card from 'primevue/card'
+import Button from 'primevue/button'
+import Dropdown from 'primevue/dropdown'
+import Calendar from 'primevue/calendar'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+
+interface CallLog {
+  id: string
+  phoneNumber: string
+  callerName: string
+  date: Date
+  duration: number // in seconds
+  outcome: 'appointment_booked' | 'inquiry' | 'voicemail' | 'transferred' | 'missed'
+  notes: string
+}
+
+interface AppointmentStat {
+  period: string
+  booked: number
+  completed: number
+  cancelled: number
+  noShow: number
+}
+
+const loading = ref(false)
+
+// Date range filter
+const dateRange = ref<Date[] | null>(null)
+const periodFilter = ref('last30days')
+
+const periodOptions = [
+  { label: 'Last 7 days', value: 'last7days' },
+  { label: 'Last 30 days', value: 'last30days' },
+  { label: 'Last 90 days', value: 'last90days' },
+  { label: 'This month', value: 'thisMonth' },
+  { label: 'Last month', value: 'lastMonth' },
+  { label: 'Custom range', value: 'custom' }
+]
+
+// Overview stats
+const overviewStats = ref({
+  totalCalls: 256,
+  avgCallDuration: 145, // seconds
+  appointmentsBooked: 89,
+  conversionRate: 34.8,
+  missedCalls: 12,
+  peakHour: '10:00 AM'
+})
+
+// Call logs
+const callLogs = ref<CallLog[]>([
+  {
+    id: '1',
+    phoneNumber: '(555) 123-4567',
+    callerName: 'John Smith',
+    date: new Date(),
+    duration: 180,
+    outcome: 'appointment_booked',
+    notes: 'Booked haircut for tomorrow'
+  },
+  {
+    id: '2',
+    phoneNumber: '(555) 234-5678',
+    callerName: 'Unknown',
+    date: new Date(Date.now() - 3600000),
+    duration: 45,
+    outcome: 'inquiry',
+    notes: 'Asked about pricing'
+  },
+  {
+    id: '3',
+    phoneNumber: '(555) 345-6789',
+    callerName: 'Emily Davis',
+    date: new Date(Date.now() - 7200000),
+    duration: 120,
+    outcome: 'appointment_booked',
+    notes: 'Color treatment next week'
+  },
+  {
+    id: '4',
+    phoneNumber: '(555) 456-7890',
+    callerName: 'Unknown',
+    date: new Date(Date.now() - 86400000),
+    duration: 0,
+    outcome: 'missed',
+    notes: 'After hours call'
+  },
+  {
+    id: '5',
+    phoneNumber: '(555) 567-8901',
+    callerName: 'Robert Wilson',
+    date: new Date(Date.now() - 172800000),
+    duration: 90,
+    outcome: 'transferred',
+    notes: 'Transferred to manager'
+  }
+])
+
+// Appointment statistics by period
+const appointmentStats = ref<AppointmentStat[]>([
+  { period: 'Week 1', booked: 25, completed: 22, cancelled: 2, noShow: 1 },
+  { period: 'Week 2', booked: 28, completed: 25, cancelled: 1, noShow: 2 },
+  { period: 'Week 3', booked: 22, completed: 20, cancelled: 1, noShow: 1 },
+  { period: 'Week 4', booked: 30, completed: 26, cancelled: 3, noShow: 1 }
+])
+
+// Top services
+const topServices = ref([
+  { name: 'Haircut', count: 45, revenue: 1575 },
+  { name: 'Color Treatment', count: 18, revenue: 2160 },
+  { name: 'Hair Styling', count: 15, revenue: 750 },
+  { name: 'Beard Trim', count: 22, revenue: 440 },
+  { name: 'Deep Conditioning', count: 10, revenue: 400 }
+])
+
+// Call outcome distribution
+const callOutcomes = computed(() => {
+  const outcomes = {
+    appointment_booked: 0,
+    inquiry: 0,
+    voicemail: 0,
+    transferred: 0,
+    missed: 0
+  }
+  callLogs.value.forEach(call => {
+    outcomes[call.outcome]++
+  })
+  return outcomes
+})
+
+function formatDuration(seconds: number): string {
+  if (seconds === 0) return '-'
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  })
+}
+
+function formatPrice(price: number): string {
+  return `$${price.toLocaleString()}`
+}
+
+function getOutcomeColor(outcome: string): string {
+  const colors: Record<string, string> = {
+    appointment_booked: 'bg-green-100 text-green-700',
+    inquiry: 'bg-blue-100 text-blue-700',
+    voicemail: 'bg-yellow-100 text-yellow-700',
+    transferred: 'bg-purple-100 text-purple-700',
+    missed: 'bg-red-100 text-red-700'
+  }
+  return colors[outcome] || 'bg-gray-100 text-gray-700'
+}
+
+function getOutcomeLabel(outcome: string): string {
+  const labels: Record<string, string> = {
+    appointment_booked: 'Appointment Booked',
+    inquiry: 'Inquiry',
+    voicemail: 'Voicemail',
+    transferred: 'Transferred',
+    missed: 'Missed'
+  }
+  return labels[outcome] || outcome
+}
+
+function exportReport() {
+  alert('Report export functionality would be implemented here')
+}
+
+onMounted(async () => {
+  loading.value = true
+  // In a real app, fetch reports data from API using tenantStore.tenantId
+  // await api.get(`/api/tenants/${tenantStore.tenantId}/reports`)
+  loading.value = false
+})
+</script>
+
+<template>
+  <div>
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Reports</h1>
+        <p class="text-gray-600 mt-1">View call logs, statistics, and appointment analytics</p>
+      </div>
+      <div class="mt-4 sm:mt-0 flex gap-2">
+        <Dropdown
+          v-model="periodFilter"
+          :options="periodOptions"
+          optionLabel="label"
+          optionValue="value"
+          class="w-40"
+        />
+        <Button
+          label="Export"
+          icon="pi pi-download"
+          outlined
+          @click="exportReport"
+        />
+      </div>
+    </div>
+
+    <!-- Custom Date Range (shown when custom is selected) -->
+    <Card v-if="periodFilter === 'custom'" class="mb-6 shadow-sm">
+      <template #content>
+        <div class="flex items-center gap-4">
+          <label class="text-sm font-medium text-gray-700">Date Range:</label>
+          <Calendar
+            v-model="dateRange"
+            selectionMode="range"
+            dateFormat="mm/dd/yy"
+            placeholder="Select date range"
+            class="w-64"
+          />
+        </div>
+      </template>
+    </Card>
+
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <Card class="shadow-sm">
+        <template #content>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-violet-600">{{ overviewStats.totalCalls }}</p>
+            <p class="text-sm text-gray-500">Total Calls</p>
+          </div>
+        </template>
+      </Card>
+      <Card class="shadow-sm">
+        <template #content>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-cyan-600">{{ formatDuration(overviewStats.avgCallDuration) }}</p>
+            <p class="text-sm text-gray-500">Avg Duration</p>
+          </div>
+        </template>
+      </Card>
+      <Card class="shadow-sm">
+        <template #content>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-green-600">{{ overviewStats.appointmentsBooked }}</p>
+            <p class="text-sm text-gray-500">Appointments</p>
+          </div>
+        </template>
+      </Card>
+      <Card class="shadow-sm">
+        <template #content>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-blue-600">{{ overviewStats.conversionRate }}%</p>
+            <p class="text-sm text-gray-500">Conversion Rate</p>
+          </div>
+        </template>
+      </Card>
+      <Card class="shadow-sm">
+        <template #content>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-red-600">{{ overviewStats.missedCalls }}</p>
+            <p class="text-sm text-gray-500">Missed Calls</p>
+          </div>
+        </template>
+      </Card>
+      <Card class="shadow-sm">
+        <template #content>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-orange-600">{{ overviewStats.peakHour }}</p>
+            <p class="text-sm text-gray-500">Peak Hour</p>
+          </div>
+        </template>
+      </Card>
+    </div>
+
+    <TabView>
+      <!-- Call Logs Tab -->
+      <TabPanel value="0" header="Call Logs">
+        <Card class="shadow-sm">
+          <template #content>
+            <DataTable
+              :value="callLogs"
+              :loading="loading"
+              paginator
+              :rows="10"
+              :rowsPerPageOptions="[5, 10, 20]"
+              responsiveLayout="scroll"
+              class="p-datatable-sm"
+              sortField="date"
+              :sortOrder="-1"
+            >
+              <template #empty>
+                <div class="text-center py-8 text-gray-500">
+                  No call logs found
+                </div>
+              </template>
+
+              <Column field="date" header="Date/Time" sortable>
+                <template #body="{ data }">
+                  <span>{{ formatDate(data.date) }}</span>
+                </template>
+              </Column>
+
+              <Column field="phoneNumber" header="Phone" sortable />
+
+              <Column field="callerName" header="Caller" sortable>
+                <template #body="{ data }">
+                  <span :class="data.callerName === 'Unknown' ? 'text-gray-400' : ''">
+                    {{ data.callerName }}
+                  </span>
+                </template>
+              </Column>
+
+              <Column field="duration" header="Duration" sortable>
+                <template #body="{ data }">
+                  <span>{{ formatDuration(data.duration) }}</span>
+                </template>
+              </Column>
+
+              <Column field="outcome" header="Outcome" sortable>
+                <template #body="{ data }">
+                  <span :class="['px-2 py-1 rounded-full text-xs font-medium', getOutcomeColor(data.outcome)]">
+                    {{ getOutcomeLabel(data.outcome) }}
+                  </span>
+                </template>
+              </Column>
+
+              <Column field="notes" header="Notes">
+                <template #body="{ data }">
+                  <span class="text-gray-500 text-sm">{{ data.notes || '-' }}</span>
+                </template>
+              </Column>
+            </DataTable>
+          </template>
+        </Card>
+
+        <!-- Call Outcome Distribution -->
+        <Card class="shadow-sm mt-6">
+          <template #title>Call Outcome Distribution</template>
+          <template #content>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div class="text-center p-4 bg-green-50 rounded-lg">
+                <p class="text-2xl font-bold text-green-600">{{ callOutcomes.appointment_booked }}</p>
+                <p class="text-sm text-gray-600">Appointments Booked</p>
+              </div>
+              <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <p class="text-2xl font-bold text-blue-600">{{ callOutcomes.inquiry }}</p>
+                <p class="text-sm text-gray-600">Inquiries</p>
+              </div>
+              <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                <p class="text-2xl font-bold text-yellow-600">{{ callOutcomes.voicemail }}</p>
+                <p class="text-sm text-gray-600">Voicemails</p>
+              </div>
+              <div class="text-center p-4 bg-purple-50 rounded-lg">
+                <p class="text-2xl font-bold text-purple-600">{{ callOutcomes.transferred }}</p>
+                <p class="text-sm text-gray-600">Transferred</p>
+              </div>
+              <div class="text-center p-4 bg-red-50 rounded-lg">
+                <p class="text-2xl font-bold text-red-600">{{ callOutcomes.missed }}</p>
+                <p class="text-sm text-gray-600">Missed</p>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </TabPanel>
+
+      <!-- Appointment Analytics Tab -->
+      <TabPanel value="1" header="Appointment Analytics">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Weekly Statistics -->
+          <Card class="shadow-sm">
+            <template #title>Weekly Appointment Statistics</template>
+            <template #content>
+              <DataTable
+                :value="appointmentStats"
+                responsiveLayout="scroll"
+                class="p-datatable-sm"
+              >
+                <Column field="period" header="Period" />
+                <Column field="booked" header="Booked">
+                  <template #body="{ data }">
+                    <span class="font-medium text-blue-600">{{ data.booked }}</span>
+                  </template>
+                </Column>
+                <Column field="completed" header="Completed">
+                  <template #body="{ data }">
+                    <span class="font-medium text-green-600">{{ data.completed }}</span>
+                  </template>
+                </Column>
+                <Column field="cancelled" header="Cancelled">
+                  <template #body="{ data }">
+                    <span class="font-medium text-red-600">{{ data.cancelled }}</span>
+                  </template>
+                </Column>
+                <Column field="noShow" header="No Show">
+                  <template #body="{ data }">
+                    <span class="font-medium text-orange-600">{{ data.noShow }}</span>
+                  </template>
+                </Column>
+              </DataTable>
+            </template>
+          </Card>
+
+          <!-- Top Services -->
+          <Card class="shadow-sm">
+            <template #title>Top Services</template>
+            <template #content>
+              <div class="space-y-4">
+                <div
+                  v-for="(service, index) in topServices"
+                  :key="service.name"
+                  class="flex items-center justify-between"
+                >
+                  <div class="flex items-center">
+                    <span class="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-medium mr-3">
+                      {{ index + 1 }}
+                    </span>
+                    <div>
+                      <p class="font-medium text-gray-900">{{ service.name }}</p>
+                      <p class="text-sm text-gray-500">{{ service.count }} bookings</p>
+                    </div>
+                  </div>
+                  <span class="font-medium text-green-600">{{ formatPrice(service.revenue) }}</span>
+                </div>
+              </div>
+            </template>
+          </Card>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <Card class="shadow-sm">
+            <template #content>
+              <div class="text-center">
+                <p class="text-3xl font-bold text-blue-600">
+                  {{ appointmentStats.reduce((sum, s) => sum + s.booked, 0) }}
+                </p>
+                <p class="text-sm text-gray-500">Total Booked</p>
+              </div>
+            </template>
+          </Card>
+          <Card class="shadow-sm">
+            <template #content>
+              <div class="text-center">
+                <p class="text-3xl font-bold text-green-600">
+                  {{ appointmentStats.reduce((sum, s) => sum + s.completed, 0) }}
+                </p>
+                <p class="text-sm text-gray-500">Completed</p>
+              </div>
+            </template>
+          </Card>
+          <Card class="shadow-sm">
+            <template #content>
+              <div class="text-center">
+                <p class="text-3xl font-bold text-red-600">
+                  {{ appointmentStats.reduce((sum, s) => sum + s.cancelled, 0) }}
+                </p>
+                <p class="text-sm text-gray-500">Cancelled</p>
+              </div>
+            </template>
+          </Card>
+          <Card class="shadow-sm">
+            <template #content>
+              <div class="text-center">
+                <p class="text-3xl font-bold text-orange-600">
+                  {{ appointmentStats.reduce((sum, s) => sum + s.noShow, 0) }}
+                </p>
+                <p class="text-sm text-gray-500">No Shows</p>
+              </div>
+            </template>
+          </Card>
+        </div>
+      </TabPanel>
+    </TabView>
+  </div>
+</template>

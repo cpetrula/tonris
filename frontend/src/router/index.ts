@@ -10,8 +10,16 @@ const SignUpPage = () => import('@/pages/SignUpPage.vue')
 const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
 const HowItWorksPage = () => import('@/pages/HowItWorksPage.vue')
 const FAQPage = () => import('@/pages/FAQPage.vue')
-const Dashboard = () => import('@/pages/Dashboard.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
+
+// Admin Dashboard Pages
+const DashboardPage = () => import('@/pages/DashboardPage.vue')
+const EmployeesPage = () => import('@/pages/EmployeesPage.vue')
+const ServicesPage = () => import('@/pages/ServicesPage.vue')
+const AppointmentsPage = () => import('@/pages/AppointmentsPage.vue')
+const BillingPage = () => import('@/pages/BillingPage.vue')
+const ReportsPage = () => import('@/pages/ReportsPage.vue')
+const SettingsPage = () => import('@/pages/SettingsPage.vue')
 
 // Public Layout
 const PublicLayout = () => import('@/layouts/PublicLayout.vue')
@@ -75,7 +83,37 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'dashboard',
-        component: Dashboard
+        component: DashboardPage
+      },
+      {
+        path: 'employees',
+        name: 'employees',
+        component: EmployeesPage
+      },
+      {
+        path: 'services',
+        name: 'services',
+        component: ServicesPage
+      },
+      {
+        path: 'appointments',
+        name: 'appointments',
+        component: AppointmentsPage
+      },
+      {
+        path: 'billing',
+        name: 'billing',
+        component: BillingPage
+      },
+      {
+        path: 'reports',
+        name: 'reports',
+        component: ReportsPage
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: SettingsPage
       }
     ]
   },
