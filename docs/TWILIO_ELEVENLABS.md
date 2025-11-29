@@ -158,8 +158,7 @@ Configure your Twilio phone number to use the ElevenLabs webhook:
    - **URL**: `https://your-domain.com/api/webhooks/twilio/elevenlabs`
    - **HTTP Method**: POST
 
-Alternatively, you can use the standard voice webhook and redirect to ElevenLabs:
-- **URL**: `https://your-domain.com/api/webhooks/twilio/voice`
+> **Note**: The standard voice webhook (`/api/webhooks/twilio/voice`) handles calls differently and does not automatically connect to ElevenLabs. Use the ElevenLabs-specific webhook endpoint for AI voice conversations.
 
 ### 4. Tenant Configuration (Optional)
 

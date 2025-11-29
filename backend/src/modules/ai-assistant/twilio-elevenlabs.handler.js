@@ -8,6 +8,38 @@ const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
 const { Tenant } = require('../tenants/tenant.model');
 
+// Lazy-loaded service references to avoid circular dependencies
+let _availabilityService = null;
+let _appointmentService = null;
+let _serviceService = null;
+let _tenantService = null;
+let _AppointmentModel = null;
+
+/**
+ * Get lazy-loaded services
+ */
+const getServices = () => {
+  if (!_availabilityService) {
+    const appointments = require('../appointments');
+    _availabilityService = appointments.availabilityService;
+    _appointmentService = appointments.appointmentService;
+    _AppointmentModel = require('../appointments/appointment.model').Appointment;
+  }
+  if (!_serviceService) {
+    _serviceService = require('../services').serviceService;
+  }
+  if (!_tenantService) {
+    _tenantService = require('../tenants').tenantService;
+  }
+  return {
+    availabilityService: _availabilityService,
+    appointmentService: _appointmentService,
+    serviceService: _serviceService,
+    tenantService: _tenantService,
+    Appointment: _AppointmentModel,
+  };
+};
+
 /**
  * Find tenant by phone number
  * @param {string} phoneNumber - Phone number to look up
@@ -203,11 +235,8 @@ const handleElevenLabsToolCall = async (toolData, tenantId) => {
   
   logger.info(`ElevenLabs tool call: ${tool_name} for tenant: ${tenantId}`);
   
-  // Import services dynamically to avoid circular dependencies
-  const { availabilityService } = require('../appointments');
-  const { appointmentService } = require('../appointments');
-  const { serviceService } = require('../services');
-  const { tenantService } = require('../tenants');
+  // Get lazy-loaded services to avoid circular dependencies
+  const { availabilityService, appointmentService, serviceService, tenantService, Appointment } = getServices();
   
   try {
     switch (tool_name) {
@@ -297,7 +326,6 @@ const handleElevenLabsToolCall = async (toolData, tenantId) => {
       
       case 'find_appointment': {
         // Find appointment by customer phone or email
-        const { Appointment } = require('../appointments/appointment.model');
         const where = { tenantId };
         
         if (parameters.customerPhone) {
