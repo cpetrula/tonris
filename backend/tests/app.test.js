@@ -3,17 +3,36 @@
  * Tests for Express application, middleware, and routes
  */
 const request = require('supertest');
+const path = require('path');
+const fs = require('fs');
 const { app } = require('../src/app');
 
 describe('TONRIS Backend', () => {
-  describe('Root Endpoint', () => {
-    it('should return welcome message at root', async () => {
+  describe('Static File Serving', () => {
+    const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+    const indexPath = path.join(frontendDistPath, 'index.html');
+
+    it('should return 404 at root when frontend dist does not exist', async () => {
+      // Skip test if frontend dist exists
+      if (fs.existsSync(indexPath)) {
+        return;
+      }
+
+      const response = await request(app).get('/');
+      
+      expect(response.status).toBe(404);
+    });
+
+    it('should serve index.html at root when frontend dist exists', async () => {
+      // Skip test if frontend dist does not exist
+      if (!fs.existsSync(indexPath)) {
+        return;
+      }
+
       const response = await request(app).get('/');
       
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('TONRIS Backend API');
-      expect(response.body.version).toBe('1.0.0');
+      expect(response.headers['content-type']).toContain('text/html');
     });
   });
 

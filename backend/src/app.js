@@ -3,6 +3,7 @@
  * Main Express application entry point
  */
 const express = require('express');
+const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 
@@ -82,13 +83,23 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/telephony', telephonyRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'TONRIS Backend API',
-    version: '1.0.0',
-    documentation: '/api/docs',
+// Static file serving - serve frontend build from frontend/dist directory
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// SPA fallback - serve index.html for non-API routes (client-side routing support)
+app.get('/{*path}', (req, res, next) => {
+  // Skip API routes and health check routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+    return next();
+  }
+  
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      // If index.html doesn't exist, fall through to 404 handler
+      next();
+    }
   });
 });
 
