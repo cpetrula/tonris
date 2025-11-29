@@ -68,7 +68,7 @@ const login = async (req, res, next) => {
       });
     }
 
-    const result = await authService.login({ email, password, twoFactorCode }, req.tenantId);
+    const result = await authService.login({ email, password, twoFactorCode });
 
     // Check if 2FA is required
     if (result.requiresTwoFactor) {

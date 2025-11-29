@@ -48,12 +48,11 @@ const signup = async ({ email, password }, tenantId) => {
  * @param {string} credentials.email - User email
  * @param {string} credentials.password - User password
  * @param {string} credentials.twoFactorCode - Optional 2FA code
- * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Object>} - User data and tokens
  */
-const login = async ({ email, password, twoFactorCode }, tenantId) => {
-  // Find user
-  const user = await User.findOne({ where: { email, tenantId } });
+const login = async ({ email, password, twoFactorCode }) => {
+  // Find user by email only - tenantId is retrieved from the user record
+  const user = await User.findOne({ where: { email } });
   if (!user) {
     throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
   }
@@ -87,7 +86,7 @@ const login = async ({ email, password, twoFactorCode }, tenantId) => {
   // Generate tokens
   const tokens = generateTokenPair(user);
 
-  logger.info(`User logged in: ${email} for tenant: ${tenantId}`);
+  logger.info(`User logged in: ${email} for tenant: ${user.tenantId}`);
 
   return {
     user: user.toSafeObject(),
