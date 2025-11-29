@@ -240,7 +240,7 @@ function saveAppointment() {
 
 function updateStatus(appointment: Appointment, status: Appointment['status']) {
   const index = appointments.value.findIndex(a => a.id === appointment.id)
-  if (index !== -1 && appointments.value[index]) {
+  if (index !== -1) {
     appointments.value[index]!.status = status
   }
 }

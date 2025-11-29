@@ -153,7 +153,7 @@ function deleteService(service: Service) {
 
 function toggleStatus(service: Service) {
   const index = services.value.findIndex(s => s.id === service.id)
-  if (index !== -1 && services.value[index]) {
+  if (index !== -1) {
     services.value[index]!.status = service.status === 'active' ? 'inactive' : 'active'
   }
 }

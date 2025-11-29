@@ -170,7 +170,7 @@ function deleteEmployee(employee: Employee) {
 
 function toggleStatus(employee: Employee) {
   const index = employees.value.findIndex(e => e.id === employee.id)
-  if (index !== -1 && employees.value[index]) {
+  if (index !== -1) {
     employees.value[index]!.status = employee.status === 'active' ? 'inactive' : 'active'
   }
 }
