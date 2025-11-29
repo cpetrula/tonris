@@ -35,6 +35,11 @@ const notFoundHandler = (req, res, next) => {
  * Global error handler middleware
  */
 const errorHandler = (err, req, res, next) => {
+  // Handle Sequelize errors by converting them to AppErrors
+  if (err.name && err.name.startsWith('Sequelize')) {
+    err = databaseErrorHandler(err);
+  }
+  
   // Set default values
   err.statusCode = err.statusCode || 500;
   err.code = err.code || 'INTERNAL_ERROR';
@@ -100,7 +105,9 @@ const databaseErrorHandler = (error) => {
     return new AppError('Resource already exists', 409, 'DUPLICATE_ENTRY');
   }
   
-  if (error.name === 'SequelizeConnectionError') {
+  // Handle all connection errors (SequelizeConnectionError and subclasses like
+  // SequelizeConnectionRefusedError, SequelizeHostNotFoundError, etc.)
+  if (error.name && error.name.startsWith('SequelizeConnection')) {
     return new AppError('Database connection failed', 503, 'DATABASE_CONNECTION_ERROR');
   }
   
