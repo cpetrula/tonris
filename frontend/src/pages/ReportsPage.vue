@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useTenantStore } from '@/stores/tenant'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
@@ -9,8 +8,6 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
-
-const tenantStore = useTenantStore()
 
 interface CallLog {
   id: string
@@ -285,7 +282,7 @@ onMounted(async () => {
 
     <TabView>
       <!-- Call Logs Tab -->
-      <TabPanel header="Call Logs">
+      <TabPanel value="0" header="Call Logs">
         <Card class="shadow-sm">
           <template #content>
             <DataTable
@@ -375,7 +372,7 @@ onMounted(async () => {
       </TabPanel>
 
       <!-- Appointment Analytics Tab -->
-      <TabPanel header="Appointment Analytics">
+      <TabPanel value="1" header="Appointment Analytics">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Weekly Statistics -->
           <Card class="shadow-sm">

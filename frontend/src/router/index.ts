@@ -10,7 +10,6 @@ const SignUpPage = () => import('@/pages/SignUpPage.vue')
 const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
 const HowItWorksPage = () => import('@/pages/HowItWorksPage.vue')
 const FAQPage = () => import('@/pages/FAQPage.vue')
-const Dashboard = () => import('@/pages/Dashboard.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
 
 // Admin Dashboard Pages

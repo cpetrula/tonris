@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useTenantStore } from '@/stores/tenant'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-
-const tenantStore = useTenantStore()
 
 interface PaymentMethod {
   id: string

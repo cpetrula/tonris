@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useTenantStore } from '@/stores/tenant'
-import { useAuthStore } from '@/stores/auth'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -12,10 +10,10 @@ import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
+import { useRouter } from 'vue-router'
 
-const tenantStore = useTenantStore()
-const authStore = useAuthStore()
 const toast = useToast()
+const router = useRouter()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -84,13 +82,6 @@ const languageOptions = [
   { label: 'English (UK)', value: 'en-GB' },
   { label: 'Spanish', value: 'es-ES' },
   { label: 'French', value: 'fr-FR' }
-]
-
-const timezoneOptions = [
-  { label: 'Eastern Time (ET)', value: 'America/New_York' },
-  { label: 'Central Time (CT)', value: 'America/Chicago' },
-  { label: 'Mountain Time (MT)', value: 'America/Denver' },
-  { label: 'Pacific Time (PT)', value: 'America/Los_Angeles' }
 ]
 
 const timeSlots = [
@@ -195,7 +186,7 @@ onMounted(async () => {
 
     <TabView>
       <!-- Business Profile Tab -->
-      <TabPanel header="Business Profile">
+      <TabPanel value="0" header="Business Profile">
         <Card class="shadow-sm">
           <template #content>
             <div class="space-y-6">
@@ -260,7 +251,7 @@ onMounted(async () => {
       </TabPanel>
 
       <!-- Business Hours Tab -->
-      <TabPanel header="Business Hours">
+      <TabPanel value="1" header="Business Hours">
         <Card class="shadow-sm">
           <template #content>
             <div class="space-y-4">
@@ -307,7 +298,7 @@ onMounted(async () => {
       </TabPanel>
 
       <!-- AI Voice Settings Tab -->
-      <TabPanel header="AI Voice Settings">
+      <TabPanel value="2" header="AI Voice Settings">
         <Card class="shadow-sm">
           <template #content>
             <div class="space-y-6">
@@ -385,7 +376,7 @@ onMounted(async () => {
       </TabPanel>
 
       <!-- Notifications Tab -->
-      <TabPanel header="Notifications">
+      <TabPanel value="3" header="Notifications">
         <Card class="shadow-sm">
           <template #content>
             <div class="space-y-6">
@@ -457,7 +448,7 @@ onMounted(async () => {
       </TabPanel>
 
       <!-- Integrations Tab -->
-      <TabPanel header="Integrations">
+      <TabPanel value="4" header="Integrations">
         <div class="space-y-6">
           <!-- Google Calendar -->
           <Card class="shadow-sm">
@@ -542,7 +533,7 @@ onMounted(async () => {
                   v-if="integrations.stripe.connected"
                   label="Manage"
                   outlined
-                  @click="$router.push('/app/billing')"
+                  @click="router.push('/app/billing')"
                 />
               </div>
             </template>

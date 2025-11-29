@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useTenantStore } from '@/stores/tenant'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -12,8 +11,6 @@ import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
-
-const tenantStore = useTenantStore()
 
 interface Appointment {
   id: string
@@ -243,8 +240,8 @@ function saveAppointment() {
 
 function updateStatus(appointment: Appointment, status: Appointment['status']) {
   const index = appointments.value.findIndex(a => a.id === appointment.id)
-  if (index !== -1) {
-    appointments.value[index].status = status
+  if (index !== -1 && appointments.value[index]) {
+    appointments.value[index]!.status = status
   }
 }
 
@@ -322,7 +319,7 @@ onMounted(async () => {
 
     <TabView>
       <!-- Calendar View Tab -->
-      <TabPanel header="Calendar View">
+      <TabPanel value="0" header="Calendar View">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Calendar -->
           <Card class="shadow-sm">
@@ -388,7 +385,7 @@ onMounted(async () => {
       </TabPanel>
 
       <!-- List View Tab -->
-      <TabPanel header="List View">
+      <TabPanel value="1" header="List View">
         <!-- Filters -->
         <Card class="mb-6 shadow-sm">
           <template #content>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useTenantStore } from '@/stores/tenant'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -8,8 +7,6 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
-
-const tenantStore = useTenantStore()
 
 interface Employee {
   id: string
@@ -173,8 +170,8 @@ function deleteEmployee(employee: Employee) {
 
 function toggleStatus(employee: Employee) {
   const index = employees.value.findIndex(e => e.id === employee.id)
-  if (index !== -1) {
-    employees.value[index].status = employee.status === 'active' ? 'inactive' : 'active'
+  if (index !== -1 && employees.value[index]) {
+    employees.value[index]!.status = employee.status === 'active' ? 'inactive' : 'active'
   }
 }
 
