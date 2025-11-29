@@ -213,6 +213,8 @@ ELEVENLABS_AGENT_ID=your_agent_id
 ELEVENLABS_VOICE_ID=your_voice_id
 ```
 
+4. For Twilio integration, see [TWILIO_ELEVENLABS.md](./TWILIO_ELEVENLABS.md)
+
 ## Project Structure
 
 ```
@@ -427,4 +429,5 @@ After setup is complete:
 2. Review [API.md](./API.md) for endpoint details
 3. Review [DATA_MODEL.md](./DATA_MODEL.md) for database schema
 4. Review [AI_FLOW.md](./AI_FLOW.md) for AI conversation logic
-5. Start exploring the codebase!
+5. Review [TWILIO_ELEVENLABS.md](./TWILIO_ELEVENLABS.md) for Twilio-ElevenLabs voice integration
+6. Start exploring the codebase!

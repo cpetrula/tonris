@@ -7,6 +7,7 @@ const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
 const { getOpenAIService } = require('./openai.service');
 const { handleIntent } = require('./intent.handler');
+const { handleTwilioToElevenLabs, handleElevenLabsToolCall: handleToolCall } = require('./twilio-elevenlabs.handler');
 const { availabilityService } = require('../appointments');
 const { appointmentService, CANCELLATION_REASONS } = require('../appointments');
 const { serviceService } = require('../services');
@@ -471,8 +472,8 @@ const handleElevenLabsWebhook = async (req, res, next) => {
         break;
       
       case 'tool_call': {
-        // Handle tool calls from ElevenLabs Agent
-        const toolResult = await handleElevenLabsToolCall(data, req.tenantId);
+        // Handle tool calls from ElevenLabs Agent using the new handler
+        const toolResult = await handleToolCall(data, req.tenantId);
         return res.status(200).json({
           success: true,
           data: toolResult,
@@ -491,41 +492,20 @@ const handleElevenLabsWebhook = async (req, res, next) => {
 };
 
 /**
- * Handle tool calls from ElevenLabs Agent
- * @param {Object} toolData - Tool call data
- * @param {string} tenantId - Tenant ID
- * @returns {Promise<Object>} - Tool result
+ * POST /api/webhooks/twilio/elevenlabs
+ * Handle incoming Twilio voice call and connect to ElevenLabs Conversational AI
  */
-const handleElevenLabsToolCall = async (toolData, tenantId) => {
-  const { tool_name, parameters } = toolData;
-
-  if (tool_name === 'check_availability') {
-    // Default to tomorrow if no date provided
-    const queryDate = parameters.date ? new Date(parameters.date) : getNextBusinessDay();
-    const availability = await availabilityService.getAvailabilityForDate(
-      tenantId,
-      queryDate,
-      parameters.serviceId
-    );
-    return { availability };
+const handleTwilioElevenLabsWebhook = async (req, res, next) => {
+  try {
+    const result = await handleTwilioToElevenLabs(req.body);
+    
+    // Return TwiML response
+    res.type('text/xml');
+    res.send(result.twiml);
+  } catch (error) {
+    logger.error(`Twilio-ElevenLabs webhook error: ${error.message}`);
+    next(error);
   }
-  
-  if (tool_name === 'book_appointment') {
-    const appointment = await appointmentService.createAppointment(parameters, tenantId);
-    return { appointment };
-  }
-  
-  if (tool_name === 'get_services') {
-    const services = await serviceService.getServices(tenantId, { status: 'active' });
-    return { services: services.services };
-  }
-  
-  if (tool_name === 'get_hours') {
-    const tenant = await tenantService.getTenantById(tenantId);
-    return { hours: tenant?.settings?.businessHours };
-  }
-
-  return { error: `Unknown tool: ${tool_name}` };
 };
 
 /**
@@ -589,5 +569,6 @@ module.exports = {
   getBusinessHours,
   processConversation,
   handleElevenLabsWebhook,
+  handleTwilioElevenLabsWebhook,
   getAIConfig,
 };
