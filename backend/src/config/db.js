@@ -26,6 +26,8 @@ const sequelize = new Sequelize(
       timestamps: true,
       underscored: true,
       freezeTableName: true,
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     },
   }
 );
