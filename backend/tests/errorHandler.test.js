@@ -96,9 +96,41 @@ describe('Error Handler', () => {
       
       const appError = databaseErrorHandler(sequelizeError);
       
-      // This is not a connection error starting with 'SequelizeConnection'
-      expect(appError.statusCode).toBe(500);
-      expect(appError.code).toBe('DATABASE_ERROR');
+      expect(appError.statusCode).toBe(503);
+      expect(appError.code).toBe('DATABASE_CONNECTION_ERROR');
+    });
+
+    it('should handle SequelizeHostNotReachableError', () => {
+      const sequelizeError = {
+        name: 'SequelizeHostNotReachableError',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(503);
+      expect(appError.code).toBe('DATABASE_CONNECTION_ERROR');
+    });
+
+    it('should handle SequelizeAccessDeniedError', () => {
+      const sequelizeError = {
+        name: 'SequelizeAccessDeniedError',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(503);
+      expect(appError.code).toBe('DATABASE_CONNECTION_ERROR');
+    });
+
+    it('should handle SequelizeInvalidConnectionError', () => {
+      const sequelizeError = {
+        name: 'SequelizeInvalidConnectionError',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(503);
+      expect(appError.code).toBe('DATABASE_CONNECTION_ERROR');
     });
 
     it('should handle SequelizeConnectionAcquireTimeoutError', () => {

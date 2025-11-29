@@ -105,9 +105,23 @@ const databaseErrorHandler = (error) => {
     return new AppError('Resource already exists', 409, 'DUPLICATE_ENTRY');
   }
   
-  // Handle all connection errors (SequelizeConnectionError and subclasses like
-  // SequelizeConnectionRefusedError, SequelizeHostNotFoundError, etc.)
-  if (error.name && error.name.startsWith('SequelizeConnection')) {
+  // Handle all connection errors (SequelizeConnectionError and subclasses)
+  // These include: SequelizeConnectionError, SequelizeConnectionRefusedError,
+  // SequelizeConnectionTimedOutError, SequelizeConnectionAcquireTimeoutError,
+  // SequelizeHostNotFoundError, SequelizeHostNotReachableError,
+  // SequelizeAccessDeniedError, SequelizeInvalidConnectionError
+  const connectionErrorNames = [
+    'SequelizeConnectionError',
+    'SequelizeConnectionRefusedError',
+    'SequelizeConnectionTimedOutError',
+    'SequelizeConnectionAcquireTimeoutError',
+    'SequelizeHostNotFoundError',
+    'SequelizeHostNotReachableError',
+    'SequelizeAccessDeniedError',
+    'SequelizeInvalidConnectionError',
+  ];
+  
+  if (error.name && connectionErrorNames.includes(error.name)) {
     return new AppError('Database connection failed', 503, 'DATABASE_CONNECTION_ERROR');
   }
   
