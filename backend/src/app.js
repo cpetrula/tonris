@@ -12,6 +12,7 @@ const logger = require('./utils/logger');
 const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
+const { aiController } = require('./modules/ai-assistant');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -50,6 +51,12 @@ app.post('/api/webhooks/twilio/sms',
 app.post('/api/webhooks/twilio/status',
   express.urlencoded({ extended: false }),
   telephonyController.handleStatusWebhook
+);
+
+// Twilio to ElevenLabs webhook - connects incoming calls to ElevenLabs Conversational AI
+app.post('/api/webhooks/twilio/elevenlabs',
+  express.urlencoded({ extended: false }),
+  aiController.handleTwilioElevenLabsWebhook
 );
 
 // Body parsing middleware

@@ -8,6 +8,11 @@ const { ElevenLabsService, getElevenLabsService } = require('./elevenlabs.servic
 const { OpenAIService, getOpenAIService } = require('./openai.service');
 const { handleIntent } = require('./intent.handler');
 const {
+  handleTwilioToElevenLabs,
+  handleElevenLabsToolCall,
+  generateElevenLabsConnectTwiml,
+} = require('./twilio-elevenlabs.handler');
+const {
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,
@@ -21,6 +26,9 @@ module.exports = {
   OpenAIService,
   getOpenAIService,
   handleIntent,
+  handleTwilioToElevenLabs,
+  handleElevenLabsToolCall,
+  generateElevenLabsConnectTwiml,
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,

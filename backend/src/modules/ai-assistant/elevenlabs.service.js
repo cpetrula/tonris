@@ -3,6 +3,7 @@
  * Handles integration with ElevenLabs for voice AI and call orchestration
  */
 const crypto = require('crypto');
+const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
 const { AIProviderInterface, INTENT_TYPES, ACTION_TYPES } = require('./ai-provider.interface');
@@ -18,6 +19,9 @@ class ElevenLabsService extends AIProviderInterface {
     this.agentId = config.agentId || env.ELEVENLABS_AGENT_ID;
     this.baseUrl = 'https://api.elevenlabs.io/v1';
     this.sessions = new Map();
+    
+    // Initialize ElevenLabs client if API key is available
+    this.client = this.apiKey ? new ElevenLabsClient({ apiKey: this.apiKey }) : null;
   }
 
   /**
@@ -205,13 +209,84 @@ class ElevenLabsService extends AIProviderInterface {
     
     logger.info(`Generating signed URL for agent: ${effectiveAgentId}`);
     
-    // In production, this would call ElevenLabs API to get a signed WebSocket URL
-    // POST https://api.elevenlabs.io/v1/convai/conversation/get_signed_url
-    const encodedAgentId = encodeURIComponent(effectiveAgentId);
+    try {
+      // Use the ElevenLabs client to get a signed URL for the conversation
+      const response = await this.client.conversationalAi.getSignedUrl({
+        agentId: effectiveAgentId,
+      });
+      
+      return {
+        signedUrl: response.signedUrl,
+        agentId: effectiveAgentId,
+        expiresIn: 3600,
+      };
+    } catch (error) {
+      logger.error(`Failed to get signed URL: ${error.message}`);
+      // Fallback to constructing URL directly if API call fails
+      const encodedAgentId = encodeURIComponent(effectiveAgentId);
+      return {
+        signedUrl: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${encodedAgentId}`,
+        agentId: effectiveAgentId,
+        expiresIn: 3600,
+      };
+    }
+  }
+
+  /**
+   * Get a signed URL specifically for Twilio integration
+   * This creates a connection URL that can be used in TwiML <Connect><Stream>
+   * @param {string} agentId - Agent ID (optional, uses default if not provided)
+   * @param {Object} options - Connection options
+   * @param {string} options.tenantId - Tenant identifier for context
+   * @param {string} options.callSid - Twilio call SID for tracking
+   * @returns {Promise<Object>} - Connection details with signed URL
+   */
+  async getTwilioSignedUrl(agentId, options = {}) {
+    if (!await this.isAvailable()) {
+      throw new Error('ElevenLabs is not configured');
+    }
+
+    const effectiveAgentId = agentId || this.agentId;
+    const { tenantId, callSid } = options;
+    
+    logger.info(`Generating Twilio signed URL for agent: ${effectiveAgentId}, tenant: ${tenantId}, call: ${callSid}`);
+    
+    try {
+      // Use the ElevenLabs client to get a signed URL
+      const response = await this.client.conversationalAi.getSignedUrl({
+        agentId: effectiveAgentId,
+      });
+      
+      return {
+        signedUrl: response.signedUrl,
+        agentId: effectiveAgentId,
+        tenantId,
+        callSid,
+      };
+    } catch (error) {
+      logger.error(`Failed to get Twilio signed URL: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the ElevenLabs client instance
+   * @returns {ElevenLabsClient|null} - The ElevenLabs client or null if not configured
+   */
+  getClient() {
+    return this.client;
+  }
+
+  /**
+   * Get configuration for ElevenLabs agent
+   * @returns {Object} - Agent configuration
+   */
+  getAgentConfig() {
     return {
-      signedUrl: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${encodedAgentId}`,
-      agentId: effectiveAgentId,
-      expiresIn: 3600,
+      agentId: this.agentId,
+      apiKey: this.apiKey ? '****' + this.apiKey.slice(-4) : null,
+      baseUrl: this.baseUrl,
+      isConfigured: !!(this.apiKey && this.agentId),
     };
   }
 
