@@ -130,12 +130,18 @@ const router = createRouter({
 })
 
 // Navigation guard for authentication
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
   // Check if route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const guestOnly = to.matched.some(record => record.meta.guestOnly)
+  
+  // If we have a token but no user, try to fetch the user first
+  // This handles the case when the page is refreshed and user data is not yet loaded
+  if (authStore.token && !authStore.user) {
+    await authStore.fetchUser()
+  }
   
   if (requiresAuth && !authStore.isAuthenticated) {
     // Redirect to login if not authenticated
