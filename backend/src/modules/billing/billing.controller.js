@@ -5,6 +5,7 @@
 const billingService = require('./billing.service');
 const webhookHandler = require('./webhook.handler');
 const { BILLING_INTERVAL, PLAN_CONFIG } = require('./subscription.model');
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * GET /api/billing/subscription
@@ -12,7 +13,8 @@ const { BILLING_INTERVAL, PLAN_CONFIG } = require('./subscription.model');
  */
 const getSubscription = async (req, res, next) => {
   try {
-    const subscription = await billingService.getSubscription(req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const subscription = await billingService.getSubscription(tenantUUID);
     
     res.status(200).json({
       success: true,
@@ -62,8 +64,9 @@ const createCheckoutSession = async (req, res, next) => {
       });
     }
     
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const session = await billingService.createCheckoutSession(
-      req.tenantId,
+      tenantUUID,
       billingInterval,
       successUrl,
       cancelUrl
@@ -94,8 +97,9 @@ const createPortalSession = async (req, res, next) => {
       });
     }
     
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const session = await billingService.createPortalSession(
-      req.tenantId,
+      tenantUUID,
       returnUrl
     );
     
@@ -116,8 +120,9 @@ const cancelSubscription = async (req, res, next) => {
   try {
     const { immediate } = req.body;
     
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const subscription = await billingService.cancelSubscription(
-      req.tenantId,
+      tenantUUID,
       immediate === true
     );
     

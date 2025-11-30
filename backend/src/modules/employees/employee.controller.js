@@ -3,6 +3,7 @@
  * Handles HTTP requests for employee endpoints
  */
 const employeeService = require('./employee.service');
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * Validation patterns
@@ -18,8 +19,9 @@ const VALIDATION = {
 const getEmployees = async (req, res, next) => {
   try {
     const { status, employeeType, limit, offset } = req.query;
+    const tenantUUID = await getTenantUUID(req.tenantId);
     
-    const result = await employeeService.getEmployees(req.tenantId, {
+    const result = await employeeService.getEmployees(tenantUUID, {
       status,
       employeeType,
       limit,
@@ -41,7 +43,8 @@ const getEmployees = async (req, res, next) => {
  */
 const getEmployee = async (req, res, next) => {
   try {
-    const employee = await employeeService.getEmployeeById(req.params.id, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const employee = await employeeService.getEmployeeById(req.params.id, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -78,6 +81,7 @@ const createEmployee = async (req, res, next) => {
       });
     }
 
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const employee = await employeeService.createEmployee({
       firstName,
       lastName,
@@ -87,7 +91,7 @@ const createEmployee = async (req, res, next) => {
       hireDate,
       schedule,
       serviceIds,
-    }, req.tenantId);
+    }, tenantUUID);
 
     res.status(201).json({
       success: true,
@@ -115,7 +119,8 @@ const updateEmployee = async (req, res, next) => {
       });
     }
 
-    const employee = await employeeService.updateEmployee(req.params.id, req.tenantId, {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const employee = await employeeService.updateEmployee(req.params.id, tenantUUID, {
       firstName,
       lastName,
       email,
@@ -142,7 +147,8 @@ const updateEmployee = async (req, res, next) => {
  */
 const deleteEmployee = async (req, res, next) => {
   try {
-    const result = await employeeService.deleteEmployee(req.params.id, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await employeeService.deleteEmployee(req.params.id, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -159,7 +165,8 @@ const deleteEmployee = async (req, res, next) => {
  */
 const getEmployeeSchedule = async (req, res, next) => {
   try {
-    const schedule = await employeeService.getEmployeeSchedule(req.params.id, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const schedule = await employeeService.getEmployeeSchedule(req.params.id, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -186,7 +193,8 @@ const updateEmployeeSchedule = async (req, res, next) => {
       });
     }
 
-    const result = await employeeService.updateEmployeeSchedule(req.params.id, req.tenantId, schedule);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await employeeService.updateEmployeeSchedule(req.params.id, tenantUUID, schedule);
 
     res.status(200).json({
       success: true,

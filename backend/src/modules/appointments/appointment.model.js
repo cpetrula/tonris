@@ -35,9 +35,13 @@ const Appointment = sequelize.define('Appointment', {
     primaryKey: true,
   },
   tenantId: {
-    type: DataTypes.STRING(64),
+    type: DataTypes.UUID,
     allowNull: false,
     field: 'tenant_id',
+    references: {
+      model: 'tenants',
+      key: 'id',
+    },
   },
   employeeId: {
     type: DataTypes.UUID,

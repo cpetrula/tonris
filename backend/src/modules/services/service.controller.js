@@ -3,21 +3,7 @@
  * Handles HTTP requests for service endpoints
  */
 const serviceService = require('./service.service');
-const { Tenant } = require('../tenants/tenant.model');
-const { AppError } = require('../../middleware/errorHandler');
-
-/**
- * Helper function to get tenant UUID from string tenant ID
- * @param {string} tenantIdString - String tenant identifier from header
- * @returns {Promise<string>} - Tenant UUID
- */
-const getTenantUUID = async (tenantIdString) => {
-  const tenant = await Tenant.findOne({ where: { tenantId: tenantIdString } });
-  if (!tenant) {
-    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
-  }
-  return tenant.id;
-};
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * GET /api/services

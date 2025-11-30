@@ -50,7 +50,7 @@ INSERT INTO tenants (
     updatedAt
 ) VALUES (
     @tenant_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Hair Done Right Salon',
     'hair-done-right-salon',
     'active',
@@ -117,7 +117,7 @@ INSERT INTO users (
     @user_uuid,
     'admin@hairdonerightson.com',
     '$2b$10$cuxtDMGAPnYN595um0PtauSaGMXy9SQIHIhMqAHrUYcwjAGEiPZXi',
-    @tenant_id,
+    @tenant_uuid,
     NULL,
     0,
     1,
@@ -147,7 +147,7 @@ INSERT INTO employees (
 -- Employee 1: Senior Stylist
 (
     @employee1_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Sarah',
     'Johnson',
     'sarah.johnson@hairdonerightson.com',
@@ -172,7 +172,7 @@ INSERT INTO employees (
 -- Employee 2: Stylist
 (
     @employee2_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Michael',
     'Chen',
     'michael.chen@hairdonerightson.com',
@@ -197,7 +197,7 @@ INSERT INTO employees (
 -- Employee 3: Junior Stylist
 (
     @employee3_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Emily',
     'Rodriguez',
     'emily.rodriguez@hairdonerightson.com',
@@ -222,7 +222,7 @@ INSERT INTO employees (
 -- Employee 4: Nail Technician (Contractor)
 (
     @employee4_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Jessica',
     'Williams',
     'jessica.williams@hairdonerightson.com',
@@ -463,7 +463,7 @@ INSERT INTO subscriptions (
     updatedAt
 ) VALUES (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     'cus_demo_hair_done_right',
     'sub_demo_hair_done_right',
     'price_monthly_professional',
@@ -508,7 +508,7 @@ INSERT INTO appointments (
 -- Upcoming appointment 1: Tomorrow
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee1_uuid,
     @service_haircut_uuid,
     'Jennifer Martinez',
@@ -531,7 +531,7 @@ INSERT INTO appointments (
 -- Upcoming appointment 2: Tomorrow afternoon
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee1_uuid,
     @service_coloring_uuid,
     'Amanda Thompson',
@@ -554,7 +554,7 @@ INSERT INTO appointments (
 -- Upcoming appointment 3: Day after tomorrow
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee2_uuid,
     @service_haircut_uuid,
     'David Wilson',
@@ -577,7 +577,7 @@ INSERT INTO appointments (
 -- Upcoming appointment 4: Three days out
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee4_uuid,
     @service_manicure_uuid,
     'Lisa Chang',
@@ -600,7 +600,7 @@ INSERT INTO appointments (
 -- Upcoming appointment 5: This week
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee3_uuid,
     @service_blowout_uuid,
     'Rachel Green',
@@ -623,7 +623,7 @@ INSERT INTO appointments (
 -- Upcoming appointment 6: Special occasion
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee1_uuid,
     @service_styling_uuid,
     'Michelle Davis',
@@ -646,7 +646,7 @@ INSERT INTO appointments (
 -- Past appointment 1: Completed yesterday
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee2_uuid,
     @service_haircut_uuid,
     'Robert Brown',
@@ -669,7 +669,7 @@ INSERT INTO appointments (
 -- Past appointment 2: Completed last week
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee1_uuid,
     @service_highlights_uuid,
     'Sophia Anderson',
@@ -692,7 +692,7 @@ INSERT INTO appointments (
 -- Past appointment 3: Cancelled
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee3_uuid,
     @service_blowout_uuid,
     'Emma White',
@@ -715,7 +715,7 @@ INSERT INTO appointments (
 -- Past appointment 4: No show
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     @employee4_uuid,
     @service_pedicure_uuid,
     'Olivia Taylor',
@@ -759,7 +759,7 @@ INSERT INTO call_logs (
 -- Inbound call 1: Appointment booking
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     CONCAT('CA', REPLACE(UUID(), '-', '')),
     'inbound',
     'completed',
@@ -777,7 +777,7 @@ INSERT INTO call_logs (
 -- Inbound call 2: Service inquiry
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     CONCAT('CA', REPLACE(UUID(), '-', '')),
     'inbound',
     'completed',
@@ -795,7 +795,7 @@ INSERT INTO call_logs (
 -- Outbound call 1: Appointment reminder
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     CONCAT('CA', REPLACE(UUID(), '-', '')),
     'outbound',
     'completed',
@@ -813,7 +813,7 @@ INSERT INTO call_logs (
 -- Inbound call 3: Cancellation
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     CONCAT('CA', REPLACE(UUID(), '-', '')),
     'inbound',
     'completed',
@@ -831,7 +831,7 @@ INSERT INTO call_logs (
 -- Inbound call 4: Business hours inquiry
 (
     UUID(),
-    @tenant_id,
+    @tenant_uuid,
     CONCAT('CA', REPLACE(UUID(), '-', '')),
     'inbound',
     'completed',
@@ -854,7 +854,7 @@ SELECT 'Hair Done Right Salon demo data seeded successfully!' AS Status;
 SELECT 'Tenant ID:' AS Info, @tenant_id AS Value;
 SELECT 'Tenant UUID:' AS Info, @tenant_uuid AS Value;
 SELECT 'Admin Email:' AS Info, 'admin@hairdonerightson.com' AS Value;
-SELECT 'Total Employees:' AS Info, (SELECT COUNT(*) FROM employees WHERE tenant_id = @tenant_id) AS Value;
+SELECT 'Total Employees:' AS Info, (SELECT COUNT(*) FROM employees WHERE tenant_id = @tenant_uuid) AS Value;
 SELECT 'Total Services:' AS Info, (SELECT COUNT(*) FROM services WHERE tenant_id = @tenant_uuid) AS Value;
-SELECT 'Total Appointments:' AS Info, (SELECT COUNT(*) FROM appointments WHERE tenant_id = @tenant_id) AS Value;
-SELECT 'Total Call Logs:' AS Info, (SELECT COUNT(*) FROM call_logs WHERE tenant_id = @tenant_id) AS Value;
+SELECT 'Total Appointments:' AS Info, (SELECT COUNT(*) FROM appointments WHERE tenant_id = @tenant_uuid) AS Value;
+SELECT 'Total Call Logs:' AS Info, (SELECT COUNT(*) FROM call_logs WHERE tenant_id = @tenant_uuid) AS Value;

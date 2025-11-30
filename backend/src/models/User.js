@@ -25,9 +25,13 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   tenantId: {
-    type: DataTypes.STRING(64),
+    type: DataTypes.UUID,
     allowNull: false,
     field: 'tenant_id',
+    references: {
+      model: 'tenants',
+      key: 'id',
+    },
   },
   twoFactorSecret: {
     type: DataTypes.STRING(255),

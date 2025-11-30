@@ -7,6 +7,7 @@ This directory contains SQL scripts for setting up the TONRIS database and seedi
 - **create_tables.sql** - Creates all database tables for the TONRIS platform
 - **seed_data.sql** - Seeds demo data for "Hair Done Right Salon"
 - **migrate_services_tenant_id_to_uuid.sql** - Migration script to update services.tenant_id from string to UUID (foreign key to tenants.id)
+- **migrate_all_tenant_id_to_uuid.sql** - Migration script to update tenant_id in all tables (users, employees, appointments, subscriptions, call_logs) from string to UUID (foreign key to tenants.id)
 - **add_twilio_phone_number_column.sql** - Migration to add twilio_phone_number column to tenants table
 
 ## Usage
@@ -36,6 +37,29 @@ mysql -u root -p < seed_data.sql
 ### 3. Migrations
 
 If you have an existing database and need to update the schema, run the migration scripts:
+
+#### Update ALL tables tenant_id to UUID (references tenants.id)
+
+This migration updates ALL tables (users, employees, appointments, subscriptions, call_logs) to use the tenant's UUID (id) instead of the string tenant_id:
+
+```bash
+mysql -u root -p tonris_db < migrate_all_tenant_id_to_uuid.sql
+```
+
+**Tables updated:**
+- users
+- employees
+- appointments
+- subscriptions
+- call_logs
+
+**What this migration does for each table:**
+1. Drops existing indexes on tenant_id
+2. Creates a temporary column for the new UUID values
+3. Maps existing string tenant_ids to tenant UUIDs via JOIN with tenants table
+4. Displays verification status showing if any records couldn't be mapped
+5. Drops the old column and renames the new one
+6. Recreates indexes and adds foreign key constraint
 
 #### Update services.tenant_id to UUID (references tenants.id)
 
