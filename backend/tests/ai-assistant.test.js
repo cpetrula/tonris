@@ -664,6 +664,65 @@ describe('AI Assistant Module', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
+
+    it('should handle ElevenLabs standard payload format with type field', async () => {
+      const response = await request(app)
+        .post('/api/ai/webhook/elevenlabs')
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({
+          type: 'post_call_transcription',
+          event_timestamp: 1739537297,
+          data: {
+            agent_id: 'xyz',
+            conversation_id: 'abc',
+            status: 'done',
+            transcript: [],
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should handle ElevenLabs standard payload with nested agent_id', async () => {
+      const response = await request(app)
+        .post('/api/ai/webhook/elevenlabs')
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({
+          type: 'conversation_started',
+          conversation_id: 'conv-123',
+          data: {
+            agent_id: 'agent-456',
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should handle empty payload without crashing', async () => {
+      const response = await request(app)
+        .post('/api/ai/webhook/elevenlabs')
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should handle payload with no event type gracefully', async () => {
+      const response = await request(app)
+        .post('/api/ai/webhook/elevenlabs')
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({
+          data: {
+            agent_id: 'agent-123',
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
   });
 });
 
