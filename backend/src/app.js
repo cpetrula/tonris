@@ -91,6 +91,14 @@ app.post('/api/webhooks/elevenlabs/conversation-initiation',
   aiController.handleConversationInitiationWebhook
 );
 
+// ElevenLabs Client Data webhook for services
+// Called by ElevenLabs to fetch services for a tenant
+// This endpoint does not require Bearer token authentication
+app.get('/api/webhooks/elevenlabs/services',
+  webhookRateLimiter,
+  aiController.handleElevenLabsServicesWebhook
+);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

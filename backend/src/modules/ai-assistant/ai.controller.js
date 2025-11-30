@@ -720,6 +720,82 @@ const handleConversationInitiationWebhook = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/webhooks/elevenlabs/services
+ * Handle ElevenLabs Client Data webhook to fetch services for a tenant
+ * 
+ * This endpoint is called by ElevenLabs when it needs to retrieve services
+ * for a tenant. It does not require Bearer token authentication since
+ * ElevenLabs webhooks don't send authentication headers.
+ * 
+ * Query Parameters:
+ * - tenantId: The tenant identifier (required)
+ * 
+ * Headers (required in production when webhook secret is configured):
+ * - X-ElevenLabs-Signature: HMAC-SHA256 signature of the request
+ */
+const handleElevenLabsServicesWebhook = async (req, res, next) => {
+  try {
+    // Verify webhook signature in production
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+    
+    if (env.isProduction() && webhookSecret) {
+      // For GET requests, we need to verify using query string
+      const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
+      
+      // Signature is required when webhook secret is configured in production
+      if (!signature || !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Services webhook: Invalid or missing signature');
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    }
+    
+    // Get tenant ID from query parameter only (explicit requirement)
+    const tenantId = req.query.tenantId;
+    
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+    
+    // Validate tenant ID format
+    if (!isValidUUID(tenantId)) {
+      throw new AppError('Invalid tenant ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    logger.info(`ElevenLabs Services webhook: Fetching services for tenant ${tenantId}`);
+    
+    // Fetch services for the tenant
+    const result = await serviceService.getServices(tenantId, {
+      status: 'active',
+      limit: 100,
+    });
+    
+    // Return services in the format expected by ElevenLabs
+    // Use toSafeObject() if available for consistency
+    res.status(200).json({
+      success: true,
+      data: {
+        services: result.services.map(service => 
+          service.toSafeObject ? service.toSafeObject() : {
+            id: service.id,
+            name: service.name,
+            description: service.description,
+            price: service.price,
+            duration: service.duration,
+            category: service.category,
+          }
+        ),
+        total: result.total,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Services webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -729,5 +805,6 @@ module.exports = {
   handleElevenLabsWebhook,
   handleTwilioElevenLabsWebhook,
   handleConversationInitiationWebhook,
+  handleElevenLabsServicesWebhook,
   getAIConfig,
 };
