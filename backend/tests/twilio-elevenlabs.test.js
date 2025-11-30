@@ -187,7 +187,8 @@ describe('Twilio-ElevenLabs Integration', () => {
       tenantId: 'test-tenant',
       name: 'Test Salon',
       status: 'active',
-      metadata: { twilioPhoneNumber: '+15551234567' },
+      twilioPhoneNumber: '+15551234567',
+      metadata: {},
       settings: {
         elevenLabsAgentId: 'agent-123',
         businessHours: {
@@ -202,8 +203,40 @@ describe('Twilio-ElevenLabs Integration', () => {
       },
     };
 
-    it('should return TwiML to connect to ElevenLabs when tenant is found', async () => {
-      mockTenantModel.findAll.mockResolvedValue([mockTenant]);
+    it('should return TwiML to connect to ElevenLabs when tenant is found by twilioPhoneNumber', async () => {
+      mockTenantModel.findOne.mockResolvedValue(mockTenant);
+      mockElevenLabsService.isAvailable.mockResolvedValue(true);
+      mockElevenLabsService.getTwilioSignedUrl.mockResolvedValue({
+        signedUrl: 'wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent-123',
+        agentId: 'agent-123',
+      });
+
+      const response = await request(app)
+        .post('/api/webhooks/twilio/elevenlabs')
+        .type('form')
+        .send({
+          CallSid: 'CA123456789',
+          From: '+15559876543',
+          To: '+15551234567',
+          CallStatus: 'ringing',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.type).toBe('text/xml');
+      expect(response.text).toContain('<?xml');
+      expect(response.text).toContain('Response');
+      expect(response.text).toContain('Connect');
+      expect(response.text).toContain('Stream');
+    });
+
+    it('should return TwiML to connect to ElevenLabs when tenant is found via metadata fallback', async () => {
+      const mockTenantWithMetadata = {
+        ...mockTenant,
+        twilioPhoneNumber: null,
+        metadata: { twilioPhoneNumber: '+15551234567' },
+      };
+      mockTenantModel.findOne.mockResolvedValue(null);
+      mockTenantModel.findAll.mockResolvedValue([mockTenantWithMetadata]);
       mockElevenLabsService.isAvailable.mockResolvedValue(true);
       mockElevenLabsService.getTwilioSignedUrl.mockResolvedValue({
         signedUrl: 'wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent-123',
@@ -229,6 +262,7 @@ describe('Twilio-ElevenLabs Integration', () => {
     });
 
     it('should return error TwiML when no tenant found', async () => {
+      mockTenantModel.findOne.mockResolvedValue(null);
       mockTenantModel.findAll.mockResolvedValue([]);
 
       const response = await request(app)
@@ -248,7 +282,7 @@ describe('Twilio-ElevenLabs Integration', () => {
     });
 
     it('should return error TwiML when ElevenLabs is not configured', async () => {
-      mockTenantModel.findAll.mockResolvedValue([mockTenant]);
+      mockTenantModel.findOne.mockResolvedValue(mockTenant);
       mockElevenLabsService.isAvailable.mockResolvedValue(false);
 
       const response = await request(app)
@@ -267,6 +301,7 @@ describe('Twilio-ElevenLabs Integration', () => {
     });
 
     it('should handle missing CallSid gracefully', async () => {
+      mockTenantModel.findOne.mockResolvedValue(null);
       mockTenantModel.findAll.mockResolvedValue([]);
 
       const response = await request(app)

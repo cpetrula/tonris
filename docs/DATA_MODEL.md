@@ -101,6 +101,7 @@ Stores tenant/organization configuration.
 | `metadata` | JSON | NULL | Additional metadata |
 | `trial_ends_at` | DATETIME | NULL | Trial expiration |
 | `onboarding_completed_at` | DATETIME | NULL | Onboarding completion |
+| `twilio_phone_number` | VARCHAR(50) | NULL, UNIQUE | Twilio phone number for identifying tenant via webhooks |
 | `createdAt` | DATETIME | NOT NULL | Created timestamp |
 | `updatedAt` | DATETIME | NOT NULL | Updated timestamp |
 

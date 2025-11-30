@@ -448,6 +448,44 @@ describe('Tenant Module', () => {
         expect(response.body.success).toBe(true);
         expect(mockTenantInstance.update).toHaveBeenCalled();
       });
+
+      it('should update tenant with twilioPhoneNumber successfully', async () => {
+        const mockTenantInstance = {
+          tenantId: 'test-tenant',
+          name: 'Test Salon',
+          contactEmail: 'test@example.com',
+          twilioPhoneNumber: null,
+          update: jest.fn().mockResolvedValue(true),
+          toSafeObject: () => ({
+            tenantId: 'test-tenant',
+            name: 'Test Salon',
+            contactEmail: 'test@example.com',
+            twilioPhoneNumber: '+15551234567',
+          }),
+        };
+        mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+        const response = await request(app)
+          .patch('/api/tenant')
+          .set('Authorization', `Bearer ${validToken()}`)
+          .set('X-Tenant-ID', 'test-tenant')
+          .send({ twilioPhoneNumber: '+15551234567' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(mockTenantInstance.update).toHaveBeenCalled();
+      });
+
+      it('should return 400 for invalid twilioPhoneNumber format', async () => {
+        const response = await request(app)
+          .patch('/api/tenant')
+          .set('Authorization', `Bearer ${validToken()}`)
+          .set('X-Tenant-ID', 'test-tenant')
+          .send({ twilioPhoneNumber: 'invalid!phone@number' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toContain('Twilio phone number');
+      });
     });
   });
 

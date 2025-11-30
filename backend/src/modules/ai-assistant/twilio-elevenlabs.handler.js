@@ -49,6 +49,19 @@ const findTenantByPhoneNumber = async (phoneNumber) => {
   try {
     const normalizedNumber = phoneNumber.replace(/[^0-9+]/g, '');
     
+    // First, try to find tenant by the dedicated twilio_phone_number column
+    const tenantByTwilioNumber = await Tenant.findOne({
+      where: { 
+        status: 'active',
+        twilioPhoneNumber: normalizedNumber,
+      },
+    });
+    
+    if (tenantByTwilioNumber) {
+      return tenantByTwilioNumber;
+    }
+    
+    // Fallback: search in metadata/settings for backward compatibility
     const tenants = await Tenant.findAll({
       where: { status: 'active' },
     });
