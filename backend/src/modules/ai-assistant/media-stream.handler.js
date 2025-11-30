@@ -82,11 +82,16 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         
         // Send initialization message to ElevenLabs to start the conversation
         // This is required by ElevenLabs Conversational AI WebSocket protocol
+        // IMPORTANT: output_format must be set to 'ulaw_8000' for Twilio compatibility
+        // Without this, ElevenLabs outputs audio in an incompatible format causing immediate disconnects
         const initMessage = {
           type: 'conversation_initiation_client_data',
           conversation_config_override: {
             agent: {
               language: 'en',
+            },
+            tts: {
+              output_format: 'ulaw_8000',
             },
           },
           dynamic_variables: dynamicVariables,
