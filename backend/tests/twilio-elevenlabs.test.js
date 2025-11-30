@@ -324,7 +324,51 @@ describe('Twilio-ElevenLabs Handler Functions', () => {
     formatAvailabilityResponse,
     formatServicesResponse,
     formatBusinessHoursResponse,
+    buildMediaStreamUrl,
   } = require('../src/modules/ai-assistant/twilio-elevenlabs.handler');
+
+  describe('buildMediaStreamUrl', () => {
+    it('should build WebSocket URL with wss protocol for HTTPS base URL', () => {
+      const url = buildMediaStreamUrl(
+        'https://example.com',
+        'agent-123',
+        'tenant-456',
+        'CA789'
+      );
+      
+      expect(url).toContain('wss://');
+      expect(url).toContain('/media-stream');
+      expect(url).toContain('agent_id=agent-123');
+      expect(url).toContain('tenant_id=tenant-456');
+      expect(url).toContain('call_sid=CA789');
+    });
+
+    it('should build WebSocket URL with ws protocol for HTTP base URL', () => {
+      const url = buildMediaStreamUrl(
+        'http://localhost:3000',
+        'agent-123',
+        'tenant-456',
+        'CA789'
+      );
+      
+      expect(url).toContain('ws://');
+      expect(url).not.toContain('wss://');
+      expect(url).toContain('localhost:3000/media-stream');
+    });
+
+    it('should URL encode special characters in parameters', () => {
+      const url = buildMediaStreamUrl(
+        'https://example.com',
+        'agent with spaces',
+        'tenant&special=chars',
+        'CA+789'
+      );
+      
+      expect(url).toContain('agent%20with%20spaces');
+      expect(url).toContain('tenant%26special%3Dchars');
+      expect(url).toContain('CA%2B789');
+    });
+  });
 
   describe('formatAvailabilityResponse', () => {
     it('should format availability with slots', () => {

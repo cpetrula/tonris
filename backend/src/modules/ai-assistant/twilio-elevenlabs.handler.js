@@ -86,6 +86,20 @@ const findTenantByPhoneNumber = async (phoneNumber) => {
 };
 
 /**
+ * Build the WebSocket URL for the media stream handler
+ * @param {string} baseUrl - Base HTTP/HTTPS URL of the application
+ * @param {string} agentId - ElevenLabs agent ID
+ * @param {string} tenantId - Tenant identifier
+ * @param {string} callSid - Twilio call SID
+ * @returns {string} - WebSocket URL for media stream
+ */
+const buildMediaStreamUrl = (baseUrl, agentId, tenantId, callSid) => {
+  const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
+  const httpHost = baseUrl.replace(/^https?:\/\//, '');
+  return `${wsProtocol}://${httpHost}/media-stream?agent_id=${encodeURIComponent(agentId)}&tenant_id=${encodeURIComponent(tenantId)}&call_sid=${encodeURIComponent(callSid)}`;
+};
+
+/**
  * Generate TwiML to connect Twilio call to ElevenLabs Conversational AI
  * Uses the application's WebSocket server as a bridge between Twilio and ElevenLabs
  * @param {Object} params - Connection parameters
@@ -179,9 +193,7 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     // Build the WebSocket URL for the application's media stream handler
     // The media stream handler will bridge between Twilio and ElevenLabs
     const baseUrl = hostUrl || env.APP_BASE_URL;
-    const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
-    const httpHost = baseUrl.replace(/^https?:\/\//, '');
-    const mediaStreamUrl = `${wsProtocol}://${httpHost}/media-stream?agent_id=${encodeURIComponent(agentId)}&tenant_id=${encodeURIComponent(tenant.tenantId)}&call_sid=${encodeURIComponent(CallSid)}`;
+    const mediaStreamUrl = buildMediaStreamUrl(baseUrl, agentId, tenant.tenantId, CallSid);
     
     // Prepare custom parameters for context
     const customParameters = {
@@ -488,6 +500,7 @@ module.exports = {
   generateElevenLabsConnectTwiml,
   generateErrorTwiml,
   findTenantByPhoneNumber,
+  buildMediaStreamUrl,
   formatAvailabilityResponse,
   formatServicesResponse,
   formatBusinessHoursResponse,

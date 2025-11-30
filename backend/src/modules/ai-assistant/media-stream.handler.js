@@ -9,7 +9,8 @@ const { getElevenLabsService } = require('./elevenlabs.service');
 
 /**
  * Active stream connections map
- * Key: Twilio streamSid, Value: { twilioWs, elevenLabsWs, callSid, tenantId }
+ * Key: Twilio streamSid, Value: { twilioWs, callSid, tenantId, startTime }
+ * Note: elevenLabsWs is not stored here as it's managed within the connection scope
  */
 const activeStreams = new Map();
 
@@ -105,7 +106,8 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
 
       case 'audio':
         // Forward audio from ElevenLabs to Twilio
-        if (message.audio_event?.audio_base_64 && twilioWs.readyState === WebSocket.OPEN) {
+        // Only send if streamSid is defined (start event has been processed)
+        if (streamSid && message.audio_event?.audio_base_64 && twilioWs.readyState === WebSocket.OPEN) {
           const audioData = {
             event: 'media',
             streamSid,
@@ -119,7 +121,8 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
 
       case 'interruption':
         // Clear Twilio's audio buffer on interruption
-        if (twilioWs.readyState === WebSocket.OPEN) {
+        // Only send if streamSid is defined
+        if (streamSid && twilioWs.readyState === WebSocket.OPEN) {
           twilioWs.send(JSON.stringify({ event: 'clear', streamSid }));
         }
         break;
