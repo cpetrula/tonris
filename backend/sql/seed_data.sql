@@ -50,7 +50,7 @@ INSERT INTO tenants (
     updatedAt
 ) VALUES (
     @tenant_uuid,
-    @tenant_uuid,
+    @tenant_id,
     'Hair Done Right Salon',
     'hair-done-right-salon',
     'active',
