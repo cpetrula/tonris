@@ -163,7 +163,10 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
       case 'conversation_initiation_metadata':
         // This confirms the conversation has been initialized successfully
         // If we receive this, the audio format configuration was accepted
-        logger.info(`[MediaStream] Conversation initiated for call ${callSid}, conversation_id: ${message.conversation_initiation_metadata_event?.conversation_id || 'unknown'}`);
+        {
+          const conversationId = message.conversation_initiation_metadata_event?.conversation_id || 'unknown';
+          logger.info(`[MediaStream] Conversation initiated for call ${callSid}, conversation_id: ${conversationId}`);
+        }
         break;
 
       case 'audio':

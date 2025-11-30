@@ -261,9 +261,11 @@ class ElevenLabsService extends AIProviderInterface {
       // This ensures ElevenLabs uses μ-law encoding at 8kHz which is required for Twilio
       // Some ElevenLabs agent configurations may not respect the conversation_config_override
       // so we also add the format parameters to the URL as a fallback
-      let signedUrl = response.signedUrl;
-      const separator = signedUrl.includes('?') ? '&' : '?';
-      signedUrl = `${signedUrl}${separator}output_format=ulaw_8000&input_format=ulaw_8000`;
+      // Use URL class for safer parameter handling
+      const url = new URL(response.signedUrl);
+      url.searchParams.set('output_format', 'ulaw_8000');
+      url.searchParams.set('input_format', 'ulaw_8000');
+      const signedUrl = url.toString();
       
       return {
         signedUrl,
