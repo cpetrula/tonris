@@ -9,6 +9,7 @@ const serviceService = require('./service.service');
  * Get all services for tenant
  */
 const getServices = async (req, res, next) => {
+  console.log('Fetching services for tenant:', req);
   try {
     const { status, category, limit, offset } = req.query;
     

@@ -67,6 +67,21 @@ const getTenantById = async (tenantId) => {
   return tenant.toSafeObject();
 };
 
+/** 
+ * Get tenant by twilio_phone_number
+ * @param {string} phoneNumber - Twilio phone number
+ * @returns {Promise<Object>} - Tenant data
+ **/
+const getTenantByPhoneNumber = async (phoneNumber) => {
+  const tenant = await Tenant.findOne({ where: { twilioPhoneNumber: phoneNumber } });
+  
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  return tenant.toSafeObject();
+}
+
 /**
  * Get tenant settings
  * @param {string} tenantId - Tenant identifier
@@ -252,6 +267,7 @@ const updateTenant = async (tenantId, updateData) => {
 module.exports = {
   createTenant,
   getTenantById,
+  getTenantByPhoneNumber,
   getTenantSettings,
   updateTenantSettings,
   updateTenantStatus,

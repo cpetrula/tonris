@@ -457,7 +457,31 @@ const processConversation = async (req, res, next) => {
  * POST /api/ai/webhook/elevenlabs
  * Handle ElevenLabs Agent webhooks
  */
+
 const handleElevenLabsWebhook = async (req, res, next) => {
+  console.log('ElevenLabs webhook payload:', req.body);
+  try {
+    // get "name" from "tenant" table where "twilio_phone_number" = req.body.called_number
+    const {called_number} = req.body;
+    const tenant = await tenantService.getTenantByPhoneNumber(called_number);
+    console.log('ElevenLabs webhook tenant:', tenant);
+    if (tenant) {
+      return res.status(200).json({ 
+        "dynamic_variables": {
+          "tenant_id": tenant.id,
+          "business_name": tenant.name,
+        }
+      });// Handle different webhook events
+    }
+    else return res.status(400).json({ success: false, message: 'Tenant not found for called number' });  
+  } catch (error) {
+    logger.error(`ElevenLabs webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
+const handleElevenLabsWebhook2 = async (req, res, next) => {
+  console.log('ElevenLabs webhook payload:', req);
   try {
     // ElevenLabs webhooks use 'type' for event type and nest agent_id inside 'data'
     // Support both 'type' (ElevenLabs standard) and 'event' (legacy/custom) for flexibility

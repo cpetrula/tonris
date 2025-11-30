@@ -148,6 +148,10 @@ app.use(notFoundHandler);
 // Global error handler
 app.use(errorHandler);
 
+// Enable trust proxy
+app.set('trust proxy', 1); // Trust the first proxy (e.g., Nginx, AWS ELB)
+
+
 // Start server (only if not in test mode)
 const startServer = () => {
   // Create HTTP server from Express app
