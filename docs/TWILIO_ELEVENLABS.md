@@ -59,6 +59,7 @@ APP_BASE_URL=https://your-domain.com
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
 ELEVENLABS_AGENT_ID=your_agent_id
 ELEVENLABS_VOICE_ID=your_voice_id  # Optional
+ELEVENLABS_WEBHOOK_SECRET=your_webhook_secret  # Required for production webhook verification
 ```
 
 ### 2. ElevenLabs Agent Setup
@@ -244,6 +245,68 @@ Handles callbacks from ElevenLabs agent, including tool calls.
   }
 }
 ```
+
+#### POST `/api/webhooks/elevenlabs/conversation-initiation`
+
+**Conversation Initiation Client Data Webhook** - Called by ElevenLabs when a new Twilio phone call or SIP trunk call conversation begins. This webhook allows the server to dynamically provide conversation configuration and variables based on the incoming call data.
+
+**Use Case**: Configure this webhook URL in your ElevenLabs agent settings to enable dynamic conversation configuration for each call.
+
+**Headers**:
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-ElevenLabs-Signature` | Yes (production) | HMAC-SHA256 signature of request body |
+| `Content-Type` | Yes | `application/json` |
+
+**Request** (from ElevenLabs):
+```json
+{
+  "type": "conversation_initiation_client_data",
+  "conversation_id": "unique-conversation-id",
+  "agent_id": "elevenlabs-agent-id",
+  "dynamic_variables": {
+    "tenant_id": "tenant-identifier",
+    "caller_number": "+15551234567",
+    "call_sid": "CA12345...",
+    "business_name": "My Business"
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "dynamic_variables": {
+    "tenant_id": "tenant-identifier",
+    "tenant_name": "My Business",
+    "business_name": "My Business",
+    "caller_number": "+15551234567",
+    "call_sid": "CA12345...",
+    "conversation_id": "unique-conversation-id",
+    "business_hours_summary": "We're open Monday through Friday from 09:00 to 17:00."
+  },
+  "conversation_config_override": {
+    "agent": {
+      "agent_output_audio_format": "ulaw_8000",
+      "user_input_audio_format": "ulaw_8000",
+      "language": "en",
+      "first_message": "Hello! Welcome to My Business."
+    },
+    "tts": {
+      "output_format": "ulaw_8000"
+    }
+  }
+}
+```
+
+**Configuration in ElevenLabs Dashboard**:
+1. Navigate to your ElevenLabs agent settings
+2. Under "Webhooks" or "Conversation Initiation", add the webhook URL:
+   - URL: `https://your-domain.com/api/webhooks/elevenlabs/conversation-initiation`
+3. Set the webhook secret (recommended for production):
+   - Generate a secure random string
+   - Add it to your `.env` as `ELEVENLABS_WEBHOOK_SECRET`
+   - Configure the same secret in ElevenLabs dashboard
 
 ## Supported Tool Calls
 

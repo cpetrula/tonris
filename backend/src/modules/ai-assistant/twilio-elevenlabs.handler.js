@@ -497,9 +497,140 @@ const formatBusinessHoursResponse = (hours) => {
   return 'Our hours vary by day. Would you like me to tell you about a specific day?';
 };
 
+/**
+ * Handle ElevenLabs Conversation Initiation Client Data webhook
+ * This webhook is called by ElevenLabs when a new Twilio phone call or SIP trunk call
+ * conversation begins. It allows us to dynamically provide conversation configuration
+ * and variables based on the call data.
+ * 
+ * ElevenLabs sends this request to retrieve dynamic configuration for each conversation.
+ * @see https://elevenlabs.io/docs/conversational-ai/customization/conversation-init-client-data
+ * 
+ * @param {Object} params - Webhook request body from ElevenLabs
+ * @param {string} params.type - Always 'conversation_initiation_client_data'
+ * @param {string} params.conversation_id - Unique identifier for the conversation
+ * @param {string} params.agent_id - The ElevenLabs agent ID handling the conversation
+ * @param {Object} params.dynamic_variables - Variables passed from the initial WebSocket connection
+ * @returns {Promise<Object>} - Conversation configuration response
+ */
+const handleConversationInitiation = async (params) => {
+  const {
+    conversation_id: conversationId,
+    agent_id: agentId,
+    dynamic_variables: dynamicVariables = {},
+  } = params;
+
+  // Extract tenant ID from dynamic variables (set during Twilio connection)
+  const tenantId = dynamicVariables.tenant_id;
+  const callerNumber = dynamicVariables.caller_number;
+  const callSid = dynamicVariables.call_sid;
+
+  logger.info(`ElevenLabs Conversation Initiation: conversation=${conversationId}, agent=${agentId}, tenant=${tenantId}`);
+
+  try {
+    // Get lazy-loaded services
+    const { tenantService } = getServices();
+    
+    // Fetch tenant data if tenant ID is available
+    let tenant = null;
+    let businessName = dynamicVariables.business_name || 'Our Business';
+    let businessHours = null;
+    let greeting = null;
+    let aiTone = null;
+
+    if (tenantId) {
+      try {
+        tenant = await tenantService.getTenantById(tenantId);
+        
+        if (tenant) {
+          businessName = tenant.name || businessName;
+          businessHours = tenant.settings?.businessHours || getDefaultBusinessHours();
+          greeting = tenant.settings?.aiGreeting;
+          aiTone = tenant.settings?.aiTone;
+        }
+      } catch (tenantError) {
+        // Tenant not found is ok - we'll use defaults
+        logger.warn(`ElevenLabs Conversation Initiation: Tenant not found (${tenantId}): ${tenantError.message}`);
+      }
+    }
+
+    // Build dynamic variables for the conversation
+    const responseVariables = {
+      tenant_id: tenantId || '',
+      tenant_name: businessName,
+      business_name: businessName,
+      caller_number: callerNumber || '',
+      call_sid: callSid || '',
+      conversation_id: conversationId,
+    };
+
+    // Add business hours as a formatted string for agent context
+    if (businessHours) {
+      responseVariables.business_hours_summary = formatBusinessHoursResponse(businessHours);
+    }
+
+    // Build the response with conversation configuration overrides
+    const response = {
+      // Dynamic variables that will be available to the agent during the conversation
+      dynamic_variables: responseVariables,
+      
+      // Conversation configuration overrides
+      conversation_config_override: {
+        agent: {
+          // Audio format must be ulaw_8000 for Twilio compatibility
+          agent_output_audio_format: 'ulaw_8000',
+          user_input_audio_format: 'ulaw_8000',
+          language: 'en',
+        },
+        tts: {
+          output_format: 'ulaw_8000',
+        },
+      },
+    };
+
+    // Add custom first message if greeting is configured
+    if (greeting) {
+      response.conversation_config_override.agent.first_message = greeting;
+    }
+
+    // Add custom prompt if tone is configured
+    // Note: The prompt is added as a direct property on the agent object
+    if (aiTone) {
+      response.conversation_config_override.agent.prompt = `You are a ${aiTone} AI receptionist for ${businessName}. Help callers with booking appointments, checking availability, and answering questions about services and business hours.`;
+    }
+
+    logger.info(`ElevenLabs Conversation Initiation response for tenant=${tenantId}: variables=${Object.keys(responseVariables).join(',')}`);
+
+    return {
+      success: true,
+      data: response,
+    };
+  } catch (error) {
+    logger.error(`ElevenLabs Conversation Initiation error: ${error.message}`);
+    
+    // Return a minimal response even on error to avoid breaking the conversation
+    return {
+      success: true,
+      data: {
+        dynamic_variables: {
+          tenant_id: tenantId || '',
+          business_name: dynamicVariables.business_name || 'Our Business',
+        },
+        conversation_config_override: {
+          agent: {
+            agent_output_audio_format: 'ulaw_8000',
+            user_input_audio_format: 'ulaw_8000',
+          },
+        },
+      },
+    };
+  }
+};
+
 module.exports = {
   handleTwilioToElevenLabs,
   handleElevenLabsToolCall,
+  handleConversationInitiation,
   generateElevenLabsConnectTwiml,
   generateErrorTwiml,
   findTenantByPhoneNumber,

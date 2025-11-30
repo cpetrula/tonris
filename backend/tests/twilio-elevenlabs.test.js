@@ -515,3 +515,192 @@ describe('ElevenLabs Service', () => {
     expect(config).toHaveProperty('isConfigured');
   });
 });
+
+describe('ElevenLabs Conversation Initiation Webhook', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /api/webhooks/elevenlabs/conversation-initiation', () => {
+    it('should return conversation configuration with dynamic variables', async () => {
+      const mockTenantData = {
+        tenantId: 'test-tenant',
+        name: 'Test Salon',
+        status: 'active',
+        settings: {
+          businessHours: {
+            monday: { open: '09:00', close: '17:00', enabled: true },
+            tuesday: { open: '09:00', close: '17:00', enabled: true },
+            wednesday: { open: '09:00', close: '17:00', enabled: true },
+            thursday: { open: '09:00', close: '17:00', enabled: true },
+            friday: { open: '09:00', close: '17:00', enabled: true },
+            saturday: { open: '10:00', close: '14:00', enabled: false },
+            sunday: { open: '10:00', close: '14:00', enabled: false },
+          },
+          timezone: 'America/New_York',
+          aiGreeting: 'Hello! Welcome to Test Salon.',
+          aiTone: 'friendly and professional',
+        },
+      };
+      
+      const mockTenant = {
+        ...mockTenantData,
+        toSafeObject: function() { return mockTenantData; },
+      };
+
+      mockTenantModel.findOne.mockResolvedValue(mockTenant);
+
+      const response = await request(app)
+        .post('/api/webhooks/elevenlabs/conversation-initiation')
+        .set('Content-Type', 'application/json')
+        .send({
+          type: 'conversation_initiation_client_data',
+          conversation_id: 'conv-123',
+          agent_id: 'agent-123',
+          dynamic_variables: {
+            tenant_id: 'test-tenant',
+            caller_number: '+15551234567',
+            call_sid: 'CA123',
+            business_name: 'Test Salon',
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('dynamic_variables');
+      expect(response.body).toHaveProperty('conversation_config_override');
+      expect(response.body.dynamic_variables.tenant_id).toBe('test-tenant');
+      expect(response.body.dynamic_variables.business_name).toBe('Test Salon');
+      expect(response.body.conversation_config_override.agent.agent_output_audio_format).toBe('ulaw_8000');
+      expect(response.body.conversation_config_override.agent.user_input_audio_format).toBe('ulaw_8000');
+    });
+
+    it('should return minimal configuration when tenant is not found', async () => {
+      mockTenantModel.findOne.mockResolvedValue(null);
+
+      const response = await request(app)
+        .post('/api/webhooks/elevenlabs/conversation-initiation')
+        .set('Content-Type', 'application/json')
+        .send({
+          type: 'conversation_initiation_client_data',
+          conversation_id: 'conv-123',
+          agent_id: 'agent-123',
+          dynamic_variables: {
+            tenant_id: 'unknown-tenant',
+            business_name: 'Unknown Business',
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('dynamic_variables');
+      expect(response.body).toHaveProperty('conversation_config_override');
+      expect(response.body.dynamic_variables.business_name).toBe('Unknown Business');
+    });
+
+    it('should return empty configuration for non-conversation_initiation_client_data type', async () => {
+      const response = await request(app)
+        .post('/api/webhooks/elevenlabs/conversation-initiation')
+        .set('Content-Type', 'application/json')
+        .send({
+          type: 'other_event_type',
+          data: {},
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('dynamic_variables');
+      expect(response.body.dynamic_variables).toEqual({});
+    });
+
+    it('should handle missing dynamic_variables gracefully', async () => {
+      const response = await request(app)
+        .post('/api/webhooks/elevenlabs/conversation-initiation')
+        .set('Content-Type', 'application/json')
+        .send({
+          type: 'conversation_initiation_client_data',
+          conversation_id: 'conv-123',
+          agent_id: 'agent-123',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('dynamic_variables');
+      expect(response.body).toHaveProperty('conversation_config_override');
+    });
+
+    it('should include custom greeting in response when configured', async () => {
+      const mockTenantData = {
+        tenantId: 'test-tenant',
+        name: 'Test Salon',
+        settings: {
+          aiGreeting: 'Welcome to Test Salon! How can I help you today?',
+        },
+      };
+      
+      const mockTenant = {
+        ...mockTenantData,
+        toSafeObject: function() { return mockTenantData; },
+      };
+
+      mockTenantModel.findOne.mockResolvedValue(mockTenant);
+
+      const response = await request(app)
+        .post('/api/webhooks/elevenlabs/conversation-initiation')
+        .set('Content-Type', 'application/json')
+        .send({
+          type: 'conversation_initiation_client_data',
+          conversation_id: 'conv-123',
+          agent_id: 'agent-123',
+          dynamic_variables: {
+            tenant_id: 'test-tenant',
+          },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.conversation_config_override.agent.first_message)
+        .toBe('Welcome to Test Salon! How can I help you today?');
+    });
+  });
+});
+
+describe('handleConversationInitiation Function', () => {
+  const {
+    handleConversationInitiation,
+  } = require('../src/modules/ai-assistant/twilio-elevenlabs.handler');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return success with dynamic variables', async () => {
+    mockTenantModel.findOne.mockResolvedValue(null);
+
+    const result = await handleConversationInitiation({
+      conversation_id: 'conv-123',
+      agent_id: 'agent-123',
+      dynamic_variables: {
+        tenant_id: 'test-tenant',
+        caller_number: '+15551234567',
+        call_sid: 'CA123',
+        business_name: 'Test Business',
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toHaveProperty('dynamic_variables');
+    expect(result.data).toHaveProperty('conversation_config_override');
+    expect(result.data.dynamic_variables.caller_number).toBe('+15551234567');
+    expect(result.data.dynamic_variables.call_sid).toBe('CA123');
+  });
+
+  it('should set audio format to ulaw_8000 for Twilio compatibility', async () => {
+    mockTenantModel.findOne.mockResolvedValue(null);
+
+    const result = await handleConversationInitiation({
+      conversation_id: 'conv-123',
+      agent_id: 'agent-123',
+      dynamic_variables: {},
+    });
+
+    expect(result.data.conversation_config_override.agent.agent_output_audio_format).toBe('ulaw_8000');
+    expect(result.data.conversation_config_override.agent.user_input_audio_format).toBe('ulaw_8000');
+    expect(result.data.conversation_config_override.tts.output_format).toBe('ulaw_8000');
+  });
+});

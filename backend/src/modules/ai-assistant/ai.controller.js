@@ -2,12 +2,14 @@
  * AI Controller
  * Handles HTTP requests for AI assistant endpoints
  */
+const crypto = require('crypto');
 const { AppError } = require('../../middleware/errorHandler');
+const env = require('../../config/env');
 const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
 const { getOpenAIService } = require('./openai.service');
 const { handleIntent } = require('./intent.handler');
-const { handleTwilioToElevenLabs, handleElevenLabsToolCall: handleToolCall } = require('./twilio-elevenlabs.handler');
+const { handleTwilioToElevenLabs, handleElevenLabsToolCall: handleToolCall, handleConversationInitiation } = require('./twilio-elevenlabs.handler');
 const { availabilityService } = require('../appointments');
 const { appointmentService, CANCELLATION_REASONS } = require('../appointments');
 const { serviceService } = require('../services');
@@ -567,6 +569,116 @@ const getNextBusinessDay = () => {
   return date;
 };
 
+/**
+ * Verify ElevenLabs webhook signature
+ * @param {string} payload - Raw request body as string
+ * @param {string} signature - Signature from X-ElevenLabs-Signature header
+ * @param {string} secret - Webhook secret
+ * @returns {boolean} - True if signature is valid
+ */
+const verifyElevenLabsSignature = (payload, signature, secret) => {
+  if (!secret || !signature) {
+    return false;
+  }
+  
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * POST /api/webhooks/elevenlabs/conversation-initiation
+ * Handle ElevenLabs Conversation Initiation Client Data webhook
+ * 
+ * This webhook is called by ElevenLabs when a new Twilio phone call or SIP trunk
+ * call conversation begins. It allows providing dynamic conversation configuration
+ * and variables based on the call data.
+ * 
+ * Headers:
+ * - X-ElevenLabs-Signature: HMAC-SHA256 signature of the request body (required in production)
+ * 
+ * Request body (from ElevenLabs):
+ * {
+ *   "type": "conversation_initiation_client_data",
+ *   "conversation_id": "unique-conversation-id",
+ *   "agent_id": "elevenlabs-agent-id",
+ *   "dynamic_variables": {
+ *     "tenant_id": "tenant-id",
+ *     "caller_number": "+15551234567",
+ *     "call_sid": "CA12345...",
+ *     "business_name": "My Business"
+ *   }
+ * }
+ * 
+ * Response:
+ * {
+ *   "dynamic_variables": {
+ *     "tenant_id": "...",
+ *     "business_name": "...",
+ *     ...
+ *   },
+ *   "conversation_config_override": {
+ *     "agent": {
+ *       "agent_output_audio_format": "ulaw_8000",
+ *       "user_input_audio_format": "ulaw_8000",
+ *       ...
+ *     }
+ *   }
+ * }
+ */
+const handleConversationInitiationWebhook = async (req, res, next) => {
+  try {
+    // Verify webhook signature in production
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+    
+    if (env.isProduction() && webhookSecret) {
+      // Require raw body for signature verification
+      if (!req.rawBody) {
+        logger.warn('ElevenLabs Conversation Initiation: Missing raw body for signature verification');
+        throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
+      }
+      
+      if (!verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Conversation Initiation: Invalid signature');
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    } else if (env.isProduction() && !webhookSecret) {
+      logger.warn('ElevenLabs Conversation Initiation: Webhook secret not configured');
+    }
+    
+    // Validate request type
+    if (req.body.type && req.body.type !== 'conversation_initiation_client_data') {
+      logger.warn(`ElevenLabs Conversation Initiation: Unexpected type ${req.body.type}`);
+      return res.status(200).json({
+        dynamic_variables: {},
+        conversation_config_override: {},
+      });
+    }
+    
+    // Process the conversation initiation request
+    const result = await handleConversationInitiation(req.body);
+    
+    // Return the configuration directly (not wrapped in success/data)
+    // ElevenLabs expects the response format: { dynamic_variables, conversation_config_override }
+    res.status(200).json(result.data);
+  } catch (error) {
+    logger.error(`ElevenLabs Conversation Initiation webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -575,5 +687,6 @@ module.exports = {
   processConversation,
   handleElevenLabsWebhook,
   handleTwilioElevenLabsWebhook,
+  handleConversationInitiationWebhook,
   getAIConfig,
 };
