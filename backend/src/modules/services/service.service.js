@@ -47,7 +47,7 @@ const createService = async (serviceData, tenantId) => {
 const getServices = async (tenantId, options = {}) => {
   const { status, category, limit = 100, offset = 0 } = options;
 
-  const where = { tenantId };
+  const where = { id: tenantId };
   
   if (status) {
     where.status = status;
