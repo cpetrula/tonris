@@ -27,6 +27,13 @@ const mockUserModel = {
   create: jest.fn(),
 };
 
+const mockTenantModel = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  generateDefaultSettings: jest.fn(() => ({})),
+  isValidTransition: jest.fn(),
+};
+
 // Mock models BEFORE requiring the app
 jest.mock('../src/modules/services/service.model', () => ({
   Service: mockServiceModel,
@@ -41,6 +48,18 @@ jest.mock('../src/modules/services/service.model', () => ({
     MAKEUP: 'makeup',
     MASSAGE: 'massage',
     OTHER: 'other',
+  },
+}));
+
+// Mock the tenant model used by service controller
+jest.mock('../src/modules/tenants/tenant.model', () => ({
+  Tenant: mockTenantModel,
+  TENANT_STATUS: {
+    PENDING: 'pending',
+    ACTIVE: 'active',
+  },
+  PLAN_TYPES: {
+    FREE: 'free',
   },
 }));
 
@@ -59,12 +78,7 @@ jest.mock('../src/models', () => ({
     MASSAGE: 'massage',
     OTHER: 'other',
   },
-  Tenant: {
-    findOne: jest.fn(),
-    create: jest.fn(),
-    generateDefaultSettings: jest.fn(() => ({})),
-    isValidTransition: jest.fn(),
-  },
+  Tenant: mockTenantModel,
   TENANT_STATUS: {
     PENDING: 'pending',
     ACTIVE: 'active',
@@ -94,6 +108,11 @@ const jwtUtils = require('../src/modules/auth/jwt.utils');
 describe('Service Module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Setup default tenant mock - returns a tenant with UUID id
+    mockTenantModel.findOne.mockResolvedValue({
+      id: 'tenant-uuid-123',
+      tenantId: 'test-tenant',
+    });
   });
 
   const validToken = () => jwtUtils.generateAccessToken({
@@ -119,6 +138,7 @@ describe('Service Module', () => {
             name: 'Haircut',
             description: 'Standard haircut',
             price: 35.00,
+            tenantId: 'test-tenant',
             toSafeObject: function() { return { id: this.id, name: this.name, description: this.description, price: this.price }; },
           },
         ],
@@ -245,6 +265,7 @@ describe('Service Module', () => {
         price: 35.00,
         duration: 45,
         category: 'hair',
+        tenantId: 'test-tenant',
         status: 'active',
         toSafeObject: function() {
           return {

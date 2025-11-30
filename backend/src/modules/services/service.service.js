@@ -9,19 +9,21 @@ const logger = require('../../utils/logger');
 /**
  * Create a new service
  * @param {Object} serviceData - Service creation data
+ * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Object>} - Created service
  */
-const createService = async (serviceData) => {
+const createService = async (serviceData, tenantId) => {
   const { name, description, category, duration, price, addOns } = serviceData;
 
-  // Check if service with same name exists
-  const existingService = await Service.findOne({ where: { name } });
+  // Check if service with same name exists for this tenant
+  const existingService = await Service.findOne({ where: { name, tenantId } });
   if (existingService) {
     throw new AppError('A service with this name already exists', 400, 'SERVICE_EXISTS');
   }
 
   // Create service
   const service = await Service.create({
+    tenantId,
     name,
     description,
     category: category || SERVICE_CATEGORIES.OTHER,
@@ -31,20 +33,21 @@ const createService = async (serviceData) => {
     status: SERVICE_STATUS.ACTIVE,
   });
 
-  logger.info(`New service created: ${name}`);
+  logger.info(`New service created: ${name} for tenant: ${tenantId}`);
 
   return service.toSafeObject();
 };
 
 /**
- * Get all services
+ * Get all services for a tenant
+ * @param {string} tenantId - Tenant identifier
  * @param {Object} options - Query options (pagination, filters)
  * @returns {Promise<Object>} - List of services
  */
-const getServices = async (options = {}) => {
+const getServices = async (tenantId, options = {}) => {
   const { status, category, limit = 100, offset = 0 } = options;
 
-  const where = {};
+  const where = { tenantId };
   
   if (status) {
     where.status = status;
@@ -72,10 +75,11 @@ const getServices = async (options = {}) => {
 /**
  * Get service by ID
  * @param {string} serviceId - Service ID
+ * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Object>} - Service data
  */
-const getServiceById = async (serviceId) => {
-  const service = await Service.findOne({ where: { id: serviceId } });
+const getServiceById = async (serviceId, tenantId) => {
+  const service = await Service.findOne({ where: { id: serviceId, tenantId } });
   
   if (!service) {
     throw new AppError('Service not found', 404, 'SERVICE_NOT_FOUND');
@@ -87,11 +91,12 @@ const getServiceById = async (serviceId) => {
 /**
  * Update service
  * @param {string} serviceId - Service ID
+ * @param {string} tenantId - Tenant identifier
  * @param {Object} updateData - Data to update
  * @returns {Promise<Object>} - Updated service
  */
-const updateService = async (serviceId, updateData) => {
-  const service = await Service.findOne({ where: { id: serviceId } });
+const updateService = async (serviceId, tenantId, updateData) => {
+  const service = await Service.findOne({ where: { id: serviceId, tenantId } });
   
   if (!service) {
     throw new AppError('Service not found', 404, 'SERVICE_NOT_FOUND');
@@ -110,7 +115,7 @@ const updateService = async (serviceId, updateData) => {
   // Check for duplicate name if name is being updated
   if (filteredData.name && filteredData.name !== service.name) {
     const existingService = await Service.findOne({ 
-      where: { name: filteredData.name } 
+      where: { name: filteredData.name, tenantId } 
     });
     if (existingService) {
       throw new AppError('A service with this name already exists', 400, 'SERVICE_EXISTS');
@@ -119,7 +124,7 @@ const updateService = async (serviceId, updateData) => {
 
   await service.update(filteredData);
 
-  logger.info(`Service updated: ${serviceId}`);
+  logger.info(`Service updated: ${serviceId} for tenant: ${tenantId}`);
 
   return service.toSafeObject();
 };
@@ -127,10 +132,11 @@ const updateService = async (serviceId, updateData) => {
 /**
  * Delete service
  * @param {string} serviceId - Service ID
+ * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Object>} - Success message
  */
-const deleteService = async (serviceId) => {
-  const service = await Service.findOne({ where: { id: serviceId } });
+const deleteService = async (serviceId, tenantId) => {
+  const service = await Service.findOne({ where: { id: serviceId, tenantId } });
   
   if (!service) {
     throw new AppError('Service not found', 404, 'SERVICE_NOT_FOUND');
@@ -138,22 +144,23 @@ const deleteService = async (serviceId) => {
 
   await service.destroy();
 
-  logger.info(`Service deleted: ${serviceId}`);
+  logger.info(`Service deleted: ${serviceId} for tenant: ${tenantId}`);
 
   return { message: 'Service deleted successfully' };
 };
 
 /**
- * Seed default services
+ * Seed default services for a tenant
+ * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Array>} - Created services
  */
-const seedDefaultServices = async () => {
+const seedDefaultServices = async (tenantId) => {
   const defaultServices = Service.generateDefaultServices();
   const createdServices = [];
 
   for (const serviceData of defaultServices) {
     // Check if service already exists
-    const existing = await Service.findOne({ where: { name: serviceData.name } });
+    const existing = await Service.findOne({ where: { name: serviceData.name, tenantId } });
     if (existing) {
       createdServices.push(existing.toSafeObject());
       continue;
@@ -161,12 +168,13 @@ const seedDefaultServices = async () => {
 
     const service = await Service.create({
       ...serviceData,
+      tenantId,
       status: SERVICE_STATUS.ACTIVE,
     });
     createdServices.push(service.toSafeObject());
   }
 
-  logger.info('Default services seeded');
+  logger.info(`Default services seeded for tenant: ${tenantId}`);
 
   return createdServices;
 };
@@ -174,11 +182,12 @@ const seedDefaultServices = async () => {
 /**
  * Add add-on to a service
  * @param {string} serviceId - Service ID
+ * @param {string} tenantId - Tenant identifier
  * @param {Object} addOn - Add-on data { name, price, duration }
  * @returns {Promise<Object>} - Updated service
  */
-const addAddOn = async (serviceId, addOn) => {
-  const service = await Service.findOne({ where: { id: serviceId } });
+const addAddOn = async (serviceId, tenantId, addOn) => {
+  const service = await Service.findOne({ where: { id: serviceId, tenantId } });
   
   if (!service) {
     throw new AppError('Service not found', 404, 'SERVICE_NOT_FOUND');
@@ -186,7 +195,7 @@ const addAddOn = async (serviceId, addOn) => {
 
   await service.addAddOn(addOn);
 
-  logger.info(`Add-on added to service: ${serviceId}`);
+  logger.info(`Add-on added to service: ${serviceId} for tenant: ${tenantId}`);
 
   return service.toSafeObject();
 };
@@ -194,11 +203,12 @@ const addAddOn = async (serviceId, addOn) => {
 /**
  * Remove add-on from a service
  * @param {string} serviceId - Service ID
+ * @param {string} tenantId - Tenant identifier
  * @param {string} addOnId - Add-on ID to remove
  * @returns {Promise<Object>} - Updated service
  */
-const removeAddOn = async (serviceId, addOnId) => {
-  const service = await Service.findOne({ where: { id: serviceId } });
+const removeAddOn = async (serviceId, tenantId, addOnId) => {
+  const service = await Service.findOne({ where: { id: serviceId, tenantId } });
   
   if (!service) {
     throw new AppError('Service not found', 404, 'SERVICE_NOT_FOUND');
@@ -206,7 +216,7 @@ const removeAddOn = async (serviceId, addOnId) => {
 
   await service.removeAddOn(addOnId);
 
-  logger.info(`Add-on removed from service: ${serviceId}`);
+  logger.info(`Add-on removed from service: ${serviceId} for tenant: ${tenantId}`);
 
   return service.toSafeObject();
 };
