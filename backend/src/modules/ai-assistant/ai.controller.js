@@ -731,7 +731,7 @@ const handleConversationInitiationWebhook = async (req, res, next) => {
  * Query Parameters:
  * - tenantId: The tenant identifier (required)
  * 
- * Headers (optional, verified in production):
+ * Headers (required in production when webhook secret is configured):
  * - X-ElevenLabs-Signature: HMAC-SHA256 signature of the request
  */
 const handleElevenLabsServicesWebhook = async (req, res, next) => {
@@ -744,14 +744,15 @@ const handleElevenLabsServicesWebhook = async (req, res, next) => {
       // For GET requests, we need to verify using query string
       const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
       
-      if (signature && !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
-        logger.warn('ElevenLabs Services webhook: Invalid signature');
+      // Signature is required when webhook secret is configured in production
+      if (!signature || !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Services webhook: Invalid or missing signature');
         throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
       }
     }
     
-    // Get tenant ID from query parameter or request context
-    const tenantId = req.query.tenantId || req.tenantId;
+    // Get tenant ID from query parameter only (explicit requirement)
+    const tenantId = req.query.tenantId;
     
     if (!tenantId) {
       throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
@@ -771,17 +772,20 @@ const handleElevenLabsServicesWebhook = async (req, res, next) => {
     });
     
     // Return services in the format expected by ElevenLabs
+    // Use toSafeObject() if available for consistency
     res.status(200).json({
       success: true,
       data: {
-        services: result.services.map(service => ({
-          id: service.id,
-          name: service.name,
-          description: service.description,
-          price: service.price,
-          duration: service.duration,
-          category: service.category,
-        })),
+        services: result.services.map(service => 
+          service.toSafeObject ? service.toSafeObject() : {
+            id: service.id,
+            name: service.name,
+            description: service.description,
+            price: service.price,
+            duration: service.duration,
+            category: service.category,
+          }
+        ),
         total: result.total,
         tenantId,
       },
