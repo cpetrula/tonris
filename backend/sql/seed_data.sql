@@ -45,6 +45,7 @@ INSERT INTO tenants (
     metadata,
     trial_ends_at,
     onboarding_completed_at,
+    twilio_phone_number,
     createdAt,
     updatedAt
 ) VALUES (
@@ -93,6 +94,7 @@ INSERT INTO tenants (
     ),
     DATE_ADD(NOW(), INTERVAL 30 DAY),
     NOW(),
+    '+15551234567',
     NOW(),
     NOW()
 );

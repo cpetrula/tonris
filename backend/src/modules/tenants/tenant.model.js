@@ -114,6 +114,14 @@ const Tenant = sequelize.define('Tenant', {
     allowNull: true,
     field: 'onboarding_completed_at',
   },
+  twilioPhoneNumber: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'twilio_phone_number',
+    validate: {
+      is: /^[+]?[0-9][0-9\s()-]{5,}$/,
+    },
+  },
 }, {
   tableName: 'tenants',
   timestamps: true,

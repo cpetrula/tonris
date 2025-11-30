@@ -12,6 +12,8 @@ const VALIDATION = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   // Slug validation - lowercase letters, numbers, and hyphens only
   SLUG_REGEX: /^[a-z0-9-]+$/,
+  // Phone number validation - must start with optional + followed by at least one digit, then allow numbers, spaces, parentheses, and hyphens (min 6 chars)
+  PHONE_REGEX: /^[+]?[0-9][0-9\s()-]{5,}$/,
 };
 
 /**
@@ -156,7 +158,7 @@ const getTenant = async (req, res, next) => {
  */
 const updateTenant = async (req, res, next) => {
   try {
-    const { name, contactEmail, contactPhone, address, metadata } = req.body;
+    const { name, contactEmail, contactPhone, address, metadata, twilioPhoneNumber } = req.body;
 
     // Validate email format if provided
     if (contactEmail) {
@@ -169,12 +171,24 @@ const updateTenant = async (req, res, next) => {
       }
     }
 
+    // Validate Twilio phone number format if provided
+    if (twilioPhoneNumber) {
+      if (!VALIDATION.PHONE_REGEX.test(twilioPhoneNumber)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Twilio phone number format',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+    }
+
     const tenant = await tenantService.updateTenant(req.tenantId, {
       name,
       contactEmail,
       contactPhone,
       address,
       metadata,
+      twilioPhoneNumber,
     });
 
     res.status(200).json({

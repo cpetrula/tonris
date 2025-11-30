@@ -49,15 +49,28 @@ const findTenantByPhoneNumber = async (phoneNumber) => {
   try {
     const normalizedNumber = phoneNumber.replace(/[^0-9+]/g, '');
     
-    const tenants = await Tenant.findAll({
+    // First, try to find all active tenants and check for matching twilio_phone_number
+    // We need to normalize both sides of the comparison since stored values may have formatting
+    const activeTenants = await Tenant.findAll({
       where: { status: 'active' },
     });
     
-    if (!tenants || tenants.length === 0) {
+    if (!activeTenants || activeTenants.length === 0) {
       return null;
     }
     
-    for (const tenant of tenants) {
+    // Check twilioPhoneNumber column first (primary lookup)
+    for (const tenant of activeTenants) {
+      if (tenant.twilioPhoneNumber) {
+        const storedNormalized = tenant.twilioPhoneNumber.replace(/[^0-9+]/g, '');
+        if (storedNormalized === normalizedNumber) {
+          return tenant;
+        }
+      }
+    }
+    
+    // Fallback: search in metadata/settings for backward compatibility
+    for (const tenant of activeTenants) {
       const twilioPhone = tenant.metadata?.twilioPhoneNumber || tenant.settings?.twilioPhoneNumber;
       
       if (twilioPhone && twilioPhone.replace(/[^0-9+]/g, '') === normalizedNumber) {

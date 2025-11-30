@@ -45,11 +45,13 @@ CREATE TABLE IF NOT EXISTS tenants (
     metadata JSON NULL,
     trial_ends_at DATETIME NULL,
     onboarding_completed_at DATETIME NULL,
+    twilio_phone_number VARCHAR(50) NULL,
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_tenants_tenant_id (tenant_id),
-    UNIQUE KEY uk_tenants_slug (slug)
+    UNIQUE KEY uk_tenants_slug (slug),
+    UNIQUE KEY uk_tenants_twilio_phone_number (twilio_phone_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================

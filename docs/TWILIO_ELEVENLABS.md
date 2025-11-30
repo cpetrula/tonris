@@ -160,14 +160,15 @@ Configure your Twilio phone number to use the ElevenLabs webhook:
 
 > **Note**: The standard voice webhook (`/api/webhooks/twilio/voice`) handles calls differently and does not automatically connect to ElevenLabs. Use the ElevenLabs-specific webhook endpoint for AI voice conversations.
 
-### 4. Tenant Configuration (Optional)
+### 4. Tenant Configuration
 
-Each tenant can have their own ElevenLabs agent. Configure in tenant settings:
+Each tenant must have their Twilio phone number configured to identify incoming calls. Update the tenant record with:
 
 ```javascript
 {
+  "twilioPhoneNumber": "+15551234567",  // Required: Twilio phone number for this tenant
   "settings": {
-    "elevenLabsAgentId": "tenant-specific-agent-id",
+    "elevenLabsAgentId": "tenant-specific-agent-id",  // Optional: tenant-specific agent
     "businessHours": {
       "monday": { "open": "09:00", "close": "17:00", "enabled": true },
       // ... other days
@@ -175,6 +176,8 @@ Each tenant can have their own ElevenLabs agent. Configure in tenant settings:
   }
 }
 ```
+
+The `twilio_phone_number` column is used to identify which tenant an incoming call belongs to when Twilio webhooks are triggered.
 
 ## API Endpoints
 

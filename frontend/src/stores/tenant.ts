@@ -8,6 +8,7 @@ export interface Tenant {
   slug: string
   plan: string
   status: 'active' | 'inactive' | 'suspended'
+  twilioPhoneNumber?: string
   createdAt: string
 }
 
