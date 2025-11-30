@@ -218,9 +218,23 @@ Direction=inbound
 
 #### POST `/api/ai/webhook/elevenlabs`
 
-Handles callbacks from ElevenLabs agent, including tool calls.
+Handles callbacks from ElevenLabs agent, including tool calls and conversation events.
 
-**Request** (from ElevenLabs):
+**ElevenLabs Standard Request Format** (post-call transcription, conversation events):
+```json
+{
+  "type": "post_call_transcription",
+  "event_timestamp": 1739537297,
+  "data": {
+    "agent_id": "xyz",
+    "conversation_id": "abc",
+    "status": "done",
+    "transcript": []
+  }
+}
+```
+
+**Alternative Request Format** (tool calls, legacy integrations):
 ```json
 {
   "event": "tool_call",
@@ -232,6 +246,14 @@ Handles callbacks from ElevenLabs agent, including tool calls.
   "sessionId": "session-456"
 }
 ```
+
+The webhook handler supports both `type` (ElevenLabs standard) and `event` (legacy) fields for event type identification, and both root-level and nested `data.agent_id` for agent identification.
+
+**Supported Event Types**:
+- `conversation_started` - Conversation has begun
+- `conversation_ended` - Conversation has ended
+- `post_call_transcription` - Post-call transcript is available
+- `tool_call` - Agent is requesting a tool call
 
 **Response**:
 ```json

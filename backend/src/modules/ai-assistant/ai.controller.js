@@ -459,18 +459,31 @@ const processConversation = async (req, res, next) => {
  */
 const handleElevenLabsWebhook = async (req, res, next) => {
   try {
-    const { event, data, agentId, sessionId } = req.body;
+    // ElevenLabs webhooks use 'type' for event type and nest agent_id inside 'data'
+    // Support both 'type' (ElevenLabs standard) and 'event' (legacy/custom) for flexibility
+    const { type, event, data = {}, agentId, sessionId, conversation_id: conversationId } = req.body;
+    
+    // Use 'type' if available (ElevenLabs standard), fall back to 'event' for compatibility
+    const eventType = type || event;
+    // Agent ID can be at root level or inside data object
+    const resolvedAgentId = agentId || data.agent_id;
+    // Session/conversation ID can be at root level or inside data object
+    const resolvedSessionId = sessionId || conversationId || data.conversation_id;
 
-    logger.info(`ElevenLabs webhook received: event=${event}, agentId=${agentId}`);
+    logger.info(`ElevenLabs webhook received: event=${eventType}, agentId=${resolvedAgentId}`);
 
     // Handle different webhook events
-    switch (event) {
+    switch (eventType) {
       case 'conversation_started':
-        logger.info(`ElevenLabs conversation started: ${sessionId}`);
+        logger.info(`ElevenLabs conversation started: ${resolvedSessionId}`);
         break;
       
       case 'conversation_ended':
-        logger.info(`ElevenLabs conversation ended: ${sessionId}`);
+        logger.info(`ElevenLabs conversation ended: ${resolvedSessionId}`);
+        break;
+      
+      case 'post_call_transcription':
+        logger.info(`ElevenLabs post-call transcription received: ${resolvedSessionId}, status=${data.status}`);
         break;
       
       case 'tool_call': {
@@ -483,7 +496,11 @@ const handleElevenLabsWebhook = async (req, res, next) => {
       }
       
       default:
-        logger.info(`Unhandled ElevenLabs event: ${event}`);
+        if (eventType) {
+          logger.info(`Unhandled ElevenLabs event: ${eventType}`);
+        } else {
+          logger.warn('ElevenLabs webhook received with no event type');
+        }
     }
 
     res.status(200).json({ success: true });
