@@ -68,7 +68,7 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // Include tenant_id and tenant_name for webhook callbacks and query params
         const dynamicVariables = {
           tenant_id: tenantId,
-          tenant_name: customParameters.business_name || '',
+          tenant_name: customParameters.tenant_name || customParameters.business_name || '',
         };
         if (customParameters.business_name) {
           dynamicVariables.business_name = customParameters.business_name;
