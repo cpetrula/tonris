@@ -204,7 +204,7 @@ describe('Twilio-ElevenLabs Integration', () => {
     };
 
     it('should return TwiML to connect to ElevenLabs when tenant is found by twilioPhoneNumber', async () => {
-      mockTenantModel.findOne.mockResolvedValue(mockTenant);
+      mockTenantModel.findAll.mockResolvedValue([mockTenant]);
       mockElevenLabsService.isAvailable.mockResolvedValue(true);
       mockElevenLabsService.getTwilioSignedUrl.mockResolvedValue({
         signedUrl: 'wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent-123',
@@ -235,7 +235,6 @@ describe('Twilio-ElevenLabs Integration', () => {
         twilioPhoneNumber: null,
         metadata: { twilioPhoneNumber: '+15551234567' },
       };
-      mockTenantModel.findOne.mockResolvedValue(null);
       mockTenantModel.findAll.mockResolvedValue([mockTenantWithMetadata]);
       mockElevenLabsService.isAvailable.mockResolvedValue(true);
       mockElevenLabsService.getTwilioSignedUrl.mockResolvedValue({
@@ -262,7 +261,6 @@ describe('Twilio-ElevenLabs Integration', () => {
     });
 
     it('should return error TwiML when no tenant found', async () => {
-      mockTenantModel.findOne.mockResolvedValue(null);
       mockTenantModel.findAll.mockResolvedValue([]);
 
       const response = await request(app)
@@ -282,7 +280,7 @@ describe('Twilio-ElevenLabs Integration', () => {
     });
 
     it('should return error TwiML when ElevenLabs is not configured', async () => {
-      mockTenantModel.findOne.mockResolvedValue(mockTenant);
+      mockTenantModel.findAll.mockResolvedValue([mockTenant]);
       mockElevenLabsService.isAvailable.mockResolvedValue(false);
 
       const response = await request(app)
@@ -301,7 +299,6 @@ describe('Twilio-ElevenLabs Integration', () => {
     });
 
     it('should handle missing CallSid gracefully', async () => {
-      mockTenantModel.findOne.mockResolvedValue(null);
       mockTenantModel.findAll.mockResolvedValue([]);
 
       const response = await request(app)

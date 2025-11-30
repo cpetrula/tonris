@@ -119,7 +119,7 @@ const Tenant = sequelize.define('Tenant', {
     allowNull: true,
     field: 'twilio_phone_number',
     validate: {
-      is: /^[+]?[0-9\s()-]*$/,
+      is: /^[+]?[0-9][0-9\s()-]{5,}$/,
     },
   },
 }, {

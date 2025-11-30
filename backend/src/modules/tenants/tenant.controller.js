@@ -12,8 +12,8 @@ const VALIDATION = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   // Slug validation - lowercase letters, numbers, and hyphens only
   SLUG_REGEX: /^[a-z0-9-]+$/,
-  // Phone number validation - allows +, numbers, spaces, parentheses, and hyphens
-  PHONE_REGEX: /^[+]?[0-9\s()-]*$/,
+  // Phone number validation - must start with optional + followed by at least one digit, then allow numbers, spaces, parentheses, and hyphens (min 6 chars)
+  PHONE_REGEX: /^[+]?[0-9][0-9\s()-]{5,}$/,
 };
 
 /**
