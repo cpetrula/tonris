@@ -211,7 +211,7 @@ class ElevenLabsService extends AIProviderInterface {
     
     try {
       // Use the ElevenLabs client to get a signed URL for the conversation
-      const response = await this.client.conversationalAi.getSignedUrl({
+      const response = await this.client.conversationalAi.conversations.getSignedUrl({
         agentId: effectiveAgentId,
       });
       
@@ -253,7 +253,7 @@ class ElevenLabsService extends AIProviderInterface {
     
     try {
       // Use the ElevenLabs client to get a signed URL
-      const response = await this.client.conversationalAi.getSignedUrl({
+      const response = await this.client.conversationalAi.conversations.getSignedUrl({
         agentId: effectiveAgentId,
       });
       
