@@ -770,13 +770,26 @@ const handleElevenLabsServicesWebhook = async (req, res, next) => {
       status: 'active',
       limit: 100,
     });
+    console.log('Fetched services result:', result);
+
+    const data = result.services.map(service => 
+      service.toSafeObject ? service.toSafeObject() : {
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        price: service.price,
+        duration: service.duration,
+        category: service.category,
+      }
+    );
+    console.log('Fetched services data:', data);
     
     // Return services in the format expected by ElevenLabs
     // Use toSafeObject() if available for consistency
     res.status(200).json({
       success: true,
       data: {
-        services: result.services.map(service => 
+        services_offered: result.services.map(service => 
           service.toSafeObject ? service.toSafeObject() : {
             id: service.id,
             name: service.name,
@@ -786,6 +799,7 @@ const handleElevenLabsServicesWebhook = async (req, res, next) => {
             category: service.category,
           }
         ),
+        message: 'Here are the current services available',
         total: result.total,
         tenantId,
       },
