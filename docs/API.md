@@ -1388,6 +1388,59 @@ Handle call status updates.
 
 **Authentication**: Twilio signature verification
 
+### POST /api/webhooks/elevenlabs/conversation-initiation
+
+Handle ElevenLabs Conversation Initiation Client Data webhook. This webhook is called by ElevenLabs when a new Twilio phone call or SIP trunk call conversation begins. It allows the server to provide dynamic conversation configuration and variables based on the call data.
+
+**Authentication**: HMAC-SHA256 signature verification (via `X-ElevenLabs-Signature` header)
+
+**Headers**:
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-ElevenLabs-Signature` | Yes (in production) | HMAC-SHA256 signature of the request body using `ELEVENLABS_WEBHOOK_SECRET` |
+| `Content-Type` | Yes | Must be `application/json` |
+
+**Request Body** (from ElevenLabs):
+```json
+{
+  "type": "conversation_initiation_client_data",
+  "conversation_id": "unique-conversation-id",
+  "agent_id": "elevenlabs-agent-id",
+  "dynamic_variables": {
+    "tenant_id": "tenant-identifier",
+    "caller_number": "+15551234567",
+    "call_sid": "CA12345...",
+    "business_name": "My Business"
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "dynamic_variables": {
+    "tenant_id": "tenant-identifier",
+    "tenant_name": "My Business",
+    "business_name": "My Business",
+    "caller_number": "+15551234567",
+    "call_sid": "CA12345...",
+    "conversation_id": "unique-conversation-id",
+    "business_hours_summary": "We're open Monday through Friday from 09:00 to 17:00."
+  },
+  "conversation_config_override": {
+    "agent": {
+      "agent_output_audio_format": "ulaw_8000",
+      "user_input_audio_format": "ulaw_8000",
+      "language": "en",
+      "first_message": "Hello! Welcome to My Business."
+    },
+    "tts": {
+      "output_format": "ulaw_8000"
+    }
+  }
+}
+```
+
 ---
 
 ## Error Responses

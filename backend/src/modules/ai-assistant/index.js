@@ -10,6 +10,7 @@ const { handleIntent } = require('./intent.handler');
 const {
   handleTwilioToElevenLabs,
   handleElevenLabsToolCall,
+  handleConversationInitiation,
   generateElevenLabsConnectTwiml,
 } = require('./twilio-elevenlabs.handler');
 const {
@@ -33,6 +34,7 @@ module.exports = {
   handleIntent,
   handleTwilioToElevenLabs,
   handleElevenLabsToolCall,
+  handleConversationInitiation,
   generateElevenLabsConnectTwiml,
   handleMediaStreamConnection,
   getActiveStreamCount,

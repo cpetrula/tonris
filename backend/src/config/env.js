@@ -42,6 +42,7 @@ const env = {
   ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY || '',
   ELEVENLABS_AGENT_ID: process.env.ELEVENLABS_AGENT_ID || '',
   ELEVENLABS_VOICE_ID: process.env.ELEVENLABS_VOICE_ID || '',
+  ELEVENLABS_WEBHOOK_SECRET: process.env.ELEVENLABS_WEBHOOK_SECRET || '',
   
   // OpenAI Configuration
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',

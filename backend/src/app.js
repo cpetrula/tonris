@@ -61,6 +61,19 @@ app.post('/api/webhooks/twilio/elevenlabs',
   aiController.handleTwilioElevenLabsWebhook
 );
 
+// ElevenLabs Conversation Initiation Client Data webhook
+// Called by ElevenLabs when a new Twilio phone call or SIP trunk call conversation begins
+// This webhook must receive raw body for signature verification
+app.post('/api/webhooks/elevenlabs/conversation-initiation',
+  express.json({
+    verify: (req, _res, buf) => {
+      // Store raw body for signature verification
+      req.rawBody = buf.toString();
+    },
+  }),
+  aiController.handleConversationInitiationWebhook
+);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
