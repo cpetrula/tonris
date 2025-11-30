@@ -9,8 +9,9 @@
 -- =============================================================================
 
 -- Step 1: Drop existing indexes on tenant_id (they will be recreated after column change)
-ALTER TABLE services DROP INDEX idx_services_tenant_id;
-ALTER TABLE services DROP INDEX uk_services_tenant_name;
+-- Using IF EXISTS to prevent errors if indexes don't exist
+DROP INDEX IF EXISTS idx_services_tenant_id ON services;
+DROP INDEX IF EXISTS uk_services_tenant_name ON services;
 
 -- Step 2: Add a temporary column to store the new UUID values
 ALTER TABLE services ADD COLUMN tenant_uuid CHAR(36) NULL AFTER tenant_id;
@@ -22,9 +23,15 @@ UPDATE services s
 INNER JOIN tenants t ON s.tenant_id = t.tenant_id
 SET s.tenant_uuid = t.id;
 
--- Step 4: Verify all services have been mapped (optional but recommended)
--- Run this query manually to check for any unmapped services:
--- SELECT * FROM services WHERE tenant_uuid IS NULL;
+-- Step 4: Verify all services have been mapped - fail if any are unmapped
+-- This SELECT will show any services that couldn't be mapped to a tenant
+SELECT 
+    CASE 
+        WHEN COUNT(*) > 0 THEN CONCAT('WARNING: ', COUNT(*), ' services could not be mapped to a tenant UUID!')
+        ELSE 'All services successfully mapped to tenant UUIDs'
+    END AS migration_status
+FROM services 
+WHERE tenant_uuid IS NULL;
 
 -- Step 5: Drop the old tenant_id column
 ALTER TABLE services DROP COLUMN tenant_id;
