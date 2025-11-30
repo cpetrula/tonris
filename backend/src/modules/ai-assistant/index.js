@@ -13,6 +13,11 @@ const {
   generateElevenLabsConnectTwiml,
 } = require('./twilio-elevenlabs.handler');
 const {
+  handleMediaStreamConnection,
+  getActiveStreamCount,
+  getActiveStream,
+} = require('./media-stream.handler');
+const {
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,
@@ -29,6 +34,9 @@ module.exports = {
   handleTwilioToElevenLabs,
   handleElevenLabsToolCall,
   generateElevenLabsConnectTwiml,
+  handleMediaStreamConnection,
+  getActiveStreamCount,
+  getActiveStream,
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,

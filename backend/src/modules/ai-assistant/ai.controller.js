@@ -497,7 +497,12 @@ const handleElevenLabsWebhook = async (req, res, next) => {
  */
 const handleTwilioElevenLabsWebhook = async (req, res, next) => {
   try {
-    const result = await handleTwilioToElevenLabs(req.body);
+    // Build the host URL from the request for WebSocket connection
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const hostUrl = `${protocol}://${host}`;
+    
+    const result = await handleTwilioToElevenLabs(req.body, hostUrl);
     
     // Return TwiML response
     res.type('text/xml');

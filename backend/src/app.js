@@ -6,13 +6,15 @@ const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
+const { WebSocketServer } = require('ws');
+const http = require('http');
 
 const env = require('./config/env');
 const logger = require('./utils/logger');
 const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
-const { aiController } = require('./modules/ai-assistant');
+const { aiController, handleMediaStreamConnection } = require('./modules/ai-assistant');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -118,15 +120,39 @@ app.use(errorHandler);
 
 // Start server (only if not in test mode)
 const startServer = () => {
-  const server = app.listen(env.PORT, () => {
+  // Create HTTP server from Express app
+  const server = http.createServer(app);
+  
+  // Create WebSocket server for media streams
+  const wss = new WebSocketServer({ 
+    server,
+    path: '/media-stream',
+  });
+  
+  // Handle WebSocket connections for Twilio media streams
+  wss.on('connection', (ws, req) => {
+    logger.info('[WebSocket] New media stream connection');
+    handleMediaStreamConnection(ws, req);
+  });
+  
+  wss.on('error', (error) => {
+    logger.error(`[WebSocket] Server error: ${error.message}`);
+  });
+  
+  // Start the server
+  server.listen(env.PORT, () => {
     logger.info(`TONRIS Backend server running on port ${env.PORT}`);
     logger.info(`Environment: ${env.NODE_ENV}`);
     logger.info(`Health check: http://localhost:${env.PORT}/health`);
+    logger.info(`WebSocket media stream: ws://localhost:${env.PORT}/media-stream`);
   });
 
   // Graceful shutdown
   process.on('SIGTERM', () => {
     logger.info('SIGTERM signal received: closing HTTP server');
+    wss.close(() => {
+      logger.info('WebSocket server closed');
+    });
     server.close(() => {
       logger.info('HTTP server closed');
       process.exit(0);
@@ -135,6 +161,9 @@ const startServer = () => {
 
   process.on('SIGINT', () => {
     logger.info('SIGINT signal received: closing HTTP server');
+    wss.close(() => {
+      logger.info('WebSocket server closed');
+    });
     server.close(() => {
       logger.info('HTTP server closed');
       process.exit(0);

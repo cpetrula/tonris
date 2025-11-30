@@ -227,6 +227,10 @@ describe('Twilio-ElevenLabs Integration', () => {
       expect(response.text).toContain('Response');
       expect(response.text).toContain('Connect');
       expect(response.text).toContain('Stream');
+      // Verify that the stream URL points to the application's media-stream endpoint
+      expect(response.text).toContain('/media-stream');
+      // Verify that the stream has a name attribute
+      expect(response.text).toContain('name="ElevenLabsStream"');
     });
 
     it('should return TwiML to connect to ElevenLabs when tenant is found via metadata fallback', async () => {
