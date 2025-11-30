@@ -347,6 +347,35 @@ Monitor these logs to track:
 3. Ensure `APP_BASE_URL` is accessible from the internet
 4. Review logs for error messages
 
+### Call Immediately Disconnects After Connecting
+
+This is often caused by audio format incompatibility. Check the following:
+
+1. **ElevenLabs Dashboard Configuration**:
+   - Log in to your ElevenLabs account
+   - Navigate to the Agent settings
+   - **Enable "Overrides"** - This must be enabled for the code to override the default audio format
+   - In the Agent's Voice settings, ensure the TTS output format is set to `ulaw_8000` (mu-law 8kHz)
+
+2. **WebSocket Connection Logs**:
+   - Check the server logs for ElevenLabs WebSocket close codes:
+     - Code `1000`: Normal closure
+     - Code `1006`: Abnormal closure (connection lost) - often indicates audio format issues
+     - Code `4xxx`: Application-specific errors from ElevenLabs
+   
+3. **Verify Audio Format Configuration**:
+   - The system sends `agent_output_audio_format: 'ulaw_8000'` and `user_input_audio_format: 'ulaw_8000'`
+   - These settings must be accepted by ElevenLabs for Twilio compatibility
+   - If the agent doesn't have overrides enabled, it will ignore these settings
+
+4. **Check for Error Messages**:
+   - Look for `[MediaStream] ElevenLabs error` in the logs
+   - Check for `conversation_initiation_metadata` message - if not received, initialization failed
+
+5. **First Message Configuration**:
+   - If your agent doesn't have a first message configured in the dashboard, it may wait for user input
+   - Ensure your agent has a greeting/first message configured, or configure one via the override
+
 ### Tool Calls Not Working
 
 1. Verify the ElevenLabs agent has tools configured
@@ -358,6 +387,23 @@ Monitor these logs to track:
 1. Check Twilio webhook response is valid TwiML
 2. Verify the ElevenLabs signed URL is valid
 3. Ensure WebSocket connection is not blocked by firewall
+4. Verify the audio format is set to `ulaw_8000` in both directions
+
+### Common ElevenLabs Dashboard Settings
+
+When setting up your ElevenLabs agent, ensure these settings are configured:
+
+1. **Agent Settings > Advanced**:
+   - Enable "Allow overrides from client"
+   - This allows the application to set audio format parameters
+
+2. **Agent Settings > Voice**:
+   - Set TTS Output Format to `ulaw_8000` (for telephony)
+   - This ensures audio is compatible with Twilio
+
+3. **Agent Settings > Conversation**:
+   - Configure a first message/greeting for the agent
+   - Set appropriate language settings
 
 ## Security Considerations
 
