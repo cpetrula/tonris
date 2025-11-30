@@ -265,7 +265,7 @@ INSERT INTO services (
 -- Hair Services
 (
     @service_haircut_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Haircut',
     'Professional haircut including consultation, shampoo, cut, and style. Our expert stylists will work with you to create the perfect look.',
     'hair',
@@ -283,7 +283,7 @@ INSERT INTO services (
 ),
 (
     @service_coloring_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Full Hair Coloring',
     'Complete hair coloring service including consultation, application, processing, and styling. Transform your look with vibrant, long-lasting color.',
     'hair',
@@ -301,7 +301,7 @@ INSERT INTO services (
 ),
 (
     @service_blowout_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Blowout',
     'Professional blowout service including shampoo, conditioning, and styled blow dry for a polished finish.',
     'hair',
@@ -319,7 +319,7 @@ INSERT INTO services (
 ),
 (
     @service_highlights_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Highlights',
     'Partial or full highlights to add dimension and brightness to your hair. Includes consultation and toner.',
     'hair',
@@ -337,7 +337,7 @@ INSERT INTO services (
 ),
 (
     @service_treatment_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Deep Conditioning Treatment',
     'Intensive hair treatment to restore moisture, repair damage, and add shine. Perfect for dry or damaged hair.',
     'hair',
@@ -355,7 +355,7 @@ INSERT INTO services (
 ),
 (
     @service_styling_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Special Occasion Styling',
     'Elegant updo or formal styling for weddings, proms, galas, and special events. Includes consultation.',
     'hair',
@@ -374,7 +374,7 @@ INSERT INTO services (
 -- Nail Services
 (
     @service_manicure_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Classic Manicure',
     'Complete manicure service including nail shaping, cuticle care, hand massage, and polish application.',
     'nails',
@@ -393,7 +393,7 @@ INSERT INTO services (
 ),
 (
     @service_pedicure_uuid,
-    @tenant_id,
+    @tenant_uuid,
     'Spa Pedicure',
     'Luxurious pedicure including foot soak, exfoliation, callus removal, massage, and polish application.',
     'nails',
@@ -852,8 +852,9 @@ INSERT INTO call_logs (
 -- =============================================================================
 SELECT 'Hair Done Right Salon demo data seeded successfully!' AS Status;
 SELECT 'Tenant ID:' AS Info, @tenant_id AS Value;
+SELECT 'Tenant UUID:' AS Info, @tenant_uuid AS Value;
 SELECT 'Admin Email:' AS Info, 'admin@hairdonerightson.com' AS Value;
 SELECT 'Total Employees:' AS Info, (SELECT COUNT(*) FROM employees WHERE tenant_id = @tenant_id) AS Value;
-SELECT 'Total Services:' AS Info, (SELECT COUNT(*) FROM services WHERE tenant_id = @tenant_id) AS Value;
+SELECT 'Total Services:' AS Info, (SELECT COUNT(*) FROM services WHERE tenant_id = @tenant_uuid) AS Value;
 SELECT 'Total Appointments:' AS Info, (SELECT COUNT(*) FROM appointments WHERE tenant_id = @tenant_id) AS Value;
 SELECT 'Total Call Logs:' AS Info, (SELECT COUNT(*) FROM call_logs WHERE tenant_id = @tenant_id) AS Value;

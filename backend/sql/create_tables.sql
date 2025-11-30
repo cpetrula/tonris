@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS employees (
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS services (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
-    tenant_id VARCHAR(64) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
     name VARCHAR(200) NOT NULL,
     description TEXT NULL,
     category ENUM('hair', 'nails', 'skin', 'makeup', 'massage', 'other') NOT NULL DEFAULT 'other',
@@ -97,7 +97,8 @@ CREATE TABLE IF NOT EXISTS services (
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_services_tenant_id (tenant_id),
-    UNIQUE KEY uk_services_tenant_name (tenant_id, name)
+    UNIQUE KEY uk_services_tenant_name (tenant_id, name),
+    CONSTRAINT fk_services_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================

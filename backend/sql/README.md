@@ -6,6 +6,8 @@ This directory contains SQL scripts for setting up the TONRIS database and seedi
 
 - **create_tables.sql** - Creates all database tables for the TONRIS platform
 - **seed_data.sql** - Seeds demo data for "Hair Done Right Salon"
+- **migrate_services_tenant_id_to_uuid.sql** - Migration script to update services.tenant_id from string to UUID (foreign key to tenants.id)
+- **add_twilio_phone_number_column.sql** - Migration to add twilio_phone_number column to tenants table
 
 ## Usage
 
@@ -30,6 +32,25 @@ After creating the tables, run the seed script to populate demo data:
 ```bash
 mysql -u root -p < seed_data.sql
 ```
+
+### 3. Migrations
+
+If you have an existing database and need to update the schema, run the migration scripts:
+
+#### Update services.tenant_id to UUID (references tenants.id)
+
+This migration updates the services table to use the tenant's UUID (id) instead of the string tenant_id:
+
+```bash
+mysql -u root -p tonris_db < migrate_services_tenant_id_to_uuid.sql
+```
+
+**What this migration does:**
+1. Drops existing indexes on tenant_id
+2. Creates a temporary column for the new UUID values
+3. Updates the column with tenant UUIDs by joining with the tenants table
+4. Drops the old column and renames the new one
+5. Recreates indexes and adds foreign key constraint
 
 ## Demo Salon Details
 
@@ -87,4 +108,5 @@ Nail Services:
 - The scripts are designed for MySQL 8.0+
 - UUID() function is used for generating unique identifiers
 - JSON columns use MySQL's native JSON type
-- All tables support multi-tenancy through the `tenant_id` column
+- The `services.tenant_id` column is a UUID foreign key referencing `tenants.id`
+- Other tables use string `tenant_id` referencing `tenants.tenant_id`
