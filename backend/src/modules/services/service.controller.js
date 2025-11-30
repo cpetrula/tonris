@@ -6,13 +6,13 @@ const serviceService = require('./service.service');
 
 /**
  * GET /api/services
- * Get all services for tenant
+ * Get all services
  */
 const getServices = async (req, res, next) => {
   try {
     const { status, category, limit, offset } = req.query;
     
-    const result = await serviceService.getServices(req.tenantId, {
+    const result = await serviceService.getServices({
       status,
       category,
       limit,
@@ -34,7 +34,7 @@ const getServices = async (req, res, next) => {
  */
 const getService = async (req, res, next) => {
   try {
-    const service = await serviceService.getServiceById(req.params.id, req.tenantId);
+    const service = await serviceService.getServiceById(req.params.id);
 
     res.status(200).json({
       success: true,
@@ -87,7 +87,7 @@ const createService = async (req, res, next) => {
       duration,
       price,
       addOns,
-    }, req.tenantId);
+    });
 
     res.status(201).json({
       success: true,
@@ -124,7 +124,7 @@ const updateService = async (req, res, next) => {
       });
     }
 
-    const service = await serviceService.updateService(req.params.id, req.tenantId, {
+    const service = await serviceService.updateService(req.params.id, {
       name,
       description,
       category,
@@ -150,7 +150,7 @@ const updateService = async (req, res, next) => {
  */
 const deleteService = async (req, res, next) => {
   try {
-    const result = await serviceService.deleteService(req.params.id, req.tenantId);
+    const result = await serviceService.deleteService(req.params.id);
 
     res.status(200).json({
       success: true,

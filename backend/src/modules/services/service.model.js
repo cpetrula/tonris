@@ -32,11 +32,6 @@ const Service = sequelize.define('Service', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  tenantId: {
-    type: DataTypes.STRING(64),
-    allowNull: false,
-    field: 'tenant_id',
-  },
   name: {
     type: DataTypes.STRING(200),
     allowNull: false,
@@ -84,10 +79,7 @@ const Service = sequelize.define('Service', {
   timestamps: true,
   indexes: [
     {
-      fields: ['tenant_id'],
-    },
-    {
-      fields: ['tenant_id', 'name'],
+      fields: ['name'],
       unique: true,
     },
   ],
@@ -127,7 +119,7 @@ Service.prototype.removeAddOn = async function(addOnId) {
 };
 
 /**
- * Generate default salon services for a new tenant
+ * Generate default salon services
  * @returns {Array<Object>} - Array of default service objects
  */
 Service.generateDefaultServices = function() {

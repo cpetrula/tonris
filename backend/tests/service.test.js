@@ -119,7 +119,6 @@ describe('Service Module', () => {
             name: 'Haircut',
             description: 'Standard haircut',
             price: 35.00,
-            tenantId: 'test-tenant',
             toSafeObject: function() { return { id: this.id, name: this.name, description: this.description, price: this.price }; },
           },
         ],
@@ -246,7 +245,6 @@ describe('Service Module', () => {
         price: 35.00,
         duration: 45,
         category: 'hair',
-        tenantId: 'test-tenant',
         status: 'active',
         toSafeObject: function() {
           return {
