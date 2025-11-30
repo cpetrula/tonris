@@ -27,6 +27,7 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
   let elevenLabsWs = null;
   let tenantId = null;
   let agentId = null;
+  let customParameters = {};
 
   // Extract query parameters if present
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -62,6 +63,37 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
       // Handle ElevenLabs WebSocket open
       elevenLabsWs.on('open', () => {
         logger.info(`[MediaStream] Connected to ElevenLabs for call ${callSid}`);
+        
+        // Build dynamic variables from custom parameters
+        // Include tenant_id and tenant_name for webhook callbacks and query params
+        const dynamicVariables = {
+          tenant_id: tenantId,
+          tenant_name: customParameters.business_name || '',
+        };
+        if (customParameters.business_name) {
+          dynamicVariables.business_name = customParameters.business_name;
+        }
+        if (customParameters.caller_number) {
+          dynamicVariables.caller_number = customParameters.caller_number;
+        }
+        if (customParameters.call_sid) {
+          dynamicVariables.call_sid = customParameters.call_sid;
+        }
+        
+        // Send initialization message to ElevenLabs to start the conversation
+        // This is required by ElevenLabs Conversational AI WebSocket protocol
+        const initMessage = {
+          type: 'conversation_initiation_client_data',
+          conversation_config_override: {
+            agent: {
+              language: 'en',
+            },
+          },
+          dynamic_variables: dynamicVariables,
+        };
+        
+        elevenLabsWs.send(JSON.stringify(initMessage));
+        logger.info(`[MediaStream] Sent initialization message to ElevenLabs for call ${callSid}, tenant: ${tenantId}`);
       });
 
       // Handle messages from ElevenLabs
@@ -171,6 +203,8 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
           if (data.start.customParameters) {
             tenantId = tenantId || data.start.customParameters.tenant_id;
             agentId = agentId || data.start.customParameters.agent_id;
+            // Store all custom parameters for passing to ElevenLabs
+            customParameters = { ...data.start.customParameters };
           }
 
           logger.info(`[MediaStream] Stream started: ${streamSid}, call: ${callSid}`);

@@ -196,7 +196,10 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     const mediaStreamUrl = buildMediaStreamUrl(baseUrl, agentId, tenant.tenantId, CallSid);
     
     // Prepare custom parameters for context
+    // Include tenant_id and tenant_name for ElevenLabs webhook callbacks
     const customParameters = {
+      tenant_id: tenant.tenantId,
+      tenant_name: tenant.name || 'Our Business',
       business_name: tenant.name || 'Our Business',
       caller_number: From,
       call_status: CallStatus,
