@@ -257,8 +257,16 @@ class ElevenLabsService extends AIProviderInterface {
         agentId: effectiveAgentId,
       });
       
+      // Append audio format query parameters to the signed URL for Twilio compatibility
+      // This ensures ElevenLabs uses μ-law encoding at 8kHz which is required for Twilio
+      // Some ElevenLabs agent configurations may not respect the conversation_config_override
+      // so we also add the format parameters to the URL as a fallback
+      let signedUrl = response.signedUrl;
+      const separator = signedUrl.includes('?') ? '&' : '?';
+      signedUrl = `${signedUrl}${separator}output_format=ulaw_8000&input_format=ulaw_8000`;
+      
       return {
-        signedUrl: response.signedUrl,
+        signedUrl,
         agentId: effectiveAgentId,
         tenantId,
         callSid,

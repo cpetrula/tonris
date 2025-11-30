@@ -88,6 +88,10 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // - user_input_audio_format: Format for Twilio input audio (sent to ElevenLabs)
         // Without correct audio format configuration, ElevenLabs outputs audio in an incompatible 
         // format (typically pcm_16000), causing immediate disconnects when Twilio receives it
+        // 
+        // NOTE: We also specify first_message as empty to let the agent use its configured greeting.
+        // If no greeting is configured in the ElevenLabs dashboard, the agent will wait for user input.
+        // The tts section ensures the agent uses the correct TTS output format.
         const initMessage = {
           type: 'conversation_initiation_client_data',
           conversation_config_override: {
@@ -95,6 +99,10 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
               language: 'en',
               agent_output_audio_format: 'ulaw_8000',
               user_input_audio_format: 'ulaw_8000',
+            },
+            tts: {
+              // Ensure TTS output uses the correct format for Twilio
+              output_format: 'ulaw_8000',
             },
           },
           dynamic_variables: dynamicVariables,
@@ -120,8 +128,20 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
       });
 
       // Handle ElevenLabs WebSocket close
+      // Common close codes:
+      // - 1000: Normal closure
+      // - 1006: Abnormal closure (connection lost)
+      // - 1011: Unexpected condition (server error)
+      // - 4000-4999: Application-specific errors from ElevenLabs
       elevenLabsWs.on('close', (code, reason) => {
-        logger.info(`[MediaStream] ElevenLabs disconnected: code=${code}, reason=${reason}`);
+        const reasonStr = reason ? reason.toString() : 'No reason provided';
+        if (code === 1000) {
+          logger.info(`[MediaStream] ElevenLabs disconnected normally: code=${code}`);
+        } else if (code === 1006) {
+          logger.warn(`[MediaStream] ElevenLabs connection lost abnormally: code=${code}, reason=${reasonStr}`);
+        } else {
+          logger.warn(`[MediaStream] ElevenLabs disconnected: code=${code}, reason=${reasonStr}`);
+        }
         // Close Twilio connection when ElevenLabs disconnects
         if (twilioWs.readyState === WebSocket.OPEN) {
           twilioWs.close();
@@ -141,7 +161,9 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
   const handleElevenLabsMessage = (message) => {
     switch (message.type) {
       case 'conversation_initiation_metadata':
-        logger.info(`[MediaStream] Conversation initiated for call ${callSid}`);
+        // This confirms the conversation has been initialized successfully
+        // If we receive this, the audio format configuration was accepted
+        logger.info(`[MediaStream] Conversation initiated for call ${callSid}, conversation_id: ${message.conversation_initiation_metadata_event?.conversation_id || 'unknown'}`);
         break;
 
       case 'audio':
@@ -168,13 +190,16 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         break;
 
       case 'ping':
-        // Respond to ping with pong
+        // Respond to ping with pong - this is critical for keeping the connection alive
+        // ElevenLabs sends periodic pings and expects pong responses
+        // Failure to respond will cause the connection to be closed
         if (message.ping_event?.event_id && elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
           const pongResponse = {
             type: 'pong',
             event_id: message.ping_event.event_id,
           };
           elevenLabsWs.send(JSON.stringify(pongResponse));
+          logger.debug(`[MediaStream] Responded to ping for call ${callSid}`);
         }
         break;
 
@@ -184,6 +209,12 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
 
       case 'user_transcript':
         logger.debug(`[MediaStream] User transcript for call ${callSid}`);
+        break;
+      
+      case 'error':
+        // Handle error messages from ElevenLabs
+        // This can indicate configuration issues, API errors, or other problems
+        logger.error(`[MediaStream] ElevenLabs error for call ${callSid}: ${JSON.stringify(message)}`);
         break;
 
       default:
