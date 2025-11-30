@@ -644,10 +644,13 @@ const handleConversationInitiationWebhook = async (req, res, next) => {
     const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
     
     if (env.isProduction() && webhookSecret) {
-      // Need to use raw body for signature verification
-      const rawBody = req.rawBody || JSON.stringify(req.body);
+      // Require raw body for signature verification
+      if (!req.rawBody) {
+        logger.warn('ElevenLabs Conversation Initiation: Missing raw body for signature verification');
+        throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
+      }
       
-      if (!verifyElevenLabsSignature(rawBody, signature, webhookSecret)) {
+      if (!verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
         logger.warn('ElevenLabs Conversation Initiation: Invalid signature');
         throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
       }

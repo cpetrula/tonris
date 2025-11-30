@@ -594,10 +594,9 @@ const handleConversationInitiation = async (params) => {
     }
 
     // Add custom prompt if tone is configured
+    // Note: The prompt is added as a direct property on the agent object
     if (aiTone) {
-      response.conversation_config_override.agent.prompt = {
-        prompt: `You are a ${aiTone} AI receptionist for ${businessName}. Help callers with booking appointments, checking availability, and answering questions about services and business hours.`,
-      };
+      response.conversation_config_override.agent.prompt = `You are a ${aiTone} AI receptionist for ${businessName}. Help callers with booking appointments, checking availability, and answering questions about services and business hours.`;
     }
 
     logger.info(`ElevenLabs Conversation Initiation response for tenant=${tenantId}: variables=${Object.keys(responseVariables).join(',')}`);

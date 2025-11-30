@@ -6,6 +6,7 @@ const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const { WebSocketServer } = require('ws');
 const http = require('http');
 
@@ -27,6 +28,20 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors());
+
+// Rate limiter for webhooks (more lenient than user-facing endpoints)
+const webhookRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute per IP
+  skip: () => env.isTest(), // Skip in test environment
+  message: {
+    success: false,
+    error: 'Too many requests, please try again later',
+    code: 'RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Stripe webhook route needs raw body - must be before express.json()
 app.post('/api/webhooks/stripe', 
@@ -57,6 +72,7 @@ app.post('/api/webhooks/twilio/status',
 
 // Twilio to ElevenLabs webhook - connects incoming calls to ElevenLabs Conversational AI
 app.post('/api/webhooks/twilio/elevenlabs',
+  webhookRateLimiter,
   express.urlencoded({ extended: false }),
   aiController.handleTwilioElevenLabsWebhook
 );
@@ -65,6 +81,7 @@ app.post('/api/webhooks/twilio/elevenlabs',
 // Called by ElevenLabs when a new Twilio phone call or SIP trunk call conversation begins
 // This webhook must receive raw body for signature verification
 app.post('/api/webhooks/elevenlabs/conversation-initiation',
+  webhookRateLimiter,
   express.json({
     verify: (req, _res, buf) => {
       // Store raw body for signature verification
