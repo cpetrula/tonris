@@ -1441,6 +1441,52 @@ Handle ElevenLabs Conversation Initiation Client Data webhook. This webhook is c
 }
 ```
 
+### GET /api/webhooks/elevenlabs/services
+
+Fetch services for a tenant. This webhook is called by ElevenLabs to retrieve available services for display or voice assistant context. It does not require Bearer token authentication.
+
+**Authentication**: Optional HMAC-SHA256 signature verification (via `X-ElevenLabs-Signature` header)
+
+**Query Parameters**:
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `tenantId` | Yes | The tenant identifier (must be a valid UUID) |
+
+**Headers** (optional):
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-ElevenLabs-Signature` | No (Yes in production) | HMAC-SHA256 signature of the query string |
+
+**Request**:
+```
+GET /api/webhooks/elevenlabs/services?tenantId=de535df4-ccee-11f0-a2aa-12736706c408
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "services": [
+      {
+        "id": "service-uuid",
+        "name": "Haircut",
+        "description": "A classic haircut",
+        "price": 50,
+        "duration": 60,
+        "category": "hair"
+      }
+    ],
+    "total": 1,
+    "tenantId": "de535df4-ccee-11f0-a2aa-12736706c408"
+  }
+}
+```
+
+**Error Responses**:
+- `400 Bad Request`: Missing or invalid `tenantId`
+- `401 Unauthorized`: Invalid webhook signature (production only)
+
 ---
 
 ## Error Responses

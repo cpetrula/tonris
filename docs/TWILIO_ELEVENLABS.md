@@ -330,6 +330,54 @@ The webhook handler supports both `type` (ElevenLabs standard) and `event` (lega
    - Add it to your `.env` as `ELEVENLABS_WEBHOOK_SECRET`
    - Configure the same secret in ElevenLabs dashboard
 
+#### GET `/api/webhooks/elevenlabs/services`
+
+**Client Data Webhook for Services** - Called by ElevenLabs to fetch available services for a tenant. This endpoint does not require Bearer token authentication, making it suitable for ElevenLabs webhook calls.
+
+**Use Case**: Configure this webhook URL in your ElevenLabs agent settings to enable dynamic service retrieval for each call. This is useful when you want ElevenLabs to automatically fetch the list of services.
+
+**Query Parameters**:
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `tenantId` | Yes | The tenant identifier (UUID format) |
+
+**Headers** (optional):
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-ElevenLabs-Signature` | No (Yes in production) | HMAC-SHA256 signature of the query string |
+
+**Request**:
+```
+GET /api/webhooks/elevenlabs/services?tenantId=de535df4-ccee-11f0-a2aa-12736706c408
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "services": [
+      {
+        "id": "service-uuid",
+        "name": "Haircut",
+        "description": "A classic haircut",
+        "price": 50,
+        "duration": 60,
+        "category": "hair"
+      }
+    ],
+    "total": 1,
+    "tenantId": "de535df4-ccee-11f0-a2aa-12736706c408"
+  }
+}
+```
+
+**Configuration in ElevenLabs Dashboard**:
+1. Navigate to your ElevenLabs agent settings
+2. Under "Client Data" or "Data Sources", add the webhook URL:
+   - URL: `https://your-domain.com/api/webhooks/elevenlabs/services?tenantId=YOUR_TENANT_ID`
+3. Optionally set the webhook secret for production use
+
 ## Supported Tool Calls
 
 The integration supports the following tool calls from ElevenLabs:

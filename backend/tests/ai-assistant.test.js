@@ -724,6 +724,73 @@ describe('AI Assistant Module', () => {
       expect(response.body.success).toBe(true);
     });
   });
+
+  describe('GET /api/webhooks/elevenlabs/services', () => {
+    it('should return 400 when tenantId is missing', async () => {
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/services');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Tenant ID is required');
+    });
+
+    it('should return 400 for invalid tenantId format', async () => {
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/services?tenantId=invalid-id');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid tenant ID format');
+    });
+
+    it('should return services for valid tenantId', async () => {
+      mockServiceModel.findAndCountAll.mockResolvedValue({
+        count: 2,
+        rows: [
+          {
+            id: 'service-1',
+            name: 'Haircut',
+            description: 'A classic haircut',
+            price: 50,
+            duration: 60,
+            category: 'hair',
+            toSafeObject: function() { return this; },
+          },
+          {
+            id: 'service-2',
+            name: 'Styling',
+            description: 'Hair styling',
+            price: 30,
+            duration: 30,
+            category: 'hair',
+            toSafeObject: function() { return this; },
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/services?tenantId=de535df4-ccee-11f0-a2aa-12736706c408');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.services).toBeDefined();
+      expect(response.body.data.services.length).toBe(2);
+      expect(response.body.data.tenantId).toBe('de535df4-ccee-11f0-a2aa-12736706c408');
+    });
+
+    it('should not require authentication', async () => {
+      mockServiceModel.findAndCountAll.mockResolvedValue({
+        count: 0,
+        rows: [],
+      });
+
+      // This request has no Authorization header but should still succeed
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/services?tenantId=de535df4-ccee-11f0-a2aa-12736706c408');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
 });
 
 describe('AI Provider Interface', () => {
