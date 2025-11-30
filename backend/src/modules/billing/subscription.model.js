@@ -42,12 +42,13 @@ const Subscription = sequelize.define('Subscription', {
     primaryKey: true,
   },
   tenantId: {
-    type: DataTypes.STRING(64),
+    type: DataTypes.UUID,
     allowNull: false,
     unique: true,
     field: 'tenant_id',
-    validate: {
-      notEmpty: true,
+    references: {
+      model: 'tenants',
+      key: 'id',
     },
   },
   stripeCustomerId: {

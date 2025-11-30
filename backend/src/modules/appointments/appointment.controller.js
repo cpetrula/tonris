@@ -4,6 +4,7 @@
  */
 const appointmentService = require('./appointment.service');
 const availabilityService = require('./availability.service');
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * Validation patterns
@@ -20,8 +21,9 @@ const VALIDATION = {
 const getAppointments = async (req, res, next) => {
   try {
     const { status, employeeId, startDate, endDate, customerEmail, limit, offset } = req.query;
+    const tenantUUID = await getTenantUUID(req.tenantId);
 
-    const result = await appointmentService.getAppointments(req.tenantId, {
+    const result = await appointmentService.getAppointments(tenantUUID, {
       status,
       employeeId,
       startDate,
@@ -46,7 +48,8 @@ const getAppointments = async (req, res, next) => {
  */
 const getAppointment = async (req, res, next) => {
   try {
-    const appointment = await appointmentService.getAppointmentById(req.params.id, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const appointment = await appointmentService.getAppointmentById(req.params.id, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -127,6 +130,7 @@ const createAppointment = async (req, res, next) => {
       });
     }
 
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const appointment = await appointmentService.createAppointment({
       employeeId,
       serviceId,
@@ -136,7 +140,7 @@ const createAppointment = async (req, res, next) => {
       startTime,
       addOns,
       notes,
-    }, req.tenantId);
+    }, tenantUUID);
 
     res.status(201).json({
       success: true,
@@ -202,7 +206,8 @@ const updateAppointment = async (req, res, next) => {
       }
     }
 
-    const appointment = await appointmentService.updateAppointment(req.params.id, req.tenantId, {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const appointment = await appointmentService.updateAppointment(req.params.id, tenantUUID, {
       employeeId,
       startTime,
       addOns,
@@ -229,10 +234,11 @@ const updateAppointment = async (req, res, next) => {
 const deleteAppointment = async (req, res, next) => {
   try {
     const { reason, notes, hardDelete } = req.body;
+    const tenantUUID = await getTenantUUID(req.tenantId);
 
     // If hardDelete is true, permanently delete the appointment
     if (hardDelete === true) {
-      const result = await appointmentService.deleteAppointment(req.params.id, req.tenantId);
+      const result = await appointmentService.deleteAppointment(req.params.id, tenantUUID);
       return res.status(200).json({
         success: true,
         data: result,
@@ -250,7 +256,7 @@ const deleteAppointment = async (req, res, next) => {
 
     const appointment = await appointmentService.cancelAppointment(
       req.params.id,
-      req.tenantId,
+      tenantUUID,
       reason,
       notes
     );
@@ -298,6 +304,8 @@ const getAvailability = async (req, res, next) => {
       });
     }
 
+    const tenantUUID = await getTenantUUID(req.tenantId);
+
     // If date range is provided
     if (startDate && endDate) {
       const start = new Date(startDate);
@@ -320,7 +328,7 @@ const getAvailability = async (req, res, next) => {
       }
 
       const availability = await availabilityService.getAvailabilityForDateRange(
-        req.tenantId,
+        tenantUUID,
         start,
         end,
         serviceId,
@@ -345,7 +353,7 @@ const getAvailability = async (req, res, next) => {
 
     const employeeIds = employeeId ? [employeeId] : null;
     const availability = await availabilityService.getAvailabilityForDate(
-      req.tenantId,
+      tenantUUID,
       targetDate,
       serviceId,
       employeeIds

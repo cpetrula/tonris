@@ -3,23 +3,57 @@
  * Tests for authentication module functionality
  */
 const request = require('supertest');
+
+// Define mocks before requiring the app
+const mockUserModel = {
+  findOne: jest.fn(),
+  findByPk: jest.fn(),
+  create: jest.fn(),
+};
+
+const mockTenantModel = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  generateDefaultSettings: jest.fn(() => ({})),
+  isValidTransition: jest.fn(),
+};
+
+// Mock models BEFORE requiring the app
+jest.mock('../src/models', () => ({
+  User: mockUserModel,
+}));
+
+// Mock tenant utility
+jest.mock('../src/utils/tenant', () => ({
+  getTenantUUID: jest.fn().mockResolvedValue('tenant-uuid-123'),
+}));
+
+// Mock tenant model for the auth controller
+jest.mock('../src/modules/tenants/tenant.model', () => ({
+  Tenant: mockTenantModel,
+  TENANT_STATUS: {
+    PENDING: 'pending',
+    ACTIVE: 'active',
+  },
+  PLAN_TYPES: {
+    FREE: 'free',
+  },
+}));
+
+// Now require the app AFTER the mocks are in place
 const { app } = require('../src/app');
 const { User } = require('../src/models');
 const jwtUtils = require('../src/modules/auth/jwt.utils');
 const twoFactorUtils = require('../src/modules/auth/2fa.utils');
 
-// Mock the database User model
-jest.mock('../src/models', () => ({
-  User: {
-    findOne: jest.fn(),
-    findByPk: jest.fn(),
-    create: jest.fn(),
-  },
-}));
-
 describe('Authentication Module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Setup default tenant mock
+    mockTenantModel.findOne.mockResolvedValue({
+      id: 'tenant-uuid-123',
+      tenantId: 'default',
+    });
   });
 
   describe('JWT Utilities', () => {

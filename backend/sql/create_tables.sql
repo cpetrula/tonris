@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    tenant_id VARCHAR(64) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
     two_factor_secret VARCHAR(255) NULL,
     two_factor_enabled TINYINT(1) DEFAULT 0,
     password_reset_token VARCHAR(255) NULL,
@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS users (
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_users_email (email)
+    UNIQUE KEY uk_users_email (email),
+    CONSTRAINT fk_users_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -60,7 +61,7 @@ CREATE TABLE IF NOT EXISTS tenants (
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS employees (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
-    tenant_id VARCHAR(64) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -75,7 +76,8 @@ CREATE TABLE IF NOT EXISTS employees (
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_employees_tenant_id (tenant_id),
-    UNIQUE KEY uk_employees_tenant_email (tenant_id, email)
+    UNIQUE KEY uk_employees_tenant_email (tenant_id, email),
+    CONSTRAINT fk_employees_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -84,7 +86,7 @@ CREATE TABLE IF NOT EXISTS employees (
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS services (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
-    tenant_id VARCHAR(64) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
     name VARCHAR(200) NOT NULL,
     description TEXT NULL,
     category ENUM('hair', 'nails', 'skin', 'makeup', 'massage', 'other') NOT NULL DEFAULT 'other',
@@ -97,7 +99,8 @@ CREATE TABLE IF NOT EXISTS services (
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_services_tenant_id (tenant_id),
-    UNIQUE KEY uk_services_tenant_name (tenant_id, name)
+    UNIQUE KEY uk_services_tenant_name (tenant_id, name),
+    CONSTRAINT fk_services_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -106,7 +109,7 @@ CREATE TABLE IF NOT EXISTS services (
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS appointments (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
-    tenant_id VARCHAR(64) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
     employee_id CHAR(36) NOT NULL,
     service_id CHAR(36) NOT NULL,
     customer_name VARCHAR(200) NOT NULL,
@@ -130,7 +133,8 @@ CREATE TABLE IF NOT EXISTS appointments (
     INDEX idx_appointments_tenant_employee (tenant_id, employee_id),
     INDEX idx_appointments_tenant_time (tenant_id, start_time, end_time),
     INDEX idx_appointments_tenant_status (tenant_id, status),
-    INDEX idx_appointments_tenant_customer_email (tenant_id, customer_email)
+    INDEX idx_appointments_tenant_customer_email (tenant_id, customer_email),
+    CONSTRAINT fk_appointments_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -139,7 +143,7 @@ CREATE TABLE IF NOT EXISTS appointments (
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS subscriptions (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
-    tenant_id VARCHAR(64) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
     stripe_customer_id VARCHAR(255) NULL,
     stripe_subscription_id VARCHAR(255) NULL,
     stripe_price_id VARCHAR(255) NULL,
@@ -158,7 +162,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     UNIQUE KEY uk_subscriptions_tenant_id (tenant_id),
     UNIQUE KEY uk_subscriptions_stripe_subscription_id (stripe_subscription_id),
     INDEX idx_subscriptions_stripe_customer_id (stripe_customer_id),
-    INDEX idx_subscriptions_status (status)
+    INDEX idx_subscriptions_status (status),
+    CONSTRAINT fk_subscriptions_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -167,7 +172,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS call_logs (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
-    tenant_id VARCHAR(64) NOT NULL,
+    tenant_id CHAR(36) NOT NULL,
     twilio_call_sid VARCHAR(64) NOT NULL,
     direction ENUM('inbound', 'outbound') NOT NULL,
     status ENUM('initiated', 'ringing', 'in-progress', 'completed', 'busy', 'no-answer', 'canceled', 'failed') NOT NULL DEFAULT 'initiated',
@@ -184,5 +189,6 @@ CREATE TABLE IF NOT EXISTS call_logs (
     PRIMARY KEY (id),
     INDEX idx_call_logs_tenant_id (tenant_id),
     UNIQUE KEY uk_call_logs_twilio_call_sid (twilio_call_sid),
-    INDEX idx_call_logs_created_at (createdAt)
+    INDEX idx_call_logs_created_at (createdAt),
+    CONSTRAINT fk_call_logs_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

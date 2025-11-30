@@ -110,6 +110,11 @@ jest.mock('../src/modules/billing/stripe.service', () => ({
   getPlanPrice: jest.fn((interval) => interval === 'year' ? 283200 : 29500),
 }));
 
+// Mock tenant utility
+jest.mock('../src/utils/tenant', () => ({
+  getTenantUUID: jest.fn().mockResolvedValue('tenant-uuid-123'),
+}));
+
 // Now require the app AFTER the mocks are in place
 const { app } = require('../src/app');
 const jwtUtils = require('../src/modules/auth/jwt.utils');

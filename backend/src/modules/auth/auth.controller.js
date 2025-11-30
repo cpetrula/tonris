@@ -3,6 +3,7 @@
  * Handles HTTP requests for authentication endpoints
  */
 const authService = require('./auth.service');
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * POST /api/auth/signup
@@ -40,7 +41,8 @@ const signup = async (req, res, next) => {
       });
     }
 
-    const result = await authService.signup({ email, password }, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await authService.signup({ email, password }, tenantUUID);
 
     res.status(201).json({
       success: true,
@@ -104,7 +106,8 @@ const forgotPassword = async (req, res, next) => {
       });
     }
 
-    const result = await authService.forgotPassword(email, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await authService.forgotPassword(email, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -140,7 +143,8 @@ const resetPassword = async (req, res, next) => {
       });
     }
 
-    const result = await authService.resetPassword(token, password, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await authService.resetPassword(token, password, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -157,7 +161,8 @@ const resetPassword = async (req, res, next) => {
  */
 const setup2FA = async (req, res, next) => {
   try {
-    const result = await authService.setup2FA(req.user.userId, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await authService.setup2FA(req.user.userId, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -184,7 +189,8 @@ const verify2FA = async (req, res, next) => {
       });
     }
 
-    const result = await authService.verify2FA(req.user.userId, code, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await authService.verify2FA(req.user.userId, code, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -211,7 +217,8 @@ const disable2FA = async (req, res, next) => {
       });
     }
 
-    const result = await authService.disable2FA(req.user.userId, code, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await authService.disable2FA(req.user.userId, code, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -255,7 +262,8 @@ const refreshToken = async (req, res, next) => {
  */
 const getProfile = async (req, res, next) => {
   try {
-    const user = await authService.getUserById(req.user.userId, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const user = await authService.getUserById(req.user.userId, tenantUUID);
 
     res.status(200).json({
       success: true,

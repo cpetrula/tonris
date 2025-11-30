@@ -34,12 +34,12 @@ const CallLog = sequelize.define('CallLog', {
     primaryKey: true,
   },
   tenantId: {
-    type: DataTypes.STRING(64),
+    type: DataTypes.UUID,
     allowNull: false,
     field: 'tenant_id',
-    validate: {
-      is: /^[a-zA-Z0-9_-]+$/,
-      len: [1, 64],
+    references: {
+      model: 'tenants',
+      key: 'id',
     },
   },
   twilioCallSid: {

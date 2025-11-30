@@ -3,17 +3,18 @@
  * Handles HTTP requests for service endpoints
  */
 const serviceService = require('./service.service');
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * GET /api/services
  * Get all services for tenant
  */
 const getServices = async (req, res, next) => {
-  console.log('Fetching services for tenant:', req);
   try {
     const { status, category, limit, offset } = req.query;
+    const tenantUUID = await getTenantUUID(req.tenantId);
     
-    const result = await serviceService.getServices(req.tenantId, {
+    const result = await serviceService.getServices(tenantUUID, {
       status,
       category,
       limit,
@@ -35,7 +36,8 @@ const getServices = async (req, res, next) => {
  */
 const getService = async (req, res, next) => {
   try {
-    const service = await serviceService.getServiceById(req.params.id, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const service = await serviceService.getServiceById(req.params.id, tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -81,6 +83,7 @@ const createService = async (req, res, next) => {
       });
     }
 
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const service = await serviceService.createService({
       name,
       description,
@@ -88,7 +91,7 @@ const createService = async (req, res, next) => {
       duration,
       price,
       addOns,
-    }, req.tenantId);
+    }, tenantUUID);
 
     res.status(201).json({
       success: true,
@@ -125,7 +128,8 @@ const updateService = async (req, res, next) => {
       });
     }
 
-    const service = await serviceService.updateService(req.params.id, req.tenantId, {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const service = await serviceService.updateService(req.params.id, tenantUUID, {
       name,
       description,
       category,
@@ -151,7 +155,8 @@ const updateService = async (req, res, next) => {
  */
 const deleteService = async (req, res, next) => {
   try {
-    const result = await serviceService.deleteService(req.params.id, req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await serviceService.deleteService(req.params.id, tenantUUID);
 
     res.status(200).json({
       success: true,

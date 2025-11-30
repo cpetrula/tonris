@@ -156,6 +156,11 @@ jest.mock('../src/models', () => ({
   },
 }));
 
+// Mock tenant utility
+jest.mock('../src/utils/tenant', () => ({
+  getTenantUUID: jest.fn().mockResolvedValue('tenant-uuid-123'),
+}));
+
 // Now require the app AFTER the mocks are in place
 const { app } = require('../src/app');
 const jwtUtils = require('../src/modules/auth/jwt.utils');

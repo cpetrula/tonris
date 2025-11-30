@@ -6,6 +6,7 @@ const twilioService = require('./twilio.service');
 const callHandler = require('./call.handler');
 const smsHandler = require('./sms.handler');
 const { Tenant } = require('../tenants/tenant.model');
+const { getTenantUUID } = require('../../utils/tenant');
 const logger = require('../../utils/logger');
 
 /**
@@ -98,9 +99,10 @@ const handleStatusWebhook = async (req, res, next) => {
 const provisionNumber = async (req, res, next) => {
   try {
     const { areaCode, country } = req.body;
+    const tenantUUID = await getTenantUUID(req.tenantId);
     
     const result = await twilioService.provisionPhoneNumber({
-      tenantId: req.tenantId,
+      tenantId: tenantUUID,
       areaCode,
       country,
     });
@@ -150,8 +152,9 @@ const sendSms = async (req, res, next) => {
       });
     }
     
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const result = await smsHandler.sendCustomerNotification({
-      tenantId: req.tenantId,
+      tenantId: tenantUUID,
       to,
       message,
       type: type || 'custom',
@@ -182,8 +185,9 @@ const sendEmployeeSms = async (req, res, next) => {
       });
     }
     
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const result = await smsHandler.sendEmployeeNotification({
-      tenantId: req.tenantId,
+      tenantId: tenantUUID,
       to,
       message,
       type: type || 'custom',
@@ -220,8 +224,9 @@ const sendAppointmentReminder = async (req, res, next) => {
       });
     }
     
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const result = await smsHandler.sendAppointmentReminder({
-      tenantId: req.tenantId,
+      tenantId: tenantUUID,
       customerPhone,
       customerName,
       appointmentDate,
@@ -253,7 +258,8 @@ const getCallLogs = async (req, res, next) => {
       endDate,
     } = req.query;
     
-    const result = await callHandler.getCallLogs(req.tenantId, {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await callHandler.getCallLogs(tenantUUID, {
       limit: limit ? parseInt(limit, 10) : undefined,
       offset: offset ? parseInt(offset, 10) : undefined,
       direction,
