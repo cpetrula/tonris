@@ -99,6 +99,22 @@ app.get('/api/webhooks/elevenlabs/services',
   aiController.handleElevenLabsServicesWebhook
 );
 
+// ElevenLabs Client Data webhook for employees
+// Called by ElevenLabs to fetch employees for a tenant
+// This endpoint does not require Bearer token authentication
+app.get('/api/webhooks/elevenlabs/employees',
+  webhookRateLimiter,
+  aiController.handleElevenLabsEmployeesWebhook
+);
+
+// ElevenLabs Client Data webhook for appointments
+// Called by ElevenLabs to fetch appointments for a tenant
+// This endpoint does not require Bearer token authentication
+app.get('/api/webhooks/elevenlabs/appointments',
+  webhookRateLimiter,
+  aiController.handleElevenLabsAppointmentsWebhook
+);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

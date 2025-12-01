@@ -796,6 +796,163 @@ describe('AI Assistant Module', () => {
       expect(response.body.success).toBe(true);
     });
   });
+
+  describe('GET /api/webhooks/elevenlabs/employees', () => {
+    it('should return 400 when tenantId is missing', async () => {
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/employees');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Tenant ID is required');
+    });
+
+    it('should return 400 for invalid tenantId format', async () => {
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/employees?tenantId=invalid-id');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid tenant ID format');
+    });
+
+    it('should return employees for valid tenantId', async () => {
+      mockEmployeeModel.findAndCountAll.mockResolvedValue({
+        count: 2,
+        rows: [
+          {
+            id: 'employee-1',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john@example.com',
+            status: 'active',
+            toSafeObject: function() { return this; },
+          },
+          {
+            id: 'employee-2',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            email: 'jane@example.com',
+            status: 'active',
+            toSafeObject: function() { return this; },
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/employees?tenantId=de535df4-ccee-11f0-a2aa-12736706c408');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.employees).toBeDefined();
+      expect(response.body.data.employees.length).toBe(2);
+      expect(response.body.data.tenantId).toBe('de535df4-ccee-11f0-a2aa-12736706c408');
+    });
+
+    it('should not require authentication', async () => {
+      mockEmployeeModel.findAndCountAll.mockResolvedValue({
+        count: 0,
+        rows: [],
+      });
+
+      // This request has no Authorization header but should still succeed
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/employees?tenantId=de535df4-ccee-11f0-a2aa-12736706c408');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('GET /api/webhooks/elevenlabs/appointments', () => {
+    it('should return 400 when tenantId is missing', async () => {
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/appointments');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Tenant ID is required');
+    });
+
+    it('should return 400 for invalid tenantId format', async () => {
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/appointments?tenantId=invalid-id');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid tenant ID format');
+    });
+
+    it('should return 400 for invalid employeeId format', async () => {
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/appointments?tenantId=de535df4-ccee-11f0-a2aa-12736706c408&employeeId=invalid-id');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid employee ID format');
+    });
+
+    it('should return appointments for valid tenantId', async () => {
+      mockAppointmentModel.findAndCountAll.mockResolvedValue({
+        count: 2,
+        rows: [
+          {
+            id: 'appointment-1',
+            customerName: 'John Customer',
+            startTime: '2024-01-15T10:00:00Z',
+            status: 'scheduled',
+            toSafeObject: function() { return this; },
+          },
+          {
+            id: 'appointment-2',
+            customerName: 'Jane Customer',
+            startTime: '2024-01-15T11:00:00Z',
+            status: 'confirmed',
+            toSafeObject: function() { return this; },
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/appointments?tenantId=de535df4-ccee-11f0-a2aa-12736706c408');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.appointments).toBeDefined();
+      expect(response.body.data.appointments.length).toBe(2);
+      expect(response.body.data.tenantId).toBe('de535df4-ccee-11f0-a2aa-12736706c408');
+    });
+
+    it('should not require authentication', async () => {
+      mockAppointmentModel.findAndCountAll.mockResolvedValue({
+        count: 0,
+        rows: [],
+      });
+
+      // This request has no Authorization header but should still succeed
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/appointments?tenantId=de535df4-ccee-11f0-a2aa-12736706c408');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should accept optional filter parameters', async () => {
+      mockAppointmentModel.findAndCountAll.mockResolvedValue({
+        count: 1,
+        rows: [
+          {
+            id: 'appointment-1',
+            customerName: 'John Customer',
+            startTime: '2024-01-15T10:00:00Z',
+            status: 'scheduled',
+            toSafeObject: function() { return this; },
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .get('/api/webhooks/elevenlabs/appointments?tenantId=de535df4-ccee-11f0-a2aa-12736706c408&status=scheduled&employeeId=de535df4-ccee-11f0-a2aa-12736706c408&startDate=2024-01-01&endDate=2024-12-31');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
 });
 
 describe('AI Provider Interface', () => {
