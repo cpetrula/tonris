@@ -14,6 +14,7 @@ const { availabilityService } = require('../appointments');
 const { appointmentService, CANCELLATION_REASONS } = require('../appointments');
 const { serviceService } = require('../services');
 const { tenantService } = require('../tenants');
+const { employeeService } = require('../employees');
 
 /**
  * UUID validation regex
@@ -810,6 +811,155 @@ const handleElevenLabsServicesWebhook = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/webhooks/elevenlabs/employees
+ * Handle ElevenLabs Client Data webhook to fetch employees for a tenant
+ * 
+ * This endpoint is called by ElevenLabs when it needs to retrieve employees
+ * for a tenant. It does not require Bearer token authentication since
+ * ElevenLabs webhooks don't send authentication headers.
+ * 
+ * Query Parameters:
+ * - tenantId: The tenant identifier (required)
+ * 
+ * Headers (required in production when webhook secret is configured):
+ * - X-ElevenLabs-Signature: HMAC-SHA256 signature of the request
+ */
+const handleElevenLabsEmployeesWebhook = async (req, res, next) => {
+  try {
+    // Verify webhook signature in production
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+    
+    if (env.isProduction() && webhookSecret) {
+      // For GET requests, we need to verify using query string
+      const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
+      
+      // Signature is required when webhook secret is configured in production
+      if (!signature || !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Employees webhook: Invalid or missing signature');
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    }
+    
+    // Get tenant ID from query parameter only (explicit requirement)
+    const tenantId = req.query.tenantId;
+    
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+    
+    // Validate tenant ID format
+    if (!isValidUUID(tenantId)) {
+      throw new AppError('Invalid tenant ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    logger.info(`ElevenLabs Employees webhook: Fetching employees for tenant ${tenantId}`);
+    
+    // Fetch employees for the tenant
+    const result = await employeeService.getEmployees(tenantId, {
+      status: 'active',
+      limit: 100,
+    });
+    
+    // Return employees in the format expected by ElevenLabs
+    res.status(200).json({
+      success: true,
+      data: {
+        employees: result.employees,
+        message: 'Here are the current employees available',
+        total: result.total,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Employees webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
+/**
+ * GET /api/webhooks/elevenlabs/appointments
+ * Handle ElevenLabs Client Data webhook to fetch appointments for a tenant
+ * 
+ * This endpoint is called by ElevenLabs when it needs to retrieve appointments
+ * for a tenant. It does not require Bearer token authentication since
+ * ElevenLabs webhooks don't send authentication headers.
+ * 
+ * Query Parameters:
+ * - tenantId: The tenant identifier (required)
+ * - status: Optional filter by appointment status
+ * - employeeId: Optional filter by employee ID
+ * - startDate: Optional filter by start date (ISO 8601)
+ * - endDate: Optional filter by end date (ISO 8601)
+ * 
+ * Headers (required in production when webhook secret is configured):
+ * - X-ElevenLabs-Signature: HMAC-SHA256 signature of the request
+ */
+const handleElevenLabsAppointmentsWebhook = async (req, res, next) => {
+  try {
+    // Verify webhook signature in production
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+    
+    if (env.isProduction() && webhookSecret) {
+      // For GET requests, we need to verify using query string
+      const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
+      
+      // Signature is required when webhook secret is configured in production
+      if (!signature || !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Appointments webhook: Invalid or missing signature');
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    }
+    
+    // Get tenant ID from query parameter only (explicit requirement)
+    const tenantId = req.query.tenantId;
+    
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+    
+    // Validate tenant ID format
+    if (!isValidUUID(tenantId)) {
+      throw new AppError('Invalid tenant ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    // Get optional filter parameters
+    const { status, employeeId, startDate, endDate } = req.query;
+    
+    // Validate optional employeeId format if provided
+    if (employeeId && !isValidUUID(employeeId)) {
+      throw new AppError('Invalid employee ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    logger.info(`ElevenLabs Appointments webhook: Fetching appointments for tenant ${tenantId}`);
+    
+    // Fetch appointments for the tenant
+    const result = await appointmentService.getAppointments(tenantId, {
+      status,
+      employeeId,
+      startDate,
+      endDate,
+      limit: 100,
+    });
+    
+    // Return appointments in the format expected by ElevenLabs
+    res.status(200).json({
+      success: true,
+      data: {
+        appointments: result.appointments,
+        message: 'Here are the current appointments',
+        total: result.total,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Appointments webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -820,5 +970,7 @@ module.exports = {
   handleTwilioElevenLabsWebhook,
   handleConversationInitiationWebhook,
   handleElevenLabsServicesWebhook,
+  handleElevenLabsEmployeesWebhook,
+  handleElevenLabsAppointmentsWebhook,
   getAIConfig,
 };
