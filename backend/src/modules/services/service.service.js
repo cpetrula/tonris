@@ -45,6 +45,7 @@ const createService = async (serviceData, tenantId) => {
  * @returns {Promise<Object>} - List of services
  */
 const getServices = async (tenantId, options = {}) => {
+  console.log('Getting services with options:', options);
   const { status, category, limit = 100, offset = 0 } = options;
 
   const where = { tenantId };

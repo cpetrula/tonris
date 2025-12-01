@@ -47,6 +47,7 @@ const createEmployee = async (employeeData, tenantId) => {
  * @returns {Promise<Array>} - List of employees
  */
 const getEmployees = async (tenantId, options = {}) => {
+  console.log('Getting employees with options:', options);
   const { status, employeeType, limit = 100, offset = 0 } = options;
 
   const where = { tenantId };
