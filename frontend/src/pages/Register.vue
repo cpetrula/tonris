@@ -36,6 +36,7 @@ async function fetchBusinessTypes() {
     businessTypes.value = response.data.data.businessTypes
   } catch (err) {
     console.error('Failed to fetch business types:', err)
+    localError.value = 'Failed to load business types. Please refresh the page.'
   } finally {
     loadingBusinessTypes.value = false
   }

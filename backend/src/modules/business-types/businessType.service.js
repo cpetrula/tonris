@@ -16,7 +16,8 @@ const getActiveBusinessTypes = async () => {
     order: [['businessType', 'ASC']],
   });
 
-  return businessTypes.map(bt => bt.toSafeObject());
+  // Don't include agentId for public endpoint
+  return businessTypes.map(bt => bt.toSafeObject(false));
 };
 
 /**
@@ -28,7 +29,8 @@ const getAllBusinessTypes = async () => {
     order: [['businessType', 'ASC']],
   });
 
-  return businessTypes.map(bt => bt.toSafeObject());
+  // Include agentId for admin endpoint
+  return businessTypes.map(bt => bt.toSafeObject(true));
 };
 
 /**
@@ -43,7 +45,8 @@ const getBusinessTypeById = async (id) => {
     throw new AppError('Business type not found', 404, 'BUSINESS_TYPE_NOT_FOUND');
   }
 
-  return businessType.toSafeObject();
+  // Include agentId for admin endpoint
+  return businessType.toSafeObject(true);
 };
 
 /**

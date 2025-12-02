@@ -37,10 +37,15 @@ const BusinessType = sequelize.define('BusinessType', {
 
 /**
  * Get business type data safe for API response
+ * @param {boolean} includeAgentId - Whether to include agent ID (false for public endpoints)
  * @returns {Object} - BusinessType data
  */
-BusinessType.prototype.toSafeObject = function() {
-  return this.toJSON();
+BusinessType.prototype.toSafeObject = function(includeAgentId = false) {
+  const data = this.toJSON();
+  if (!includeAgentId) {
+    delete data.agentId;
+  }
+  return data;
 };
 
 module.exports = {
