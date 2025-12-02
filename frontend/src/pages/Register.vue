@@ -2,10 +2,19 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import Select from 'primevue/select'
+
+interface BusinessType {
+  id: string
+  businessType: string
+  agentId: string
+  active: boolean
+}
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -15,10 +24,31 @@ const lastName = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const businessTypeId = ref('')
+const businessTypes = ref<BusinessType[]>([])
 const localError = ref('')
+const loadingBusinessTypes = ref(false)
+
+async function fetchBusinessTypes() {
+  loadingBusinessTypes.value = true
+  try {
+    const response = await api.get('/api/business-types/active')
+    businessTypes.value = response.data.data.businessTypes
+  } catch (err) {
+    console.error('Failed to fetch business types:', err)
+  } finally {
+    loadingBusinessTypes.value = false
+  }
+}
 
 async function handleSubmit() {
   localError.value = ''
+
+  // Validate business type selection
+  if (!businessTypeId.value) {
+    localError.value = 'Please select a business type'
+    return
+  }
 
   // Validate passwords match
   if (password.value !== confirmPassword.value) {
@@ -36,7 +66,8 @@ async function handleSubmit() {
     firstName: firstName.value,
     lastName: lastName.value,
     email: email.value,
-    password: password.value
+    password: password.value,
+    businessTypeId: businessTypeId.value
   })
 
   if (success) {
@@ -46,6 +77,7 @@ async function handleSubmit() {
 
 onMounted(() => {
   authStore.clearError()
+  fetchBusinessTypes()
 })
 </script>
 
@@ -107,6 +139,22 @@ onMounted(() => {
               class="w-full"
               required
               autocomplete="email"
+            />
+          </div>
+
+          <div>
+            <label for="businessType" class="block text-sm font-medium text-gray-700 mb-1">
+              Business Type <span class="text-red-500">*</span>
+            </label>
+            <Select
+              id="businessType"
+              v-model="businessTypeId"
+              :options="businessTypes"
+              optionLabel="businessType"
+              optionValue="id"
+              placeholder="Select a business type"
+              class="w-full"
+              :loading="loadingBusinessTypes"
             />
           </div>
 
