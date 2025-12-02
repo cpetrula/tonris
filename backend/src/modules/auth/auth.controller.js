@@ -274,9 +274,79 @@ const getProfile = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/auth/register
+ * Full registration: Create tenant with business type and user
+ */
+const register = async (req, res, next) => {
+  try {
+    const { email, password, firstName, lastName, businessTypeId } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (!firstName || !lastName) {
+      return res.status(400).json({
+        success: false,
+        error: 'First name and last name are required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (!businessTypeId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Business type is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters long',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const result = await authService.register({ 
+      email, 
+      password, 
+      firstName, 
+      lastName, 
+      businessTypeId 
+    });
+
+    res.status(201).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   signup,
   login,
+  register,
   forgotPassword,
   resetPassword,
   setup2FA,

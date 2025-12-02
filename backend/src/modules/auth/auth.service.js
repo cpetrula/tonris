@@ -311,9 +311,59 @@ const getUserById = async (userId, tenantId) => {
   return user.toSafeObject();
 };
 
+/**
+ * Full registration: Create tenant with business type and user
+ * @param {Object} registrationData - Registration data
+ * @param {string} registrationData.email - User email
+ * @param {string} registrationData.password - User password
+ * @param {string} registrationData.firstName - User first name
+ * @param {string} registrationData.lastName - User last name
+ * @param {string} registrationData.businessTypeId - Business type ID
+ * @returns {Promise<Object>} - Created user and tokens
+ */
+const register = async ({ email, password, firstName, lastName, businessTypeId }) => {
+  const tenantService = require('../tenants/tenant.service');
+
+  // Check if user already exists (globally - email is unique)
+  const existingUser = await User.findOne({ where: { email } });
+  if (existingUser) {
+    throw new AppError('User already exists with this email', 400, 'USER_EXISTS');
+  }
+
+  // Generate slug from business name (using email domain as business name for now)
+  const businessName = `${firstName} ${lastName}'s Business`;
+  const slug = `${firstName}-${lastName}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+
+  // Create tenant with business type
+  const tenant = await tenantService.createTenant({
+    name: businessName,
+    slug,
+    contactEmail: email,
+    businessTypeId,
+  });
+
+  // Create user associated with the new tenant
+  const user = await User.create({
+    email,
+    password,
+    tenantId: tenant.id,
+  });
+
+  // Generate tokens
+  const tokens = generateTokenPair(user);
+
+  logger.info(`New registration: ${email} with tenant: ${tenant.tenantId}`);
+
+  return {
+    user: user.toSafeObject(),
+    tokens,
+  };
+};
+
 module.exports = {
   signup,
   login,
+  register,
   forgotPassword,
   resetPassword,
   setup2FA,
