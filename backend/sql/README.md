@@ -87,9 +87,11 @@ mysql -u root -p tonris_db < create_business_types_table.sql
 
 **Table columns:**
 - `id` - Primary key (UUID)
-- `business_type` - Business type name (VARCHAR 50)
-- `agent_id` - Agent identifier (UUID)
-- `active` - Active status (Boolean)
+- `business_type` - Business type name (VARCHAR 50, unique)
+- `agent_id` - Agent identifier (UUID, indexed)
+- `active` - Active status (Boolean, indexed)
+- `createdAt` - Created timestamp
+- `updatedAt` - Updated timestamp
 
 ## Demo Salon Details
 
