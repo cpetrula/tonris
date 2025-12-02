@@ -9,6 +9,7 @@ This directory contains SQL scripts for setting up the TONRIS database and seedi
 - **migrate_services_tenant_id_to_uuid.sql** - Migration script to update services.tenant_id from string to UUID (foreign key to tenants.id)
 - **migrate_all_tenant_id_to_uuid.sql** - Migration script to update tenant_id in all tables (users, employees, appointments, subscriptions, call_logs) from string to UUID (foreign key to tenants.id)
 - **add_twilio_phone_number_column.sql** - Migration to add twilio_phone_number column to tenants table
+- **create_business_types_table.sql** - Creates the business_types table for storing business type configurations
 
 ## Usage
 
@@ -75,6 +76,20 @@ mysql -u root -p tonris_db < migrate_services_tenant_id_to_uuid.sql
 3. Updates the column with tenant UUIDs by joining with the tenants table
 4. Drops the old column and renames the new one
 5. Recreates indexes and adds foreign key constraint
+
+#### Create business_types table
+
+Creates a new table for storing business type configurations:
+
+```bash
+mysql -u root -p tonris_db < create_business_types_table.sql
+```
+
+**Table columns:**
+- `id` - Primary key (UUID)
+- `business_type` - Business type name (VARCHAR 50)
+- `agent_id` - Agent identifier (UUID)
+- `active` - Active status (Boolean)
 
 ## Demo Salon Details
 
