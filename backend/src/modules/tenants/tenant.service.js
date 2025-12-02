@@ -15,10 +15,11 @@ const logger = require('../../utils/logger');
  * @param {string} tenantData.contactEmail - Contact email
  * @param {string} tenantData.contactPhone - Contact phone (optional)
  * @param {string} tenantData.planType - Plan type (optional)
+ * @param {string} tenantData.businessTypeId - Business type ID (optional)
  * @returns {Promise<Object>} - Created tenant
  */
 const createTenant = async (tenantData) => {
-  const { name, slug, contactEmail, contactPhone, planType } = tenantData;
+  const { name, slug, contactEmail, contactPhone, planType, businessTypeId } = tenantData;
 
   // Check if tenant with same slug exists
   const existingTenant = await Tenant.findOne({ where: { slug } });
@@ -45,6 +46,7 @@ const createTenant = async (tenantData) => {
     planType: planType || PLAN_TYPES.FREE,
     settings: Tenant.generateDefaultSettings(),
     status: TENANT_STATUS.PENDING,
+    businessTypeId: businessTypeId || null,
   });
 
   logger.info(`New tenant created: ${name} (${tenantId})`);

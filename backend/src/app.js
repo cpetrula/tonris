@@ -12,7 +12,7 @@ const http = require('http');
 
 const env = require('./config/env');
 const logger = require('./utils/logger');
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
 const { aiController, handleMediaStreamConnection } = require('./modules/ai-assistant');
@@ -145,6 +145,7 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/telephony', telephonyRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/business-types', businessTypesRoutes);
 
 // Static file serving - serve frontend build from frontend/dist directory
 const frontendDistPath = path.join(__dirname, '../../frontend/dist');

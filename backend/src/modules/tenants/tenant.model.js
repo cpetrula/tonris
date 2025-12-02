@@ -122,6 +122,15 @@ const Tenant = sequelize.define('Tenant', {
       is: /^[+]?[0-9][0-9\s()-]{5,}$/,
     },
   },
+  businessTypeId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'business_type_id',
+    references: {
+      model: 'business_types',
+      key: 'id',
+    },
+  },
 }, {
   tableName: 'tenants',
   timestamps: true,

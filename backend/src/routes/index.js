@@ -12,6 +12,7 @@ const { appointmentRoutes, availabilityRoutes } = require('../modules/appointmen
 const { billingRoutes } = require('../modules/billing');
 const { telephonyRoutes } = require('../modules/telephony');
 const { aiRoutes } = require('../modules/ai-assistant');
+const { businessTypesRoutes } = require('../modules/business-types');
 
 module.exports = {
   healthRoutes,
@@ -25,4 +26,5 @@ module.exports = {
   billingRoutes,
   telephonyRoutes,
   aiRoutes,
+  businessTypesRoutes,
 };

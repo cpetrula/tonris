@@ -50,6 +50,9 @@ const standardLimiter = rateLimit({
 // POST /api/auth/signup - Register a new user
 router.post('/signup', authLimiter, authController.signup);
 
+// POST /api/auth/register - Full registration (create tenant with business type and user)
+router.post('/register', authLimiter, authController.register);
+
 // POST /api/auth/login - Authenticate user
 router.post('/login', authLimiter, authController.login);
 

@@ -9,6 +9,8 @@ This directory contains SQL scripts for setting up the TONRIS database and seedi
 - **migrate_services_tenant_id_to_uuid.sql** - Migration script to update services.tenant_id from string to UUID (foreign key to tenants.id)
 - **migrate_all_tenant_id_to_uuid.sql** - Migration script to update tenant_id in all tables (users, employees, appointments, subscriptions, call_logs) from string to UUID (foreign key to tenants.id)
 - **add_twilio_phone_number_column.sql** - Migration to add twilio_phone_number column to tenants table
+- **create_business_types_table.sql** - Creates the business_types table for storing business type configurations
+- **add_business_type_to_tenants.sql** - Adds business_type_id column to tenants table with FK to business_types
 
 ## Usage
 
@@ -75,6 +77,35 @@ mysql -u root -p tonris_db < migrate_services_tenant_id_to_uuid.sql
 3. Updates the column with tenant UUIDs by joining with the tenants table
 4. Drops the old column and renames the new one
 5. Recreates indexes and adds foreign key constraint
+
+#### Create business_types table
+
+Creates a new table for storing business type configurations:
+
+```bash
+mysql -u root -p tonris_db < create_business_types_table.sql
+```
+
+**Table columns:**
+- `id` - Primary key (UUID)
+- `business_type` - Business type name (VARCHAR 50, unique)
+- `agent_id` - Agent identifier (UUID, indexed)
+- `active` - Active status (Boolean, indexed)
+- `createdAt` - Created timestamp
+- `updatedAt` - Updated timestamp
+
+#### Add business_type to tenants table
+
+Adds a business_type_id column to the tenants table with a foreign key reference to business_types:
+
+```bash
+mysql -u root -p tonris_db < add_business_type_to_tenants.sql
+```
+
+**What this migration does:**
+1. Adds `business_type_id` column (CHAR 36, nullable)
+2. Creates an index on the new column
+3. Adds foreign key constraint referencing `business_types.id`
 
 ## Demo Salon Details
 
