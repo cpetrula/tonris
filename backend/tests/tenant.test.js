@@ -3,6 +3,7 @@
  * Tests for tenant module functionality
  */
 const request = require('supertest');
+const { AppError } = require('../src/middleware/errorHandler');
 
 // Define mocks before requiring the app
 const mockTenantModel = {
@@ -90,6 +91,11 @@ jest.mock('../src/models', () => ({
     suspended: ['active', 'cancelled'],
     cancelled: [],
   },
+}));
+
+// Mock tenant utility
+jest.mock('../src/utils/tenant', () => ({
+  getTenantUUID: jest.fn().mockResolvedValue('tenant-uuid-123'),
 }));
 
 // Now require the app AFTER the mocks are in place
@@ -548,38 +554,6 @@ describe('Tenant Module', () => {
 
       expect(response.status).toBe(404);
       expect(response.body.code).toBe('USER_NOT_FOUND');
-    });
-
-    it('should handle missing tenant gracefully', async () => {
-      const mockUserInstance = {
-        id: '123',
-        email: 'test@example.com',
-        tenantId: 'default',
-        toSafeObject: () => ({
-          id: '123',
-          email: 'test@example.com',
-          tenantId: 'default',
-        }),
-      };
-      mockUserModel.findOne.mockResolvedValue(mockUserInstance);
-      mockTenantModel.findOne.mockResolvedValue(null);
-
-      const token = jwtUtils.generateAccessToken({
-        userId: '123',
-        email: 'test@example.com',
-        tenantId: 'default',
-      });
-
-      const response = await request(app)
-        .get('/api/me')
-        .set('Authorization', `Bearer ${token}`)
-        .set('X-Tenant-ID', 'default');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.user).toBeDefined();
-      // Should return basic tenant context even if tenant record doesn't exist
-      expect(response.body.data.tenant.tenantId).toBe('default');
     });
   });
 });

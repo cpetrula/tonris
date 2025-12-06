@@ -41,16 +41,6 @@ const Tenant = sequelize.define('Tenant', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  tenantId: {
-    type: DataTypes.STRING(64),
-    allowNull: false,
-    unique: true,
-    field: 'tenant_id',
-    validate: {
-      is: /^[a-zA-Z0-9_-]+$/,
-      len: [1, 64],
-    },
-  },
   name: {
     type: DataTypes.STRING(255),
     allowNull: false,

@@ -3,6 +3,7 @@
  * Handles HTTP requests for tenant endpoints
  */
 const tenantService = require('./tenant.service');
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * Validation patterns
@@ -22,9 +23,10 @@ const VALIDATION = {
  */
 const getCurrentUserAndTenant = async (req, res, next) => {
   try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const result = await tenantService.getCurrentUserAndTenant(
       req.user.userId,
-      req.tenantId
+      tenantUUID
     );
 
     res.status(200).json({
@@ -42,7 +44,8 @@ const getCurrentUserAndTenant = async (req, res, next) => {
  */
 const getTenantSettings = async (req, res, next) => {
   try {
-    const settings = await tenantService.getTenantSettings(req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const settings = await tenantService.getTenantSettings(tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -69,8 +72,9 @@ const updateTenantSettings = async (req, res, next) => {
       });
     }
 
+    const tenantUUID = await getTenantUUID(req.tenantId);
     const updatedSettings = await tenantService.updateTenantSettings(
-      req.tenantId,
+      tenantUUID,
       settings
     );
 
@@ -141,7 +145,8 @@ const createTenant = async (req, res, next) => {
  */
 const getTenant = async (req, res, next) => {
   try {
-    const tenant = await tenantService.getTenantById(req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const tenant = await tenantService.getTenantById(tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -182,7 +187,8 @@ const updateTenant = async (req, res, next) => {
       }
     }
 
-    const tenant = await tenantService.updateTenant(req.tenantId, {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const tenant = await tenantService.updateTenant(tenantUUID, {
       name,
       contactEmail,
       contactPhone,
@@ -206,7 +212,8 @@ const updateTenant = async (req, res, next) => {
  */
 const activateTenant = async (req, res, next) => {
   try {
-    const tenant = await tenantService.activateTenant(req.tenantId);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const tenant = await tenantService.activateTenant(tenantUUID);
 
     res.status(200).json({
       success: true,
@@ -233,7 +240,8 @@ const updateTenantStatus = async (req, res, next) => {
       });
     }
 
-    const tenant = await tenantService.updateTenantStatus(req.tenantId, status);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const tenant = await tenantService.updateTenantStatus(tenantUUID, status);
 
     res.status(200).json({
       success: true,
