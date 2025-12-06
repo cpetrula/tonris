@@ -274,8 +274,16 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
       appointment.addOns = addOns;
     }
 
+    // Ensure startTime is a string in HH:MM format
+    let timeString = newStartTime;
+    if (typeof newStartTime !== 'string') {
+      // If it's a Date object, convert to HH:MM
+      const date = new Date(newStartTime);
+      timeString = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
     // Calculate end time as string (HH:MM format)
-    const [hours, minutes] = newStartTime.split(':').map(Number);
+    const [hours, minutes] = timeString.split(':').map(Number);
     const startMinutes = hours * 60 + minutes;
     const endMinutes = startMinutes + newDuration;
     const endHours = Math.floor(endMinutes / 60) % 24;
@@ -307,7 +315,7 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
     if (appointmentDate) {
       appointment.appointmentDate = newAppointmentDate;
     }
-    appointment.startTime = newStartTime;
+    appointment.startTime = timeString;
     appointment.endTime = newEndTime;
     appointment.totalDuration = newDuration;
     

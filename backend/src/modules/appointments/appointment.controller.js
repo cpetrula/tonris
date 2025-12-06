@@ -113,6 +113,16 @@ const createAppointment = async (req, res, next) => {
       });
     }
 
+    // Validate startTime format (HH:MM)
+    const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
+    if (!timeRegex.test(startTime)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid start time format. Expected HH:MM format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
     // Validate appointment date and time are in the future
     const appointmentDateTime = new Date(appointmentDate);
     if (isNaN(appointmentDateTime.getTime())) {
@@ -192,6 +202,18 @@ const updateAppointment = async (req, res, next) => {
         error: 'Invalid employee ID format',
         code: 'VALIDATION_ERROR',
       });
+    }
+
+    // Validate startTime format if provided (HH:MM)
+    if (startTime) {
+      const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
+      if (!timeRegex.test(startTime)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid start time format. Expected HH:MM format',
+          code: 'VALIDATION_ERROR',
+        });
+      }
     }
 
     // Validate appointment date and time if provided
