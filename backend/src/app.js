@@ -115,6 +115,21 @@ app.get('/api/webhooks/elevenlabs/appointments',
   aiController.handleElevenLabsAppointmentsWebhook
 );
 
+// ElevenLabs Client Data webhook for creating appointments
+// Called by ElevenLabs Custom Actions to create an appointment
+// This endpoint does not require Bearer token authentication
+// Must receive raw body for signature verification
+app.post('/api/webhooks/elevenlabs/appointments',
+  webhookRateLimiter,
+  express.json({
+    verify: (req, _res, buf) => {
+      // Store raw body for signature verification
+      req.rawBody = buf.toString();
+    },
+  }),
+  aiController.handleElevenLabsCreateAppointmentWebhook
+);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

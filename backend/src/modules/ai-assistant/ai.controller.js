@@ -19,7 +19,7 @@ const { employeeService } = require('../employees');
 /**
  * UUID validation regex
  */
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Validate UUID format
@@ -960,6 +960,144 @@ const handleElevenLabsAppointmentsWebhook = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/webhooks/elevenlabs/appointments
+ * Handle ElevenLabs Client Data webhook to create appointments
+ * 
+ * This endpoint is called by ElevenLabs Custom Actions when creating an appointment.
+ * It does not require Bearer token authentication since ElevenLabs webhooks/custom actions
+ * don't send authentication headers.
+ * 
+ * Request body:
+ * {
+ *   "tenantId": "tenant-uuid",
+ *   "employeeId": "employee-uuid",
+ *   "serviceId": "service-uuid",
+ *   "customerName": "John Doe",
+ *   "customerEmail": "john@example.com",
+ *   "customerPhone": "+15551234567",
+ *   "startTime": "2024-01-15T10:00:00Z",
+ *   "addOns": [],
+ *   "notes": "Created via AI"
+ * }
+ * 
+ * Query Parameters (alternative):
+ * - tenantId: The tenant identifier (can be in body or query)
+ * 
+ * Headers (required in production when webhook secret is configured):
+ * - X-ElevenLabs-Signature: HMAC-SHA256 signature of the request body
+ */
+const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
+  try {
+    // Verify webhook signature in production
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+    
+    if (env.isProduction() && webhookSecret) {
+      // Require raw body for signature verification
+      if (!req.rawBody) {
+        logger.warn('ElevenLabs Create Appointment: Missing raw body for signature verification');
+        throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
+      }
+      
+      if (!signature || !verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Create Appointment: Invalid or missing signature');
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    }
+    
+    // Get tenant ID from query parameter or request body
+    const tenantId = req.query.tenantId || req.body.tenantId;
+    
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+    
+    // Validate tenant ID format
+    if (!isValidUUID(tenantId)) {
+      throw new AppError('Invalid tenant ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    const {
+      employeeId,
+      serviceId,
+      customerName,
+      customerEmail,
+      customerPhone,
+      startTime,
+      addOns,
+      notes,
+    } = req.body;
+    
+    // Validate required fields
+    if (!employeeId || !serviceId || !customerName || !startTime) {
+      throw new AppError(
+        'employeeId, serviceId, customerName, and startTime are required',
+        400,
+        'VALIDATION_ERROR'
+      );
+    }
+    
+    if (!customerEmail && !customerPhone) {
+      throw new AppError(
+        'Either customerEmail or customerPhone is required',
+        400,
+        'VALIDATION_ERROR'
+      );
+    }
+    
+    // Validate UUID formats
+    if (!isValidUUID(employeeId)) {
+      throw new AppError('Invalid employee ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    if (!isValidUUID(serviceId)) {
+      throw new AppError('Invalid service ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    // Validate email format if provided
+    if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      throw new AppError('Invalid email format', 400, 'VALIDATION_ERROR');
+    }
+    
+    // Validate startTime is valid and in the future
+    const appointmentStart = new Date(startTime);
+    if (isNaN(appointmentStart.getTime())) {
+      throw new AppError('Invalid startTime format', 400, 'VALIDATION_ERROR');
+    }
+    
+    if (appointmentStart <= new Date()) {
+      throw new AppError('Appointment time must be in the future', 400, 'VALIDATION_ERROR');
+    }
+    
+    logger.info(`ElevenLabs Create Appointment webhook: Creating appointment for tenant ${tenantId}`);
+    
+    // Create appointment using the internal service
+    const appointment = await appointmentService.createAppointment({
+      employeeId,
+      serviceId,
+      customerName,
+      customerEmail,
+      customerPhone,
+      startTime,
+      addOns,
+      notes: notes || 'Created via ElevenLabs AI',
+    }, tenantId);
+    
+    // Return appointment in the format expected by ElevenLabs
+    res.status(201).json({
+      success: true,
+      data: {
+        appointment,
+        message: 'Appointment created successfully',
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Create Appointment webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -972,5 +1110,6 @@ module.exports = {
   handleElevenLabsServicesWebhook,
   handleElevenLabsEmployeesWebhook,
   handleElevenLabsAppointmentsWebhook,
+  handleElevenLabsCreateAppointmentWebhook,
   getAIConfig,
 };

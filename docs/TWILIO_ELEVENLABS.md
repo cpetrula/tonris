@@ -378,6 +378,95 @@ GET /api/webhooks/elevenlabs/services?tenantId=de535df4-ccee-11f0-a2aa-12736706c
    - URL: `https://your-domain.com/api/webhooks/elevenlabs/services?tenantId=YOUR_TENANT_ID`
 3. Optionally set the webhook secret for production use
 
+#### POST `/api/webhooks/elevenlabs/appointments`
+
+**Create Appointment Webhook** - Called by ElevenLabs Custom Actions to create appointments. This endpoint does not require Bearer token authentication.
+
+**Use Case**: Configure this as a Custom Action URL in your ElevenLabs agent to enable direct appointment creation via HTTP POST.
+
+**Headers**:
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-ElevenLabs-Signature` | Yes (production) | HMAC-SHA256 signature of request body |
+| `Content-Type` | Yes | `application/json` |
+
+**Request** (from ElevenLabs):
+```json
+{
+  "tenantId": "de535df4-ccee-11f0-a2aa-12736706c408",
+  "employeeId": "12345678-1234-1234-1234-123456789012",
+  "serviceId": "87654321-4321-4321-4321-210987654321",
+  "customerName": "John Doe",
+  "customerEmail": "john@example.com",
+  "customerPhone": "+15551234567",
+  "startTime": "2024-01-15T10:00:00Z",
+  "addOns": [],
+  "notes": "Created via AI assistant"
+}
+```
+
+**Query Parameters** (alternative):
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `tenantId` | No | Tenant UUID (can be in body or query) |
+
+**Response** (Success):
+```json
+{
+  "success": true,
+  "data": {
+    "appointment": {
+      "id": "appt-uuid",
+      "tenantId": "de535df4-ccee-11f0-a2aa-12736706c408",
+      "employeeId": "12345678-1234-1234-1234-123456789012",
+      "serviceId": "87654321-4321-4321-4321-210987654321",
+      "customerName": "John Doe",
+      "customerEmail": "john@example.com",
+      "customerPhone": "+15551234567",
+      "startTime": "2024-01-15T10:00:00Z",
+      "endTime": "2024-01-15T11:00:00Z",
+      "status": "scheduled",
+      "notes": "Created via ElevenLabs AI"
+    },
+    "message": "Appointment created successfully"
+  }
+}
+```
+
+**Response** (Error):
+```json
+{
+  "success": false,
+  "error": "employeeId, serviceId, customerName, and startTime are required",
+  "code": "VALIDATION_ERROR"
+}
+```
+
+**Configuration in ElevenLabs Dashboard**:
+1. Navigate to your ElevenLabs agent settings
+2. Under "Custom Actions", add a new action:
+   - Name: `create_appointment`
+   - Method: POST
+   - URL: `https://your-domain.com/api/webhooks/elevenlabs/appointments?tenantId=YOUR_TENANT_ID`
+   - Headers: `Content-Type: application/json`
+3. Define the parameters: `employeeId`, `serviceId`, `customerName`, `customerEmail`, `customerPhone`, `startTime`, `notes`
+4. Optionally set the webhook secret for production use
+
+**Example Usage**:
+```bash
+curl -X POST "https://your-domain.com/api/webhooks/elevenlabs/appointments?tenantId=de535df4-ccee-11f0-a2aa-12736706c408" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeId": "12345678-1234-1234-1234-123456789012",
+    "serviceId": "87654321-4321-4321-4321-210987654321",
+    "customerName": "John Doe",
+    "customerEmail": "john@example.com",
+    "customerPhone": "+15551234567",
+    "startTime": "2024-01-15T10:00:00Z",
+    "notes": "Haircut appointment"
+  }'
+```
+
 ## Supported Tool Calls
 
 The integration supports the following tool calls from ElevenLabs:
