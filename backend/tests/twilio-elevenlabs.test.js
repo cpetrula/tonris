@@ -784,10 +784,6 @@ describe('POST /api/webhooks/elevenlabs/appointments', () => {
         notes: 'Test appointment',
       });
 
-    if (response.status !== 201) {
-      console.log('Response body:', JSON.stringify(response.body, null, 2));
-    }
-
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.data.appointment).toBeDefined();
