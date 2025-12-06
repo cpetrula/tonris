@@ -69,7 +69,7 @@ const Appointment = sequelize.define('Appointment', {
     allowNull: true,
   },
   appointmentDate: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATE,  // DATETIME(3) in database - stores full datetime but typically only date part is used
     allowNull: false,
   },
   startTime: {
