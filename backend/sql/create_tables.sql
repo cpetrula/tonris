@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS users (
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS tenants (
     id CHAR(36) NOT NULL DEFAULT (UUID()),
-    tenant_id VARCHAR(64) NOT NULL,
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(128) NOT NULL,
     status ENUM('pending', 'active', 'suspended', 'cancelled') NOT NULL DEFAULT 'pending',
@@ -50,7 +49,6 @@ CREATE TABLE IF NOT EXISTS tenants (
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_tenants_tenant_id (tenant_id),
     UNIQUE KEY uk_tenants_slug (slug),
     UNIQUE KEY uk_tenants_twilio_phone_number (twilio_phone_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

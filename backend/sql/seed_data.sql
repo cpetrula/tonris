@@ -9,7 +9,6 @@ USE tonris_db;
 -- Define Variables for UUIDs (for referential integrity)
 -- =============================================================================
 SET @tenant_uuid = UUID();
-SET @tenant_id = 'hair-done-right-salon';
 SET @user_uuid = UUID();
 
 -- Employee UUIDs
@@ -33,7 +32,6 @@ SET @service_pedicure_uuid = UUID();
 -- =============================================================================
 INSERT INTO tenants (
     id,
-    tenant_id,
     name,
     slug,
     status,
@@ -50,7 +48,6 @@ INSERT INTO tenants (
     updatedAt
 ) VALUES (
     @tenant_uuid,
-    @tenant_id,
     'Hair Done Right Salon',
     'hair-done-right-salon',
     'active',
@@ -851,7 +848,6 @@ INSERT INTO call_logs (
 -- Summary Output
 -- =============================================================================
 SELECT 'Hair Done Right Salon demo data seeded successfully!' AS Status;
-SELECT 'Tenant ID:' AS Info, @tenant_id AS Value;
 SELECT 'Tenant UUID:' AS Info, @tenant_uuid AS Value;
 SELECT 'Admin Email:' AS Info, 'admin@hairdonerightson.com' AS Value;
 SELECT 'Total Employees:' AS Info, (SELECT COUNT(*) FROM employees WHERE tenant_id = @tenant_uuid) AS Value;

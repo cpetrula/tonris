@@ -27,18 +27,8 @@ const createTenant = async (tenantData) => {
     throw new AppError('A tenant with this slug already exists', 400, 'TENANT_EXISTS');
   }
 
-  // Generate unique tenant ID from slug
-  const tenantId = slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-
-  // Check if tenant with same tenantId exists
-  const existingTenantId = await Tenant.findOne({ where: { tenantId } });
-  if (existingTenantId) {
-    throw new AppError('A tenant with this identifier already exists', 400, 'TENANT_ID_EXISTS');
-  }
-
   // Create tenant with default settings
   const tenant = await Tenant.create({
-    tenantId,
     name,
     slug,
     contactEmail,
@@ -49,18 +39,18 @@ const createTenant = async (tenantData) => {
     businessTypeId: businessTypeId || null,
   });
 
-  logger.info(`New tenant created: ${name} (${tenantId})`);
+  logger.info(`New tenant created: ${name} (${slug})`);
 
   return tenant.toSafeObject();
 };
 
 /**
- * Get tenant by tenant ID
- * @param {string} tenantId - Tenant identifier
+ * Get tenant by ID (UUID)
+ * @param {string} id - Tenant UUID
  * @returns {Promise<Object>} - Tenant data
  */
-const getTenantById = async (tenantId) => {
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+const getTenantById = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
   
   if (!tenant) {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
@@ -86,18 +76,18 @@ const getTenantByPhoneNumber = async (phoneNumber) => {
 
 /**
  * Get tenant settings
- * @param {string} tenantId - Tenant identifier
+ * @param {string} id - Tenant UUID
  * @returns {Promise<Object>} - Tenant settings
  */
-const getTenantSettings = async (tenantId) => {
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+const getTenantSettings = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
   
   if (!tenant) {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
   }
 
   return {
-    tenantId: tenant.tenantId,
+    id: tenant.id,
     name: tenant.name,
     settings: tenant.settings,
     planType: tenant.planType,
@@ -107,12 +97,12 @@ const getTenantSettings = async (tenantId) => {
 
 /**
  * Update tenant settings
- * @param {string} tenantId - Tenant identifier
+ * @param {string} id - Tenant UUID
  * @param {Object} settings - New settings to merge
  * @returns {Promise<Object>} - Updated tenant settings
  */
-const updateTenantSettings = async (tenantId, settings) => {
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+const updateTenantSettings = async (id, settings) => {
+  const tenant = await Tenant.findOne({ where: { id } });
   
   if (!tenant) {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
@@ -125,10 +115,10 @@ const updateTenantSettings = async (tenantId, settings) => {
 
   await tenant.updateSettings(settings);
 
-  logger.info(`Tenant settings updated: ${tenantId}`);
+  logger.info(`Tenant settings updated: ${id}`);
 
   return {
-    tenantId: tenant.tenantId,
+    id: tenant.id,
     name: tenant.name,
     settings: tenant.settings,
     planType: tenant.planType,
@@ -138,12 +128,12 @@ const updateTenantSettings = async (tenantId, settings) => {
 
 /**
  * Update tenant status
- * @param {string} tenantId - Tenant identifier
+ * @param {string} id - Tenant UUID
  * @param {string} newStatus - New status
  * @returns {Promise<Object>} - Updated tenant
  */
-const updateTenantStatus = async (tenantId, newStatus) => {
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+const updateTenantStatus = async (id, newStatus) => {
+  const tenant = await Tenant.findOne({ where: { id } });
   
   if (!tenant) {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
@@ -166,18 +156,18 @@ const updateTenantStatus = async (tenantId, newStatus) => {
   const previousStatus = tenant.status;
   await tenant.transitionTo(newStatus);
 
-  logger.info(`Tenant status changed: ${tenantId} from ${previousStatus} to ${newStatus}`);
+  logger.info(`Tenant status changed: ${id} from ${previousStatus} to ${newStatus}`);
 
   return tenant.toSafeObject();
 };
 
 /**
  * Activate tenant (complete onboarding)
- * @param {string} tenantId - Tenant identifier
+ * @param {string} id - Tenant UUID
  * @returns {Promise<Object>} - Updated tenant
  */
-const activateTenant = async (tenantId) => {
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+const activateTenant = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
   
   if (!tenant) {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
@@ -195,7 +185,7 @@ const activateTenant = async (tenantId) => {
   tenant.onboardingCompletedAt = new Date();
   await tenant.save();
 
-  logger.info(`Tenant activated: ${tenantId}`);
+  logger.info(`Tenant activated: ${id}`);
 
   return tenant.toSafeObject();
 };
@@ -203,7 +193,7 @@ const activateTenant = async (tenantId) => {
 /**
  * Get current user and tenant context
  * @param {string} userId - User ID
- * @param {string} tenantId - Tenant identifier
+ * @param {string} tenantId - Tenant UUID
  * @returns {Promise<Object>} - User and tenant data
  */
 const getCurrentUserAndTenant = async (userId, tenantId) => {
@@ -215,35 +205,37 @@ const getCurrentUserAndTenant = async (userId, tenantId) => {
   }
 
   // Get tenant data
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+  const tenant = await Tenant.findOne({ where: { id: tenantId } });
   
-  // Tenant may not exist for default tenant
-  const tenantData = tenant ? tenant.toSafeObject() : { tenantId };
+  // Tenant should exist
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
 
   return {
     user: user.toSafeObject(),
-    tenant: tenantData,
+    tenant: tenant.toSafeObject(),
   };
 };
 
 /**
  * Check if tenant exists
- * @param {string} tenantId - Tenant identifier
+ * @param {string} id - Tenant UUID
  * @returns {Promise<boolean>} - True if tenant exists
  */
-const tenantExists = async (tenantId) => {
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+const tenantExists = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
   return !!tenant;
 };
 
 /**
  * Update tenant information
- * @param {string} tenantId - Tenant identifier
+ * @param {string} id - Tenant UUID
  * @param {Object} updateData - Data to update
  * @returns {Promise<Object>} - Updated tenant
  */
-const updateTenant = async (tenantId, updateData) => {
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+const updateTenant = async (id, updateData) => {
+  const tenant = await Tenant.findOne({ where: { id } });
   
   if (!tenant) {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
@@ -261,7 +253,7 @@ const updateTenant = async (tenantId, updateData) => {
 
   await tenant.update(filteredData);
 
-  logger.info(`Tenant updated: ${tenantId}`);
+  logger.info(`Tenant updated: ${id}`);
 
   return tenant.toSafeObject();
 };
