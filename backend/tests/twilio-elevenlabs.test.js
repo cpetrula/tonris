@@ -704,3 +704,232 @@ describe('handleConversationInitiation Function', () => {
     expect(result.data.conversation_config_override.tts.output_format).toBe('ulaw_8000');
   });
 });
+
+describe('POST /api/webhooks/elevenlabs/appointments', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const getFutureDate = () => {
+    const future = new Date();
+    future.setDate(future.getDate() + 7); // 7 days in the future
+    return future.toISOString();
+  };
+
+  it('should create appointment via webhook without authentication', async () => {
+    const tenantId = 'de535df4-ccee-11f0-a2aa-12736706c408';
+    const employeeId = '12345678-1234-1234-1234-123456789012';
+    const serviceId = '87654321-4321-4321-4321-210987654321';
+    const futureDate = getFutureDate();
+
+    // Mock employee lookup
+    mockEmployeeModel.findOne.mockResolvedValue({
+      id: employeeId,
+      tenantId,
+      status: 'active',
+      serviceIds: [serviceId],
+    });
+
+    // Mock service lookup
+    mockServiceModel.findOne.mockResolvedValue({
+      id: serviceId,
+      tenantId,
+      name: 'Test Service',
+      price: 50,
+      duration: 60,
+      addOns: [],
+    });
+
+    // Mock appointment conflict check (no conflicts)
+    mockAppointmentModel.findAll.mockResolvedValue([]);
+
+    // Mock the appointment creation
+    mockAppointmentModel.create.mockResolvedValue({
+      id: 'appt-123',
+      tenantId,
+      employeeId,
+      serviceId,
+      customerName: 'John Doe',
+      customerEmail: 'john@example.com',
+      customerPhone: '+15551234567',
+      startTime: futureDate,
+      status: 'scheduled',
+      notes: 'Created via ElevenLabs AI',
+      toSafeObject: function() {
+        return {
+          id: this.id,
+          tenantId: this.tenantId,
+          employeeId: this.employeeId,
+          serviceId: this.serviceId,
+          customerName: this.customerName,
+          customerEmail: this.customerEmail,
+          customerPhone: this.customerPhone,
+          startTime: this.startTime,
+          status: this.status,
+          notes: this.notes,
+        };
+      },
+    });
+
+    const response = await request(app)
+      .post('/api/webhooks/elevenlabs/appointments')
+      .send({
+        tenantId,
+        employeeId,
+        serviceId,
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        customerPhone: '+15551234567',
+        startTime: futureDate,
+        notes: 'Test appointment',
+      });
+
+    if (response.status !== 201) {
+      console.log('Response body:', JSON.stringify(response.body, null, 2));
+    }
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.appointment).toBeDefined();
+    expect(response.body.data.appointment.customerName).toBe('John Doe');
+    expect(mockAppointmentModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId,
+        employeeId,
+        serviceId,
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+      })
+    );
+  });
+
+  it('should accept tenantId as query parameter', async () => {
+    const tenantId = 'de535df4-ccee-11f0-a2aa-12736706c408';
+    const employeeId = '12345678-1234-1234-1234-123456789012';
+    const serviceId = '87654321-4321-4321-4321-210987654321';
+    const futureDate = getFutureDate();
+
+    // Mock employee lookup
+    mockEmployeeModel.findOne.mockResolvedValue({
+      id: employeeId,
+      tenantId,
+      status: 'active',
+      serviceIds: [serviceId],
+    });
+
+    // Mock service lookup
+    mockServiceModel.findOne.mockResolvedValue({
+      id: serviceId,
+      tenantId,
+      name: 'Test Service',
+      price: 50,
+      duration: 60,
+      addOns: [],
+    });
+
+    // Mock appointment conflict check (no conflicts)
+    mockAppointmentModel.findAll.mockResolvedValue([]);
+
+    mockAppointmentModel.create.mockResolvedValue({
+      id: 'appt-456',
+      tenantId,
+      employeeId,
+      serviceId,
+      customerName: 'Jane Smith',
+      customerEmail: 'jane@example.com',
+      startTime: futureDate,
+      status: 'scheduled',
+      toSafeObject: function() {
+        return {
+          id: this.id,
+          tenantId: this.tenantId,
+          employeeId: this.employeeId,
+          serviceId: this.serviceId,
+          customerName: this.customerName,
+          customerEmail: this.customerEmail,
+          startTime: this.startTime,
+          status: this.status,
+        };
+      },
+    });
+
+    const response = await request(app)
+      .post('/api/webhooks/elevenlabs/appointments?tenantId=' + tenantId)
+      .send({
+        employeeId,
+        serviceId,
+        customerName: 'Jane Smith',
+        customerEmail: 'jane@example.com',
+        startTime: futureDate,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+  });
+
+  it('should return 400 if tenantId is missing', async () => {
+    const response = await request(app)
+      .post('/api/webhooks/elevenlabs/appointments')
+      .send({
+        employeeId: '12345678-1234-1234-1234-123456789012',
+        serviceId: '87654321-4321-4321-4321-210987654321',
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        startTime: getFutureDate(),
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain('Tenant ID is required');
+  });
+
+  it('should return 400 if required fields are missing', async () => {
+    const response = await request(app)
+      .post('/api/webhooks/elevenlabs/appointments')
+      .send({
+        tenantId: 'de535df4-ccee-11f0-a2aa-12736706c408',
+        customerName: 'John Doe',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain('required');
+  });
+
+  it('should return 400 if startTime is in the past', async () => {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const response = await request(app)
+      .post('/api/webhooks/elevenlabs/appointments')
+      .send({
+        tenantId: 'de535df4-ccee-11f0-a2aa-12736706c408',
+        employeeId: '12345678-1234-1234-1234-123456789012',
+        serviceId: '87654321-4321-4321-4321-210987654321',
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        startTime: pastDate.toISOString(),
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain('must be in the future');
+  });
+
+  it('should return 400 if UUID format is invalid', async () => {
+    const response = await request(app)
+      .post('/api/webhooks/elevenlabs/appointments')
+      .send({
+        tenantId: 'invalid-uuid',
+        employeeId: '12345678-1234-1234-1234-123456789012',
+        serviceId: '87654321-4321-4321-4321-210987654321',
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        startTime: getFutureDate(),
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toContain('Invalid tenant ID format');
+  });
+});
