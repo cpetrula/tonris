@@ -178,6 +178,18 @@ describe('Appointment Module', () => {
     return date;
   };
 
+  // Helper to get date string in YYYY-MM-DD format
+  const getDateString = (date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  // Helper to get time string in HH:MM format
+  const getTimeString = (date) => {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   describe('GET /api/appointments', () => {
     it('should return 401 without authentication', async () => {
       const response = await request(app)
@@ -266,6 +278,7 @@ describe('Appointment Module', () => {
 
   describe('POST /api/appointments', () => {
     it('should return 401 without authentication', async () => {
+      const futureDate = getFutureDate();
       const response = await request(app)
         .post('/api/appointments')
         .set('X-Tenant-ID', 'test-tenant')
@@ -274,7 +287,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: getFutureDate().toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(401);
@@ -293,6 +307,7 @@ describe('Appointment Module', () => {
     });
 
     it('should return 400 for invalid email format', async () => {
+      const futureDate = getFutureDate();
       const response = await request(app)
         .post('/api/appointments')
         .set('Authorization', `Bearer ${validToken()}`)
@@ -302,7 +317,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'invalid-email',
-          startTime: getFutureDate().toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(400);
@@ -310,6 +326,7 @@ describe('Appointment Module', () => {
     });
 
     it('should return 400 for invalid UUID format', async () => {
+      const futureDate = getFutureDate();
       const response = await request(app)
         .post('/api/appointments')
         .set('Authorization', `Bearer ${validToken()}`)
@@ -319,7 +336,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: getFutureDate().toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(400);
@@ -339,7 +357,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: pastDate.toISOString(),
+          appointmentDate: getDateString(pastDate),
+          startTime: getTimeString(pastDate),
         });
 
       expect(response.status).toBe(400);
@@ -348,6 +367,7 @@ describe('Appointment Module', () => {
 
     it('should return 404 when employee not found', async () => {
       mockEmployeeModel.findOne.mockResolvedValue(null);
+      const futureDate = getFutureDate();
 
       const response = await request(app)
         .post('/api/appointments')
@@ -358,7 +378,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: getFutureDate().toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(404);
@@ -366,6 +387,7 @@ describe('Appointment Module', () => {
     });
 
     it('should return 404 when service not found', async () => {
+      const futureDate = getFutureDate();
       mockEmployeeModel.findOne.mockResolvedValue({
         id: mockEmployeeId,
         serviceIds: [mockServiceId],
@@ -381,7 +403,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: getFutureDate().toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(404);
@@ -389,6 +412,7 @@ describe('Appointment Module', () => {
     });
 
     it('should return 400 when employee is not qualified for service', async () => {
+      const futureDate = getFutureDate();
       mockEmployeeModel.findOne.mockResolvedValue({
         id: mockEmployeeId,
         serviceIds: ['other-service-id'],
@@ -408,7 +432,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: getFutureDate().toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(400);
@@ -447,7 +472,8 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: futureDate.toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(409);
@@ -476,8 +502,9 @@ describe('Appointment Module', () => {
         serviceId: mockServiceId,
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
-        startTime: futureDate,
-        endTime: new Date(futureDate.getTime() + 60 * 60 * 1000),
+        appointmentDate: futureDate,
+        startTime: getTimeString(futureDate),
+        endTime: '11:00',
         status: 'scheduled',
         toSafeObject: function() {
           return {
@@ -486,6 +513,8 @@ describe('Appointment Module', () => {
             serviceId: this.serviceId,
             customerName: this.customerName,
             customerEmail: this.customerEmail,
+            appointmentDate: this.appointmentDate,
+            startTime: this.startTime,
             status: this.status,
           };
         },
@@ -501,13 +530,73 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          startTime: futureDate.toISOString(),
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.data.appointment).toBeDefined();
       expect(response.body.data.appointment.customerName).toBe('John Doe');
+    });
+
+    it('should create appointment successfully without customer email', async () => {
+      const futureDate = getFutureDate();
+      
+      mockEmployeeModel.findOne.mockResolvedValue({
+        id: mockEmployeeId,
+        serviceIds: [mockServiceId],
+      });
+      mockServiceModel.findOne.mockResolvedValue({
+        id: mockServiceId,
+        duration: 60,
+        price: 50.00,
+        addOns: [],
+      });
+      // No conflicts
+      mockAppointmentModel.findAll.mockResolvedValue([]);
+      
+      const mockAppointment = {
+        id: mockAppointmentId,
+        employeeId: mockEmployeeId,
+        serviceId: mockServiceId,
+        customerName: 'Jane Doe',
+        customerEmail: null,
+        appointmentDate: futureDate,
+        startTime: getTimeString(futureDate),
+        endTime: '11:00',
+        status: 'scheduled',
+        toSafeObject: function() {
+          return {
+            id: this.id,
+            employeeId: this.employeeId,
+            serviceId: this.serviceId,
+            customerName: this.customerName,
+            customerEmail: this.customerEmail,
+            appointmentDate: this.appointmentDate,
+            startTime: this.startTime,
+            status: this.status,
+          };
+        },
+      };
+      mockAppointmentModel.create.mockResolvedValue(mockAppointment);
+
+      const response = await request(app)
+        .post('/api/appointments')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({
+          employeeId: mockEmployeeId,
+          serviceId: mockServiceId,
+          customerName: 'Jane Doe',
+          appointmentDate: getDateString(futureDate),
+          startTime: getTimeString(futureDate),
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.appointment).toBeDefined();
+      expect(response.body.data.appointment.customerName).toBe('Jane Doe');
     });
   });
 
