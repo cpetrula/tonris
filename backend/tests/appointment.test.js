@@ -183,6 +183,13 @@ describe('Appointment Module', () => {
     return date.toISOString().split('T')[0];
   };
 
+  // Helper to get time string in HH:MM format
+  const getTimeString = (date) => {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   describe('GET /api/appointments', () => {
     it('should return 401 without authentication', async () => {
       const response = await request(app)
@@ -281,7 +288,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(401);
@@ -311,7 +318,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'invalid-email',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(400);
@@ -330,7 +337,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(400);
@@ -351,7 +358,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(pastDate),
-          startTime: pastDate.toISOString(),
+          startTime: getTimeString(pastDate),
         });
 
       expect(response.status).toBe(400);
@@ -372,7 +379,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(404);
@@ -397,7 +404,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(404);
@@ -426,7 +433,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(400);
@@ -466,7 +473,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(409);
@@ -495,9 +502,9 @@ describe('Appointment Module', () => {
         serviceId: mockServiceId,
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
-        appointmentDate: getDateString(futureDate),
-        startTime: futureDate,
-        endTime: new Date(futureDate.getTime() + 60 * 60 * 1000),
+        appointmentDate: futureDate,
+        startTime: getTimeString(futureDate),
+        endTime: '11:00',
         status: 'scheduled',
         toSafeObject: function() {
           return {
@@ -507,6 +514,7 @@ describe('Appointment Module', () => {
             customerName: this.customerName,
             customerEmail: this.customerEmail,
             appointmentDate: this.appointmentDate,
+            startTime: this.startTime,
             status: this.status,
           };
         },
@@ -523,7 +531,7 @@ describe('Appointment Module', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(201);
@@ -554,9 +562,9 @@ describe('Appointment Module', () => {
         serviceId: mockServiceId,
         customerName: 'Jane Doe',
         customerEmail: null,
-        appointmentDate: getDateString(futureDate),
-        startTime: futureDate,
-        endTime: new Date(futureDate.getTime() + 60 * 60 * 1000),
+        appointmentDate: futureDate,
+        startTime: getTimeString(futureDate),
+        endTime: '11:00',
         status: 'scheduled',
         toSafeObject: function() {
           return {
@@ -566,6 +574,7 @@ describe('Appointment Module', () => {
             customerName: this.customerName,
             customerEmail: this.customerEmail,
             appointmentDate: this.appointmentDate,
+            startTime: this.startTime,
             status: this.status,
           };
         },
@@ -581,7 +590,7 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'Jane Doe',
           appointmentDate: getDateString(futureDate),
-          startTime: futureDate.toISOString(),
+          startTime: getTimeString(futureDate),
         });
 
       expect(response.status).toBe(201);

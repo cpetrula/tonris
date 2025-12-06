@@ -37,7 +37,6 @@ const Appointment = sequelize.define('Appointment', {
   tenantId: {
     type: DataTypes.UUID,
     allowNull: false,
-    field: 'tenant_id',
     references: {
       model: 'tenants',
       key: 'id',
@@ -46,17 +45,14 @@ const Appointment = sequelize.define('Appointment', {
   employeeId: {
     type: DataTypes.UUID,
     allowNull: false,
-    field: 'employee_id',
   },
   serviceId: {
     type: DataTypes.UUID,
     allowNull: false,
-    field: 'service_id',
   },
   customerName: {
     type: DataTypes.STRING(200),
     allowNull: false,
-    field: 'customer_name',
     validate: {
       len: [1, 200],
     },
@@ -64,7 +60,6 @@ const Appointment = sequelize.define('Appointment', {
   customerEmail: {
     type: DataTypes.STRING(255),
     allowNull: true,
-    field: 'customer_email',
     validate: {
       isEmail: true,
     },
@@ -72,22 +67,18 @@ const Appointment = sequelize.define('Appointment', {
   customerPhone: {
     type: DataTypes.STRING(50),
     allowNull: true,
-    field: 'customer_phone',
   },
   appointmentDate: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.DATE,
     allowNull: false,
-    field: 'appointment_date',
   },
   startTime: {
-    type: DataTypes.DATE,
+    type: DataTypes.STRING(191),
     allowNull: false,
-    field: 'start_time',
   },
   endTime: {
-    type: DataTypes.DATE,
+    type: DataTypes.STRING(191),
     allowNull: false,
-    field: 'end_time',
   },
   status: {
     type: DataTypes.ENUM(...Object.values(APPOINTMENT_STATUS)),
@@ -98,7 +89,6 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.JSON,
     allowNull: false,
     defaultValue: [],
-    field: 'add_ons',
     comment: 'Array of add-on IDs selected for this appointment',
   },
   notes: {
@@ -109,29 +99,24 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0.00,
-    field: 'total_price',
   },
   totalDuration: {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0,
-    field: 'total_duration',
     comment: 'Total duration in minutes including add-ons',
   },
   cancellationReason: {
     type: DataTypes.ENUM(...Object.values(CANCELLATION_REASONS)),
     allowNull: true,
-    field: 'cancellation_reason',
   },
   cancellationNotes: {
     type: DataTypes.TEXT,
     allowNull: true,
-    field: 'cancellation_notes',
   },
   cancelledAt: {
     type: DataTypes.DATE,
     allowNull: true,
-    field: 'cancelled_at',
   },
   metadata: {
     type: DataTypes.JSON,
