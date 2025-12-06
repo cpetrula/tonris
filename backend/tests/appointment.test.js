@@ -362,8 +362,7 @@ describe('Appointment Module', () => {
           serviceId: mockServiceId,
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
-          appointmentDate: getDateString(futureDate),
-          startTime: getTimeString(futureDate),
+          startTime: futureDate.toISOString(),
         });
 
       expect(response.status).toBe(404);
