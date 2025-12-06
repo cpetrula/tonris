@@ -73,23 +73,22 @@ const createAppointment = async (req, res, next) => {
       customerName,
       customerEmail,
       customerPhone,
-      appointmentDate,
       startTime,
       addOns,
       notes,
     } = req.body;
 
-    // Validate required fields (customerEmail is now optional)
-    if (!employeeId || !serviceId || !customerName || !appointmentDate || !startTime) {
+    // Validate required fields
+    if (!employeeId || !serviceId || !customerName || !customerEmail || !startTime) {
       return res.status(400).json({
         success: false,
-        error: 'Employee ID, service ID, customer name, appointment date, and start time are required',
+        error: 'Employee ID, service ID, customer name, customer email, and start time are required',
         code: 'VALIDATION_ERROR',
       });
     }
 
-    // Validate email format if provided
-    if (customerEmail && !VALIDATION.EMAIL_REGEX.test(customerEmail)) {
+    // Validate email format
+    if (!VALIDATION.EMAIL_REGEX.test(customerEmail)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid customer email format',
@@ -114,34 +113,21 @@ const createAppointment = async (req, res, next) => {
       });
     }
 
-    // Validate startTime format (HH:MM)
-    if (!VALIDATION.TIME_REGEX.test(startTime)) {
+    // Validate startTime is a valid datetime
+    const startDateTime = new Date(startTime);
+    if (isNaN(startDateTime.getTime())) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid start time format. Expected HH:MM format',
+        error: 'Invalid start time format',
         code: 'VALIDATION_ERROR',
       });
     }
 
-    // Validate appointment date and time are in the future
-    const appointmentDateTime = new Date(appointmentDate);
-    if (isNaN(appointmentDateTime.getTime())) {
+    // Validate appointment time is in the future
+    if (startDateTime <= new Date()) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid appointment date format',
-        code: 'VALIDATION_ERROR',
-      });
-    }
-
-    // Combine date and time to check if in future
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const fullDateTime = new Date(appointmentDateTime);
-    fullDateTime.setHours(hours, minutes, 0, 0);
-
-    if (fullDateTime <= new Date()) {
-      return res.status(400).json({
-        success: false,
-        error: 'Appointment date and time must be in the future',
+        error: 'Appointment time must be in the future',
         code: 'VALIDATION_ERROR',
       });
     }
@@ -153,7 +139,6 @@ const createAppointment = async (req, res, next) => {
       customerName,
       customerEmail,
       customerPhone,
-      appointmentDate,
       startTime,
       addOns,
       notes,
@@ -176,7 +161,6 @@ const updateAppointment = async (req, res, next) => {
   try {
     const {
       employeeId,
-      appointmentDate,
       startTime,
       addOns,
       notes,
@@ -204,34 +188,21 @@ const updateAppointment = async (req, res, next) => {
       });
     }
 
-    // Validate startTime format if provided (HH:MM)
-    if (startTime && !VALIDATION.TIME_REGEX.test(startTime)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid start time format. Expected HH:MM format',
-        code: 'VALIDATION_ERROR',
-      });
-    }
-
-    // Validate appointment date and time if provided
-    if (appointmentDate && startTime) {
-      const appointmentDateTime = new Date(appointmentDate);
-      if (isNaN(appointmentDateTime.getTime())) {
+    // Validate startTime if provided
+    if (startTime) {
+      const startDateTime = new Date(startTime);
+      if (isNaN(startDateTime.getTime())) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid appointment date format',
+          error: 'Invalid start time format',
           code: 'VALIDATION_ERROR',
         });
       }
 
-      const [hours, minutes] = startTime.split(':').map(Number);
-      const fullDateTime = new Date(appointmentDateTime);
-      fullDateTime.setHours(hours, minutes, 0, 0);
-
-      if (fullDateTime <= new Date()) {
+      if (startDateTime <= new Date()) {
         return res.status(400).json({
           success: false,
-          error: 'Appointment date and time must be in the future',
+          error: 'Appointment time must be in the future',
           code: 'VALIDATION_ERROR',
         });
       }
@@ -240,7 +211,6 @@ const updateAppointment = async (req, res, next) => {
     const tenantUUID = await getTenantUUID(req.tenantId);
     const appointment = await appointmentService.updateAppointment(req.params.id, tenantUUID, {
       employeeId,
-      appointmentDate,
       startTime,
       addOns,
       notes,

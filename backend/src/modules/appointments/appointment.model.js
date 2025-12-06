@@ -59,7 +59,7 @@ const Appointment = sequelize.define('Appointment', {
   },
   customerEmail: {
     type: DataTypes.STRING(255),
-    allowNull: true,
+    allowNull: false,
     validate: {
       isEmail: true,
     },
@@ -68,16 +68,12 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.STRING(50),
     allowNull: true,
   },
-  appointmentDate: {
-    type: DataTypes.DATE,  // DATETIME(3) in database - stores full datetime but typically only date part is used
-    allowNull: false,
-  },
   startTime: {
-    type: DataTypes.STRING(191),
+    type: DataTypes.DATE,
     allowNull: false,
   },
   endTime: {
-    type: DataTypes.STRING(191),
+    type: DataTypes.DATE,
     allowNull: false,
   },
   status: {

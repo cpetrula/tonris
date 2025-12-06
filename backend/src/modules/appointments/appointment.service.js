@@ -35,25 +35,14 @@ const calculateTotals = (service, addOnIds = []) => {
 
 /**
  * Calculate end time from start time and duration
- * @param {string|Date} startTime - Start time in HH:MM format or Date object
+ * @param {Date} startTime - Start time as Date object
  * @param {number} durationMinutes - Duration in minutes
- * @returns {string} - End time in HH:MM format
+ * @returns {Date} - End time as Date object
  */
 const calculateEndTime = (startTime, durationMinutes) => {
-  // Ensure startTime is a string in HH:MM format
-  let timeString = startTime;
-  if (typeof startTime !== 'string') {
-    // If it's a Date object, convert to HH:MM
-    const date = new Date(startTime);
-    timeString = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  }
-
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const startMinutes = hours * 60 + minutes;
-  const endMinutes = startMinutes + durationMinutes;
-  const endHours = Math.floor(endMinutes / 60) % 24;
-  const endMins = endMinutes % 60;
-  return `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+  const startDateTime = new Date(startTime);
+  const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60 * 1000);
+  return endDateTime;
 };
 
 /**
@@ -69,7 +58,6 @@ const createAppointment = async (appointmentData, tenantId) => {
     customerName,
     customerEmail,
     customerPhone,
-    appointmentDate,
     startTime,
     addOns = [],
     notes,
@@ -99,15 +87,9 @@ const createAppointment = async (appointmentData, tenantId) => {
   // Calculate totals
   const { totalPrice, totalDuration } = calculateTotals(service, addOns);
 
-  // Calculate end time as string (HH:MM format)
-  const endTime = calculateEndTime(startTime, totalDuration);
-
-  // For availability check, we need to combine date and time into full datetime
-  const appointmentDateTime = new Date(appointmentDate);
-  const [hours, minutes] = startTime.split(':').map(Number);
-  const startDateTime = new Date(appointmentDateTime);
-  startDateTime.setHours(hours, minutes, 0, 0);
-  const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60 * 1000);
+  // Calculate end time as Date object
+  const startDateTime = new Date(startTime);
+  const endDateTime = calculateEndTime(startDateTime, totalDuration);
 
   // Check for conflicts
   const availability = await checkSlotAvailability(
@@ -133,9 +115,8 @@ const createAppointment = async (appointmentData, tenantId) => {
     customerName,
     customerEmail,
     customerPhone,
-    appointmentDate: appointmentDateTime,
-    startTime,
-    endTime,
+    startTime: startDateTime,
+    endTime: endDateTime,
     addOns,
     notes,
     totalPrice,
@@ -248,7 +229,6 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
 
   const {
     employeeId,
-    appointmentDate,
     startTime,
     addOns,
     notes,
@@ -258,8 +238,8 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
     customerPhone,
   } = updateData;
 
-  // If rescheduling (changing date, time or employee), check for conflicts
-  if (appointmentDate || startTime || employeeId) {
+  // If rescheduling (changing time or employee), check for conflicts
+  if (startTime || employeeId) {
     const newEmployeeId = employeeId || appointment.employeeId;
     
     // Verify new employee if changed
@@ -277,9 +257,8 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
       }
     }
 
-    // Get the appointment date and start time (use existing if not provided)
-    const newAppointmentDate = appointmentDate ? new Date(appointmentDate) : appointment.appointmentDate;
-    const newStartTime = startTime || appointment.startTime;
+    // Get the start time (use existing if not provided)
+    const newStartTime = startTime ? new Date(startTime) : appointment.startTime;
     let newDuration = appointment.totalDuration;
 
     // Recalculate duration if add-ons changed
@@ -293,28 +272,15 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
       appointment.addOns = addOns;
     }
 
-    // Calculate end time as string (HH:MM format) using helper
+    // Calculate end time as Date object
     const newEndTime = calculateEndTime(newStartTime, newDuration);
     
-    // Get time string for availability check (helper handles type conversion)
-    let timeString = newStartTime;
-    if (typeof newStartTime !== 'string') {
-      const date = new Date(newStartTime);
-      timeString = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-    }
-
-    // For availability check, combine date and time
-    const [hours, minutes] = timeString.split(':').map(Number);
-    const startDateTime = new Date(newAppointmentDate);
-    startDateTime.setHours(hours, minutes, 0, 0);
-    const endDateTime = new Date(startDateTime.getTime() + newDuration * 60 * 1000);
-
     // Check availability
     const availability = await checkSlotAvailability(
       newEmployeeId,
       tenantId,
-      startDateTime,
-      endDateTime,
+      newStartTime,
+      newEndTime,
       appointmentId // Exclude current appointment from conflict check
     );
 
@@ -326,10 +292,7 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
       );
     }
 
-    if (appointmentDate) {
-      appointment.appointmentDate = newAppointmentDate;
-    }
-    appointment.startTime = timeString;
+    appointment.startTime = newStartTime;
     appointment.endTime = newEndTime;
     appointment.totalDuration = newDuration;
     
