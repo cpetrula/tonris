@@ -12,6 +12,7 @@ const { getTenantUUID } = require('../../utils/tenant');
 const VALIDATION = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   UUID_REGEX: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  TIME_REGEX: /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/,
 };
 
 /**
@@ -114,8 +115,7 @@ const createAppointment = async (req, res, next) => {
     }
 
     // Validate startTime format (HH:MM)
-    const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
-    if (!timeRegex.test(startTime)) {
+    if (!VALIDATION.TIME_REGEX.test(startTime)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid start time format. Expected HH:MM format',
@@ -205,15 +205,12 @@ const updateAppointment = async (req, res, next) => {
     }
 
     // Validate startTime format if provided (HH:MM)
-    if (startTime) {
-      const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
-      if (!timeRegex.test(startTime)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid start time format. Expected HH:MM format',
-          code: 'VALIDATION_ERROR',
-        });
-      }
+    if (startTime && !VALIDATION.TIME_REGEX.test(startTime)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid start time format. Expected HH:MM format',
+        code: 'VALIDATION_ERROR',
+      });
     }
 
     // Validate appointment date and time if provided

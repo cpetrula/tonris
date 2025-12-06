@@ -34,6 +34,29 @@ const calculateTotals = (service, addOnIds = []) => {
 };
 
 /**
+ * Calculate end time from start time and duration
+ * @param {string|Date} startTime - Start time in HH:MM format or Date object
+ * @param {number} durationMinutes - Duration in minutes
+ * @returns {string} - End time in HH:MM format
+ */
+const calculateEndTime = (startTime, durationMinutes) => {
+  // Ensure startTime is a string in HH:MM format
+  let timeString = startTime;
+  if (typeof startTime !== 'string') {
+    // If it's a Date object, convert to HH:MM
+    const date = new Date(startTime);
+    timeString = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  }
+
+  const [hours, minutes] = timeString.split(':').map(Number);
+  const startMinutes = hours * 60 + minutes;
+  const endMinutes = startMinutes + durationMinutes;
+  const endHours = Math.floor(endMinutes / 60) % 24;
+  const endMins = endMinutes % 60;
+  return `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+};
+
+/**
  * Create a new appointment
  * @param {Object} appointmentData - Appointment creation data
  * @param {string} tenantId - Tenant identifier
@@ -77,15 +100,11 @@ const createAppointment = async (appointmentData, tenantId) => {
   const { totalPrice, totalDuration } = calculateTotals(service, addOns);
 
   // Calculate end time as string (HH:MM format)
-  const [hours, minutes] = startTime.split(':').map(Number);
-  const startMinutes = hours * 60 + minutes;
-  const endMinutes = startMinutes + totalDuration;
-  const endHours = Math.floor(endMinutes / 60) % 24;
-  const endMins = endMinutes % 60;
-  const endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+  const endTime = calculateEndTime(startTime, totalDuration);
 
   // For availability check, we need to combine date and time into full datetime
   const appointmentDateTime = new Date(appointmentDate);
+  const [hours, minutes] = startTime.split(':').map(Number);
   const startDateTime = new Date(appointmentDateTime);
   startDateTime.setHours(hours, minutes, 0, 0);
   const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60 * 1000);
@@ -274,23 +293,18 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
       appointment.addOns = addOns;
     }
 
-    // Ensure startTime is a string in HH:MM format
+    // Calculate end time as string (HH:MM format) using helper
+    const newEndTime = calculateEndTime(newStartTime, newDuration);
+    
+    // Get time string for availability check (helper handles type conversion)
     let timeString = newStartTime;
     if (typeof newStartTime !== 'string') {
-      // If it's a Date object, convert to HH:MM
       const date = new Date(newStartTime);
       timeString = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
-    // Calculate end time as string (HH:MM format)
-    const [hours, minutes] = timeString.split(':').map(Number);
-    const startMinutes = hours * 60 + minutes;
-    const endMinutes = startMinutes + newDuration;
-    const endHours = Math.floor(endMinutes / 60) % 24;
-    const endMins = endMinutes % 60;
-    const newEndTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
-
     // For availability check, combine date and time
+    const [hours, minutes] = timeString.split(':').map(Number);
     const startDateTime = new Date(newAppointmentDate);
     startDateTime.setHours(hours, minutes, 0, 0);
     const endDateTime = new Date(startDateTime.getTime() + newDuration * 60 * 1000);
