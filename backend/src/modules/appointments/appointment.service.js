@@ -46,6 +46,7 @@ const createAppointment = async (appointmentData, tenantId) => {
     customerName,
     customerEmail,
     customerPhone,
+    appointmentDate,
     startTime,
     addOns = [],
     notes,
@@ -103,6 +104,7 @@ const createAppointment = async (appointmentData, tenantId) => {
     customerName,
     customerEmail,
     customerPhone,
+    appointmentDate,
     startTime: startDateTime,
     endTime: endDateTime,
     addOns,
@@ -218,6 +220,7 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
   const {
     employeeId,
     startTime,
+    appointmentDate,
     addOns,
     notes,
     status,
@@ -286,6 +289,11 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
     if (employeeId) {
       appointment.employeeId = employeeId;
     }
+  }
+
+  // Update appointmentDate if provided
+  if (appointmentDate !== undefined) {
+    appointment.appointmentDate = appointmentDate;
   }
 
   // Update other fields

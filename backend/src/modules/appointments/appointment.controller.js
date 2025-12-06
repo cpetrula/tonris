@@ -72,22 +72,23 @@ const createAppointment = async (req, res, next) => {
       customerName,
       customerEmail,
       customerPhone,
+      appointmentDate,
       startTime,
       addOns,
       notes,
     } = req.body;
 
     // Validate required fields
-    if (!employeeId || !serviceId || !customerName || !customerEmail || !startTime) {
+    if (!employeeId || !serviceId || !customerName || !appointmentDate || !startTime) {
       return res.status(400).json({
         success: false,
-        error: 'Employee ID, service ID, customer name, customer email, and start time are required',
+        error: 'Employee ID, service ID, customer name, appointment date, and start time are required',
         code: 'VALIDATION_ERROR',
       });
     }
 
-    // Validate email format
-    if (!VALIDATION.EMAIL_REGEX.test(customerEmail)) {
+    // Validate email format if provided
+    if (customerEmail && !VALIDATION.EMAIL_REGEX.test(customerEmail)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid customer email format',
@@ -137,6 +138,7 @@ const createAppointment = async (req, res, next) => {
       customerName,
       customerEmail,
       customerPhone,
+      appointmentDate,
       startTime,
       addOns,
       notes,
@@ -160,6 +162,7 @@ const updateAppointment = async (req, res, next) => {
     const {
       employeeId,
       startTime,
+      appointmentDate,
       addOns,
       notes,
       status,
@@ -210,6 +213,7 @@ const updateAppointment = async (req, res, next) => {
     const appointment = await appointmentService.updateAppointment(req.params.id, tenantUUID, {
       employeeId,
       startTime,
+      appointmentDate,
       addOns,
       notes,
       status,
