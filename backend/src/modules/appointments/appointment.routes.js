@@ -29,7 +29,7 @@ const standardLimiter = rateLimit({
 });
 
 /**
- * All routes require authentication
+ * GET routes require authentication, POST/PATCH/DELETE do not
  */
 
 // GET /api/appointments - Get all appointments
@@ -39,12 +39,12 @@ router.get('/', standardLimiter, authMiddleware, appointmentController.getAppoin
 router.get('/:id', standardLimiter, authMiddleware, appointmentController.getAppointment);
 
 // POST /api/appointments - Create a new appointment
-router.post('/', standardLimiter, authMiddleware, appointmentController.createAppointment);
+router.post('/', standardLimiter, appointmentController.createAppointment);
 
 // PATCH /api/appointments/:id - Update appointment (reschedule)
-router.patch('/:id', standardLimiter, authMiddleware, appointmentController.updateAppointment);
+router.patch('/:id', standardLimiter, appointmentController.updateAppointment);
 
 // DELETE /api/appointments/:id - Cancel or delete appointment
-router.delete('/:id', standardLimiter, authMiddleware, appointmentController.deleteAppointment);
+router.delete('/:id', standardLimiter, appointmentController.deleteAppointment);
 
 module.exports = router;
