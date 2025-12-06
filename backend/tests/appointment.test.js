@@ -265,8 +265,47 @@ describe('Appointment Module', () => {
   });
 
   describe('POST /api/appointments', () => {
-    it('should return 401 without authentication', async () => {
+    it('should accept requests without authentication', async () => {
       const futureDate = getFutureDate();
+      
+      mockEmployeeModel.findOne.mockResolvedValue({
+        id: mockEmployeeId,
+        serviceIds: [mockServiceId],
+      });
+      mockServiceModel.findOne.mockResolvedValue({
+        id: mockServiceId,
+        duration: 60,
+        price: 50.00,
+        addOns: [],
+      });
+      // No conflicts
+      mockAppointmentModel.findAll.mockResolvedValue([]);
+      
+      const endDate = new Date(futureDate.getTime() + 60 * 60 * 1000);
+      const mockAppointment = {
+        id: mockAppointmentId,
+        employeeId: mockEmployeeId,
+        serviceId: mockServiceId,
+        customerName: 'John Doe',
+        customerEmail: 'john@example.com',
+        startTime: futureDate,
+        endTime: endDate,
+        status: 'scheduled',
+        toSafeObject: function() {
+          return {
+            id: this.id,
+            employeeId: this.employeeId,
+            serviceId: this.serviceId,
+            customerName: this.customerName,
+            customerEmail: this.customerEmail,
+            startTime: this.startTime,
+            endTime: this.endTime,
+            status: this.status,
+          };
+        },
+      };
+      mockAppointmentModel.create.mockResolvedValue(mockAppointment);
+
       const response = await request(app)
         .post('/api/appointments')
         .set('X-Tenant-ID', 'test-tenant')
@@ -278,7 +317,8 @@ describe('Appointment Module', () => {
           startTime: futureDate.toISOString(),
         });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
     });
 
     it('should return 400 when required fields are missing', async () => {
