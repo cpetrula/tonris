@@ -4,6 +4,7 @@
  */
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/db');
+const { EMAIL_REGEX } = require('../../utils/validation');
 
 /**
  * Valid appointment statuses
@@ -63,10 +64,16 @@ const Appointment = sequelize.define('Appointment', {
   },
   customerEmail: {
     type: DataTypes.STRING(255),
-    allowNull: false,
+    allowNull: true,
     field: 'customer_email',
     validate: {
-      isEmail: true,
+      isEmailOrNull(value) {
+        if (value !== null && value !== undefined && value !== '') {
+          if (!EMAIL_REGEX.test(value)) {
+            throw new Error('Invalid email format');
+          }
+        }
+      },
     },
   },
   customerPhone: {
