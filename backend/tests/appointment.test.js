@@ -559,8 +559,46 @@ describe('Appointment Module', () => {
       expect(response.body.data.appointment.customerName).toBe('John Doe');
     });
 
-    it('should return 400 when customer email is missing', async () => {
+    it('should create appointment successfully without customer email', async () => {
       const futureDate = getFutureDate();
+      
+      mockEmployeeModel.findOne.mockResolvedValue({
+        id: mockEmployeeId,
+        serviceIds: [mockServiceId],
+      });
+      mockServiceModel.findOne.mockResolvedValue({
+        id: mockServiceId,
+        duration: 60,
+        price: 50.00,
+        addOns: [],
+      });
+      // No conflicts
+      mockAppointmentModel.findAll.mockResolvedValue([]);
+      
+      const endDate = new Date(futureDate.getTime() + 60 * 60 * 1000);
+      const mockAppointment = {
+        id: mockAppointmentId,
+        employeeId: mockEmployeeId,
+        serviceId: mockServiceId,
+        customerName: 'Jane Doe',
+        customerEmail: null,
+        startTime: futureDate,
+        endTime: endDate,
+        status: 'scheduled',
+        toSafeObject: function() {
+          return {
+            id: this.id,
+            employeeId: this.employeeId,
+            serviceId: this.serviceId,
+            customerName: this.customerName,
+            customerEmail: this.customerEmail,
+            startTime: this.startTime,
+            endTime: this.endTime,
+            status: this.status,
+          };
+        },
+      };
+      mockAppointmentModel.create.mockResolvedValue(mockAppointment);
 
       const response = await request(app)
         .post('/api/appointments')
@@ -573,9 +611,9 @@ describe('Appointment Module', () => {
           startTime: futureDate.toISOString(),
         });
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.code).toBe('VALIDATION_ERROR');
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.appointment.customerName).toBe('Jane Doe');
     });
   });
 

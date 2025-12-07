@@ -79,16 +79,16 @@ const createAppointment = async (req, res, next) => {
     } = req.body;
 
     // Validate required fields
-    if (!employeeId || !serviceId || !customerName || !customerEmail || !startTime) {
+    if (!employeeId || !serviceId || !customerName || !startTime) {
       return res.status(400).json({
         success: false,
-        error: 'Employee ID, service ID, customer name, customer email, and start time are required',
+        error: 'Employee ID, service ID, customer name, and start time are required',
         code: 'VALIDATION_ERROR',
       });
     }
 
-    // Validate email format
-    if (!VALIDATION.EMAIL_REGEX.test(customerEmail)) {
+    // Validate email format if provided
+    if (customerEmail && !VALIDATION.EMAIL_REGEX.test(customerEmail)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid customer email format',

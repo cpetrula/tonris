@@ -63,7 +63,7 @@ const Appointment = sequelize.define('Appointment', {
   },
   customerEmail: {
     type: DataTypes.STRING(255),
-    allowNull: false,
+    allowNull: true,
     field: 'customer_email',
     validate: {
       isEmail: true,
