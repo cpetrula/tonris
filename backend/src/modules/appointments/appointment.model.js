@@ -66,7 +66,13 @@ const Appointment = sequelize.define('Appointment', {
     allowNull: true,
     field: 'customer_email',
     validate: {
-      isEmail: true,
+      isEmailOrNull(value) {
+        if (value !== null && value !== undefined && value !== '') {
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            throw new Error('Invalid email format');
+          }
+        }
+      },
     },
   },
   customerPhone: {
