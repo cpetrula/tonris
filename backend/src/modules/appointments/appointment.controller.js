@@ -5,14 +5,15 @@
 const appointmentService = require('./appointment.service');
 const availabilityService = require('./availability.service');
 const { getTenantUUID } = require('../../utils/tenant');
+const { EMAIL_REGEX, UUID_REGEX, TIME_REGEX } = require('../../utils/validation');
 
 /**
  * Validation patterns
  */
 const VALIDATION = {
-  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  UUID_REGEX: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-  TIME_REGEX: /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/,
+  EMAIL_REGEX,
+  UUID_REGEX,
+  TIME_REGEX,
 };
 
 /**
