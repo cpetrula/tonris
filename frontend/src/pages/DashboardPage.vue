@@ -58,7 +58,9 @@ function navigateTo(path: string) {
 function navigateToStatDetails(index: number) {
   // Navigate to appropriate page based on stat index
   const routes = ['/app/appointments', '/app/appointments', '/app/employees', '/app/services']
-  router.push(routes[index])
+  if (routes[index]) {
+    router.push(routes[index]!)
+  }
 }
 
 function formatTime(dateString: string): string {

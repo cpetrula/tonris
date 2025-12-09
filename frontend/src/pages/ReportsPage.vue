@@ -218,22 +218,24 @@ function calculateAppointmentStats(appointments: any[]) {
     const date = new Date(apt.startTime)
     const weekStart = new Date(date)
     weekStart.setDate(date.getDate() - date.getDay())
-    const weekKey = weekStart.toISOString().split('T')[0]
+    const weekKey = weekStart.toISOString().split('T')[0] || ''
     
-    if (!weeklyStats[weekKey]) {
+    if (weekKey && !weeklyStats[weekKey]) {
       weeklyStats[weekKey] = { booked: 0, completed: 0, cancelled: 0, noShow: 0 }
     }
     
-    weeklyStats[weekKey].booked++
-    if (apt.status === 'completed') weeklyStats[weekKey].completed++
-    if (apt.status === 'cancelled') weeklyStats[weekKey].cancelled++
-    if (apt.status === 'no-show') weeklyStats[weekKey].noShow++
+    if (weekKey) {
+      weeklyStats[weekKey]!.booked++
+      if (apt.status === 'completed') weeklyStats[weekKey]!.completed++
+      if (apt.status === 'cancelled') weeklyStats[weekKey]!.cancelled++
+      if (apt.status === 'no-show') weeklyStats[weekKey]!.noShow++
+    }
   })
   
   appointmentStats.value = Object.entries(weeklyStats)
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-4) // Last 4 weeks
-    .map(([week, stats], index) => ({
+    .map(([, stats], index) => ({
       period: `Week ${index + 1}`,
       ...stats
     }))
