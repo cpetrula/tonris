@@ -341,15 +341,15 @@ const getDashboardStats = async (tenantId) => {
   const employeeIds = [...new Set(todayAppointments.map(apt => apt.employeeId))];
   const serviceIds = [...new Set(todayAppointments.map(apt => apt.serviceId))];
 
-  const employees = await Employee.findAll({
+  const employees = employeeIds.length > 0 ? await Employee.findAll({
     where: { id: { [Op.in]: employeeIds } },
     attributes: ['id', 'firstName', 'lastName'],
-  });
+  }) : [];
 
-  const services = await Service.findAll({
+  const services = serviceIds.length > 0 ? await Service.findAll({
     where: { id: { [Op.in]: serviceIds } },
     attributes: ['id', 'name'],
-  });
+  }) : [];
 
   // Create lookup maps
   const employeeMap = new Map(employees.map(e => [e.id, e]));
@@ -367,10 +367,10 @@ const getDashboardStats = async (tenantId) => {
 
   // Get service details for recent appointments
   const recentServiceIds = [...new Set(recentAppointments.map(apt => apt.serviceId))];
-  const recentServices = await Service.findAll({
+  const recentServices = recentServiceIds.length > 0 ? await Service.findAll({
     where: { id: { [Op.in]: recentServiceIds } },
     attributes: ['id', 'name'],
-  });
+  }) : [];
   const recentServiceMap = new Map(recentServices.map(s => [s.id, s]));
 
   const recentCalls = await CallLog.findAll({

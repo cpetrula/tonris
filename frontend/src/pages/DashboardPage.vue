@@ -83,12 +83,21 @@ async function fetchDashboardData() {
     const response = await api.get('/api/tenant/dashboard-stats')
     const data = response.data.data
     
-    // Update stats
+    // Update stats using a more robust approach
     if (data.stats) {
-      stats.value[0]!.value = String(data.stats.todayAppointments)
-      stats.value[1]!.value = String(data.stats.pendingCalls)
-      stats.value[2]!.value = String(data.stats.activeEmployees)
-      stats.value[3]!.value = String(data.stats.servicesOffered)
+      const statMap: Record<string, keyof typeof data.stats> = {
+        "Today's Appointments": 'todayAppointments',
+        'Pending Calls': 'pendingCalls',
+        'Active Employees': 'activeEmployees',
+        'Services Offered': 'servicesOffered'
+      }
+      
+      stats.value.forEach(stat => {
+        const key = statMap[stat.label]
+        if (key && data.stats[key] !== undefined) {
+          stat.value = String(data.stats[key])
+        }
+      })
     }
     
     // Update appointments
