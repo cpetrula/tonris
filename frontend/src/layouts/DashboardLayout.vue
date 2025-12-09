@@ -59,6 +59,21 @@ function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value
 }
 
+function formatPhoneNumber(phoneNumber: string): string {
+  // Remove all non-digit characters
+  const digits = phoneNumber.replace(/\D/g, '')
+  
+  // Format as (XXX) XXX-XXXX for US numbers
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
+  } else if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+  }
+  
+  // Return original if not a standard format
+  return phoneNumber
+}
+
 onMounted(async () => {
   // Fetch user data if not loaded
   if (!authStore.user && authStore.token) {
@@ -130,7 +145,16 @@ onMounted(async () => {
 
         <!-- Search / Breadcrumb placeholder -->
         <div class="flex-1 px-4">
-          <!-- Could add breadcrumbs or search here -->
+          <!-- AI Phone Number Display -->
+          <div v-if="tenantStore.currentTenant?.twilioPhoneNumber" class="flex items-center space-x-2">
+            <i class="pi pi-phone text-violet-600"></i>
+            <span class="text-sm font-medium text-surface-700 dark:text-surface-300">
+              Your AI phone #: 
+            </span>
+            <span class="text-sm font-semibold text-violet-600 dark:text-violet-400">
+              {{ formatPhoneNumber(tenantStore.currentTenant.twilioPhoneNumber) }}
+            </span>
+          </div>
         </div>
 
         <!-- User Menu -->

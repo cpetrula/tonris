@@ -252,6 +252,24 @@ const updateTenantStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/tenant/dashboard-stats
+ * Get dashboard statistics for tenant
+ */
+const getDashboardStats = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const stats = await tenantService.getDashboardStats(tenantUUID);
+
+    res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCurrentUserAndTenant,
   getTenantSettings,
@@ -261,4 +279,5 @@ module.exports = {
   updateTenant,
   activateTenant,
   updateTenantStatus,
+  getDashboardStats,
 };

@@ -57,4 +57,7 @@ router.post('/activate', standardLimiter, authMiddleware, tenantController.activ
 // PATCH /api/tenant/status - Update tenant status
 router.patch('/status', standardLimiter, authMiddleware, tenantController.updateTenantStatus);
 
+// GET /api/tenant/dashboard-stats - Get dashboard statistics
+router.get('/dashboard-stats', standardLimiter, authMiddleware, tenantController.getDashboardStats);
+
 module.exports = router;
