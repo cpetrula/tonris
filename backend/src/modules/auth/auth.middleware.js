@@ -5,6 +5,7 @@
 const { verifyToken } = require('./jwt.utils');
 const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
+const env = require('../../config/env');
 
 /**
  * Middleware to verify JWT token and attach user to request
@@ -29,7 +30,6 @@ const authMiddleware = (req, res, next) => {
 
     // Set tenant ID from JWT token if not already set by tenant middleware
     // or if the current tenant ID is the default (meaning no explicit tenant was provided)
-    const env = require('../../config/env');
     if (decoded.tenantId && (!req.tenantId || req.tenantId === env.DEFAULT_TENANT_ID)) {
       req.tenantId = decoded.tenantId;
     } else if (decoded.tenantId && req.tenantId && decoded.tenantId !== req.tenantId) {
@@ -69,7 +69,6 @@ const optionalAuthMiddleware = (req, res, next) => {
       
       // Set tenant ID from JWT token if not already set by tenant middleware
       // or if the current tenant ID is the default (meaning no explicit tenant was provided)
-      const env = require('../../config/env');
       if (decoded.tenantId && (!req.tenantId || req.tenantId === env.DEFAULT_TENANT_ID)) {
         req.tenantId = decoded.tenantId;
       }
