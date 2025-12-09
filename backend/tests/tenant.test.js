@@ -47,6 +47,26 @@ const mockUserModel = {
   create: jest.fn(),
 };
 
+const mockAppointmentModel = {
+  count: jest.fn(),
+  findAll: jest.fn(),
+};
+
+const mockEmployeeModel = {
+  count: jest.fn(),
+  findAll: jest.fn(),
+};
+
+const mockServiceModel = {
+  count: jest.fn(),
+  findAll: jest.fn(),
+};
+
+const mockCallLogModel = {
+  count: jest.fn(),
+  findAll: jest.fn(),
+};
+
 // Mock both the tenant model and the models index BEFORE requiring the app
 jest.mock('../src/modules/tenants/tenant.model', () => ({
   Tenant: mockTenantModel,
@@ -67,6 +87,53 @@ jest.mock('../src/modules/tenants/tenant.model', () => ({
     active: ['suspended', 'cancelled'],
     suspended: ['active', 'cancelled'],
     cancelled: [],
+  },
+}));
+
+jest.mock('../src/modules/appointments/appointment.model', () => ({
+  Appointment: mockAppointmentModel,
+  APPOINTMENT_STATUS: {
+    SCHEDULED: 'scheduled',
+    CONFIRMED: 'confirmed',
+    IN_PROGRESS: 'in_progress',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+    NO_SHOW: 'no_show',
+  },
+}));
+
+jest.mock('../src/modules/employees/employee.model', () => ({
+  Employee: mockEmployeeModel,
+  EMPLOYEE_STATUS: {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive',
+    ON_LEAVE: 'on_leave',
+  },
+}));
+
+jest.mock('../src/modules/services/service.model', () => ({
+  Service: mockServiceModel,
+  SERVICE_STATUS: {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive',
+  },
+}));
+
+jest.mock('../src/modules/telephony/callLog.model', () => ({
+  CallLog: mockCallLogModel,
+  CALL_STATUS: {
+    INITIATED: 'initiated',
+    RINGING: 'ringing',
+    IN_PROGRESS: 'in-progress',
+    COMPLETED: 'completed',
+    BUSY: 'busy',
+    NO_ANSWER: 'no-answer',
+    CANCELED: 'canceled',
+    FAILED: 'failed',
+  },
+  CALL_DIRECTION: {
+    INBOUND: 'inbound',
+    OUTBOUND: 'outbound',
   },
 }));
 
@@ -554,6 +621,86 @@ describe('Tenant Module', () => {
 
       expect(response.status).toBe(404);
       expect(response.body.code).toBe('USER_NOT_FOUND');
+    });
+  });
+
+  describe('GET /api/tenant/dashboard-stats', () => {
+    const validToken = () => jwtUtils.generateAccessToken({
+      userId: '123',
+      email: 'test@example.com',
+      tenantId: 'test-tenant',
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      
+      // Set up default mock return values
+      mockAppointmentModel.count.mockResolvedValue(5);
+      mockAppointmentModel.findAll.mockResolvedValue([
+        {
+          id: 'apt-1',
+          customerName: 'John Doe',
+          employeeId: 'emp-1',
+          serviceId: 'svc-1',
+          startTime: new Date(),
+        },
+      ]);
+      mockEmployeeModel.count.mockResolvedValue(3);
+      mockEmployeeModel.findAll.mockResolvedValue([
+        {
+          id: 'emp-1',
+          firstName: 'Jane',
+          lastName: 'Smith',
+        },
+      ]);
+      mockServiceModel.count.mockResolvedValue(10);
+      mockServiceModel.findAll.mockResolvedValue([
+        {
+          id: 'svc-1',
+          name: 'Haircut',
+        },
+      ]);
+      mockCallLogModel.count.mockResolvedValue(2);
+      mockCallLogModel.findAll.mockResolvedValue([
+        {
+          id: 'call-1',
+          fromNumber: '+1234567890',
+          status: 'completed',
+          createdAt: new Date(),
+        },
+      ]);
+    });
+
+    it('should return 401 without authentication', async () => {
+      const response = await request(app)
+        .get('/api/tenant/dashboard-stats')
+        .set('X-Tenant-ID', 'test-tenant');
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should return dashboard stats with valid token', async () => {
+      const mockTenantInstance = {
+        id: 'tenant-uuid-123',
+        name: 'Test Salon',
+        toSafeObject: () => ({
+          id: 'tenant-uuid-123',
+          name: 'Test Salon',
+        }),
+      };
+      mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+      const response = await request(app)
+        .get('/api/tenant/dashboard-stats')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.stats).toBeDefined();
+      expect(response.body.data.todayAppointments).toBeDefined();
+      expect(response.body.data.recentActivity).toBeDefined();
     });
   });
 });
