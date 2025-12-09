@@ -9,6 +9,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
+import api from '@/services/api'
 
 interface Service {
   id: string
@@ -21,53 +22,7 @@ interface Service {
 }
 
 const loading = ref(false)
-const services = ref<Service[]>([
-  {
-    id: '1',
-    name: 'Haircut',
-    description: 'Professional haircut with wash and style',
-    duration: 45,
-    price: 35,
-    category: 'Hair',
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'Color Treatment',
-    description: 'Full color treatment with premium products',
-    duration: 120,
-    price: 120,
-    category: 'Hair',
-    status: 'active'
-  },
-  {
-    id: '3',
-    name: 'Beard Trim',
-    description: 'Precision beard trimming and shaping',
-    duration: 20,
-    price: 20,
-    category: 'Grooming',
-    status: 'active'
-  },
-  {
-    id: '4',
-    name: 'Hair Styling',
-    description: 'Special occasion styling and blowout',
-    duration: 60,
-    price: 50,
-    category: 'Hair',
-    status: 'active'
-  },
-  {
-    id: '5',
-    name: 'Deep Conditioning',
-    description: 'Intensive hair conditioning treatment',
-    duration: 30,
-    price: 40,
-    category: 'Hair',
-    status: 'active'
-  }
-])
+const services = ref<Service[]>([])
 
 const searchQuery = ref('')
 const showDialog = ref(false)
@@ -160,10 +115,34 @@ function toggleStatus(service: Service) {
 
 onMounted(async () => {
   loading.value = true
-  // In a real app, fetch services from API using tenantStore.tenantId
-  // await api.get(`/api/tenants/${tenantStore.tenantId}/services`)
-  loading.value = false
+  try {
+    await fetchServices()
+  } catch (err) {
+    console.error('Error loading services:', err)
+    error.value = 'Failed to load services data'
+  } finally {
+    loading.value = false
+  }
 })
+
+async function fetchServices() {
+  try {
+    const response = await api.get('/api/services')
+    if (response.data.success && response.data.data) {
+      services.value = response.data.data.map((svc: any) => ({
+        id: svc.id,
+        name: svc.name || '',
+        description: svc.description || '',
+        duration: svc.duration || 30,
+        price: svc.price || 0,
+        category: svc.category || '',
+        status: svc.status || 'active'
+      }))
+    }
+  } catch (err) {
+    console.error('Error fetching services:', err)
+  }
+}
 </script>
 
 <template>

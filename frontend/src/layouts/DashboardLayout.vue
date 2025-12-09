@@ -134,15 +134,6 @@ onMounted(async () => {
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Top Header -->
       <header class="h-16 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
-        <!-- Mobile Menu Button -->
-        <Button
-          icon="pi pi-bars"
-          text
-          class="lg:hidden"
-          @click="toggleSidebar"
-          aria-label="Toggle sidebar"
-        />
-
         <!-- Search / Breadcrumb placeholder -->
         <div class="flex-1 px-4">
           <!-- AI Phone Number Display -->
@@ -176,7 +167,7 @@ onMounted(async () => {
               <div class="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center text-white font-medium">
                 {{ authStore.user?.firstName?.charAt(0) || 'U' }}
               </div>
-              <span class="hidden md:block text-gray-700">{{ authStore.fullName || 'User' }}</span>
+              <span class="hidden md:block text-gray-700">{{ authStore.user?.firstName || '' }} {{ authStore.user?.lastName || '' }}</span>
               <i class="pi pi-chevron-down text-gray-500"></i>
             </Button>
             <Menu ref="userMenu" :model="userMenuItems" popup />

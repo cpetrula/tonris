@@ -7,6 +7,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
+import api from '@/services/api'
 
 interface Employee {
   id: string
@@ -28,62 +29,7 @@ interface Employee {
 }
 
 const loading = ref(false)
-const employees = ref<Employee[]>([
-  {
-    id: '1',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    email: 'sarah.johnson@example.com',
-    phone: '(555) 123-4567',
-    role: 'Stylist',
-    status: 'active',
-    schedule: {
-      monday: '9:00 AM - 5:00 PM',
-      tuesday: '9:00 AM - 5:00 PM',
-      wednesday: '9:00 AM - 5:00 PM',
-      thursday: '9:00 AM - 5:00 PM',
-      friday: '9:00 AM - 5:00 PM',
-      saturday: '10:00 AM - 3:00 PM',
-      sunday: 'Off'
-    }
-  },
-  {
-    id: '2',
-    firstName: 'Mike',
-    lastName: 'Brown',
-    email: 'mike.brown@example.com',
-    phone: '(555) 234-5678',
-    role: 'Barber',
-    status: 'active',
-    schedule: {
-      monday: '10:00 AM - 6:00 PM',
-      tuesday: '10:00 AM - 6:00 PM',
-      wednesday: 'Off',
-      thursday: '10:00 AM - 6:00 PM',
-      friday: '10:00 AM - 6:00 PM',
-      saturday: '9:00 AM - 4:00 PM',
-      sunday: 'Off'
-    }
-  },
-  {
-    id: '3',
-    firstName: 'Jessica',
-    lastName: 'Lee',
-    email: 'jessica.lee@example.com',
-    phone: '(555) 345-6789',
-    role: 'Colorist',
-    status: 'active',
-    schedule: {
-      monday: '8:00 AM - 4:00 PM',
-      tuesday: '8:00 AM - 4:00 PM',
-      wednesday: '8:00 AM - 4:00 PM',
-      thursday: '8:00 AM - 4:00 PM',
-      friday: '8:00 AM - 4:00 PM',
-      saturday: 'Off',
-      sunday: 'Off'
-    }
-  }
-])
+const employees = ref<Employee[]>([])
 
 const searchQuery = ref('')
 const showDialog = ref(false)
@@ -177,10 +123,43 @@ function toggleStatus(employee: Employee) {
 
 onMounted(async () => {
   loading.value = true
-  // In a real app, fetch employees from API using tenantStore.tenantId
-  // await api.get(`/api/tenants/${tenantStore.tenantId}/employees`)
-  loading.value = false
+  try {
+    await fetchEmployees()
+  } catch (err) {
+    console.error('Error loading employees:', err)
+    error.value = 'Failed to load employees data'
+  } finally {
+    loading.value = false
+  }
 })
+
+async function fetchEmployees() {
+  try {
+    const response = await api.get('/api/employees')
+    if (response.data.success && response.data.data) {
+      employees.value = response.data.data.map((emp: any) => ({
+        id: emp.id,
+        firstName: emp.firstName || '',
+        lastName: emp.lastName || '',
+        email: emp.email || '',
+        phone: emp.phone || '',
+        role: emp.role || '',
+        status: emp.status || 'active',
+        schedule: emp.schedule || {
+          monday: 'Off',
+          tuesday: 'Off',
+          wednesday: 'Off',
+          thursday: 'Off',
+          friday: 'Off',
+          saturday: 'Off',
+          sunday: 'Off'
+        }
+      }))
+    }
+  } catch (err) {
+    console.error('Error fetching employees:', err)
+  }
+}
 </script>
 
 <template>
