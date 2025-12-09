@@ -43,7 +43,12 @@ const authMiddleware = (req, res, next) => {
     // or if the current tenant ID is the default (meaning no explicit tenant was provided)
     setTenantIdFromToken(req, decoded);
     
-    // Verify tenant matches if an explicit tenant ID was provided (not default)
+    // Security: Verify tenant matches if an explicit (non-default) tenant ID was provided
+    // This prevents users from accessing other tenants' data by sending a different X-Tenant-ID header
+    // If req.tenantId was set to default and then overridden by setTenantIdFromToken, 
+    // this check won't trigger (expected behavior - we want to use the JWT tenant)
+    // If req.tenantId was explicitly set to a non-default value that differs from JWT,
+    // this check will trigger and reject the request (security measure)
     if (decoded.tenantId && req.tenantId && decoded.tenantId !== req.tenantId) {
       logger.warn(`Tenant mismatch: token tenant ${decoded.tenantId} vs request tenant ${req.tenantId}`);
       throw new AppError('Token tenant mismatch', 401, 'TENANT_MISMATCH');
