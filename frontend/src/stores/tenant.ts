@@ -41,7 +41,11 @@ export const useTenantStore = defineStore('tenant', () => {
     try {
       // Fetch the current tenant information
       const response = await api.get('/api/tenant')
-      const tenant = response.data.data.tenant
+      const tenant = response.data?.data?.tenant
+
+      if (!tenant) {
+        throw new Error('Invalid response structure')
+      }
 
       // Set current tenant and add to tenants array
       currentTenant.value = tenant

@@ -21,7 +21,9 @@ function extractTenantIdFromToken(token: string): string | null {
       return null
     }
     
-    const payload = JSON.parse(atob(parts[1]))
+    // JWT uses base64url encoding - replace URL-safe characters with standard base64
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(base64))
     return payload.tenantId || null
   } catch {
     return null
