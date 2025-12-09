@@ -8,6 +8,17 @@ const logger = require('../../utils/logger');
 const env = require('../../config/env');
 
 /**
+ * Set tenant ID from JWT token if not already set or if set to default
+ * @param {Object} req - Express request object
+ * @param {Object} decoded - Decoded JWT token
+ */
+const setTenantIdFromToken = (req, decoded) => {
+  if (decoded.tenantId && (!req.tenantId || req.tenantId === env.DEFAULT_TENANT_ID)) {
+    req.tenantId = decoded.tenantId;
+  }
+};
+
+/**
  * Middleware to verify JWT token and attach user to request
  */
 const authMiddleware = (req, res, next) => {
@@ -30,10 +41,10 @@ const authMiddleware = (req, res, next) => {
 
     // Set tenant ID from JWT token if not already set by tenant middleware
     // or if the current tenant ID is the default (meaning no explicit tenant was provided)
-    if (decoded.tenantId && (!req.tenantId || req.tenantId === env.DEFAULT_TENANT_ID)) {
-      req.tenantId = decoded.tenantId;
-    } else if (decoded.tenantId && req.tenantId && decoded.tenantId !== req.tenantId) {
-      // Verify tenant matches if an explicit tenant ID was provided (not default)
+    setTenantIdFromToken(req, decoded);
+    
+    // Verify tenant matches if an explicit tenant ID was provided (not default)
+    if (decoded.tenantId && req.tenantId && decoded.tenantId !== req.tenantId) {
       logger.warn(`Tenant mismatch: token tenant ${decoded.tenantId} vs request tenant ${req.tenantId}`);
       throw new AppError('Token tenant mismatch', 401, 'TENANT_MISMATCH');
     }
@@ -66,12 +77,9 @@ const optionalAuthMiddleware = (req, res, next) => {
     
     if (decoded) {
       req.user = decoded;
-      
       // Set tenant ID from JWT token if not already set by tenant middleware
       // or if the current tenant ID is the default (meaning no explicit tenant was provided)
-      if (decoded.tenantId && (!req.tenantId || req.tenantId === env.DEFAULT_TENANT_ID)) {
-        req.tenantId = decoded.tenantId;
-      }
+      setTenantIdFromToken(req, decoded);
     }
     
     next();
