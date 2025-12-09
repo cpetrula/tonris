@@ -59,7 +59,7 @@ function navigateToStatDetails(index: number) {
   // Navigate to appropriate page based on stat index
   const routes = ['/app/appointments', '/app/appointments', '/app/employees', '/app/services']
   if (routes[index]) {
-    router.push(routes[index]!)
+    router.push(routes[index])
   }
 }
 

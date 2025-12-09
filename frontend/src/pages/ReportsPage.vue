@@ -201,9 +201,16 @@ function calculateOverviewStats() {
       const hour = new Date(log.date).getHours()
       hourCounts[hour] = (hourCounts[hour] || 0) + 1
     })
-    const peakHourNum = Object.entries(hourCounts).reduce((max, [hour, count]) => 
-      count > (hourCounts[max] || 0) ? parseInt(hour) : max, 0
-    )
+    
+    let peakHourNum = 0
+    let maxCount = 0
+    Object.entries(hourCounts).forEach(([hourStr, count]) => {
+      if (count > maxCount) {
+        maxCount = count
+        peakHourNum = parseInt(hourStr)
+      }
+    })
+    
     const hour12 = peakHourNum > 12 ? peakHourNum - 12 : (peakHourNum === 0 ? 12 : peakHourNum)
     const ampm = peakHourNum >= 12 ? 'PM' : 'AM'
     overviewStats.value.peakHour = `${hour12}:00 ${ampm}`
@@ -218,18 +225,16 @@ function calculateAppointmentStats(appointments: any[]) {
     const date = new Date(apt.startTime)
     const weekStart = new Date(date)
     weekStart.setDate(date.getDate() - date.getDay())
-    const weekKey = weekStart.toISOString().split('T')[0] || ''
+    const weekKey = weekStart.toISOString().split('T')[0]!
     
-    if (weekKey && !weeklyStats[weekKey]) {
+    if (!weeklyStats[weekKey]) {
       weeklyStats[weekKey] = { booked: 0, completed: 0, cancelled: 0, noShow: 0 }
     }
     
-    if (weekKey) {
-      weeklyStats[weekKey]!.booked++
-      if (apt.status === 'completed') weeklyStats[weekKey]!.completed++
-      if (apt.status === 'cancelled') weeklyStats[weekKey]!.cancelled++
-      if (apt.status === 'no-show') weeklyStats[weekKey]!.noShow++
-    }
+    weeklyStats[weekKey]!.booked++
+    if (apt.status === 'completed') weeklyStats[weekKey]!.completed++
+    if (apt.status === 'cancelled') weeklyStats[weekKey]!.cancelled++
+    if (apt.status === 'no-show') weeklyStats[weekKey]!.noShow++
   })
   
   appointmentStats.value = Object.entries(weeklyStats)
