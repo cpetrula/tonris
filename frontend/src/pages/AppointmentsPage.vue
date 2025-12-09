@@ -11,6 +11,7 @@ import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
+import api from '@/services/api'
 
 interface Appointment {
   id: string
@@ -27,73 +28,7 @@ interface Appointment {
 }
 
 const loading = ref(false)
-const appointments = ref<Appointment[]>([
-  {
-    id: '1',
-    customerName: 'John Smith',
-    customerEmail: 'john.smith@email.com',
-    customerPhone: '(555) 123-4567',
-    service: 'Haircut',
-    employee: 'Sarah Johnson',
-    date: new Date(),
-    time: '10:00 AM',
-    duration: 45,
-    status: 'confirmed',
-    notes: 'Regular customer'
-  },
-  {
-    id: '2',
-    customerName: 'Emily Davis',
-    customerEmail: 'emily.davis@email.com',
-    customerPhone: '(555) 234-5678',
-    service: 'Color Treatment',
-    employee: 'Mike Brown',
-    date: new Date(),
-    time: '11:30 AM',
-    duration: 120,
-    status: 'scheduled',
-    notes: ''
-  },
-  {
-    id: '3',
-    customerName: 'Robert Wilson',
-    customerEmail: 'robert.w@email.com',
-    customerPhone: '(555) 345-6789',
-    service: 'Beard Trim',
-    employee: 'Sarah Johnson',
-    date: new Date(),
-    time: '2:00 PM',
-    duration: 20,
-    status: 'scheduled',
-    notes: 'First visit'
-  },
-  {
-    id: '4',
-    customerName: 'Lisa Anderson',
-    customerEmail: 'lisa.a@email.com',
-    customerPhone: '(555) 456-7890',
-    service: 'Hair Styling',
-    employee: 'Jessica Lee',
-    date: new Date(Date.now() + 86400000),
-    time: '9:00 AM',
-    duration: 60,
-    status: 'confirmed',
-    notes: 'Wedding preparation'
-  },
-  {
-    id: '5',
-    customerName: 'David Martinez',
-    customerEmail: 'david.m@email.com',
-    customerPhone: '(555) 567-8901',
-    service: 'Haircut',
-    employee: 'Mike Brown',
-    date: new Date(Date.now() - 86400000),
-    time: '3:30 PM',
-    duration: 45,
-    status: 'completed',
-    notes: ''
-  }
-])
+const appointments = ref<Appointment[]>([])
 
 const searchQuery = ref('')
 const selectedDate = ref<Date | null>(null)
@@ -102,6 +37,10 @@ const showDialog = ref(false)
 const editMode = ref(false)
 const error = ref('')
 
+// Employees and services will be fetched from API
+const employees = ref<{ label: string; value: string }[]>([])
+const services = ref<{ label: string; value: string }[]>([])
+
 const statusOptions = [
   { label: 'All Statuses', value: null },
   { label: 'Scheduled', value: 'scheduled' },
@@ -109,20 +48,6 @@ const statusOptions = [
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
   { label: 'No Show', value: 'no-show' }
-]
-
-const employees = [
-  { label: 'Sarah Johnson', value: 'Sarah Johnson' },
-  { label: 'Mike Brown', value: 'Mike Brown' },
-  { label: 'Jessica Lee', value: 'Jessica Lee' }
-]
-
-const services = [
-  { label: 'Haircut', value: 'Haircut' },
-  { label: 'Color Treatment', value: 'Color Treatment' },
-  { label: 'Beard Trim', value: 'Beard Trim' },
-  { label: 'Hair Styling', value: 'Hair Styling' },
-  { label: 'Deep Conditioning', value: 'Deep Conditioning' }
 ]
 
 const timeSlots = [
@@ -259,10 +184,71 @@ function clearFilters() {
 
 onMounted(async () => {
   loading.value = true
-  // In a real app, fetch appointments from API using tenantStore.tenantId
-  // await api.get(`/api/tenants/${tenantStore.tenantId}/appointments`)
-  loading.value = false
+  try {
+    // Fetch appointments, employees, and services from API
+    await Promise.all([
+      fetchAppointments(),
+      fetchEmployees(),
+      fetchServices()
+    ])
+  } catch (err) {
+    console.error('Error loading data:', err)
+    error.value = 'Failed to load appointments data'
+  } finally {
+    loading.value = false
+  }
 })
+
+async function fetchAppointments() {
+  try {
+    const response = await api.get('/api/appointments')
+    if (response.data.success && response.data.data) {
+      appointments.value = response.data.data.map((apt: any) => ({
+        id: apt.id,
+        customerName: apt.customerName || 'Unknown',
+        customerEmail: apt.customerEmail || '',
+        customerPhone: apt.customerPhone || '',
+        service: apt.service?.name || 'Unknown Service',
+        employee: apt.employee ? `${apt.employee.firstName} ${apt.employee.lastName}` : 'Unknown',
+        date: new Date(apt.startTime),
+        time: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+        duration: apt.duration || 30,
+        status: apt.status || 'scheduled',
+        notes: apt.notes || ''
+      }))
+    }
+  } catch (err) {
+    console.error('Error fetching appointments:', err)
+  }
+}
+
+async function fetchEmployees() {
+  try {
+    const response = await api.get('/api/employees')
+    if (response.data.success && response.data.data) {
+      employees.value = response.data.data.map((emp: any) => ({
+        label: `${emp.firstName} ${emp.lastName}`,
+        value: `${emp.firstName} ${emp.lastName}`
+      }))
+    }
+  } catch (err) {
+    console.error('Error fetching employees:', err)
+  }
+}
+
+async function fetchServices() {
+  try {
+    const response = await api.get('/api/services')
+    if (response.data.success && response.data.data) {
+      services.value = response.data.data.map((svc: any) => ({
+        label: svc.name,
+        value: svc.name
+      }))
+    }
+  } catch (err) {
+    console.error('Error fetching services:', err)
+  }
+}
 </script>
 
 <template>

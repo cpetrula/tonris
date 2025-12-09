@@ -8,6 +8,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
+import api from '@/services/api'
 
 interface CallLog {
   id: string
@@ -42,81 +43,24 @@ const periodOptions = [
   { label: 'Custom range', value: 'custom' }
 ]
 
-// Overview stats
+// Overview stats - will be calculated from call logs
 const overviewStats = ref({
-  totalCalls: 256,
-  avgCallDuration: 145, // seconds
-  appointmentsBooked: 89,
-  conversionRate: 34.8,
-  missedCalls: 12,
-  peakHour: '10:00 AM'
+  totalCalls: 0,
+  avgCallDuration: 0, // seconds
+  appointmentsBooked: 0,
+  conversionRate: 0,
+  missedCalls: 0,
+  peakHour: 'N/A'
 })
 
-// Call logs
-const callLogs = ref<CallLog[]>([
-  {
-    id: '1',
-    phoneNumber: '(555) 123-4567',
-    callerName: 'John Smith',
-    date: new Date(),
-    duration: 180,
-    outcome: 'appointment_booked',
-    notes: 'Booked haircut for tomorrow'
-  },
-  {
-    id: '2',
-    phoneNumber: '(555) 234-5678',
-    callerName: 'Unknown',
-    date: new Date(Date.now() - 3600000),
-    duration: 45,
-    outcome: 'inquiry',
-    notes: 'Asked about pricing'
-  },
-  {
-    id: '3',
-    phoneNumber: '(555) 345-6789',
-    callerName: 'Emily Davis',
-    date: new Date(Date.now() - 7200000),
-    duration: 120,
-    outcome: 'appointment_booked',
-    notes: 'Color treatment next week'
-  },
-  {
-    id: '4',
-    phoneNumber: '(555) 456-7890',
-    callerName: 'Unknown',
-    date: new Date(Date.now() - 86400000),
-    duration: 0,
-    outcome: 'missed',
-    notes: 'After hours call'
-  },
-  {
-    id: '5',
-    phoneNumber: '(555) 567-8901',
-    callerName: 'Robert Wilson',
-    date: new Date(Date.now() - 172800000),
-    duration: 90,
-    outcome: 'transferred',
-    notes: 'Transferred to manager'
-  }
-])
+// Call logs - fetched from API
+const callLogs = ref<CallLog[]>([])
 
-// Appointment statistics by period
-const appointmentStats = ref<AppointmentStat[]>([
-  { period: 'Week 1', booked: 25, completed: 22, cancelled: 2, noShow: 1 },
-  { period: 'Week 2', booked: 28, completed: 25, cancelled: 1, noShow: 2 },
-  { period: 'Week 3', booked: 22, completed: 20, cancelled: 1, noShow: 1 },
-  { period: 'Week 4', booked: 30, completed: 26, cancelled: 3, noShow: 1 }
-])
+// Appointment statistics by period - will be fetched from API
+const appointmentStats = ref<AppointmentStat[]>([])
 
-// Top services
-const topServices = ref([
-  { name: 'Haircut', count: 45, revenue: 1575 },
-  { name: 'Color Treatment', count: 18, revenue: 2160 },
-  { name: 'Hair Styling', count: 15, revenue: 750 },
-  { name: 'Beard Trim', count: 22, revenue: 440 },
-  { name: 'Deep Conditioning', count: 10, revenue: 400 }
-])
+// Top services - will be calculated
+const topServices = ref<{ name: string; count: number; revenue: number }[]>([])
 
 // Call outcome distribution
 const callOutcomes = computed(() => {
@@ -181,10 +125,137 @@ function exportReport() {
 
 onMounted(async () => {
   loading.value = true
-  // In a real app, fetch reports data from API using tenantStore.tenantId
-  // await api.get(`/api/tenants/${tenantStore.tenantId}/reports`)
-  loading.value = false
+  try {
+    await Promise.all([
+      fetchCallLogs(),
+      fetchAppointmentStats()
+    ])
+  } catch (err) {
+    console.error('Error loading reports:', err)
+  } finally {
+    loading.value = false
+  }
 })
+
+async function fetchCallLogs() {
+  try {
+    const response = await api.get('/api/telephony/call-logs')
+    if (response.data.success && response.data.data) {
+      callLogs.value = response.data.data.map((log: any) => ({
+        id: log.id,
+        phoneNumber: log.fromNumber || log.toNumber || 'Unknown',
+        callerName: log.callerName || 'Unknown',
+        date: new Date(log.createdAt),
+        duration: log.duration || 0,
+        outcome: mapCallStatus(log.status),
+        notes: log.notes || ''
+      }))
+      
+      // Calculate overview stats from call logs
+      calculateOverviewStats()
+    }
+  } catch (err) {
+    console.error('Error fetching call logs:', err)
+  }
+}
+
+async function fetchAppointmentStats() {
+  try {
+    const response = await api.get('/api/appointments')
+    if (response.data.success && response.data.data) {
+      calculateAppointmentStats(response.data.data)
+      calculateTopServices(response.data.data)
+    }
+  } catch (err) {
+    console.error('Error fetching appointment stats:', err)
+  }
+}
+
+function mapCallStatus(status: string): CallLog['outcome'] {
+  const statusMap: Record<string, CallLog['outcome']> = {
+    'completed': 'appointment_booked',
+    'in-progress': 'inquiry',
+    'busy': 'missed',
+    'no-answer': 'missed',
+    'failed': 'missed',
+    'voicemail': 'voicemail'
+  }
+  return statusMap[status] || 'inquiry'
+}
+
+function calculateOverviewStats() {
+  const logs = callLogs.value
+  overviewStats.value.totalCalls = logs.length
+  
+  if (logs.length > 0) {
+    const totalDuration = logs.reduce((sum, log) => sum + log.duration, 0)
+    overviewStats.value.avgCallDuration = Math.round(totalDuration / logs.length)
+    
+    overviewStats.value.appointmentsBooked = logs.filter(log => log.outcome === 'appointment_booked').length
+    overviewStats.value.conversionRate = parseFloat(((overviewStats.value.appointmentsBooked / logs.length) * 100).toFixed(1))
+    overviewStats.value.missedCalls = logs.filter(log => log.outcome === 'missed').length
+    
+    // Calculate peak hour
+    const hourCounts: Record<number, number> = {}
+    logs.forEach(log => {
+      const hour = new Date(log.date).getHours()
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1
+    })
+    const peakHourNum = Object.entries(hourCounts).reduce((max, [hour, count]) => 
+      count > (hourCounts[max] || 0) ? parseInt(hour) : max, 0
+    )
+    const hour12 = peakHourNum > 12 ? peakHourNum - 12 : (peakHourNum === 0 ? 12 : peakHourNum)
+    const ampm = peakHourNum >= 12 ? 'PM' : 'AM'
+    overviewStats.value.peakHour = `${hour12}:00 ${ampm}`
+  }
+}
+
+function calculateAppointmentStats(appointments: any[]) {
+  // Group by week
+  const weeklyStats: Record<string, { booked: number; completed: number; cancelled: number; noShow: number }> = {}
+  
+  appointments.forEach(apt => {
+    const date = new Date(apt.startTime)
+    const weekStart = new Date(date)
+    weekStart.setDate(date.getDate() - date.getDay())
+    const weekKey = weekStart.toISOString().split('T')[0]
+    
+    if (!weeklyStats[weekKey]) {
+      weeklyStats[weekKey] = { booked: 0, completed: 0, cancelled: 0, noShow: 0 }
+    }
+    
+    weeklyStats[weekKey].booked++
+    if (apt.status === 'completed') weeklyStats[weekKey].completed++
+    if (apt.status === 'cancelled') weeklyStats[weekKey].cancelled++
+    if (apt.status === 'no-show') weeklyStats[weekKey].noShow++
+  })
+  
+  appointmentStats.value = Object.entries(weeklyStats)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-4) // Last 4 weeks
+    .map(([week, stats], index) => ({
+      period: `Week ${index + 1}`,
+      ...stats
+    }))
+}
+
+function calculateTopServices(appointments: any[]) {
+  const serviceCounts: Record<string, { count: number; revenue: number }> = {}
+  
+  appointments.forEach(apt => {
+    const serviceName = apt.service?.name || 'Unknown'
+    if (!serviceCounts[serviceName]) {
+      serviceCounts[serviceName] = { count: 0, revenue: 0 }
+    }
+    serviceCounts[serviceName].count++
+    serviceCounts[serviceName].revenue += apt.service?.price || 0
+  })
+  
+  topServices.value = Object.entries(serviceCounts)
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5) // Top 5
+}
 </script>
 
 <template>
