@@ -159,8 +159,10 @@ const createAppointment = async (req, res, next) => {
  * Update appointment (reschedule)
  */
 const updateAppointment = async (req, res, next) => {
+  console.log('Update appointment called', req.params.id, req.body);
   try {
     const {
+      tenantId,
       employeeId,
       startTime,
       addOns,
@@ -209,7 +211,7 @@ const updateAppointment = async (req, res, next) => {
       }
     }
 
-    const tenantUUID = await getTenantUUID(req.tenantId);
+    const tenantUUID = await getTenantUUID(tenantId);
     const appointment = await appointmentService.updateAppointment(req.params.id, tenantUUID, {
       employeeId,
       startTime,
@@ -235,8 +237,13 @@ const updateAppointment = async (req, res, next) => {
  * Cancel or delete appointment
  */
 const deleteAppointment = async (req, res, next) => {
+  console.log('Delete appointment called', req.params.id); 
   try {
-    const { reason, notes, hardDelete } = req.body;
+    //const { reason, notes, hardDelete } = req.body;
+    const reason = "";
+    const notes = "";
+    const hardDelete = true;
+
     const tenantUUID = await getTenantUUID(req.tenantId);
 
     // If hardDelete is true, permanently delete the appointment

@@ -211,6 +211,7 @@ const getAppointmentById = async (appointmentId, tenantId) => {
  * @returns {Promise<Object>} - Updated appointment
  */
 const updateAppointment = async (appointmentId, tenantId, updateData) => {
+  console.log('Update data:', updateData);
   const appointment = await Appointment.findOne({
     where: { id: appointmentId, tenantId },
   });
