@@ -5,12 +5,14 @@ import { useTenantStore } from '@/stores/tenant'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import { useRouter } from 'vue-router'
+import api from '@/services/api'
 
 const authStore = useAuthStore()
 const tenantStore = useTenantStore()
 const router = useRouter()
 
 const loading = ref(false)
+const error = ref<string | null>(null)
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -19,39 +21,101 @@ const greeting = computed(() => {
   return 'Good evening'
 })
 
+interface DashboardStats {
+  todayAppointments: number
+  pendingCalls: number
+  activeEmployees: number
+  servicesOffered: number
+}
+
+interface AppointmentItem {
+  id: string
+  customerName: string
+  service: string
+  time: string
+  employee: string
+}
+
+interface ActivityItem {
+  type: string
+  action: string
+  item: string
+  timestamp: string
+}
+
 // Dashboard stats for the current tenant
-const stats = ref([
-  { label: "Today's Appointments", value: '8', icon: 'pi pi-calendar', color: 'bg-blue-500' },
-  { label: 'Pending Calls', value: '12', icon: 'pi pi-phone', color: 'bg-orange-500' },
-  { label: 'Active Employees', value: '5', icon: 'pi pi-users', color: 'bg-green-500' },
-  { label: 'Services Offered', value: '15', icon: 'pi pi-list', color: 'bg-purple-500' }
+const stats = ref<{ label: string; value: string; icon: string; color: string }[]>([
+  { label: "Today's Appointments", value: '0', icon: 'pi pi-calendar', color: 'bg-blue-500' },
+  { label: 'Pending Calls', value: '0', icon: 'pi pi-phone', color: 'bg-orange-500' },
+  { label: 'Active Employees', value: '0', icon: 'pi pi-users', color: 'bg-green-500' },
+  { label: 'Services Offered', value: '0', icon: 'pi pi-list', color: 'bg-purple-500' }
 ])
 
 // Upcoming appointments for today
-const upcomingAppointments = ref([
-  { id: '1', customerName: 'John Smith', service: 'Haircut', time: '10:00 AM', employee: 'Sarah Johnson' },
-  { id: '2', customerName: 'Emily Davis', service: 'Color Treatment', time: '11:30 AM', employee: 'Mike Brown' },
-  { id: '3', customerName: 'Robert Wilson', service: 'Beard Trim', time: '2:00 PM', employee: 'Sarah Johnson' },
-  { id: '4', customerName: 'Lisa Anderson', service: 'Hair Styling', time: '3:30 PM', employee: 'Jessica Lee' }
-])
+const upcomingAppointments = ref<AppointmentItem[]>([])
 
 // Recent activity
-const recentActivity = ref([
-  { action: 'New appointment booked', item: 'John Smith - Haircut', time: '15 minutes ago' },
-  { action: 'Call answered', item: 'Inquiry about services', time: '30 minutes ago' },
-  { action: 'Appointment completed', item: 'Emily Davis - Manicure', time: '1 hour ago' },
-  { action: 'New customer registered', item: 'Michael Brown', time: '2 hours ago' }
-])
+const recentActivity = ref<ActivityItem[]>([])
 
 function navigateTo(path: string) {
   router.push(path)
 }
 
-onMounted(async () => {
+function formatTime(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
+
+function formatRelativeTime(dateString: string): string {
+  const now = new Date()
+  const past = new Date(dateString)
+  const diffMs = now.getTime() - past.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+  if (diffDays === 1) return 'Yesterday'
+  return `${diffDays} days ago`
+}
+
+async function fetchDashboardData() {
   loading.value = true
-  // In a real app, fetch dashboard data from API using tenantStore.tenantId
-  // await api.get(`/api/tenants/${tenantStore.tenantId}/dashboard`)
-  loading.value = false
+  error.value = null
+  
+  try {
+    const response = await api.get('/api/tenant/dashboard-stats')
+    const data = response.data.data
+    
+    // Update stats
+    stats.value[0].value = String(data.stats.todayAppointments)
+    stats.value[1].value = String(data.stats.pendingCalls)
+    stats.value[2].value = String(data.stats.activeEmployees)
+    stats.value[3].value = String(data.stats.servicesOffered)
+    
+    // Update appointments
+    upcomingAppointments.value = data.todayAppointments.map((apt: AppointmentItem) => ({
+      ...apt,
+      time: formatTime(apt.time)
+    }))
+    
+    // Update recent activity
+    recentActivity.value = data.recentActivity.map((activity: ActivityItem) => ({
+      ...activity,
+      time: formatRelativeTime(activity.timestamp)
+    }))
+  } catch (err) {
+    console.error('Failed to fetch dashboard data:', err)
+    error.value = 'Failed to load dashboard data'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await fetchDashboardData()
 })
 </script>
 
@@ -59,12 +123,17 @@ onMounted(async () => {
   <div>
     <!-- Welcome Header -->
     <div class="mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">
+      <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">
         {{ greeting }}, {{ authStore.user?.firstName || 'User' }}!
       </h1>
-      <p class="text-gray-600 mt-1">
+      <p class="text-surface-600 dark:text-surface-400 mt-1">
         Here's what's happening with {{ tenantStore.tenantName || 'your business' }} today.
       </p>
+    </div>
+
+    <!-- Error Message -->
+    <div v-if="error" class="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg">
+      <p class="text-red-800 dark:text-red-300">{{ error }}</p>
     </div>
 
     <!-- Stats Grid -->
@@ -76,8 +145,8 @@ onMounted(async () => {
               <i :class="[stat.icon, 'text-xl text-white']"></i>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">{{ stat.label }}</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stat.value }}</p>
+              <p class="text-sm font-medium text-surface-500 dark:text-surface-400">{{ stat.label }}</p>
+              <p class="text-2xl font-bold text-surface-900 dark:text-surface-0">{{ stat.value }}</p>
             </div>
           </div>
         </template>
@@ -104,17 +173,17 @@ onMounted(async () => {
             <div
               v-for="appointment in upcomingAppointments"
               :key="appointment.id"
-              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg"
             >
               <div>
-                <p class="font-medium text-gray-900">{{ appointment.customerName }}</p>
-                <p class="text-sm text-gray-500">{{ appointment.service }} with {{ appointment.employee }}</p>
+                <p class="font-medium text-surface-900 dark:text-surface-0">{{ appointment.customerName }}</p>
+                <p class="text-sm text-surface-500 dark:text-surface-400">{{ appointment.service }} with {{ appointment.employee }}</p>
               </div>
               <div class="text-right">
-                <p class="text-sm font-medium text-violet-600">{{ appointment.time }}</p>
+                <p class="text-sm font-medium text-violet-600 dark:text-violet-400">{{ appointment.time }}</p>
               </div>
             </div>
-            <div v-if="upcomingAppointments.length === 0" class="text-center py-8 text-gray-500">
+            <div v-if="upcomingAppointments.length === 0" class="text-center py-8 text-surface-500 dark:text-surface-400">
               No appointments scheduled for today
             </div>
           </div>
@@ -139,13 +208,13 @@ onMounted(async () => {
             <div
               v-for="(activity, index) in recentActivity"
               :key="index"
-              class="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0"
+              class="flex items-start pb-4 border-b border-surface-200 dark:border-surface-700 last:border-0 last:pb-0"
             >
               <div class="w-2 h-2 mt-2 rounded-full bg-violet-500"></div>
               <div class="ml-3">
-                <p class="text-sm font-medium text-gray-900">{{ activity.action }}</p>
-                <p class="text-sm text-gray-500">{{ activity.item }}</p>
-                <p class="text-xs text-gray-400 mt-1">{{ activity.time }}</p>
+                <p class="text-sm font-medium text-surface-900 dark:text-surface-0">{{ activity.action }}</p>
+                <p class="text-sm text-surface-500 dark:text-surface-400">{{ activity.item }}</p>
+                <p class="text-xs text-surface-400 dark:text-surface-500 mt-1">{{ activity.time }}</p>
               </div>
             </div>
           </div>
@@ -158,32 +227,32 @@ onMounted(async () => {
         <template #content>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <button 
-              class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
+              class="p-4 bg-surface-50 dark:bg-surface-800 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors text-left"
               @click="navigateTo('/app/appointments')"
             >
               <i class="pi pi-calendar-plus text-2xl text-violet-600 mb-2 block"></i>
-              <span class="text-sm font-medium text-gray-900">New Appointment</span>
+              <span class="text-sm font-medium text-surface-900 dark:text-surface-0">New Appointment</span>
             </button>
             <button 
-              class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
+              class="p-4 bg-surface-50 dark:bg-surface-800 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors text-left"
               @click="navigateTo('/app/employees')"
             >
               <i class="pi pi-user-plus text-2xl text-cyan-600 mb-2 block"></i>
-              <span class="text-sm font-medium text-gray-900">Add Employee</span>
+              <span class="text-sm font-medium text-surface-900 dark:text-surface-0">Add Employee</span>
             </button>
             <button 
-              class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
+              class="p-4 bg-surface-50 dark:bg-surface-800 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors text-left"
               @click="navigateTo('/app/services')"
             >
               <i class="pi pi-plus-circle text-2xl text-fuchsia-600 mb-2 block"></i>
-              <span class="text-sm font-medium text-gray-900">Add Service</span>
+              <span class="text-sm font-medium text-surface-900 dark:text-surface-0">Add Service</span>
             </button>
             <button 
-              class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
+              class="p-4 bg-surface-50 dark:bg-surface-800 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors text-left"
               @click="navigateTo('/app/settings')"
             >
               <i class="pi pi-cog text-2xl text-gray-600 mb-2 block"></i>
-              <span class="text-sm font-medium text-gray-900">Settings</span>
+              <span class="text-sm font-medium text-surface-900 dark:text-surface-0">Settings</span>
             </button>
           </div>
         </template>

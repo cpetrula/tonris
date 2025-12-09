@@ -6,6 +6,11 @@ const { Tenant, TENANT_STATUS, PLAN_TYPES } = require('./tenant.model');
 const { User } = require('../../models');
 const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
+const { Appointment, APPOINTMENT_STATUS } = require('../appointments/appointment.model');
+const { Employee, EMPLOYEE_STATUS } = require('../employees/employee.model');
+const { Service } = require('../services/service.model');
+const { CallLog, CALL_STATUS } = require('../telephony/callLog.model');
+const { Op } = require('sequelize');
 
 /**
  * Create a new tenant
@@ -258,6 +263,181 @@ const updateTenant = async (id, updateData) => {
   return tenant.toSafeObject();
 };
 
+/**
+ * Get dashboard statistics for tenant
+ * @param {string} tenantId - Tenant UUID
+ * @returns {Promise<Object>} - Dashboard statistics
+ */
+const getDashboardStats = async (tenantId) => {
+  // Get tenant to verify it exists
+  const tenant = await Tenant.findOne({ where: { id: tenantId } });
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  // Get today's date range (start of day to end of day)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // Get today's appointments count
+  const todayAppointmentsCount = await Appointment.count({
+    where: {
+      tenantId,
+      startTime: {
+        [Op.gte]: today,
+        [Op.lt]: tomorrow,
+      },
+      status: {
+        [Op.notIn]: [APPOINTMENT_STATUS.CANCELLED, APPOINTMENT_STATUS.NO_SHOW],
+      },
+    },
+  });
+
+  // Get pending calls count (ringing or in-progress)
+  const pendingCallsCount = await CallLog.count({
+    where: {
+      tenantId,
+      status: {
+        [Op.in]: [CALL_STATUS.RINGING, CALL_STATUS.IN_PROGRESS],
+      },
+    },
+  });
+
+  // Get active employees count
+  const activeEmployeesCount = await Employee.count({
+    where: {
+      tenantId,
+      status: EMPLOYEE_STATUS.ACTIVE,
+    },
+  });
+
+  // Get services offered count
+  const servicesCount = await Service.count({
+    where: {
+      tenantId,
+      status: 'active',
+    },
+  });
+
+  // Get today's appointments list with details
+  const todayAppointments = await Appointment.findAll({
+    where: {
+      tenantId,
+      startTime: {
+        [Op.gte]: today,
+        [Op.lt]: tomorrow,
+      },
+      status: {
+        [Op.notIn]: [APPOINTMENT_STATUS.CANCELLED, APPOINTMENT_STATUS.NO_SHOW],
+      },
+    },
+    order: [['startTime', 'ASC']],
+    limit: 10,
+  });
+
+  // Get employee and service details for appointments
+  const employeeIds = [...new Set(todayAppointments.map(apt => apt.employeeId))];
+  const serviceIds = [...new Set(todayAppointments.map(apt => apt.serviceId))];
+
+  const employees = await Employee.findAll({
+    where: { id: { [Op.in]: employeeIds } },
+    attributes: ['id', 'firstName', 'lastName'],
+  });
+
+  const services = await Service.findAll({
+    where: { id: { [Op.in]: serviceIds } },
+    attributes: ['id', 'name'],
+  });
+
+  // Create lookup maps
+  const employeeMap = new Map(employees.map(e => [e.id, e]));
+  const serviceMap = new Map(services.map(s => [s.id, s]));
+
+  // Get recent activity (last 10 completed appointments and recent calls)
+  const recentAppointments = await Appointment.findAll({
+    where: {
+      tenantId,
+      status: APPOINTMENT_STATUS.COMPLETED,
+    },
+    order: [['updatedAt', 'DESC']],
+    limit: 5,
+  });
+
+  // Get service details for recent appointments
+  const recentServiceIds = [...new Set(recentAppointments.map(apt => apt.serviceId))];
+  const recentServices = await Service.findAll({
+    where: { id: { [Op.in]: recentServiceIds } },
+    attributes: ['id', 'name'],
+  });
+  const recentServiceMap = new Map(recentServices.map(s => [s.id, s]));
+
+  const recentCalls = await CallLog.findAll({
+    where: {
+      tenantId,
+      status: {
+        [Op.in]: [CALL_STATUS.COMPLETED, CALL_STATUS.NO_ANSWER],
+      },
+    },
+    order: [['createdAt', 'DESC']],
+    limit: 5,
+  });
+
+  // Combine and format recent activity
+  const recentActivity = [];
+
+  // Add completed appointments
+  recentAppointments.forEach((apt) => {
+    const service = recentServiceMap.get(apt.serviceId);
+    recentActivity.push({
+      type: 'appointment_completed',
+      action: 'Appointment completed',
+      item: `${apt.customerName} - ${service?.name || 'Service'}`,
+      timestamp: apt.updatedAt,
+    });
+  });
+
+  // Add recent calls
+  recentCalls.forEach((call) => {
+    const action = call.status === CALL_STATUS.COMPLETED ? 'Call answered' : 'Missed call';
+    recentActivity.push({
+      type: 'call',
+      action,
+      item: `From ${call.fromNumber}`,
+      timestamp: call.createdAt,
+    });
+  });
+
+  // Sort by timestamp and take top 10
+  recentActivity.sort((a, b) => b.timestamp - a.timestamp);
+  const limitedActivity = recentActivity.slice(0, 10);
+
+  // Format the response
+  return {
+    stats: {
+      todayAppointments: todayAppointmentsCount,
+      pendingCalls: pendingCallsCount,
+      activeEmployees: activeEmployeesCount,
+      servicesOffered: servicesCount,
+    },
+    todayAppointments: todayAppointments.map((apt) => {
+      const employee = employeeMap.get(apt.employeeId);
+      const service = serviceMap.get(apt.serviceId);
+      return {
+        id: apt.id,
+        customerName: apt.customerName,
+        service: service?.name || 'Unknown Service',
+        time: apt.startTime,
+        employee: employee
+          ? `${employee.firstName} ${employee.lastName}`
+          : 'Unknown Employee',
+      };
+    }),
+    recentActivity: limitedActivity,
+  };
+};
+
 module.exports = {
   createTenant,
   getTenantById,
@@ -269,6 +449,7 @@ module.exports = {
   getCurrentUserAndTenant,
   tenantExists,
   updateTenant,
+  getDashboardStats,
   TENANT_STATUS,
   PLAN_TYPES,
 };
