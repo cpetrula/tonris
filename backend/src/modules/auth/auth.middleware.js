@@ -27,6 +27,11 @@ const authMiddleware = (req, res, next) => {
       throw new AppError('Invalid or expired token', 401, 'INVALID_TOKEN');
     }
 
+    // Set tenant ID from JWT token if not already set by tenant middleware
+    if (decoded.tenantId && !req.tenantId) {
+      req.tenantId = decoded.tenantId;
+    }
+
     // Verify tenant matches
     if (decoded.tenantId && req.tenantId && decoded.tenantId !== req.tenantId) {
       logger.warn(`Tenant mismatch: token tenant ${decoded.tenantId} vs request tenant ${req.tenantId}`);
@@ -61,6 +66,11 @@ const optionalAuthMiddleware = (req, res, next) => {
     
     if (decoded) {
       req.user = decoded;
+      
+      // Set tenant ID from JWT token if not already set by tenant middleware
+      if (decoded.tenantId && !req.tenantId) {
+        req.tenantId = decoded.tenantId;
+      }
     }
     
     next();
