@@ -9,12 +9,39 @@ const api: AxiosInstance = axios.create({
   }
 })
 
-// Request interceptor - add JWT token to requests
+/**
+ * Helper function to decode JWT token and extract tenantId
+ * @param token - JWT token string
+ * @returns tenantId from token payload or null
+ */
+function extractTenantIdFromToken(token: string): string | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3 || !parts[1]) {
+      return null
+    }
+    
+    // JWT uses base64url encoding - replace URL-safe characters with standard base64
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(base64))
+    return payload.tenantId || null
+  } catch {
+    return null
+  }
+}
+
+// Request interceptor - add JWT token and tenant ID to requests
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      
+      // Extract tenant ID from token and set as header
+      const tenantId = extractTenantIdFromToken(token)
+      if (tenantId) {
+        config.headers['X-Tenant-ID'] = tenantId
+      }
     }
     return config
   },
