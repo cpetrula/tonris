@@ -39,19 +39,19 @@ export const useTenantStore = defineStore('tenant', () => {
     error.value = null
 
     try {
-      const response = await api.get('/api/tenants')
-      tenants.value = response.data.tenants
+      // Fetch the current tenant information
+      const response = await api.get('/api/tenant')
+      const tenant = response.data.data.tenant
 
-      // If there's no current tenant and we have tenants, set the first one
-      if (!currentTenant.value && tenants.value.length > 0) {
-        currentTenant.value = tenants.value[0] ?? null
-      }
+      // Set current tenant and add to tenants array
+      currentTenant.value = tenant
+      tenants.value = [tenant]
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to fetch tenants'
+        error.value = axiosError.response?.data?.message || 'Failed to fetch tenant'
       } else {
-        error.value = 'Failed to fetch tenants'
+        error.value = 'Failed to fetch tenant'
       }
     } finally {
       loading.value = false
@@ -92,7 +92,7 @@ export const useTenantStore = defineStore('tenant', () => {
     if (!currentTenant.value) return
 
     try {
-      const response = await api.get(`/api/tenants/${currentTenant.value.id}/settings`)
+      const response = await api.get('/api/tenant/settings')
       settings.value = response.data.settings
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -112,7 +112,7 @@ export const useTenantStore = defineStore('tenant', () => {
 
     try {
       const response = await api.patch(
-        `/api/tenants/${currentTenant.value.id}/settings`,
+        '/api/tenant/settings',
         newSettings
       )
       settings.value = response.data.settings
