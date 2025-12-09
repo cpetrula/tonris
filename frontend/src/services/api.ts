@@ -17,7 +17,7 @@ const api: AxiosInstance = axios.create({
 function extractTenantIdFromToken(token: string): string | null {
   try {
     const parts = token.split('.')
-    if (parts.length !== 3) {
+    if (parts.length !== 3 || !parts[1]) {
       return null
     }
     
