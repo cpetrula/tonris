@@ -28,12 +28,12 @@ const authMiddleware = (req, res, next) => {
     }
 
     // Set tenant ID from JWT token if not already set by tenant middleware
-    if (decoded.tenantId && !req.tenantId) {
+    // or if the current tenant ID is the default (meaning no explicit tenant was provided)
+    const env = require('../../config/env');
+    if (decoded.tenantId && (!req.tenantId || req.tenantId === env.DEFAULT_TENANT_ID)) {
       req.tenantId = decoded.tenantId;
-    }
-
-    // Verify tenant matches
-    if (decoded.tenantId && req.tenantId && decoded.tenantId !== req.tenantId) {
+    } else if (decoded.tenantId && req.tenantId && decoded.tenantId !== req.tenantId) {
+      // Verify tenant matches if an explicit tenant ID was provided (not default)
       logger.warn(`Tenant mismatch: token tenant ${decoded.tenantId} vs request tenant ${req.tenantId}`);
       throw new AppError('Token tenant mismatch', 401, 'TENANT_MISMATCH');
     }
@@ -68,7 +68,9 @@ const optionalAuthMiddleware = (req, res, next) => {
       req.user = decoded;
       
       // Set tenant ID from JWT token if not already set by tenant middleware
-      if (decoded.tenantId && !req.tenantId) {
+      // or if the current tenant ID is the default (meaning no explicit tenant was provided)
+      const env = require('../../config/env');
+      if (decoded.tenantId && (!req.tenantId || req.tenantId === env.DEFAULT_TENANT_ID)) {
         req.tenantId = decoded.tenantId;
       }
     }
