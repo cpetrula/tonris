@@ -8,7 +8,7 @@ const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
 const { Appointment, APPOINTMENT_STATUS } = require('../appointments/appointment.model');
 const { Employee, EMPLOYEE_STATUS } = require('../employees/employee.model');
-const { Service } = require('../services/service.model');
+const { Service, SERVICE_STATUS } = require('../services/service.model');
 const { CallLog, CALL_STATUS } = require('../telephony/callLog.model');
 const { Op } = require('sequelize');
 
@@ -317,7 +317,7 @@ const getDashboardStats = async (tenantId) => {
   const servicesCount = await Service.count({
     where: {
       tenantId,
-      status: 'active',
+      status: SERVICE_STATUS.ACTIVE,
     },
   });
 
