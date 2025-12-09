@@ -21,13 +21,6 @@ const greeting = computed(() => {
   return 'Good evening'
 })
 
-interface DashboardStats {
-  todayAppointments: number
-  pendingCalls: number
-  activeEmployees: number
-  servicesOffered: number
-}
-
 interface AppointmentItem {
   id: string
   customerName: string
@@ -41,6 +34,7 @@ interface ActivityItem {
   action: string
   item: string
   timestamp: string
+  time?: string
 }
 
 // Dashboard stats for the current tenant
@@ -90,22 +84,28 @@ async function fetchDashboardData() {
     const data = response.data.data
     
     // Update stats
-    stats.value[0].value = String(data.stats.todayAppointments)
-    stats.value[1].value = String(data.stats.pendingCalls)
-    stats.value[2].value = String(data.stats.activeEmployees)
-    stats.value[3].value = String(data.stats.servicesOffered)
+    if (data.stats) {
+      stats.value[0]!.value = String(data.stats.todayAppointments)
+      stats.value[1]!.value = String(data.stats.pendingCalls)
+      stats.value[2]!.value = String(data.stats.activeEmployees)
+      stats.value[3]!.value = String(data.stats.servicesOffered)
+    }
     
     // Update appointments
-    upcomingAppointments.value = data.todayAppointments.map((apt: AppointmentItem) => ({
-      ...apt,
-      time: formatTime(apt.time)
-    }))
+    if (data.todayAppointments) {
+      upcomingAppointments.value = data.todayAppointments.map((apt: AppointmentItem) => ({
+        ...apt,
+        time: formatTime(apt.time)
+      }))
+    }
     
     // Update recent activity
-    recentActivity.value = data.recentActivity.map((activity: ActivityItem) => ({
-      ...activity,
-      time: formatRelativeTime(activity.timestamp)
-    }))
+    if (data.recentActivity) {
+      recentActivity.value = data.recentActivity.map((activity: ActivityItem) => ({
+        ...activity,
+        time: formatRelativeTime(activity.timestamp)
+      }))
+    }
   } catch (err) {
     console.error('Failed to fetch dashboard data:', err)
     error.value = 'Failed to load dashboard data'
