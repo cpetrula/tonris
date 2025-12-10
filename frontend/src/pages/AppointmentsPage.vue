@@ -217,8 +217,17 @@ async function saveAppointment() {
 
 // Helper function to combine date and time
 function combineDateAndTime(date: Date, timeStr: string): Date {
-  const [time, period] = timeStr.split(' ')
-  let [hours, minutes] = time.split(':').map(Number)
+  const parts = timeStr.split(' ')
+  const time = parts[0]
+  const period = parts[1]
+  
+  if (!time) {
+    throw new Error('Invalid time format')
+  }
+  
+  const timeParts = time.split(':')
+  let hours = parseInt(timeParts[0] || '0', 10)
+  const minutes = parseInt(timeParts[1] || '0', 10)
   
   if (period === 'PM' && hours !== 12) {
     hours += 12
