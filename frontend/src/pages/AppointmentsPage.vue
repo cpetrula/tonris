@@ -226,6 +226,10 @@ function combineDateAndTime(date: Date, timeStr: string): Date {
   }
   
   const timeParts = time.split(':')
+  if (timeParts.length !== 2) {
+    throw new Error('Time must be in format HH:MM AM/PM (e.g., 9:00 AM)')
+  }
+  
   let hours = parseInt(timeParts[0] || '0', 10)
   const minutes = parseInt(timeParts[1] || '0', 10)
   
@@ -251,7 +255,12 @@ function getTenantIdFromToken(): string | null {
       return null
     }
     
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    // JWT uses base64url encoding - replace URL-safe characters with standard base64
+    // and add padding if needed
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padding = (4 - base64.length % 4) % 4
+    base64 = base64.padEnd(base64.length + padding, '=')
+    
     const payload = JSON.parse(atob(base64))
     return payload.tenantId || null
   } catch (error) {
