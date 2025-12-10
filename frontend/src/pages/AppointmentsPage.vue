@@ -374,7 +374,7 @@ async function fetchServices() {
 </script>
 
 <template>
-  <div>
+  <div class="bg-gray-50 min-h-screen p-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
       <div>
@@ -391,35 +391,35 @@ async function fetchServices() {
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-      <Card class="shadow-sm">
+      <Card class="shadow-sm bg-white">
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-violet-600">{{ todayAppointments.length }}</p>
-            <p class="text-sm text-gray-500">Today</p>
+            <p class="text-sm text-gray-600">Today</p>
           </div>
         </template>
       </Card>
-      <Card class="shadow-sm">
+      <Card class="shadow-sm bg-white">
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-blue-600">{{ upcomingAppointments.length }}</p>
-            <p class="text-sm text-gray-500">Upcoming</p>
+            <p class="text-sm text-gray-600">Upcoming</p>
           </div>
         </template>
       </Card>
-      <Card class="shadow-sm">
+      <Card class="shadow-sm bg-white">
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-green-600">{{ appointments.filter(a => a.status === 'completed').length }}</p>
-            <p class="text-sm text-gray-500">Completed</p>
+            <p class="text-sm text-gray-600">Completed</p>
           </div>
         </template>
       </Card>
-      <Card class="shadow-sm">
+      <Card class="shadow-sm bg-white">
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-red-600">{{ appointments.filter(a => a.status === 'cancelled').length }}</p>
-            <p class="text-sm text-gray-500">Cancelled</p>
+            <p class="text-sm text-gray-600">Cancelled</p>
           </div>
         </template>
       </Card>
@@ -430,7 +430,7 @@ async function fetchServices() {
       <TabPanel value="0" header="Calendar View">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Calendar -->
-          <Card class="shadow-sm">
+          <Card class="shadow-sm bg-white">
             <template #content>
               <Calendar
                 v-model="selectedDate"
@@ -443,16 +443,16 @@ async function fetchServices() {
                 label="Clear Date" 
                 text 
                 size="small" 
-                class="mt-2 w-full"
+                class="mt-2 w-full text-emerald-600"
                 @click="selectedDate = null"
               />
             </template>
           </Card>
 
           <!-- Selected Day Appointments -->
-          <Card class="shadow-sm lg:col-span-2">
+          <Card class="shadow-sm lg:col-span-2 bg-white">
             <template #title>
-              {{ selectedDate ? formatDate(selectedDate) : "Today's" }} Appointments
+              <span class="text-gray-900">{{ selectedDate ? formatDate(selectedDate) : "Today's" }} Appointments</span>
             </template>
             <template #content>
               <div class="space-y-3">
@@ -467,7 +467,7 @@ async function fetchServices() {
                     </div>
                     <div>
                       <p class="font-medium text-gray-900">{{ apt.customerName }}</p>
-                      <p class="text-sm text-gray-500">{{ apt.service }} with {{ apt.employee }}</p>
+                      <p class="text-sm text-gray-600">{{ apt.service }} with {{ apt.employee }}</p>
                     </div>
                   </div>
                   <div class="flex items-center space-x-2">
@@ -495,7 +495,7 @@ async function fetchServices() {
       <!-- List View Tab -->
       <TabPanel value="1" header="List View">
         <!-- Filters -->
-        <Card class="mb-6 shadow-sm">
+        <Card class="mb-6 shadow-sm bg-white">
           <template #content>
             <div class="flex flex-col sm:flex-row gap-4">
               <div class="flex-1">
@@ -528,7 +528,7 @@ async function fetchServices() {
         </Card>
 
         <!-- Appointments Table -->
-        <Card class="shadow-sm">
+        <Card class="shadow-sm bg-white">
           <template #content>
             <DataTable
               :value="filteredAppointments"
@@ -560,7 +560,7 @@ async function fetchServices() {
                 <template #body="{ data }">
                   <div>
                     <p class="font-medium text-gray-900">{{ data.customerName }}</p>
-                    <p class="text-sm text-gray-500">{{ data.customerPhone }}</p>
+                    <p class="text-sm text-gray-600">{{ data.customerPhone }}</p>
                   </div>
                 </template>
               </Column>
