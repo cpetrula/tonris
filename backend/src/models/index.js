@@ -11,6 +11,14 @@ const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = req
 const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../modules/telephony/callLog.model');
 const { BusinessType } = require('../modules/business-types/businessType.model');
 
+/**
+ * Define model associations
+ * Call setupAssociations if it exists on the model
+ */
+if (typeof Appointment.setupAssociations === 'function' && Employee && Service) {
+  Appointment.setupAssociations({ Employee, Service });
+}
+
 module.exports = {
   User,
   Tenant,
