@@ -12,6 +12,10 @@ const http = require('http');
 
 const env = require('./config/env');
 const logger = require('./utils/logger');
+
+// Initialize models and associations early
+require('./models');
+
 const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');

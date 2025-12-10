@@ -25,7 +25,7 @@ interface Appointment {
   date: Date
   time: string
   duration: number
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show'
+  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   notes: string
 }
 
@@ -49,7 +49,7 @@ const statusOptions = [
   { label: 'Confirmed', value: 'confirmed' },
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
-  { label: 'No Show', value: 'no-show' }
+  { label: 'No Show', value: 'no_show' }
 ]
 
 const timeSlots = [

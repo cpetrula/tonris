@@ -210,6 +210,21 @@ Appointment.prototype.cancel = async function(reason, notes = null) {
   return this;
 };
 
+/**
+ * Set up model associations
+ * Should be called after all models are loaded
+ */
+Appointment.setupAssociations = (models) => {
+  Appointment.belongsTo(models.Employee, { 
+    foreignKey: 'employeeId', 
+    as: 'employee' 
+  });
+  Appointment.belongsTo(models.Service, { 
+    foreignKey: 'serviceId', 
+    as: 'service' 
+  });
+};
+
 module.exports = {
   Appointment,
   APPOINTMENT_STATUS,

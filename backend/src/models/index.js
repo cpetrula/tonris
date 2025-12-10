@@ -13,19 +13,11 @@ const { BusinessType } = require('../modules/business-types/businessType.model')
 
 /**
  * Define model associations
+ * Call setupAssociations if it exists on the model
  */
-// Appointment associations
-Appointment.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
-Appointment.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
-Appointment.belongsTo(Tenant, { foreignKey: 'tenantId', as: 'tenant' });
-
-// Employee associations
-Employee.hasMany(Appointment, { foreignKey: 'employeeId', as: 'appointments' });
-Employee.belongsTo(Tenant, { foreignKey: 'tenantId', as: 'tenant' });
-
-// Service associations
-Service.hasMany(Appointment, { foreignKey: 'serviceId', as: 'appointments' });
-Service.belongsTo(Tenant, { foreignKey: 'tenantId', as: 'tenant' });
+if (typeof Appointment.setupAssociations === 'function') {
+  Appointment.setupAssociations({ Employee, Service });
+}
 
 module.exports = {
   User,
