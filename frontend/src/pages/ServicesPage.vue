@@ -128,8 +128,8 @@ onMounted(async () => {
 async function fetchServices() {
   try {
     const response = await api.get('/api/services')
-    if (response.data.success && response.data.data) {
-      services.value = response.data.data.map((svc: any) => ({
+    if (response.data.success && response.data.data && response.data.data.services) {
+      services.value = response.data.data.services.map((svc: any) => ({
         id: svc.id,
         name: svc.name || '',
         description: svc.description || '',

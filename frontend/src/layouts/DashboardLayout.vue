@@ -134,6 +134,15 @@ onMounted(async () => {
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Top Header -->
       <header class="h-16 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
+        <!-- Mobile Menu Button -->
+        <Button
+          icon="pi pi-bars"
+          text
+          class="lg:hidden"
+          @click="toggleSidebar"
+          aria-label="Toggle menu"
+        />
+        
         <!-- Search / Breadcrumb placeholder -->
         <div class="flex-1 px-4">
           <!-- AI Phone Number Display -->

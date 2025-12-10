@@ -383,7 +383,7 @@ async function fetchServices() {
 </script>
 
 <template>
-  <div class="bg-gray-50 min-h-screen p-6">
+  <div>
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
       <div>

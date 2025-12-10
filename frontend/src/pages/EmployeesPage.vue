@@ -136,14 +136,14 @@ onMounted(async () => {
 async function fetchEmployees() {
   try {
     const response = await api.get('/api/employees')
-    if (response.data.success && response.data.data) {
-      employees.value = response.data.data.map((emp: any) => ({
+    if (response.data.success && response.data.data && response.data.data.employees) {
+      employees.value = response.data.data.employees.map((emp: any) => ({
         id: emp.id,
         firstName: emp.firstName || '',
         lastName: emp.lastName || '',
         email: emp.email || '',
         phone: emp.phone || '',
-        role: emp.role || '',
+        role: emp.employeeType || '',
         status: emp.status || 'active',
         schedule: emp.schedule || {
           monday: 'Off',
