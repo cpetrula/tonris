@@ -11,6 +11,22 @@ const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = req
 const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../modules/telephony/callLog.model');
 const { BusinessType } = require('../modules/business-types/businessType.model');
 
+/**
+ * Define model associations
+ */
+// Appointment associations
+Appointment.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
+Appointment.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
+Appointment.belongsTo(Tenant, { foreignKey: 'tenantId', as: 'tenant' });
+
+// Employee associations
+Employee.hasMany(Appointment, { foreignKey: 'employeeId', as: 'appointments' });
+Employee.belongsTo(Tenant, { foreignKey: 'tenantId', as: 'tenant' });
+
+// Service associations
+Service.hasMany(Appointment, { foreignKey: 'serviceId', as: 'appointments' });
+Service.belongsTo(Tenant, { foreignKey: 'tenantId', as: 'tenant' });
+
 module.exports = {
   User,
   Tenant,

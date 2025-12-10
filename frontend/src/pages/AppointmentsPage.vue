@@ -19,7 +19,9 @@ interface Appointment {
   customerEmail: string
   customerPhone: string
   service: string
+  serviceId?: string
   employee: string
+  employeeId?: string
   date: Date
   time: string
   duration: number
@@ -38,8 +40,8 @@ const editMode = ref(false)
 const error = ref('')
 
 // Employees and services will be fetched from API
-const employees = ref<{ label: string; value: string }[]>([])
-const services = ref<{ label: string; value: string }[]>([])
+const employees = ref<{ label: string; value: string; id: string }[]>([])
+const services = ref<{ label: string; value: string; id: string; duration?: number }[]>([])
 
 const statusOptions = [
   { label: 'All Statuses', value: null },
@@ -144,35 +146,140 @@ function openEditDialog(appointment: Appointment) {
   error.value = ''
 }
 
-function saveAppointment() {
+async function saveAppointment() {
   if (!currentAppointment.value.customerName || !currentAppointment.value.service || !currentAppointment.value.employee) {
     error.value = 'Please fill in all required fields'
     return
   }
 
-  if (editMode.value) {
-    const index = appointments.value.findIndex(a => a.id === currentAppointment.value.id)
-    if (index !== -1) {
-      appointments.value[index] = { ...currentAppointment.value }
+  try {
+    loading.value = true
+    error.value = ''
+
+    // Find the selected service and employee to get their IDs
+    const selectedService = services.value.find(s => s.value === currentAppointment.value.service)
+    const selectedEmployee = employees.value.find(e => e.value === currentAppointment.value.employee)
+
+    if (!selectedService || !selectedEmployee) {
+      error.value = 'Invalid service or employee selection'
+      return
     }
-  } else {
-    appointments.value.push({ ...currentAppointment.value })
-  }
 
-  showDialog.value = false
-  error.value = ''
+    // Convert time string to 24-hour format and combine with date
+    const startTime = combineDateAndTime(currentAppointment.value.date, currentAppointment.value.time)
+
+    if (editMode.value) {
+      // Update existing appointment
+      const updateData = {
+        customerName: currentAppointment.value.customerName,
+        customerEmail: currentAppointment.value.customerEmail || undefined,
+        customerPhone: currentAppointment.value.customerPhone || undefined,
+        employeeId: selectedEmployee.id,
+        startTime: startTime.toISOString(),
+        notes: currentAppointment.value.notes || undefined,
+        status: currentAppointment.value.status,
+        tenantId: getTenantIdFromToken()
+      }
+
+      const response = await api.patch(`/api/appointments/${currentAppointment.value.id}`, updateData)
+      
+      if (response.data.success) {
+        await fetchAppointments()
+        showDialog.value = false
+      }
+    } else {
+      // Create new appointment
+      const appointmentData = {
+        customerName: currentAppointment.value.customerName,
+        customerEmail: currentAppointment.value.customerEmail || undefined,
+        customerPhone: currentAppointment.value.customerPhone || undefined,
+        serviceId: selectedService.id,
+        employeeId: selectedEmployee.id,
+        startTime: startTime.toISOString(),
+        notes: currentAppointment.value.notes || undefined,
+        addOns: []
+      }
+
+      const response = await api.post('/api/appointments', appointmentData)
+      
+      if (response.data.success) {
+        await fetchAppointments()
+        showDialog.value = false
+      }
+    }
+  } catch (err: any) {
+    console.error('Error saving appointment:', err)
+    error.value = err.response?.data?.error || 'Failed to save appointment'
+  } finally {
+    loading.value = false
+  }
 }
 
-function updateStatus(appointment: Appointment, status: Appointment['status']) {
-  const index = appointments.value.findIndex(a => a.id === appointment.id)
-  if (index !== -1) {
-    appointments.value[index]!.status = status
+// Helper function to combine date and time
+function combineDateAndTime(date: Date, timeStr: string): Date {
+  const [time, period] = timeStr.split(' ')
+  let [hours, minutes] = time.split(':').map(Number)
+  
+  if (period === 'PM' && hours !== 12) {
+    hours += 12
+  } else if (period === 'AM' && hours === 12) {
+    hours = 0
+  }
+  
+  const combined = new Date(date)
+  combined.setHours(hours, minutes, 0, 0)
+  return combined
+}
+
+// Helper function to get tenant ID from JWT token
+function getTenantIdFromToken(): string | null {
+  const token = localStorage.getItem('token')
+  if (!token) return null
+  
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3 || !parts[1]) {
+      return null
+    }
+    
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(base64))
+    return payload.tenantId || null
+  } catch {
+    return null
   }
 }
 
-function cancelAppointment(appointment: Appointment) {
+async function updateStatus(appointment: Appointment, status: Appointment['status']) {
+  try {
+    const updateData = {
+      status,
+      tenantId: getTenantIdFromToken()
+    }
+
+    const response = await api.patch(`/api/appointments/${appointment.id}`, updateData)
+    
+    if (response.data.success) {
+      await fetchAppointments()
+    }
+  } catch (err) {
+    console.error('Error updating appointment status:', err)
+    error.value = 'Failed to update appointment status'
+  }
+}
+
+async function cancelAppointment(appointment: Appointment) {
   if (confirm(`Are you sure you want to cancel the appointment for ${appointment.customerName}?`)) {
-    updateStatus(appointment, 'cancelled')
+    try {
+      const response = await api.delete(`/api/appointments/${appointment.id}`)
+      
+      if (response.data.success) {
+        await fetchAppointments()
+      }
+    } catch (err) {
+      console.error('Error cancelling appointment:', err)
+      error.value = 'Failed to cancel appointment'
+    }
   }
 }
 
@@ -203,16 +310,18 @@ async function fetchAppointments() {
   try {
     const response = await api.get('/api/appointments')
     if (response.data.success && response.data.data) {
-      appointments.value = response.data.data.map((apt: any) => ({
+      appointments.value = response.data.data.appointments.map((apt: any) => ({
         id: apt.id,
         customerName: apt.customerName || 'Unknown',
         customerEmail: apt.customerEmail || '',
         customerPhone: apt.customerPhone || '',
         service: apt.service?.name || 'Unknown Service',
+        serviceId: apt.serviceId,
         employee: apt.employee ? `${apt.employee.firstName} ${apt.employee.lastName}` : 'Unknown',
+        employeeId: apt.employeeId,
         date: new Date(apt.startTime),
         time: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-        duration: apt.duration || 30,
+        duration: apt.duration || apt.totalDuration || 30,
         status: apt.status || 'scheduled',
         notes: apt.notes || ''
       }))
@@ -226,9 +335,10 @@ async function fetchEmployees() {
   try {
     const response = await api.get('/api/employees')
     if (response.data.success && response.data.data) {
-      employees.value = response.data.data.map((emp: any) => ({
+      employees.value = response.data.data.employees.map((emp: any) => ({
         label: `${emp.firstName} ${emp.lastName}`,
-        value: `${emp.firstName} ${emp.lastName}`
+        value: `${emp.firstName} ${emp.lastName}`,
+        id: emp.id
       }))
     }
   } catch (err) {
@@ -240,9 +350,11 @@ async function fetchServices() {
   try {
     const response = await api.get('/api/services')
     if (response.data.success && response.data.data) {
-      services.value = response.data.data.map((svc: any) => ({
+      services.value = response.data.data.services.map((svc: any) => ({
         label: svc.name,
-        value: svc.name
+        value: svc.name,
+        id: svc.id,
+        duration: svc.duration
       }))
     }
   } catch (err) {

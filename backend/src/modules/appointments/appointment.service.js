@@ -172,6 +172,18 @@ const getAppointments = async (tenantId, options = {}) => {
 
   const appointments = await Appointment.findAndCountAll({
     where,
+    include: [
+      {
+        model: Employee,
+        as: 'employee',
+        attributes: ['id', 'firstName', 'lastName', 'email']
+      },
+      {
+        model: Service,
+        as: 'service',
+        attributes: ['id', 'name', 'duration', 'price']
+      }
+    ],
     limit: parseInt(limit, 10),
     offset: parseInt(offset, 10),
     order: [['startTime', 'ASC']],
