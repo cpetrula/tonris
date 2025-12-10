@@ -222,7 +222,7 @@ function combineDateAndTime(date: Date, timeStr: string): Date {
   const period = parts[1]
   
   if (!time) {
-    throw new Error('Invalid time format')
+    throw new Error('Time must be in format HH:MM AM/PM (e.g., 9:00 AM)')
   }
   
   const timeParts = time.split(':')
@@ -254,7 +254,8 @@ function getTenantIdFromToken(): string | null {
     const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
     const payload = JSON.parse(atob(base64))
     return payload.tenantId || null
-  } catch {
+  } catch (error) {
+    console.error('Error parsing JWT token:', error)
     return null
   }
 }

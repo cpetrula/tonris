@@ -15,7 +15,7 @@ const { BusinessType } = require('../modules/business-types/businessType.model')
  * Define model associations
  * Call setupAssociations if it exists on the model
  */
-if (typeof Appointment.setupAssociations === 'function') {
+if (typeof Appointment.setupAssociations === 'function' && Employee && Service) {
   Appointment.setupAssociations({ Employee, Service });
 }
 
