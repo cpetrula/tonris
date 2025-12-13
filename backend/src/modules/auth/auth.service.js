@@ -319,10 +319,12 @@ const getUserById = async (userId, tenantId) => {
  * @param {string} registrationData.firstName - User first name
  * @param {string} registrationData.lastName - User last name
  * @param {string} registrationData.businessTypeId - Business type ID
+ * @param {string} registrationData.contactPhone - Contact phone (optional)
  * @returns {Promise<Object>} - Created user and tokens
  */
-const register = async ({ email, password, firstName, lastName, businessTypeId }) => {
+const register = async ({ email, password, firstName, lastName, businessTypeId, contactPhone }) => {
   const tenantService = require('../tenants/tenant.service');
+  const twilioService = require('../telephony/twilio.service');
 
   // Check if user already exists (globally - email is unique)
   const existingUser = await User.findOne({ where: { email } });
@@ -339,8 +341,43 @@ const register = async ({ email, password, firstName, lastName, businessTypeId }
     name: businessName,
     slug,
     contactEmail: email,
+    contactPhone,
     businessTypeId,
   });
+
+  // Provision Twilio phone number for the new tenant
+  let twilioPhoneNumber = null;
+  let twilioPhoneSid = null;
+  
+  try {
+    // Extract area code from contact phone if provided
+    let areaCode = null;
+    if (contactPhone) {
+      areaCode = twilioService.extractAreaCode(contactPhone);
+      logger.info(`Extracted area code ${areaCode} from contact phone ${contactPhone}`);
+    }
+    
+    // Provision phone number with area code preference
+    const provisionedNumber = await twilioService.provisionPhoneNumber({
+      tenantId: tenant.id,
+      areaCode,
+      country: 'US',
+    });
+    
+    twilioPhoneNumber = provisionedNumber.phoneNumber;
+    twilioPhoneSid = provisionedNumber.sid;
+    
+    // Update tenant with the provisioned phone number
+    await tenantService.updateTenant(tenant.id, {
+      twilioPhoneNumber,
+    });
+    
+    logger.info(`Twilio phone number ${twilioPhoneNumber} provisioned for tenant ${tenant.id}`);
+  } catch (error) {
+    // Log the error but don't fail the registration
+    logger.error(`Failed to provision Twilio phone number for tenant ${tenant.id}: ${error.message}`);
+    logger.warn('Registration will continue without Twilio phone number');
+  }
 
   // Create user associated with the new tenant
   const user = await User.create({
@@ -357,6 +394,7 @@ const register = async ({ email, password, firstName, lastName, businessTypeId }
   return {
     user: user.toSafeObject(),
     tokens,
+    twilioPhoneNumber, // Include in response so user knows their assigned number
   };
 };
 

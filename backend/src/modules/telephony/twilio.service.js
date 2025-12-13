@@ -22,7 +22,31 @@ const ensureTwilioConfigured = () => {
 };
 
 /**
- * Provision a new phone number for a tenant
+ * Extract area code from a phone number
+ * Handles US/Canada phone numbers in various formats
+ * @param {string} phoneNumber - Phone number to parse
+ * @returns {string|null} - Area code (3 digits) or null if not found
+ */
+const extractAreaCode = (phoneNumber) => {
+  if (!phoneNumber) return null;
+  
+  // Remove all non-digit characters
+  const digits = phoneNumber.replace(/\D/g, '');
+  
+  // US/Canada numbers are 10 digits (without country code) or 11 digits (with country code 1)
+  if (digits.length === 10) {
+    // First 3 digits are the area code
+    return digits.substring(0, 3);
+  } else if (digits.length === 11 && digits[0] === '1') {
+    // Remove country code and get first 3 digits
+    return digits.substring(1, 4);
+  }
+  
+  return null;
+};
+
+/**
+ * Provision a new phone number for a tenant with geographic preference
  * @param {Object} params - Provisioning parameters
  * @param {string} params.tenantId - Tenant identifier
  * @param {string} params.areaCode - Preferred area code (optional)
@@ -33,19 +57,38 @@ const provisionPhoneNumber = async ({ tenantId, areaCode, country = 'US' }) => {
   ensureTwilioConfigured();
   
   try {
-    // Search for available numbers
-    const searchParams = {
-      voiceEnabled: true,
-      smsEnabled: true,
-    };
+    let availableNumbers = [];
     
+    // Try to find a number with the preferred area code first
     if (areaCode) {
-      searchParams.areaCode = areaCode;
+      logger.info(`Searching for phone number with area code: ${areaCode}`);
+      try {
+        availableNumbers = await twilioClient.availablePhoneNumbers(country)
+          .local
+          .list({
+            voiceEnabled: true,
+            smsEnabled: true,
+            areaCode: areaCode,
+          });
+        
+        if (availableNumbers.length > 0) {
+          logger.info(`Found ${availableNumbers.length} numbers with area code ${areaCode}`);
+        }
+      } catch (error) {
+        logger.warn(`Failed to search with area code ${areaCode}: ${error.message}`);
+      }
     }
     
-    const availableNumbers = await twilioClient.availablePhoneNumbers(country)
-      .local
-      .list(searchParams);
+    // If no numbers found with preferred area code, search without restriction
+    if (availableNumbers.length === 0) {
+      logger.info('Searching for any available phone number');
+      availableNumbers = await twilioClient.availablePhoneNumbers(country)
+        .local
+        .list({
+          voiceEnabled: true,
+          smsEnabled: true,
+        });
+    }
     
     if (availableNumbers.length === 0) {
       throw new Error('No available phone numbers found');
@@ -344,4 +387,5 @@ module.exports = {
   generateVoiceResponse,
   generateSmsResponse,
   getIncomingPhoneNumber,
+  extractAreaCode,
 };
