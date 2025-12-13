@@ -347,14 +347,15 @@ const register = async ({ email, password, firstName, lastName, businessTypeId, 
 
   // Provision Twilio phone number for the new tenant
   let twilioPhoneNumber = null;
-  let twilioPhoneSid = null;
   
   try {
     // Extract area code from contact phone if provided
     let areaCode = null;
     if (contactPhone) {
       areaCode = twilioService.extractAreaCode(contactPhone);
-      logger.info(`Extracted area code ${areaCode} from contact phone ${contactPhone}`);
+      if (areaCode) {
+        logger.info(`Provisioning phone number with area code preference for tenant ${tenant.id}`);
+      }
     }
     
     // Provision phone number with area code preference
@@ -365,7 +366,6 @@ const register = async ({ email, password, firstName, lastName, businessTypeId, 
     });
     
     twilioPhoneNumber = provisionedNumber.phoneNumber;
-    twilioPhoneSid = provisionedNumber.sid;
     
     // Update tenant with the provisioned phone number
     await tenantService.updateTenant(tenant.id, {
