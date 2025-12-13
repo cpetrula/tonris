@@ -610,5 +610,139 @@ describe('Authentication Module', () => {
         });
       });
     });
+
+    describe('POST /api/auth/register', () => {
+      it('should return 400 when email is missing', async () => {
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe',
+            businessTypeId: 'business-123'
+          });
+        
+        expect(response.status).toBe(400);
+        expect(response.body.code).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 400 when required fields are missing', async () => {
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123'
+          });
+        
+        expect(response.status).toBe(400);
+        expect(response.body.error).toContain('First name and last name');
+      });
+
+      it('should return 400 when businessTypeId is missing', async () => {
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe'
+          });
+        
+        expect(response.status).toBe(400);
+        expect(response.body.error).toContain('Business type');
+      });
+
+      it('should return 400 when user already exists', async () => {
+        User.findOne.mockResolvedValue({ id: '123', email: 'test@example.com' });
+        
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe',
+            businessTypeId: 'business-123'
+          });
+        
+        expect(response.status).toBe(400);
+        expect(response.body.code).toBe('USER_EXISTS');
+      });
+
+      it('should register successfully without contact phone', async () => {
+        User.findOne.mockResolvedValue(null);
+        
+        const mockTenant = {
+          id: 'tenant-123',
+          tenantId: 'tenant-slug',
+          name: "John Doe's Business",
+          toSafeObject: () => ({ id: 'tenant-123', tenantId: 'tenant-slug' }),
+        };
+        
+        const mockUser = {
+          id: 'user-123',
+          email: 'test@example.com',
+          tenantId: 'tenant-123',
+          toSafeObject: () => ({ id: 'user-123', email: 'test@example.com', tenantId: 'tenant-123' }),
+        };
+        
+        mockTenantModel.create.mockResolvedValue(mockTenant);
+        mockTenantModel.findOne.mockResolvedValue(null); // No existing tenant
+        User.create.mockResolvedValue(mockUser);
+        
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe',
+            businessTypeId: 'business-123'
+          });
+        
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.user).toBeDefined();
+        expect(response.body.data.tokens).toBeDefined();
+      });
+
+      it('should register successfully with contact phone', async () => {
+        User.findOne.mockResolvedValue(null);
+        
+        const mockTenant = {
+          id: 'tenant-123',
+          tenantId: 'tenant-slug',
+          name: "John Doe's Business",
+          toSafeObject: () => ({ id: 'tenant-123', tenantId: 'tenant-slug' }),
+        };
+        
+        const mockUser = {
+          id: 'user-123',
+          email: 'test@example.com',
+          tenantId: 'tenant-123',
+          toSafeObject: () => ({ id: 'user-123', email: 'test@example.com', tenantId: 'tenant-123' }),
+        };
+        
+        mockTenantModel.create.mockResolvedValue(mockTenant);
+        mockTenantModel.findOne.mockResolvedValue(null); // No existing tenant
+        User.create.mockResolvedValue(mockUser);
+        
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe',
+            businessTypeId: 'business-123',
+            contactPhone: '+1-415-555-1234'
+          });
+        
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.user).toBeDefined();
+        expect(response.body.data.tokens).toBeDefined();
+      });
+    });
   });
 });
