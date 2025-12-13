@@ -280,7 +280,7 @@ const getProfile = async (req, res, next) => {
  */
 const register = async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, businessTypeId } = req.body;
+    const { email, password, firstName, lastName, businessTypeId, contactPhone } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -331,7 +331,8 @@ const register = async (req, res, next) => {
       password, 
       firstName, 
       lastName, 
-      businessTypeId 
+      businessTypeId,
+      contactPhone,
     });
 
     res.status(201).json({
