@@ -58,6 +58,11 @@ const User = sequelize.define('User', {
     defaultValue: true,
     field: 'is_active',
   },
+  smsOptIn: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    field: 'sms_opt_in',
+  },
 }, {
   tableName: 'users',
   timestamps: true,

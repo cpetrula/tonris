@@ -33,10 +33,15 @@ const env = {
   STRIPE_MONTHLY_PRICE_ID: process.env.STRIPE_MONTHLY_PRICE_ID || '',
   STRIPE_YEARLY_PRICE_ID: process.env.STRIPE_YEARLY_PRICE_ID || '',
   
-  // Twilio Configuration
+  // Twilio Configuration (Voice/Telephony)
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
   APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
+  
+  // Twilio SMS Configuration
+  TWILIO_SMS_ACCOUNT_SID: process.env.TWILIO_SMS_ACCOUNT_SID || '',
+  TWILIO_SMS_AUTH_TOKEN: process.env.TWILIO_SMS_AUTH_TOKEN || '',
+  TWILIO_SMS_PHONE_NUMBER: process.env.TWILIO_SMS_PHONE_NUMBER || '',
   
   // ElevenLabs Configuration
   ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY || '',

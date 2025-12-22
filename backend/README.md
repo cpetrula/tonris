@@ -104,17 +104,22 @@ backend/
 
 ## Environment Variables
 
-| Variable          | Description                | Default     |
-|-------------------|----------------------------|-------------|
-| NODE_ENV          | Environment mode           | development |
-| PORT              | Server port                | 3000        |
-| DB_HOST           | Database host              | localhost   |
-| DB_PORT           | Database port              | 3306        |
-| DB_NAME           | Database name              | tonris_db   |
-| DB_USER           | Database user              | root        |
-| DB_PASSWORD       | Database password          | -           |
-| LOG_LEVEL         | Logging level              | info        |
-| DEFAULT_TENANT_ID | Default tenant identifier  | default     |
+| Variable                 | Description                        | Default     |
+|--------------------------|------------------------------------|-------------|
+| NODE_ENV                 | Environment mode                   | development |
+| PORT                     | Server port                        | 3000        |
+| DB_HOST                  | Database host                      | localhost   |
+| DB_PORT                  | Database port                      | 3306        |
+| DB_NAME                  | Database name                      | tonris_db   |
+| DB_USER                  | Database user                      | root        |
+| DB_PASSWORD              | Database password                  | -           |
+| LOG_LEVEL                | Logging level                      | info        |
+| DEFAULT_TENANT_ID        | Default tenant identifier          | default     |
+| TWILIO_ACCOUNT_SID       | Twilio account SID (voice)         | -           |
+| TWILIO_AUTH_TOKEN        | Twilio auth token (voice)          | -           |
+| TWILIO_SMS_ACCOUNT_SID   | Twilio account SID (SMS)           | -           |
+| TWILIO_SMS_AUTH_TOKEN    | Twilio auth token (SMS)            | -           |
+| TWILIO_SMS_PHONE_NUMBER  | Twilio phone number for SMS        | -           |
 
 ## Multi-Tenant Architecture
 
