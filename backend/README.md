@@ -115,9 +115,11 @@ backend/
 | DB_PASSWORD              | Database password                  | -           |
 | LOG_LEVEL                | Logging level                      | info        |
 | DEFAULT_TENANT_ID        | Default tenant identifier          | default     |
-| TWILIO_ACCOUNT_SID       | Twilio account SID                 | -           |
-| TWILIO_AUTH_TOKEN        | Twilio authentication token        | -           |
-| TWILIO_SMS_FROM_NUMBER   | Twilio phone number for SMS        | -           |
+| TWILIO_ACCOUNT_SID       | Twilio account SID (voice)         | -           |
+| TWILIO_AUTH_TOKEN        | Twilio auth token (voice)          | -           |
+| TWILIO_SMS_ACCOUNT_SID   | Twilio account SID (SMS)           | -           |
+| TWILIO_SMS_AUTH_TOKEN    | Twilio auth token (SMS)            | -           |
+| TWILIO_SMS_PHONE_NUMBER  | Twilio phone number for SMS        | -           |
 
 ## Multi-Tenant Architecture
 

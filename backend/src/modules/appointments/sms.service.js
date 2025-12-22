@@ -69,8 +69,8 @@ const isUserOptedInForSms = async (customerEmail, tenantId) => {
  */
 const sendAppointmentConfirmationSms = async (appointment, employee, service, tenantId) => {
   // Check if SMS is configured
-  if (!env.TWILIO_SMS_FROM_NUMBER) {
-    logger.warn('SMS not configured: TWILIO_SMS_FROM_NUMBER is not set');
+  if (!env.TWILIO_SMS_PHONE_NUMBER) {
+    logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
     return null;
   }
 
@@ -96,7 +96,7 @@ const sendAppointmentConfirmationSms = async (appointment, employee, service, te
     // Send the SMS
     const result = await twilioService.sendSms({
       to: appointment.customerPhone,
-      from: env.TWILIO_SMS_FROM_NUMBER,
+      from: env.TWILIO_SMS_PHONE_NUMBER,
       body: messageBody,
     });
 

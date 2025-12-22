@@ -11,7 +11,9 @@ const env = require('../src/config/env');
 jest.mock('../src/modules/telephony/twilio.service');
 jest.mock('../src/models/User');
 jest.mock('../src/config/env', () => ({
-  TWILIO_SMS_FROM_NUMBER: '+15555555555',
+  TWILIO_SMS_ACCOUNT_SID: 'AC123456789',
+  TWILIO_SMS_AUTH_TOKEN: 'test_token',
+  TWILIO_SMS_PHONE_NUMBER: '+15555555555',
   isProduction: () => false,
   isDevelopment: () => true,
   isTest: () => true,
@@ -118,7 +120,7 @@ describe('SMS Service', () => {
 
   describe('sendAppointmentConfirmationSms', () => {
     beforeEach(() => {
-      env.TWILIO_SMS_FROM_NUMBER = '+15555555555';
+      env.TWILIO_SMS_PHONE_NUMBER = '+15555555555';
     });
 
     it('should send SMS when all conditions are met', async () => {
@@ -140,8 +142,8 @@ describe('SMS Service', () => {
       expect(result).toEqual({ sid: 'sms-123', status: 'sent' });
     });
 
-    it('should not send SMS if TWILIO_SMS_FROM_NUMBER is not configured', async () => {
-      env.TWILIO_SMS_FROM_NUMBER = '';
+    it('should not send SMS if TWILIO_SMS_PHONE_NUMBER is not configured', async () => {
+      env.TWILIO_SMS_PHONE_NUMBER = '';
 
       const result = await smsService.sendAppointmentConfirmationSms(
         mockAppointment,
