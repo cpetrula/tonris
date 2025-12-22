@@ -36,6 +36,7 @@ const env = {
   // Twilio Configuration
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
+  TWILIO_SMS_FROM_NUMBER: process.env.TWILIO_SMS_FROM_NUMBER || '',
   APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
   
   // ElevenLabs Configuration

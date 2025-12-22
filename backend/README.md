@@ -104,17 +104,20 @@ backend/
 
 ## Environment Variables
 
-| Variable          | Description                | Default     |
-|-------------------|----------------------------|-------------|
-| NODE_ENV          | Environment mode           | development |
-| PORT              | Server port                | 3000        |
-| DB_HOST           | Database host              | localhost   |
-| DB_PORT           | Database port              | 3306        |
-| DB_NAME           | Database name              | tonris_db   |
-| DB_USER           | Database user              | root        |
-| DB_PASSWORD       | Database password          | -           |
-| LOG_LEVEL         | Logging level              | info        |
-| DEFAULT_TENANT_ID | Default tenant identifier  | default     |
+| Variable                 | Description                        | Default     |
+|--------------------------|------------------------------------|-------------|
+| NODE_ENV                 | Environment mode                   | development |
+| PORT                     | Server port                        | 3000        |
+| DB_HOST                  | Database host                      | localhost   |
+| DB_PORT                  | Database port                      | 3306        |
+| DB_NAME                  | Database name                      | tonris_db   |
+| DB_USER                  | Database user                      | root        |
+| DB_PASSWORD              | Database password                  | -           |
+| LOG_LEVEL                | Logging level                      | info        |
+| DEFAULT_TENANT_ID        | Default tenant identifier          | default     |
+| TWILIO_ACCOUNT_SID       | Twilio account SID                 | -           |
+| TWILIO_AUTH_TOKEN        | Twilio authentication token        | -           |
+| TWILIO_SMS_FROM_NUMBER   | Twilio phone number for SMS        | -           |
 
 ## Multi-Tenant Architecture
 

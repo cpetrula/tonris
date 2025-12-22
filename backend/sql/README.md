@@ -9,6 +9,7 @@ This directory contains SQL scripts for setting up the TONRIS database and seedi
 - **migrate_services_tenant_id_to_uuid.sql** - Migration script to update services.tenant_id from string to UUID (foreign key to tenants.id)
 - **migrate_all_tenant_id_to_uuid.sql** - Migration script to update tenant_id in all tables (users, employees, appointments, subscriptions, call_logs) from string to UUID (foreign key to tenants.id)
 - **add_twilio_phone_number_column.sql** - Migration to add twilio_phone_number column to tenants table
+- **add_sms_opt_in_to_users.sql** - Migration to add sms_opt_in column to users table for SMS notification preferences
 - **create_business_types_table.sql** - Creates the business_types table for storing business type configurations
 - **add_business_type_to_tenants.sql** - Adds business_type_id column to tenants table with FK to business_types
 

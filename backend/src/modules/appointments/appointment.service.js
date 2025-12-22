@@ -9,6 +9,7 @@ const { Employee, EMPLOYEE_STATUS } = require('../employees/employee.model');
 const { Service } = require('../services/service.model');
 const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
+const smsService = require('./sms.service');
 
 /**
  * Calculate total price and duration for an appointment
@@ -125,6 +126,12 @@ const createAppointment = async (appointmentData, tenantId) => {
   });
 
   logger.info(`New appointment created: ${appointment.id} for tenant: ${tenantId}`);
+
+  // Send SMS confirmation asynchronously (don't wait for it to complete)
+  smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId)
+    .catch(error => {
+      logger.error(`Failed to send SMS for appointment ${appointment.id}: ${error.message}`);
+    });
 
   return appointment.toSafeObject();
 };
