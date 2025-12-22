@@ -12,6 +12,9 @@ jest.mock('../src/modules/telephony/twilio.service');
 jest.mock('../src/models/User');
 jest.mock('../src/config/env', () => ({
   TWILIO_SMS_FROM_NUMBER: '+15555555555',
+  isProduction: () => false,
+  isDevelopment: () => true,
+  isTest: () => true,
 }));
 
 describe('SMS Service', () => {

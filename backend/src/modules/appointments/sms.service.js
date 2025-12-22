@@ -52,7 +52,7 @@ const isUserOptedInForSms = async (customerEmail, tenantId) => {
     });
 
     // Return true only if user exists and has smsOptIn set to true
-    return user && user.smsOptIn === true;
+    return !!(user && user.smsOptIn === true);
   } catch (error) {
     logger.error(`Error checking SMS opt-in status: ${error.message}`);
     return false;
