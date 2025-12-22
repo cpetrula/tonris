@@ -2,11 +2,8 @@
   "name": "project-root",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "backend"
-  ],
   "scripts": {
-    "start:backend": "npm --prefix backend start",
+    "install": "cd backend && npm install",
     "install:all": "npm install"
   }
 }
