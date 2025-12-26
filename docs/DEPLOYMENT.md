@@ -60,7 +60,8 @@ JWT_REFRESH_EXPIRES_IN=7d
 # ===========================================
 # Stripe Configuration
 # ===========================================
-# Use LIVE keys for production (sk_live_xxx)
+# Use LIVE keys for production (sk_live_xxx, pk_live_xxx)
+# Monthly price: $295.00
 STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_signing_secret
 STRIPE_MONTHLY_PRICE_ID=price_your_monthly_price_id
@@ -444,15 +445,50 @@ crontab -e
 
 ### Stripe Webhooks
 
+Configure production webhooks in Stripe Dashboard:
+
 1. Go to Stripe Dashboard → Developers → Webhooks
-2. Add endpoint: `https://api.yourdomain.com/api/webhooks/stripe`
-3. Select events:
-   - `customer.subscription.created`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_succeeded`
-   - `invoice.payment_failed`
-4. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`
+2. Click "Add endpoint"
+3. Configure the endpoint:
+   - **Endpoint URL**: `https://api.yourdomain.com/api/webhooks/stripe`
+   - **Description**: "TONRIS Production Webhooks"
+   - **API Version**: Latest (2023-10-16 or newer)
+
+4. Select the following webhook events to send:
+   - `checkout.session.completed` - When customer completes checkout
+   - `customer.subscription.created` - When subscription is created
+   - `customer.subscription.updated` - When subscription status changes
+   - `customer.subscription.deleted` - When subscription is cancelled
+   - `invoice.paid` - When invoice payment succeeds
+   - `invoice.payment_failed` - When invoice payment fails
+
+5. After creating the endpoint:
+   - Click on the webhook endpoint
+   - Click "Reveal" under "Signing secret"
+   - Copy the webhook signing secret (starts with `whsec_`)
+   - Add to your production `.env`:
+     ```env
+     STRIPE_WEBHOOK_SECRET=whsec_your_production_webhook_secret
+     ```
+
+6. Test the webhook:
+   - Click "Send test webhook" in Stripe Dashboard
+   - Select event type: `customer.subscription.created`
+   - Verify the webhook is received successfully
+   - Check your application logs for: `Processing webhook event: customer.subscription.created`
+
+7. Monitor webhook delivery:
+   - View webhook attempts in Stripe Dashboard
+   - Set up alerts for failed webhook deliveries
+   - Webhooks will retry automatically on failure
+
+**Important Notes:**
+- The webhook endpoint must be publicly accessible
+- Use HTTPS in production (required by Stripe)
+- The endpoint processes raw request body for signature verification
+- Rate limiting: 100 requests per minute per IP
+
+For complete Stripe integration details, see [STRIPE.md](../STRIPE.md)
 
 ### Twilio Webhooks
 

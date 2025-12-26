@@ -154,16 +154,39 @@ For full functionality, configure the following services:
 
 1. Create a Stripe account at https://stripe.com
 2. Get your test API keys from Dashboard → Developers → API keys
-3. Add to `.env`:
+3. Create a product in Stripe Dashboard:
+   - Navigate to Products → Add Product
+   - Name: "TONRIS Professional - Monthly"
+   - Price: $295.00 monthly recurring
+   - Copy the Price ID (starts with `price_`)
 
-```env
-STRIPE_SECRET_KEY=sk_test_your_key
-STRIPE_WEBHOOK_SECRET=whsec_your_secret
-STRIPE_MONTHLY_PRICE_ID=price_xxx
-STRIPE_YEARLY_PRICE_ID=price_xxx
-```
+4. Set up local webhook forwarding with Stripe CLI:
+   ```bash
+   # Install Stripe CLI (macOS)
+   brew install stripe/stripe-cli/stripe
+   
+   # Login and forward webhooks
+   stripe login
+   stripe listen --forward-to localhost:3000/api/webhooks/stripe
+   ```
+   Copy the webhook signing secret from the CLI output.
 
-4. Create price products in Stripe Dashboard for testing
+5. Add to backend `.env`:
+   ```env
+   STRIPE_SECRET_KEY=sk_test_your_key
+   STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_from_cli
+   STRIPE_MONTHLY_PRICE_ID=price_xxx
+   STRIPE_YEARLY_PRICE_ID=price_xxx
+   ```
+
+6. Add to frontend `.env`:
+   ```env
+   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
+   ```
+
+7. Keep Stripe CLI running while testing locally
+
+For complete Stripe integration details, see [STRIPE.md](./STRIPE.md)
 
 ### Twilio (Telephony)
 
