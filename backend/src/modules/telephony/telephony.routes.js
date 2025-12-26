@@ -66,7 +66,9 @@ router.get('/call-logs', standardLimiter, authMiddleware, telephonyController.ge
 // POST /api/telephony/make-call - Make outbound call
 router.post('/make-call', standardLimiter, authMiddleware, telephonyController.makeCall);
 
-// POST /api/telephony/test-sms - Test SMS functionality (no auth required for easy testing)
+// POST /api/telephony/test-sms - Test SMS functionality 
+// WARNING: No authentication required - for development/testing only
+// In production, consider disabling this endpoint or adding IP restrictions
 router.post('/test-sms', smsLimiter, telephonyController.testSms);
 
 module.exports = router;

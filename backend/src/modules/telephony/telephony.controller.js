@@ -8,6 +8,7 @@ const smsHandler = require('./sms.handler');
 const { Tenant } = require('../tenants/tenant.model');
 const { getTenantUUID } = require('../../utils/tenant');
 const logger = require('../../utils/logger');
+const env = require('../../config/env');
 
 /**
  * POST /api/webhooks/twilio/voice
@@ -334,6 +335,7 @@ const makeCall = async (req, res, next) => {
 /**
  * POST /api/telephony/test-sms
  * Test endpoint for SMS functionality (no auth required)
+ * WARNING: This endpoint should be disabled in production or protected with additional security
  */
 const testSms = async (req, res, next) => {
   try {
@@ -347,12 +349,10 @@ const testSms = async (req, res, next) => {
       });
     }
     
-    const env = require('../../config/env');
-    
     if (!env.TWILIO_SMS_PHONE_NUMBER) {
       return res.status(503).json({
         success: false,
-        error: 'SMS service not configured. TWILIO_SMS_PHONE_NUMBER is not set',
+        error: 'SMS service not configured',
         code: 'SMS_NOT_CONFIGURED',
       });
     }
@@ -369,7 +369,17 @@ const testSms = async (req, res, next) => {
       message: 'Test SMS sent successfully',
     });
   } catch (error) {
-    // Return error details for easier debugging
+    // In production, don't expose detailed error messages
+    if (env.isProduction()) {
+      logger.error(`Test SMS failed: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to send SMS',
+        code: 'SMS_SEND_FAILED',
+      });
+    }
+    
+    // In development, return detailed error for debugging
     res.status(500).json({
       success: false,
       error: error.message,

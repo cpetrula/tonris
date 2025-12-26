@@ -290,6 +290,12 @@ const getCall = async (callSid) => {
  * @returns {boolean} - True if signature is valid
  */
 const validateWebhookSignature = (signature, url, params, type = 'voice') => {
+  // Validate type parameter
+  if (type !== 'voice' && type !== 'sms') {
+    logger.warn(`Invalid webhook type: ${type}, defaulting to 'voice'`);
+    type = 'voice';
+  }
+  
   // Use appropriate auth token based on webhook type
   const authToken = type === 'sms' ? env.TWILIO_SMS_AUTH_TOKEN : env.TWILIO_AUTH_TOKEN;
   

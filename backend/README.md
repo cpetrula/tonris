@@ -141,6 +141,8 @@ The application uses **two separate Twilio configurations**:
 
 A test endpoint is available for manual SMS testing without authentication:
 
+⚠️ **Security Note**: This endpoint is intended for **development and testing only**. In production environments, consider disabling this endpoint or adding IP restrictions and additional security measures.
+
 **Endpoint:** `POST /api/telephony/test-sms`
 
 **Request Body:**
@@ -165,6 +167,7 @@ curl -X POST http://localhost:3000/api/telephony/test-sms \
 - `TWILIO_SMS_ACCOUNT_SID` must be set
 - `TWILIO_SMS_AUTH_TOKEN` must be set
 - `TWILIO_SMS_PHONE_NUMBER` must be set
+- Rate limited to 30 requests per minute
 
 **Response:**
 ```json
