@@ -121,6 +121,51 @@ backend/
 | TWILIO_SMS_AUTH_TOKEN    | Twilio auth token (SMS)            | -           |
 | TWILIO_SMS_PHONE_NUMBER  | Twilio phone number for SMS        | -           |
 
+## Testing SMS Functionality
+
+A test endpoint is available for manual SMS testing without authentication:
+
+**Endpoint:** `POST /api/telephony/test-sms`
+
+**Request Body:**
+```json
+{
+  "to": "+15551234567",
+  "message": "Test message from TONRIS"
+}
+```
+
+**Example using curl:**
+```bash
+curl -X POST http://localhost:3000/api/telephony/test-sms \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "+15551234567",
+    "message": "Test message from TONRIS"
+  }'
+```
+
+**Requirements:**
+- `TWILIO_SMS_ACCOUNT_SID` must be set
+- `TWILIO_SMS_AUTH_TOKEN` must be set
+- `TWILIO_SMS_PHONE_NUMBER` must be set
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "sid": "SM...",
+    "status": "queued",
+    "to": "+15551234567",
+    "from": "+15559876543",
+    "body": "Test message from TONRIS",
+    "dateSent": null
+  },
+  "message": "Test SMS sent successfully"
+}
+```
+
 ## Multi-Tenant Architecture
 
 The backend supports multi-tenant architecture through:
