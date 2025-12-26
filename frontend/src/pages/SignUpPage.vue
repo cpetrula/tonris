@@ -9,6 +9,12 @@ import InputMask from 'primevue/inputmask'
 import { RouterLink } from 'vue-router'
 import api from '@/services/api'
 
+// Define TypeScript interface for business type
+interface BusinessType {
+  id: string
+  businessType: string
+}
+
 // Form state
 const step = ref(1)
 const loading = ref(false)
@@ -32,7 +38,11 @@ const confirmPassword = ref('')
 const phone = ref('')
 
 // Business types - will be populated from API
-const businessTypes = ref<Array<{ label: string; value: string }>>([])
+interface DropdownOption {
+  label: string
+  value: string
+}
+const businessTypes = ref<Array<DropdownOption>>([])
 const loadingBusinessTypes = ref(false)
 
 const states = [
@@ -156,17 +166,15 @@ async function fetchBusinessTypes() {
     const response = await api.get('/api/business-types/active')
     if (response.data.success && response.data.data.businessTypes) {
       // Map the business types to dropdown format
-      businessTypes.value = response.data.data.businessTypes.map((bt: any) => ({
+      businessTypes.value = response.data.data.businessTypes.map((bt: BusinessType) => ({
         label: bt.businessType,
         value: bt.id
       }))
     }
   } catch (err) {
     console.error('Failed to fetch business types:', err)
-    // Set a default fallback if API fails
-    businessTypes.value = [
-      { label: 'Other', value: '' }
-    ]
+    // If API fails, don't set any fallback - let user know there's an issue
+    error.value = 'Unable to load business types. Please refresh the page.'
   } finally {
     loadingBusinessTypes.value = false
   }
