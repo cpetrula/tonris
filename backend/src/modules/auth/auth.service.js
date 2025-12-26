@@ -51,47 +51,68 @@ const signup = async ({ email, password }, tenantId) => {
  * @returns {Promise<Object>} - User data and tokens
  */
 const login = async ({ email, password, twoFactorCode }) => {
-  // Find user
-  const user = await User.findOne({ where: { email } });
-  if (!user) {
-    throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
-  }
-
-  // Check if user is active
-  if (!user.isActive) {
-    throw new AppError('Account is deactivated', 403, 'ACCOUNT_DEACTIVATED');
-  }
-
-  // Verify password
-  const isPasswordValid = await user.comparePassword(password);
-  if (!isPasswordValid) {
-    throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
-  }
-
-  // Check 2FA if enabled
-  if (user.twoFactorEnabled) {
-    if (!twoFactorCode) {
-      return {
-        requiresTwoFactor: true,
-        message: 'Two-factor authentication code required',
-      };
+  try {
+    // Find user by email (email is globally unique across all tenants)
+    const user = await User.findOne({ 
+      where: { email },
+      raw: false, // Ensure we get a model instance, not plain object
+    });
+    
+    if (!user) {
+      throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
-    const isValidCode = twoFactorUtils.verifyToken(twoFactorCode, user.twoFactorSecret);
-    if (!isValidCode) {
-      throw new AppError('Invalid two-factor authentication code', 401, 'INVALID_2FA_CODE');
+    // Check if user is active
+    if (!user.isActive) {
+      throw new AppError('Account is deactivated', 403, 'ACCOUNT_DEACTIVATED');
     }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+    }
+
+    // Check 2FA if enabled
+    if (user.twoFactorEnabled) {
+      if (!twoFactorCode) {
+        return {
+          requiresTwoFactor: true,
+          message: 'Two-factor authentication code required',
+        };
+      }
+
+      const isValidCode = twoFactorUtils.verifyToken(twoFactorCode, user.twoFactorSecret);
+      if (!isValidCode) {
+        throw new AppError('Invalid two-factor authentication code', 401, 'INVALID_2FA_CODE');
+      }
+    }
+
+    // Generate tokens using the tenantId from the user record
+    const tokens = generateTokenPair(user);
+
+    logger.info(`User logged in: ${email} for tenant: ${user.tenantId}`);
+
+    return {
+      user: user.toSafeObject(),
+      tokens,
+    };
+  } catch (error) {
+    // If it's already an AppError, rethrow it
+    if (error.isOperational) {
+      throw error;
+    }
+    
+    // Log unexpected database errors for debugging
+    logger.error(`Login error for email ${email}:`, {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    
+    // Rethrow to be handled by error middleware
+    throw error;
   }
-
-  // Generate tokens
-  const tokens = generateTokenPair(user);
-
-  logger.info(`User logged in: ${email} for tenant: ${user.tenantId}`);
-
-  return {
-    user: user.toSafeObject(),
-    tokens,
-  };
 };
 
 /**
