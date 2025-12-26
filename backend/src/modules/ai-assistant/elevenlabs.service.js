@@ -3,6 +3,7 @@
  * Handles integration with ElevenLabs for voice AI and call orchestration
  */
 const crypto = require('crypto');
+const { URL } = require('url');
 const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
