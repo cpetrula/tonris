@@ -53,10 +53,7 @@ const signup = async ({ email, password }, tenantId) => {
 const login = async ({ email, password, twoFactorCode }) => {
   try {
     // Find user by email (email is globally unique across all tenants)
-    const user = await User.findOne({ 
-      where: { email },
-      raw: false, // Ensure we get a model instance, not plain object
-    });
+    const user = await User.findOne({ where: { email } });
     
     if (!user) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
@@ -104,7 +101,9 @@ const login = async ({ email, password, twoFactorCode }) => {
     }
     
     // Log unexpected database errors for debugging
-    logger.error(`Login error for email ${email}:`, {
+    // Obfuscate email for security
+    const obfuscatedEmail = email ? email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : 'unknown';
+    logger.error(`Login error for email ${obfuscatedEmail}:`, {
       error: error.message,
       stack: error.stack,
       name: error.name,
