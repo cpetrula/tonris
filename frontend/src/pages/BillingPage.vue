@@ -1,113 +1,83 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { loadStripe } from '@stripe/stripe-js'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import api from '@/services/api'
 
-interface PaymentMethod {
+// Configuration constants
+const DEFAULT_MONTHLY_PRICE = 295 // $295.00 per month
+
+interface Subscription {
   id: string
-  type: 'card'
-  brand: string
-  last4: string
-  expiryMonth: number
-  expiryYear: number
-  isDefault: boolean
+  tenantId: string
+  status: string
+  billingInterval: string | null
+  currentPeriodStart: string | null
+  currentPeriodEnd: string | null
+  cancelAtPeriodEnd: boolean
+  canceledAt: string | null
+  trialStart: string | null
+  trialEnd: string | null
+  isActive: boolean
+  isInactive: boolean
+  hasAccess: boolean
 }
 
-interface Invoice {
+interface Plan {
   id: string
-  number: string
-  date: string
-  amount: number
-  status: 'paid' | 'pending' | 'failed'
-  pdfUrl: string
+  name: string
+  price: number
+  priceFormatted: string
+  interval: string
+  intervalLabel: string
 }
 
 const loading = ref(false)
 const error = ref('')
+const subscription = ref<Subscription | null>(null)
+const availablePlans = ref<Plan[]>([])
+const trialDays = ref(15)
+const processingCheckout = ref(false)
 
-// Current subscription info
-const subscription = ref({
-  plan: 'Professional',
-  status: 'active',
-  billingCycle: 'monthly',
-  price: 295,
-  nextBillingDate: '2024-02-15',
-  features: [
-    'Unlimited calls',
-    '24/7 AI answering',
-    'Appointment booking',
-    'Calendar integration',
-    'Email notifications',
-    'Basic analytics'
-  ]
+const hasActiveSubscription = computed(() => {
+  return subscription.value?.isActive || false
 })
 
-// Available plans
-const plans = ref([
-  {
-    id: 'monthly',
-    name: 'Monthly',
-    price: 295,
-    description: 'Cancel anytime. No long-term contracts required.',
-    features: [
-      'Unlimited calls',
-      '24/7 AI answering',
-      'Appointment booking',
-      'Calendar integration',
-      'Email notifications',
-      'Basic analytics'
-    ],
-    current: true
-  }
-])
-
-// Payment methods
-const paymentMethods = ref<PaymentMethod[]>([
-  {
-    id: '1',
-    type: 'card',
-    brand: 'visa',
-    last4: '4242',
-    expiryMonth: 12,
-    expiryYear: 2025,
-    isDefault: true
-  }
-])
-
-// Invoices
-const invoices = ref<Invoice[]>([
-  {
-    id: '1',
-    number: 'INV-2024-001',
-    date: '2024-01-15',
-    amount: 295,
-    status: 'paid',
-    pdfUrl: '#'
-  },
-  {
-    id: '2',
-    number: 'INV-2023-012',
-    date: '2023-12-15',
-    amount: 295,
-    status: 'paid',
-    pdfUrl: '#'
-  },
-  {
-    id: '3',
-    number: 'INV-2023-011',
-    date: '2023-11-15',
-    amount: 295,
-    status: 'paid',
-    pdfUrl: '#'
-  }
-])
-
-const defaultPaymentMethod = computed(() => {
-  return paymentMethods.value.find(pm => pm.isDefault)
+const isTrialing = computed(() => {
+  return subscription.value?.status === 'trialing'
 })
 
-function formatDate(dateStr: string): string {
+const isInactive = computed(() => {
+  return subscription.value?.isInactive || false
+})
+
+const subscriptionStatusLabel = computed(() => {
+  if (!subscription.value) return 'No subscription'
+  
+  const status = subscription.value.status
+  const statusLabels: Record<string, string> = {
+    trialing: 'Free Trial',
+    active: 'Active',
+    past_due: 'Past Due',
+    canceled: 'Cancelled',
+    unpaid: 'Unpaid',
+    incomplete: 'Incomplete',
+    incomplete_expired: 'Expired',
+    inactive: 'Inactive'
+  }
+  
+  return statusLabels[status] || status
+})
+
+const subscriptionPrice = computed(() => {
+  if (!subscription.value || !availablePlans.value.length || !availablePlans.value[0]) return DEFAULT_MONTHLY_PRICE
+  return availablePlans.value[0].price / 100
+})
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return 'N/A'
   return new Date(dateStr).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -115,53 +85,137 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function formatPrice(price: number): string {
-  return `$${price.toFixed(2)}`
-}
-
-function getCardIcon(brand: string): string {
-  const icons: Record<string, string> = {
-    visa: 'pi pi-credit-card',
-    mastercard: 'pi pi-credit-card',
-    amex: 'pi pi-credit-card'
-  }
-  return icons[brand] || 'pi pi-credit-card'
-}
-
 function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    paid: 'bg-green-100 text-green-700',
-    pending: 'bg-yellow-100 text-yellow-700',
-    failed: 'bg-red-100 text-red-700'
+    trialing: 'bg-blue-100 text-blue-700',
+    active: 'bg-green-100 text-green-700',
+    past_due: 'bg-yellow-100 text-yellow-700',
+    canceled: 'bg-red-100 text-red-700',
+    unpaid: 'bg-red-100 text-red-700',
+    incomplete: 'bg-yellow-100 text-yellow-700',
+    incomplete_expired: 'bg-red-100 text-red-700',
+    inactive: 'bg-gray-100 text-gray-700'
   }
   return colors[status] || 'bg-gray-100 text-gray-700'
 }
 
-async function openStripePortal() {
-  // In a real app, this would redirect to Stripe Customer Portal
-  // const response = await api.post(`/api/tenants/${tenantStore.tenantId}/billing/portal`)
-  // window.location.href = response.data.url
-  alert('This would redirect to Stripe Customer Portal in production')
-}
-
-async function changePlan(planId: string) {
-  if (confirm('Are you sure you want to change your plan?')) {
-    // In a real app, this would call the API
-    // await api.post(`/api/tenants/${tenantStore.tenantId}/billing/change-plan`, { planId })
-    alert(`Plan change to ${planId} would be processed in production`)
+async function fetchSubscription() {
+  try {
+    loading.value = true
+    error.value = ''
+    
+    const response = await api.get('/api/billing/subscription')
+    
+    if (response.data.success) {
+      subscription.value = response.data.data.subscription
+      availablePlans.value = response.data.data.plans.monthly ? [response.data.data.plans.monthly] : []
+      trialDays.value = response.data.data.trialDays || 15
+    }
+  } catch (err: unknown) {
+    console.error('Failed to fetch subscription:', err)
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosError = err as { response?: { data?: { error?: string } } }
+      error.value = axiosError.response?.data?.error || 'Failed to load subscription information'
+    } else {
+      error.value = 'Failed to load subscription information'
+    }
+  } finally {
+    loading.value = false
   }
 }
 
-async function downloadInvoice(invoice: Invoice) {
-  // In a real app, this would download the invoice PDF
-  alert(`Downloading invoice ${invoice.number}...`)
+async function openStripePortal() {
+  try {
+    processingCheckout.value = true
+    error.value = ''
+    
+    const returnUrl = window.location.href
+    const response = await api.post('/api/billing/portal-session', { returnUrl })
+    
+    if (response.data.success && response.data.data.url) {
+      window.location.href = response.data.data.url
+    }
+  } catch (err: unknown) {
+    console.error('Failed to open portal:', err)
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosError = err as { response?: { data?: { error?: string } } }
+      error.value = axiosError.response?.data?.error || 'Failed to open billing portal'
+    } else {
+      error.value = 'Failed to open billing portal'
+    }
+    processingCheckout.value = false
+  }
+}
+
+async function startCheckout() {
+  try {
+    processingCheckout.value = true
+    error.value = ''
+    
+    // Validate Stripe publishable key is configured
+    const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+    if (!stripeKey) {
+      error.value = 'Stripe is not configured. Please contact support.'
+      processingCheckout.value = false
+      return
+    }
+    
+    const successUrl = `${window.location.origin}/app/billing?success=true`
+    const cancelUrl = `${window.location.origin}/app/billing?cancelled=true`
+    
+    const response = await api.post('/api/billing/create-checkout-session', {
+      billingInterval: 'month',
+      successUrl,
+      cancelUrl
+    })
+    
+    if (response.data.success && response.data.data.sessionId) {
+      const stripe = await loadStripe(stripeKey)
+      
+      if (!stripe) {
+        error.value = 'Failed to load Stripe. Please refresh and try again.'
+        processingCheckout.value = false
+        return
+      }
+      
+      // redirectToCheckout is a valid method - using type assertion for compatibility
+      const result = await (stripe as any).redirectToCheckout({
+        sessionId: response.data.data.sessionId
+      })
+      
+      if (result && result.error) {
+        error.value = result.error.message || 'Failed to redirect to checkout'
+        processingCheckout.value = false
+      }
+    }
+  } catch (err: unknown) {
+    console.error('Failed to start checkout:', err)
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosError = err as { response?: { data?: { error?: string } } }
+      error.value = axiosError.response?.data?.error || 'Failed to start checkout'
+    } else {
+      error.value = 'Failed to start checkout'
+    }
+    processingCheckout.value = false
+  }
 }
 
 onMounted(async () => {
-  loading.value = true
-  // In a real app, fetch billing data from API using tenantStore.tenantId
-  // await api.get(`/api/tenants/${tenantStore.tenantId}/billing`)
-  loading.value = false
+  await fetchSubscription()
+  
+  // Check for success/cancelled query params
+  const urlParams = new URLSearchParams(window.location.search)
+  if (urlParams.get('success') === 'true') {
+    // Refresh subscription data after successful payment
+    await fetchSubscription()
+  } else if (urlParams.get('cancelled') === 'true') {
+    error.value = 'Checkout was cancelled'
+  }
+  
+  // Clean up URL
+  if (urlParams.has('success') || urlParams.has('cancelled')) {
+    window.history.replaceState({}, '', window.location.pathname)
+  }
 })
 </script>
 
@@ -175,54 +229,152 @@ onMounted(async () => {
 
     <Message v-if="error" severity="error" class="mb-6">{{ error }}</Message>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Current Plan -->
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-12">
+      <i class="pi pi-spin pi-spinner text-4xl text-violet-600"></i>
+      <p class="text-gray-600 mt-4">Loading subscription information...</p>
+    </div>
+
+    <!-- No Subscription / Inactive -->
+    <div v-else-if="!subscription || isInactive">
+      <Card class="shadow-sm">
+        <template #title>Start Your Subscription</template>
+        <template #content>
+          <div class="text-center py-8">
+            <i class="pi pi-credit-card text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No Active Subscription</h3>
+            <p class="text-gray-600 mb-6">
+              {{ isInactive ? 'Your trial has ended. Subscribe now to continue using TONRIS.' : 'Subscribe to get started with TONRIS AI Assistant.' }}
+            </p>
+            
+            <div class="max-w-md mx-auto">
+              <div class="border-2 rounded-xl p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-1">Monthly Plan</h3>
+                <p class="text-gray-500 text-sm mb-4">Cancel anytime. No long-term contracts required.</p>
+
+                <div class="mb-4">
+                  <span class="text-3xl font-bold text-gray-900">${{ subscriptionPrice }}</span>
+                  <span class="text-gray-500">/month</span>
+                </div>
+
+                <ul class="space-y-2 mb-6 text-left">
+                  <li class="flex items-start text-sm text-gray-600">
+                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
+                    Unlimited calls
+                  </li>
+                  <li class="flex items-start text-sm text-gray-600">
+                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
+                    24/7 AI answering
+                  </li>
+                  <li class="flex items-start text-sm text-gray-600">
+                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
+                    Appointment booking
+                  </li>
+                  <li class="flex items-start text-sm text-gray-600">
+                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
+                    Calendar integration
+                  </li>
+                  <li class="flex items-start text-sm text-gray-600">
+                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
+                    Email notifications
+                  </li>
+                  <li class="flex items-start text-sm text-gray-600">
+                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
+                    Basic analytics
+                  </li>
+                </ul>
+
+                <Button
+                  label="Subscribe Now"
+                  icon="pi pi-credit-card"
+                  class="w-full"
+                  :loading="processingCheckout"
+                  @click="startCheckout"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
+      </Card>
+    </div>
+
+    <!-- Active/Trial Subscription -->
+    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Current Subscription -->
       <Card class="shadow-sm lg:col-span-2">
         <template #title>
           <div class="flex items-center justify-between">
-            <span>Current Plan</span>
-            <span :class="[
-              'px-3 py-1 rounded-full text-sm font-medium',
-              subscription.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-            ]">
-              {{ subscription.status === 'active' ? 'Active' : 'Inactive' }}
+            <span>Current Subscription</span>
+            <span :class="['px-3 py-1 rounded-full text-sm font-medium', getStatusColor(subscription.status)]">
+              {{ subscriptionStatusLabel }}
             </span>
           </div>
         </template>
         <template #content>
+          <!-- Trial Information -->
+          <div v-if="isTrialing" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-start">
+              <i class="pi pi-info-circle text-blue-600 text-xl mr-3 mt-0.5"></i>
+              <div>
+                <h4 class="font-medium text-blue-900 mb-1">Free Trial Active</h4>
+                <p class="text-sm text-blue-700">
+                  Your {{ trialDays }}-day free trial ends on {{ formatDate(subscription.trialEnd) }}.
+                  Add a payment method to continue your service after the trial.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <div>
-              <h3 class="text-2xl font-bold text-gray-900">{{ subscription.plan }}</h3>
+              <h3 class="text-2xl font-bold text-gray-900">Professional Plan</h3>
               <p class="text-gray-500">
-                ${{ subscription.price }}/{{ subscription.billingCycle === 'monthly' ? 'month' : 'year' }}
+                ${{ subscriptionPrice }}/month
               </p>
             </div>
-            <div class="mt-4 md:mt-0 text-right">
-              <p class="text-sm text-gray-500">Next billing date</p>
-              <p class="font-medium text-gray-900">{{ formatDate(subscription.nextBillingDate) }}</p>
+            <div v-if="subscription.currentPeriodEnd && hasActiveSubscription" class="mt-4 md:mt-0 text-right">
+              <p class="text-sm text-gray-500">
+                {{ subscription.cancelAtPeriodEnd ? 'Ends on' : 'Next billing date' }}
+              </p>
+              <p class="font-medium text-gray-900">{{ formatDate(subscription.currentPeriodEnd) }}</p>
             </div>
           </div>
 
           <div class="border-t border-gray-200 pt-4">
             <h4 class="font-medium text-gray-900 mb-3">Plan Features</h4>
             <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <li v-for="feature in subscription.features" :key="feature" class="flex items-center text-gray-600">
+              <li class="flex items-center text-gray-600">
                 <i class="pi pi-check text-green-500 mr-2"></i>
-                {{ feature }}
+                Unlimited calls
+              </li>
+              <li class="flex items-center text-gray-600">
+                <i class="pi pi-check text-green-500 mr-2"></i>
+                24/7 AI answering
+              </li>
+              <li class="flex items-center text-gray-600">
+                <i class="pi pi-check text-green-500 mr-2"></i>
+                Appointment booking
+              </li>
+              <li class="flex items-center text-gray-600">
+                <i class="pi pi-check text-green-500 mr-2"></i>
+                Calendar integration
+              </li>
+              <li class="flex items-center text-gray-600">
+                <i class="pi pi-check text-green-500 mr-2"></i>
+                Email notifications
+              </li>
+              <li class="flex items-center text-gray-600">
+                <i class="pi pi-check text-green-500 mr-2"></i>
+                Basic analytics
               </li>
             </ul>
           </div>
 
           <div class="mt-6 flex gap-3">
             <Button
-              label="Manage Subscription"
+              label="Manage in Stripe"
               icon="pi pi-external-link"
-              @click="openStripePortal"
-            />
-            <Button
-              label="Cancel Subscription"
-              severity="danger"
-              text
+              :loading="processingCheckout"
               @click="openStripePortal"
             />
           </div>
@@ -233,74 +385,35 @@ onMounted(async () => {
       <Card class="shadow-sm">
         <template #title>Payment Method</template>
         <template #content>
-          <div v-if="defaultPaymentMethod" class="mb-4">
-            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
-              <i :class="[getCardIcon(defaultPaymentMethod.brand), 'text-2xl text-gray-600 mr-3']"></i>
-              <div>
-                <p class="font-medium text-gray-900 capitalize">{{ defaultPaymentMethod.brand }} •••• {{ defaultPaymentMethod.last4 }}</p>
-                <p class="text-sm text-gray-500">
-                  Expires {{ defaultPaymentMethod.expiryMonth }}/{{ defaultPaymentMethod.expiryYear }}
-                </p>
-              </div>
-            </div>
+          <div v-if="isTrialing" class="text-center py-4">
+            <i class="pi pi-credit-card text-4xl text-gray-300 mb-3"></i>
+            <p class="text-sm text-gray-600 mb-4">
+              No payment method on file. Add one before your trial ends.
+            </p>
+          </div>
+          <div v-else-if="hasActiveSubscription" class="text-center py-4">
+            <i class="pi pi-credit-card text-4xl text-green-500 mb-3"></i>
+            <p class="text-sm text-gray-600 mb-4">
+              Payment method is on file and managed through Stripe.
+            </p>
           </div>
           <div v-else class="text-center py-4 text-gray-500">
             No payment method on file
           </div>
           <Button
-            label="Update Payment Method"
+            label="Manage Payment Method"
             icon="pi pi-credit-card"
             outlined
             class="w-full"
+            :loading="processingCheckout"
             @click="openStripePortal"
           />
         </template>
       </Card>
     </div>
 
-    <!-- Available Plans -->
-    <Card class="shadow-sm mt-6">
-      <template #title>Your Plan</template>
-      <template #content>
-        <div class="max-w-md mx-auto">
-          <div
-            :class="[
-              'border-2 rounded-xl p-6 relative',
-              plans[0].current ? 'border-violet-500 bg-violet-50' : 'border-gray-200'
-            ]"
-          >
-            <div v-if="plans[0].current" class="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-              Current Plan
-            </div>
-
-            <h3 class="text-xl font-bold text-gray-900 mb-1">{{ plans[0].name }}</h3>
-            <p class="text-gray-500 text-sm mb-4">{{ plans[0].description }}</p>
-
-            <div class="mb-4">
-              <span class="text-3xl font-bold text-gray-900">${{ plans[0].price }}</span>
-              <span class="text-gray-500">/month</span>
-            </div>
-
-            <ul class="space-y-2 mb-6">
-              <li v-for="feature in plans[0].features" :key="feature" class="flex items-start text-sm text-gray-600">
-                <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                {{ feature }}
-              </li>
-            </ul>
-
-            <Button
-              label="Current Plan"
-              severity="secondary"
-              disabled
-              class="w-full"
-            />
-          </div>
-        </div>
-      </template>
-    </Card>
-
-    <!-- Billing History -->
-    <Card class="shadow-sm mt-6">
+    <!-- Billing History Card -->
+    <Card v-if="subscription && !isInactive" class="shadow-sm mt-6">
       <template #title>
         <div class="flex items-center justify-between">
           <span>Billing History</span>
@@ -308,48 +421,14 @@ onMounted(async () => {
             label="View All in Stripe"
             text
             size="small"
+            :loading="processingCheckout"
             @click="openStripePortal"
           />
         </div>
       </template>
       <template #content>
-        <div class="overflow-x-auto">
-          <table class="min-w-full">
-            <thead>
-              <tr class="border-b border-gray-200">
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Invoice</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Date</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Amount</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="invoice in invoices" :key="invoice.id" class="border-b border-gray-100 last:border-0">
-                <td class="py-3 px-4 font-medium text-gray-900">{{ invoice.number }}</td>
-                <td class="py-3 px-4 text-gray-600">{{ formatDate(invoice.date) }}</td>
-                <td class="py-3 px-4 text-gray-900">{{ formatPrice(invoice.amount) }}</td>
-                <td class="py-3 px-4">
-                  <span :class="['px-2 py-1 rounded-full text-xs font-medium capitalize', getStatusColor(invoice.status)]">
-                    {{ invoice.status }}
-                  </span>
-                </td>
-                <td class="py-3 px-4 text-right">
-                  <Button
-                    icon="pi pi-download"
-                    text
-                    size="small"
-                    severity="secondary"
-                    v-tooltip.top="'Download PDF'"
-                    @click="downloadInvoice(invoice)"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-if="invoices.length === 0" class="text-center py-8 text-gray-500">
-          No invoices yet
+        <div class="text-center py-8 text-gray-500">
+          View your complete billing history in the Stripe customer portal.
         </div>
       </template>
     </Card>
