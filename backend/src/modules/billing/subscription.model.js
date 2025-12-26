@@ -4,6 +4,7 @@
  */
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/db');
+const logger = require('../../utils/logger');
 
 /**
  * Valid subscription statuses (aligned with Stripe subscription statuses)
@@ -17,6 +18,7 @@ const SUBSCRIPTION_STATUS = {
   CANCELED: 'canceled',
   UNPAID: 'unpaid',
   PAUSED: 'paused',
+  INACTIVE: 'inactive',
 };
 
 /**
@@ -32,7 +34,7 @@ const BILLING_INTERVAL = {
  */
 const PLAN_CONFIG = {
   MONTHLY_PRICE: 29500, // $295.00 in cents
-  YEARLY_PRICE: 283200, // $2,832.00 in cents
+  TRIAL_DAYS: 15, // 15-day free trial
 };
 
 const Subscription = sequelize.define('Subscription', {
@@ -140,6 +142,14 @@ Subscription.prototype.isActive = function() {
 };
 
 /**
+ * Check if subscription is inactive (trial expired, no payment)
+ * @returns {boolean} - True if subscription is inactive
+ */
+Subscription.prototype.isInactive = function() {
+  return this.status === SUBSCRIPTION_STATUS.INACTIVE;
+};
+
+/**
  * Check if subscription has access (active or within grace period)
  * @returns {boolean} - True if tenant should have access
  */
@@ -174,6 +184,7 @@ Subscription.prototype.toSafeObject = function() {
     trialStart: this.trialStart,
     trialEnd: this.trialEnd,
     isActive: this.isActive(),
+    isInactive: this.isInactive(),
     hasAccess: this.hasAccess(),
   };
 };
@@ -210,6 +221,27 @@ Subscription.prototype.updateFromStripe = async function(stripeSubscription) {
   
   await this.save();
   return this;
+};
+
+/**
+ * Check if trial has expired and mark as inactive if needed
+ * @returns {Promise<boolean>} - True if status was changed to inactive
+ */
+Subscription.prototype.checkAndMarkTrialExpired = async function() {
+  // Only check if currently trialing
+  if (this.status !== SUBSCRIPTION_STATUS.TRIALING) {
+    return false;
+  }
+  
+  // Check if trial has ended
+  if (this.trialEnd && new Date() > this.trialEnd) {
+    this.status = SUBSCRIPTION_STATUS.INACTIVE;
+    await this.save();
+    logger.info(`Marked subscription as inactive after trial expiration: ${this.tenantId}`);
+    return true;
+  }
+  
+  return false;
 };
 
 module.exports = {

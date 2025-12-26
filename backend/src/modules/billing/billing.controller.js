@@ -14,6 +14,10 @@ const { getTenantUUID } = require('../../utils/tenant');
 const getSubscription = async (req, res, next) => {
   try {
     const tenantUUID = await getTenantUUID(req.tenantId);
+    
+    // Check and update subscription status (e.g., mark trial as expired)
+    await billingService.checkSubscriptionStatus(tenantUUID);
+    
     const subscription = await billingService.getSubscription(tenantUUID);
     
     res.status(200).json({
@@ -26,12 +30,8 @@ const getSubscription = async (req, res, next) => {
             interval: BILLING_INTERVAL.MONTH,
             priceFormatted: `$${(PLAN_CONFIG.MONTHLY_PRICE / 100).toFixed(2)}`,
           },
-          yearly: {
-            price: PLAN_CONFIG.YEARLY_PRICE,
-            interval: BILLING_INTERVAL.YEAR,
-            priceFormatted: `$${(PLAN_CONFIG.YEARLY_PRICE / 100).toFixed(2)}`,
-          },
         },
+        trialDays: PLAN_CONFIG.TRIAL_DAYS,
       },
     });
   } catch (error) {
@@ -192,16 +192,8 @@ const getPlans = async (req, res) => {
           interval: BILLING_INTERVAL.MONTH,
           intervalLabel: 'per month',
         },
-        {
-          id: 'yearly',
-          name: 'Yearly Plan',
-          price: PLAN_CONFIG.YEARLY_PRICE,
-          priceFormatted: `$${(PLAN_CONFIG.YEARLY_PRICE / 100).toFixed(2)}`,
-          interval: BILLING_INTERVAL.YEAR,
-          intervalLabel: 'per year',
-          savings: `Save $${((PLAN_CONFIG.MONTHLY_PRICE * 12 - PLAN_CONFIG.YEARLY_PRICE) / 100).toFixed(2)}`,
-        },
       ],
+      trialDays: PLAN_CONFIG.TRIAL_DAYS,
     },
   });
 };

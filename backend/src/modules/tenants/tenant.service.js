@@ -40,11 +40,21 @@ const createTenant = async (tenantData) => {
     contactPhone,
     planType: planType || PLAN_TYPES.FREE,
     settings: Tenant.generateDefaultSettings(),
-    status: TENANT_STATUS.PENDING,
+    status: TENANT_STATUS.ACTIVE, // Set to active immediately since trial is active
     businessTypeId: businessTypeId || null,
   });
 
   logger.info(`New tenant created: ${name} (${slug})`);
+  
+  // Create trial subscription automatically
+  try {
+    const billingService = require('../billing/billing.service');
+    await billingService.getOrCreateSubscription(tenant.id);
+    logger.info(`Trial subscription created for tenant: ${tenant.id}`);
+  } catch (error) {
+    logger.error(`Failed to create trial subscription for tenant ${tenant.id}: ${error.message}`);
+    // Don't fail tenant creation if subscription creation fails
+  }
 
   return tenant.toSafeObject();
 };

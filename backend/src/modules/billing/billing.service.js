@@ -2,7 +2,7 @@
  * Billing Service
  * Handles all billing business logic
  */
-const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL } = require('./subscription.model');
+const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = require('./subscription.model');
 const { Tenant, TENANT_STATUS } = require('../tenants/tenant.model');
 const stripeService = require('./stripe.service');
 const { AppError } = require('../../middleware/errorHandler');
@@ -25,6 +25,7 @@ const getSubscription = async (tenantId) => {
 
 /**
  * Get or create subscription record for a tenant
+ * Creates with trial period by default
  * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Subscription>} - Subscription model instance
  */
@@ -32,11 +33,17 @@ const getOrCreateSubscription = async (tenantId) => {
   let subscription = await Subscription.findOne({ where: { tenantId } });
   
   if (!subscription) {
+    const now = new Date();
+    const trialEnd = new Date(now);
+    trialEnd.setDate(trialEnd.getDate() + PLAN_CONFIG.TRIAL_DAYS);
+    
     subscription = await Subscription.create({
       tenantId,
-      status: SUBSCRIPTION_STATUS.INCOMPLETE,
+      status: SUBSCRIPTION_STATUS.TRIALING,
+      trialStart: now,
+      trialEnd: trialEnd,
     });
-    logger.info(`Created new subscription record for tenant: ${tenantId}`);
+    logger.info(`Created new subscription with ${PLAN_CONFIG.TRIAL_DAYS}-day trial for tenant: ${tenantId}`);
   }
   
   return subscription;
@@ -344,6 +351,24 @@ const cancelSubscription = async (tenantId, immediate = false) => {
   return subscription.toSafeObject();
 };
 
+/**
+ * Check subscription status and update if trial expired
+ * @param {string} tenantId - Tenant identifier
+ * @returns {Promise<Object>} - Updated subscription status
+ */
+const checkSubscriptionStatus = async (tenantId) => {
+  const subscription = await Subscription.findOne({ where: { tenantId } });
+  
+  if (!subscription) {
+    return null;
+  }
+  
+  // Check if trial expired
+  await subscription.checkAndMarkTrialExpired();
+  
+  return subscription.toSafeObject();
+};
+
 module.exports = {
   getSubscription,
   getOrCreateSubscription,
@@ -356,4 +381,5 @@ module.exports = {
   syncTenantStatus,
   hasActiveSubscription,
   cancelSubscription,
+  checkSubscriptionStatus,
 };
