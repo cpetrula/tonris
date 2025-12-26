@@ -288,6 +288,60 @@ class ElevenLabsService extends AIProviderInterface {
   }
 
   /**
+   * Import a Twilio phone number into ElevenLabs
+   * @param {Object} params - Import parameters
+   * @param {string} params.phoneNumber - The phone number to import (E.164 format)
+   * @param {string} params.label - Label for the phone number (business name)
+   * @param {string} params.agentId - ElevenLabs agent ID to assign
+   * @param {string} params.twilioAccountSid - Twilio Account SID
+   * @param {string} params.twilioAuthToken - Twilio Auth Token
+   * @returns {Promise<Object>} - Import result with phone number ID
+   */
+  async importPhoneNumber({ phoneNumber, label, agentId, twilioAccountSid, twilioAuthToken }) {
+    if (!await this.isAvailable()) {
+      throw new Error('ElevenLabs is not configured');
+    }
+
+    if (!this.client) {
+      throw new Error('ElevenLabs client is not initialized');
+    }
+
+    try {
+      logger.info(`Importing phone number ${phoneNumber} to ElevenLabs with agent ${agentId}`);
+      
+      // Import phone number via ElevenLabs API
+      const response = await this.client.conversationalAi.phoneNumbers.create({
+        provider: 'twilio',
+        phoneNumber,
+        label,
+        sid: twilioAccountSid,
+        token: twilioAuthToken,
+        supportsInbound: true,
+        supportsOutbound: false,
+      });
+
+      logger.info(`Phone number ${phoneNumber} imported to ElevenLabs with ID: ${response.phoneNumberId}`);
+
+      // Assign the agent to the phone number
+      if (agentId) {
+        await this.client.conversationalAi.phoneNumbers.update(response.phoneNumberId, {
+          agentId,
+        });
+        logger.info(`Agent ${agentId} assigned to phone number ${phoneNumber}`);
+      }
+
+      return {
+        phoneNumberId: response.phoneNumberId,
+        phoneNumber,
+        agentId,
+      };
+    } catch (error) {
+      logger.error(`Failed to import phone number to ElevenLabs: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get configuration for ElevenLabs agent
    * @returns {Object} - Agent configuration
    */

@@ -110,9 +110,10 @@ const provisionPhoneNumber = async ({ tenantId, areaCode, country = 'US' }) => {
     }
     
     // Purchase the first available number
+    // Set voiceUrl to ElevenLabs inbound call endpoint for AI call handling
     const phoneNumber = await twilioClient.incomingPhoneNumbers.create({
       phoneNumber: availableNumbers[0].phoneNumber,
-      voiceUrl: `${env.APP_BASE_URL}/api/webhooks/twilio/voice`,
+      voiceUrl: 'https://api.us.elevenlabs.io/twilio/inbound_call',
       voiceMethod: 'POST',
       smsUrl: `${env.APP_BASE_URL}/api/webhooks/twilio/sms`,
       smsMethod: 'POST',
@@ -120,7 +121,7 @@ const provisionPhoneNumber = async ({ tenantId, areaCode, country = 'US' }) => {
       statusCallbackMethod: 'POST',
     });
     
-    logger.info(`Phone number provisioned: ${phoneNumber.phoneNumber} for tenant: ${tenantId}`);
+    logger.info(`Phone number provisioned: ${phoneNumber.phoneNumber} for tenant: ${tenantId} with ElevenLabs voice webhook`);
     
     return {
       phoneNumber: phoneNumber.phoneNumber,

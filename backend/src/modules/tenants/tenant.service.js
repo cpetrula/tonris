@@ -257,7 +257,7 @@ const updateTenant = async (id, updateData) => {
   }
 
   // Filter out fields that shouldn't be directly updated
-  const allowedFields = ['name', 'contactEmail', 'contactPhone', 'address', 'metadata', 'twilioPhoneNumber'];
+  const allowedFields = ['name', 'contactEmail', 'contactPhone', 'address', 'metadata', 'twilioPhoneNumber', 'twilioPhoneNumberSid', 'elevenlabsPhoneNumberId'];
   const filteredData = {};
   
   for (const key of allowedFields) {
