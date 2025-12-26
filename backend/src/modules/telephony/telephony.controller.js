@@ -369,20 +369,11 @@ const testSms = async (req, res, next) => {
       message: 'Test SMS sent successfully',
     });
   } catch (error) {
-    // In production, don't expose detailed error messages
-    if (env.isProduction()) {
-      logger.error(`Test SMS failed: ${error.message}`);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to send SMS',
-        code: 'SMS_SEND_FAILED',
-      });
-    }
-    
-    // In development, return detailed error for debugging
+    // Log detailed error for debugging but return generic error to client
+    logger.error(`Test SMS failed: ${error.message}`);
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: 'Failed to send SMS',
       code: 'SMS_SEND_FAILED',
     });
   }

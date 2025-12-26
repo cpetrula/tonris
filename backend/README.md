@@ -155,6 +155,7 @@ A test endpoint is available for manual SMS testing without authentication:
 
 **Example using curl:**
 ```bash
+# Replace localhost:3000 with your actual server URL
 curl -X POST http://localhost:3000/api/telephony/test-sms \
   -H "Content-Type: application/json" \
   -d '{

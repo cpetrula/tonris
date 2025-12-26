@@ -27,6 +27,16 @@ const ensureTwilioConfigured = () => {
 };
 
 /**
+ * Verify Twilio SMS is configured
+ * @throws {Error} If Twilio SMS is not configured
+ */
+const ensureTwilioSmsConfigured = () => {
+  if (!twilioSmsClient) {
+    throw new Error('Twilio SMS is not configured. Please set TWILIO_SMS_ACCOUNT_SID and TWILIO_SMS_AUTH_TOKEN environment variables.');
+  }
+};
+
+/**
  * Extract area code from a phone number
  * Handles US/Canada phone numbers in various formats
  * @param {string} phoneNumber - Phone number to parse
@@ -189,9 +199,7 @@ const releasePhoneNumber = async (phoneNumberSid) => {
  */
 const sendSms = async ({ to, from, body, statusCallback }) => {
   // Use SMS-specific client for SMS operations
-  if (!twilioSmsClient) {
-    throw new Error('Twilio SMS is not configured. Please set TWILIO_SMS_ACCOUNT_SID and TWILIO_SMS_AUTH_TOKEN environment variables.');
-  }
+  ensureTwilioSmsConfigured();
   
   try {
     const messageParams = {
