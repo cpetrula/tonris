@@ -26,6 +26,7 @@ jest.mock('../src/modules/billing/subscription.model', () => ({
     CANCELED: 'canceled',
     UNPAID: 'unpaid',
     PAUSED: 'paused',
+    INACTIVE: 'inactive',
   },
   BILLING_INTERVAL: {
     MONTH: 'month',
@@ -33,7 +34,7 @@ jest.mock('../src/modules/billing/subscription.model', () => ({
   },
   PLAN_CONFIG: {
     MONTHLY_PRICE: 29500,
-    YEARLY_PRICE: 283200,
+    TRIAL_DAYS: 15,
   },
 }));
 
@@ -92,7 +93,7 @@ jest.mock('../src/models', () => ({
   },
   PLAN_CONFIG: {
     MONTHLY_PRICE: 29500,
-    YEARLY_PRICE: 283200,
+    TRIAL_DAYS: 15,
   },
 }));
 
@@ -106,8 +107,8 @@ jest.mock('../src/modules/billing/stripe.service', () => ({
   cancelSubscription: jest.fn(),
   resumeSubscription: jest.fn(),
   constructWebhookEvent: jest.fn(),
-  getPriceId: jest.fn((interval) => interval === 'year' ? 'price_yearly' : 'price_monthly'),
-  getPlanPrice: jest.fn((interval) => interval === 'year' ? 283200 : 29500),
+  getPriceId: jest.fn(() => 'price_monthly'),
+  getPlanPrice: jest.fn(() => 29500),
 }));
 
 // Mock tenant utility
@@ -140,18 +141,16 @@ describe('Billing Module', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.plans).toBeDefined();
-      expect(response.body.data.plans).toHaveLength(2);
+      expect(response.body.data.plans).toHaveLength(1);
       
       const monthlyPlan = response.body.data.plans.find(p => p.id === 'monthly');
-      const yearlyPlan = response.body.data.plans.find(p => p.id === 'yearly');
       
       expect(monthlyPlan).toBeDefined();
       expect(monthlyPlan.price).toBe(29500);
       expect(monthlyPlan.interval).toBe('month');
       
-      expect(yearlyPlan).toBeDefined();
-      expect(yearlyPlan.price).toBe(283200);
-      expect(yearlyPlan.interval).toBe('year');
+      // Check for trial days in response
+      expect(response.body.data.trialDays).toBe(15);
     });
   });
 
@@ -571,7 +570,7 @@ describe('Subscription Model', () => {
       const { PLAN_CONFIG } = require('../src/modules/billing/subscription.model');
       
       expect(PLAN_CONFIG.MONTHLY_PRICE).toBe(29500); // $295.00
-      expect(PLAN_CONFIG.YEARLY_PRICE).toBe(283200); // $2,832.00
+      expect(PLAN_CONFIG.TRIAL_DAYS).toBe(15); // 15-day trial
     });
   });
 

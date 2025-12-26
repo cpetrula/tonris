@@ -236,9 +236,7 @@ const constructWebhookEvent = (payload, signature) => {
  * @returns {string} - Stripe price ID
  */
 const getPriceId = (interval) => {
-  if (interval === BILLING_INTERVAL.YEAR) {
-    return env.STRIPE_YEARLY_PRICE_ID;
-  }
+  // Only monthly pricing is supported now
   return env.STRIPE_MONTHLY_PRICE_ID;
 };
 
@@ -248,9 +246,7 @@ const getPriceId = (interval) => {
  * @returns {number} - Price in cents
  */
 const getPlanPrice = (interval) => {
-  if (interval === BILLING_INTERVAL.YEAR) {
-    return PLAN_CONFIG.YEARLY_PRICE;
-  }
+  // Only monthly pricing is supported now
   return PLAN_CONFIG.MONTHLY_PRICE;
 };
 
