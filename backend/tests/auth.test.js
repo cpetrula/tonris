@@ -332,6 +332,39 @@ describe('Authentication Module', () => {
         expect(response.body.success).toBe(true);
         expect(response.body.data.tokens).toBeDefined();
       });
+
+      it('should find user by email only and retrieve tenantId from user record', async () => {
+        const mockUser = {
+          id: 'user-uuid-456',
+          email: 'user@tenant2.com',
+          tenantId: 'tenant-uuid-456', // Different tenant
+          isActive: true,
+          twoFactorEnabled: false,
+          comparePassword: jest.fn().mockResolvedValue(true),
+          toSafeObject: () => ({ 
+            id: 'user-uuid-456', 
+            email: 'user@tenant2.com', 
+            tenantId: 'tenant-uuid-456' 
+          }),
+        };
+        User.findOne.mockResolvedValue(mockUser);
+        
+        const response = await request(app)
+          .post('/api/auth/login')
+          .send({ email: 'user@tenant2.com', password: 'password123' });
+        
+        // Verify User.findOne was called with email only (no tenantId in where clause)
+        expect(User.findOne).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { email: 'user@tenant2.com' }
+          })
+        );
+        
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.user.tenantId).toBe('tenant-uuid-456');
+        expect(response.body.data.tokens).toBeDefined();
+      });
     });
 
     describe('POST /api/auth/forgot-password', () => {
