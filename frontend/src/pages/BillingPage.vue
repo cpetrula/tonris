@@ -31,7 +31,7 @@ const subscription = ref({
   plan: 'Professional',
   status: 'active',
   billingCycle: 'monthly',
-  price: 99,
+  price: 295,
   nextBillingDate: '2024-02-15',
   features: [
     'Unlimited calls',
@@ -46,25 +46,10 @@ const subscription = ref({
 // Available plans
 const plans = ref([
   {
-    id: 'starter',
-    name: 'Starter',
-    price: 49,
-    priceYearly: 39,
-    description: 'Perfect for small businesses',
-    features: [
-      'Up to 100 calls/month',
-      'Business hours coverage',
-      'Basic scheduling',
-      'Email support'
-    ],
-    current: false
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    price: 99,
-    priceYearly: 79,
-    description: 'Most popular for growing businesses',
+    id: 'monthly',
+    name: 'Monthly',
+    price: 295,
+    description: 'Cancel anytime. No long-term contracts required.',
     features: [
       'Unlimited calls',
       '24/7 AI answering',
@@ -74,23 +59,6 @@ const plans = ref([
       'Basic analytics'
     ],
     current: true
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 249,
-    priceYearly: 199,
-    description: 'For large organizations',
-    features: [
-      'Everything in Professional',
-      'Multiple locations',
-      'Advanced analytics',
-      'Custom voice options',
-      'Dedicated account manager',
-      'Priority support',
-      'API access'
-    ],
-    current: false
   }
 ])
 
@@ -113,7 +81,7 @@ const invoices = ref<Invoice[]>([
     id: '1',
     number: 'INV-2024-001',
     date: '2024-01-15',
-    amount: 99,
+    amount: 295,
     status: 'paid',
     pdfUrl: '#'
   },
@@ -121,7 +89,7 @@ const invoices = ref<Invoice[]>([
     id: '2',
     number: 'INV-2023-012',
     date: '2023-12-15',
-    amount: 99,
+    amount: 295,
     status: 'paid',
     pdfUrl: '#'
   },
@@ -129,7 +97,7 @@ const invoices = ref<Invoice[]>([
     id: '3',
     number: 'INV-2023-011',
     date: '2023-11-15',
-    amount: 99,
+    amount: 295,
     status: 'paid',
     pdfUrl: '#'
   }
@@ -292,46 +260,35 @@ onMounted(async () => {
 
     <!-- Available Plans -->
     <Card class="shadow-sm mt-6">
-      <template #title>Available Plans</template>
+      <template #title>Your Plan</template>
       <template #content>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="max-w-md mx-auto">
           <div
-            v-for="plan in plans"
-            :key="plan.id"
             :class="[
               'border-2 rounded-xl p-6 relative',
-              plan.current ? 'border-violet-500 bg-violet-50' : 'border-gray-200'
+              plans[0].current ? 'border-violet-500 bg-violet-50' : 'border-gray-200'
             ]"
           >
-            <div v-if="plan.current" class="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+            <div v-if="plans[0].current" class="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-500 text-white px-3 py-1 rounded-full text-xs font-medium">
               Current Plan
             </div>
 
-            <h3 class="text-xl font-bold text-gray-900 mb-1">{{ plan.name }}</h3>
-            <p class="text-gray-500 text-sm mb-4">{{ plan.description }}</p>
+            <h3 class="text-xl font-bold text-gray-900 mb-1">{{ plans[0].name }}</h3>
+            <p class="text-gray-500 text-sm mb-4">{{ plans[0].description }}</p>
 
             <div class="mb-4">
-              <span class="text-3xl font-bold text-gray-900">${{ plan.price }}</span>
+              <span class="text-3xl font-bold text-gray-900">${{ plans[0].price }}</span>
               <span class="text-gray-500">/month</span>
             </div>
 
             <ul class="space-y-2 mb-6">
-              <li v-for="feature in plan.features" :key="feature" class="flex items-start text-sm text-gray-600">
+              <li v-for="feature in plans[0].features" :key="feature" class="flex items-start text-sm text-gray-600">
                 <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
                 {{ feature }}
               </li>
             </ul>
 
             <Button
-              v-if="!plan.current"
-              :label="plan.price > subscription.price ? 'Upgrade' : 'Downgrade'"
-              :severity="plan.price > subscription.price ? 'primary' : 'secondary'"
-              :outlined="plan.price < subscription.price"
-              class="w-full"
-              @click="changePlan(plan.id)"
-            />
-            <Button
-              v-else
               label="Current Plan"
               severity="secondary"
               disabled

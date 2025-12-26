@@ -33,9 +33,6 @@ const password = ref('')
 const confirmPassword = ref('')
 const phone = ref('')
 
-// Plan selection
-const selectedPlan = computed(() => route.query.plan === 'yearly' ? 'yearly' : 'monthly')
-
 const businessTypes = [
   { label: 'Restaurant / Food Service', value: 'restaurant' },
   { label: 'Healthcare / Medical', value: 'healthcare' },
@@ -172,7 +169,7 @@ async function handleSubmit() {
   loading.value = true
 
   try {
-    // First, register the user and business
+    // Register the user and business with free trial
     const signupResponse = await api.post('/api/auth/signup', {
       email: email.value,
       password: password.value,
@@ -190,21 +187,12 @@ async function handleSubmit() {
       }
     })
 
-    // Store the token temporarily
+    // Store the token
     const { token } = signupResponse.data.data
     localStorage.setItem('token', token)
 
-    // Create Stripe checkout session
-    const checkoutResponse = await api.post('/api/billing/create-checkout-session', {
-      planId: selectedPlan.value === 'yearly' ? 'yearly' : 'monthly',
-      successUrl: `${window.location.origin}/app?checkout=success`,
-      cancelUrl: `${window.location.origin}/signup?checkout=cancelled`
-    })
-
-    // Redirect to Stripe checkout
-    if (checkoutResponse.data.data?.url) {
-      window.location.href = checkoutResponse.data.data.url
-    }
+    // Redirect to app dashboard with success message
+    window.location.href = `${window.location.origin}/app?signup=success`
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'response' in err) {
       const axiosError = err as { response?: { data?: { error?: string } } }
@@ -218,10 +206,7 @@ async function handleSubmit() {
 }
 
 onMounted(() => {
-  // Check if returning from cancelled checkout
-  if (route.query.checkout === 'cancelled') {
-    error.value = 'Checkout was cancelled. Please try again to complete your subscription.'
-  }
+  // No need to check for cancelled checkout anymore
 })
 </script>
 
@@ -234,6 +219,9 @@ onMounted(() => {
           <h1 class="text-3xl font-bold text-gray-900">Create Your Account</h1>
           <p class="text-gray-600 mt-2">
             {{ step === 1 ? 'Tell us about your business' : 'Set up your account' }}
+          </p>
+          <p class="text-violet-600 font-medium mt-2">
+            Start your 15-day free trial • No credit card required
           </p>
           
           <!-- Progress Steps -->
@@ -269,14 +257,6 @@ onMounted(() => {
         <Message v-if="error" severity="error" class="mb-4">
           {{ error }}
         </Message>
-
-        <!-- Plan Badge -->
-        <div class="mb-6 text-center">
-          <span class="inline-flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-2 rounded-full text-sm font-medium">
-            <i class="pi pi-tag"></i>
-            Selected Plan: {{ selectedPlan === 'yearly' ? 'Yearly ($79/mo)' : 'Monthly ($99/mo)' }}
-          </span>
-        </div>
 
         <!-- Step 1: Business Information -->
         <form v-if="step === 1" @submit.prevent="nextStep" class="space-y-5">
@@ -500,8 +480,8 @@ onMounted(() => {
             />
             <Button
               type="submit"
-              label="Continue to Payment"
-              icon="pi pi-credit-card"
+              label="Create Account & Start Trial"
+              icon="pi pi-check"
               icon-pos="right"
               class="flex-1"
               :loading="loading"

@@ -31,13 +31,8 @@ const benefits = [
 
 const pricing = {
   monthly: {
-    price: 99,
+    price: 295,
     period: 'month'
-  },
-  yearly: {
-    price: 79,
-    period: 'month',
-    savings: 240
   }
 }
 
@@ -54,7 +49,7 @@ const employeeCostComparison = {
     }
   },
   tonris: {
-    monthlyCost: 99,
+    monthlyCost: 295,
     get annualCost() {
       return this.monthlyCost * 12
     }
@@ -93,7 +88,7 @@ const employeeCostComparison = {
             <div class="flex flex-col sm:flex-row gap-4">
               <RouterLink to="/signup">
                 <Button
-                  label="Start Free Trial"
+                  label="Start 15-Day Free Trial"
                   icon="pi pi-arrow-right"
                   icon-pos="right"
                   size="large"
@@ -202,21 +197,27 @@ const employeeCostComparison = {
             Simple, Transparent Pricing
           </h2>
           <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Get professional call handling at a fraction of the cost of hiring staff.
+            Get professional call handling at a fraction of the cost of hiring staff. Start with a 15-day free trial—no credit card required.
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
+        <div class="max-w-md mx-auto mb-16">
           <!-- Monthly Plan -->
-          <Card class="shadow-lg border-2 border-gray-200">
+          <Card class="shadow-lg border-2 border-violet-500">
             <template #content>
-              <div class="text-center p-4">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Monthly</h3>
-                <div class="mb-4">
-                  <span class="text-5xl font-bold text-gray-900">${{ pricing.monthly.price }}</span>
-                  <span class="text-gray-500">/{{ pricing.monthly.period }}</span>
+              <div class="text-center p-6">
+                <div class="bg-violet-100 text-violet-700 inline-block px-4 py-1 rounded-full text-sm font-medium mb-4">
+                  15-Day Free Trial • No Credit Card Required
                 </div>
-                <ul class="text-left space-y-3 mb-6">
+                <h3 class="text-2xl font-semibold text-gray-900 mb-2">Monthly Plan</h3>
+                <div class="mb-6">
+                  <span class="text-5xl font-bold text-violet-600">${{ pricing.monthly.price }}</span>
+                  <span class="text-gray-500 text-xl">/{{ pricing.monthly.period }}</span>
+                </div>
+                <p class="text-gray-600 mb-6">
+                  Cancel anytime. No long-term contracts required.
+                </p>
+                <ul class="text-left space-y-3 mb-8">
                   <li class="flex items-center gap-2">
                     <i class="pi pi-check text-green-500"></i>
                     <span>Unlimited calls</span>
@@ -235,58 +236,17 @@ const employeeCostComparison = {
                   </li>
                   <li class="flex items-center gap-2">
                     <i class="pi pi-check text-green-500"></i>
-                    <span>Cancel anytime</span>
+                    <span>Email notifications</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i class="pi pi-check text-green-500"></i>
+                    <span>Basic analytics</span>
                   </li>
                 </ul>
                 <RouterLink to="/signup">
                   <Button
-                    label="Get Started"
-                    severity="secondary"
-                    outlined
-                    class="w-full"
-                  />
-                </RouterLink>
-              </div>
-            </template>
-          </Card>
-
-          <!-- Yearly Plan -->
-          <Card class="shadow-lg border-2 border-violet-500 relative">
-            <template #content>
-              <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                Save ${{ pricing.yearly.savings }}/year
-              </div>
-              <div class="text-center p-4">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Yearly</h3>
-                <div class="mb-4">
-                  <span class="text-5xl font-bold text-violet-600">${{ pricing.yearly.price }}</span>
-                  <span class="text-gray-500">/{{ pricing.yearly.period }}</span>
-                </div>
-                <ul class="text-left space-y-3 mb-6">
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Everything in Monthly</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Priority support</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Custom voice options</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Advanced analytics</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Dedicated account manager</span>
-                  </li>
-                </ul>
-                <RouterLink to="/signup?plan=yearly">
-                  <Button
-                    label="Get Started"
+                    label="Start Free Trial"
+                    size="large"
                     class="w-full"
                   />
                 </RouterLink>

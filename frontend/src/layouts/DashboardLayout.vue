@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useTenantStore } from '@/stores/tenant'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
+import InactiveAccountBanner from '@/components/InactiveAccountBanner.vue'
 import type { MenuItem } from 'primevue/menuitem'
 
 const router = useRouter()
@@ -186,6 +187,9 @@ onMounted(async () => {
 
       <!-- Page Content -->
       <main class="flex-1 overflow-y-auto p-4 lg:p-6">
+        <!-- Inactive Account Banner -->
+        <InactiveAccountBanner />
+        
         <RouterView />
       </main>
     </div>
