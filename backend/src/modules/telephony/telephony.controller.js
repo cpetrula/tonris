@@ -8,6 +8,7 @@ const smsHandler = require('./sms.handler');
 const { Tenant } = require('../tenants/tenant.model');
 const { getTenantUUID } = require('../../utils/tenant');
 const logger = require('../../utils/logger');
+const env = require('../../config/env');
 
 /**
  * POST /api/webhooks/twilio/voice
@@ -48,7 +49,7 @@ const handleSmsWebhook = async (req, res, next) => {
       const signature = req.headers['x-twilio-signature'];
       const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
       
-      if (!twilioService.validateWebhookSignature(signature, url, req.body)) {
+      if (!twilioService.validateWebhookSignature(signature, url, req.body, 'sms')) {
         logger.warn('Invalid Twilio webhook signature for SMS');
         return res.status(403).send('Invalid signature');
       }
@@ -331,6 +332,53 @@ const makeCall = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/telephony/test-sms
+ * Test endpoint for SMS functionality (no auth required)
+ * WARNING: This endpoint should be disabled in production or protected with additional security
+ */
+const testSms = async (req, res, next) => {
+  try {
+    const { to, message } = req.body;
+    
+    if (!to || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Recipient phone number (to) and message are required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+    
+    if (!env.TWILIO_SMS_PHONE_NUMBER) {
+      return res.status(503).json({
+        success: false,
+        error: 'SMS service not configured',
+        code: 'SMS_NOT_CONFIGURED',
+      });
+    }
+    
+    const result = await twilioService.sendSms({
+      to,
+      from: env.TWILIO_SMS_PHONE_NUMBER,
+      body: message,
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: 'Test SMS sent successfully',
+    });
+  } catch (error) {
+    // Log detailed error for debugging but return generic error to client
+    logger.error(`Test SMS failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send SMS',
+      code: 'SMS_SEND_FAILED',
+    });
+  }
+};
+
 module.exports = {
   handleVoiceWebhook,
   handleSmsWebhook,
@@ -342,4 +390,5 @@ module.exports = {
   sendAppointmentReminder,
   getCallLogs,
   makeCall,
+  testSms,
 };

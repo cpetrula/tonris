@@ -6,9 +6,14 @@ const Twilio = require('twilio');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
 
-// Initialize Twilio client with credentials
+// Initialize Twilio client with credentials (for voice/telephony)
 const twilioClient = env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN
   ? new Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
+  : null;
+
+// Initialize Twilio SMS client with separate credentials
+const twilioSmsClient = env.TWILIO_SMS_ACCOUNT_SID && env.TWILIO_SMS_AUTH_TOKEN
+  ? new Twilio(env.TWILIO_SMS_ACCOUNT_SID, env.TWILIO_SMS_AUTH_TOKEN)
   : null;
 
 /**
@@ -18,6 +23,16 @@ const twilioClient = env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN
 const ensureTwilioConfigured = () => {
   if (!twilioClient) {
     throw new Error('Twilio is not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.');
+  }
+};
+
+/**
+ * Verify Twilio SMS is configured
+ * @throws {Error} If Twilio SMS is not configured
+ */
+const ensureTwilioSmsConfigured = () => {
+  if (!twilioSmsClient) {
+    throw new Error('Twilio SMS is not configured. Please set TWILIO_SMS_ACCOUNT_SID and TWILIO_SMS_AUTH_TOKEN environment variables.');
   }
 };
 
@@ -183,7 +198,8 @@ const releasePhoneNumber = async (phoneNumberSid) => {
  * @returns {Promise<Object>} - Sent message details
  */
 const sendSms = async ({ to, from, body, statusCallback }) => {
-  ensureTwilioConfigured();
+  // Use SMS-specific client for SMS operations
+  ensureTwilioSmsConfigured();
   
   try {
     const messageParams = {
@@ -196,7 +212,7 @@ const sendSms = async ({ to, from, body, statusCallback }) => {
       messageParams.statusCallback = statusCallback;
     }
     
-    const message = await twilioClient.messages.create(messageParams);
+    const message = await twilioSmsClient.messages.create(messageParams);
     
     logger.info(`SMS sent: ${message.sid} to ${to}`);
     
@@ -278,16 +294,26 @@ const getCall = async (callSid) => {
  * @param {string} signature - X-Twilio-Signature header
  * @param {string} url - Full URL of the webhook endpoint
  * @param {Object} params - Request body parameters
+ * @param {string} type - Type of webhook ('voice' or 'sms'), defaults to 'voice'
  * @returns {boolean} - True if signature is valid
  */
-const validateWebhookSignature = (signature, url, params) => {
-  if (!env.TWILIO_AUTH_TOKEN) {
-    logger.warn('Twilio auth token not configured, skipping signature validation');
+const validateWebhookSignature = (signature, url, params, type = 'voice') => {
+  // Validate type parameter
+  if (type !== 'voice' && type !== 'sms') {
+    logger.warn(`Invalid webhook type: ${type}, defaulting to 'voice'`);
+    type = 'voice';
+  }
+  
+  // Use appropriate auth token based on webhook type
+  const authToken = type === 'sms' ? env.TWILIO_SMS_AUTH_TOKEN : env.TWILIO_AUTH_TOKEN;
+  
+  if (!authToken) {
+    logger.warn(`Twilio ${type} auth token not configured, skipping signature validation`);
     return true;
   }
   
   return Twilio.validateRequest(
-    env.TWILIO_AUTH_TOKEN,
+    authToken,
     signature,
     url,
     params

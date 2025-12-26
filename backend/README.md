@@ -115,11 +115,76 @@ backend/
 | DB_PASSWORD              | Database password                  | -           |
 | LOG_LEVEL                | Logging level                      | info        |
 | DEFAULT_TENANT_ID        | Default tenant identifier          | default     |
+
+### Twilio Configuration
+
+The application uses **two separate Twilio configurations**:
+
+1. **Voice/Telephony** - For phone calls and voice operations:
+   - `TWILIO_ACCOUNT_SID` - Twilio account SID for voice
+   - `TWILIO_AUTH_TOKEN` - Twilio auth token for voice
+
+2. **SMS** - For text messaging operations:
+   - `TWILIO_SMS_ACCOUNT_SID` - Twilio account SID for SMS
+   - `TWILIO_SMS_AUTH_TOKEN` - Twilio auth token for SMS
+   - `TWILIO_SMS_PHONE_NUMBER` - Twilio phone number for sending SMS
+
+| Variable                 | Description                        | Default     |
+|--------------------------|------------------------------------| ------------|
 | TWILIO_ACCOUNT_SID       | Twilio account SID (voice)         | -           |
 | TWILIO_AUTH_TOKEN        | Twilio auth token (voice)          | -           |
 | TWILIO_SMS_ACCOUNT_SID   | Twilio account SID (SMS)           | -           |
 | TWILIO_SMS_AUTH_TOKEN    | Twilio auth token (SMS)            | -           |
 | TWILIO_SMS_PHONE_NUMBER  | Twilio phone number for SMS        | -           |
+
+## Testing SMS Functionality
+
+A test endpoint is available for manual SMS testing without authentication:
+
+⚠️ **Security Note**: This endpoint is intended for **development and testing only**. In production environments, consider disabling this endpoint or adding IP restrictions and additional security measures.
+
+**Endpoint:** `POST /api/telephony/test-sms`
+
+**Request Body:**
+```json
+{
+  "to": "+15551234567",
+  "message": "Test message from TONRIS"
+}
+```
+
+**Example using curl:**
+```bash
+# Replace localhost:3000 with your actual server URL
+curl -X POST http://localhost:3000/api/telephony/test-sms \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "+15551234567",
+    "message": "Test message from TONRIS"
+  }'
+```
+
+**Requirements:**
+- `TWILIO_SMS_ACCOUNT_SID` must be set
+- `TWILIO_SMS_AUTH_TOKEN` must be set
+- `TWILIO_SMS_PHONE_NUMBER` must be set
+- Rate limited to 30 requests per minute
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "sid": "SM...",
+    "status": "queued",
+    "to": "+15551234567",
+    "from": "+15559876543",
+    "body": "Test message from TONRIS",
+    "dateSent": null
+  },
+  "message": "Test SMS sent successfully"
+}
+```
 
 ## Multi-Tenant Architecture
 
