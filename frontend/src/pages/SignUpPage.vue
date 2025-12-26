@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
@@ -31,17 +31,9 @@ const password = ref('')
 const confirmPassword = ref('')
 const phone = ref('')
 
-const businessTypes = [
-  { label: 'Restaurant / Food Service', value: 'restaurant' },
-  { label: 'Healthcare / Medical', value: 'healthcare' },
-  { label: 'Salon / Spa', value: 'salon' },
-  { label: 'Legal Services', value: 'legal' },
-  { label: 'Real Estate', value: 'realestate' },
-  { label: 'Home Services', value: 'homeservices' },
-  { label: 'Professional Services', value: 'professional' },
-  { label: 'Retail', value: 'retail' },
-  { label: 'Other', value: 'other' }
-]
+// Business types - will be populated from API
+const businessTypes = ref<Array<{ label: string; value: string }>>([])
+const loadingBusinessTypes = ref(false)
 
 const states = [
   { label: 'Alabama', value: 'AL' },
@@ -157,6 +149,34 @@ function prevStep() {
   step.value = 1
 }
 
+// Fetch active business types from the API
+async function fetchBusinessTypes() {
+  loadingBusinessTypes.value = true
+  try {
+    const response = await api.get('/api/business-types/active')
+    if (response.data.success && response.data.data.businessTypes) {
+      // Map the business types to dropdown format
+      businessTypes.value = response.data.data.businessTypes.map((bt: any) => ({
+        label: bt.businessType,
+        value: bt.id
+      }))
+    }
+  } catch (err) {
+    console.error('Failed to fetch business types:', err)
+    // Set a default fallback if API fails
+    businessTypes.value = [
+      { label: 'Other', value: '' }
+    ]
+  } finally {
+    loadingBusinessTypes.value = false
+  }
+}
+
+// Fetch business types on component mount
+onMounted(() => {
+  fetchBusinessTypes()
+})
+
 async function handleSubmit() {
   error.value = ''
   
@@ -168,26 +188,18 @@ async function handleSubmit() {
 
   try {
     // Register the user and business with free trial
-    const signupResponse = await api.post('/api/auth/signup', {
+    const signupResponse = await api.post('/api/auth/register', {
       email: email.value,
       password: password.value,
       firstName: firstName.value,
       lastName: lastName.value,
-      phone: phone.value,
-      business: {
-        name: businessName.value,
-        type: businessType.value,
-        phone: businessPhone.value,
-        address: businessAddress.value,
-        city: businessCity.value,
-        state: businessState.value,
-        zip: businessZip.value
-      }
+      contactPhone: phone.value,
+      businessTypeId: businessType.value
     })
 
     // Store the token
-    const { token } = signupResponse.data.data
-    localStorage.setItem('token', token)
+    const { accessToken } = signupResponse.data.data.tokens
+    localStorage.setItem('token', accessToken)
 
     // Redirect to app dashboard with success message
     window.location.href = `${window.location.origin}/app?signup=success`
@@ -279,6 +291,8 @@ async function handleSubmit() {
               option-value="value"
               placeholder="Select your business type"
               class="w-full"
+              :loading="loadingBusinessTypes"
+              :disabled="loadingBusinessTypes"
             />
           </div>
 
