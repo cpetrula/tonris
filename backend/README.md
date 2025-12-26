@@ -115,6 +115,22 @@ backend/
 | DB_PASSWORD              | Database password                  | -           |
 | LOG_LEVEL                | Logging level                      | info        |
 | DEFAULT_TENANT_ID        | Default tenant identifier          | default     |
+
+### Twilio Configuration
+
+The application uses **two separate Twilio configurations**:
+
+1. **Voice/Telephony** - For phone calls and voice operations:
+   - `TWILIO_ACCOUNT_SID` - Twilio account SID for voice
+   - `TWILIO_AUTH_TOKEN` - Twilio auth token for voice
+
+2. **SMS** - For text messaging operations:
+   - `TWILIO_SMS_ACCOUNT_SID` - Twilio account SID for SMS
+   - `TWILIO_SMS_AUTH_TOKEN` - Twilio auth token for SMS
+   - `TWILIO_SMS_PHONE_NUMBER` - Twilio phone number for sending SMS
+
+| Variable                 | Description                        | Default     |
+|--------------------------|------------------------------------| ------------|
 | TWILIO_ACCOUNT_SID       | Twilio account SID (voice)         | -           |
 | TWILIO_AUTH_TOKEN        | Twilio auth token (voice)          | -           |
 | TWILIO_SMS_ACCOUNT_SID   | Twilio account SID (SMS)           | -           |
