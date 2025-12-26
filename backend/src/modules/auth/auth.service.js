@@ -48,10 +48,9 @@ const signup = async ({ email, password }, tenantId) => {
  * @param {string} credentials.email - User email
  * @param {string} credentials.password - User password
  * @param {string} credentials.twoFactorCode - Optional 2FA code
- * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Object>} - User data and tokens
  */
-const login = async ({ email, password, twoFactorCode }, tenantId) => {
+const login = async ({ email, password, twoFactorCode }) => {
   // Find user
   const user = await User.findOne({ where: { email } });
   if (!user) {
