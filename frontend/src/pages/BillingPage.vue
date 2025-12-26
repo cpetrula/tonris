@@ -6,6 +6,9 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import api from '@/services/api'
 
+// Configuration constants
+const DEFAULT_MONTHLY_PRICE = 295 // $295.00 per month
+
 interface Subscription {
   id: string
   tenantId: string
@@ -69,7 +72,7 @@ const subscriptionStatusLabel = computed(() => {
 })
 
 const subscriptionPrice = computed(() => {
-  if (!subscription.value || !availablePlans.value.length || !availablePlans.value[0]) return 295
+  if (!subscription.value || !availablePlans.value.length || !availablePlans.value[0]) return DEFAULT_MONTHLY_PRICE
   return availablePlans.value[0].price / 100
 })
 
@@ -149,6 +152,14 @@ async function startCheckout() {
     processingCheckout.value = true
     error.value = ''
     
+    // Validate Stripe publishable key is configured
+    const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+    if (!stripeKey) {
+      error.value = 'Stripe is not configured. Please contact support.'
+      processingCheckout.value = false
+      return
+    }
+    
     const successUrl = `${window.location.origin}/app/billing?success=true`
     const cancelUrl = `${window.location.origin}/app/billing?cancelled=true`
     
@@ -159,20 +170,21 @@ async function startCheckout() {
     })
     
     if (response.data.success && response.data.data.sessionId) {
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
+      const stripe = await loadStripe(stripeKey)
       
-      if (stripe) {
-        // Type assertion needed as redirectToCheckout exists but may not be in all type definitions
-        const result = await (stripe as any).redirectToCheckout({
-          sessionId: response.data.data.sessionId
-        })
-        
-        if (result && result.error) {
-          error.value = result.error.message || 'Failed to redirect to checkout'
-          processingCheckout.value = false
-        }
-      } else {
-        error.value = 'Stripe is not configured'
+      if (!stripe) {
+        error.value = 'Failed to load Stripe. Please refresh and try again.'
+        processingCheckout.value = false
+        return
+      }
+      
+      // redirectToCheckout is a valid method - using type assertion for compatibility
+      const result = await (stripe as any).redirectToCheckout({
+        sessionId: response.data.data.sessionId
+      })
+      
+      if (result && result.error) {
+        error.value = result.error.message || 'Failed to redirect to checkout'
         processingCheckout.value = false
       }
     }
