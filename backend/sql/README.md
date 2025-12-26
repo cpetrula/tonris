@@ -12,6 +12,7 @@ This directory contains SQL scripts for setting up the TONRIS database and seedi
 - **add_sms_opt_in_to_users.sql** - Migration to add sms_opt_in column to users table for SMS notification preferences
 - **create_business_types_table.sql** - Creates the business_types table for storing business type configurations
 - **add_business_type_to_tenants.sql** - Adds business_type_id column to tenants table with FK to business_types
+- **seed_business_types.sql** - Seeds the business_types table with common business types for the signup form
 
 ## Usage
 
@@ -107,6 +108,27 @@ mysql -u root -p tonris_db < add_business_type_to_tenants.sql
 1. Adds `business_type_id` column (CHAR 36, nullable)
 2. Creates an index on the new column
 3. Adds foreign key constraint referencing `business_types.id`
+
+#### Seed business types
+
+Populates the business_types table with common business types for the signup dropdown:
+
+```bash
+mysql -u root -p tonris_db < seed_business_types.sql
+```
+
+**Business types included:**
+- Restaurant / Food Service
+- Healthcare / Medical
+- Salon / Spa
+- Legal Services
+- Real Estate
+- Home Services
+- Professional Services
+- Retail
+- Other
+
+**Note:** Each business type is created with a placeholder agent_id. You should update these with actual ElevenLabs agent IDs configured for each business type.
 
 ## Demo Salon Details
 
