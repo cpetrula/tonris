@@ -93,7 +93,7 @@ jest.mock('../src/models', () => ({
   },
   PLAN_CONFIG: {
     MONTHLY_PRICE: 29500,
-    YEARLY_PRICE: 283200,
+    TRIAL_DAYS: 15,
   },
 }));
 
