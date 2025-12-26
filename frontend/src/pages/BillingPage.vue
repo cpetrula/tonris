@@ -69,7 +69,7 @@ const subscriptionStatusLabel = computed(() => {
 })
 
 const subscriptionPrice = computed(() => {
-  if (!subscription.value || !availablePlans.value.length) return 295
+  if (!subscription.value || !availablePlans.value.length || !availablePlans.value[0]) return 295
   return availablePlans.value[0].price / 100
 })
 
@@ -159,17 +159,16 @@ async function startCheckout() {
     })
     
     if (response.data.success && response.data.data.sessionId) {
-      // Note: In a real implementation, you would need to get your Stripe publishable key
-      // from environment variables or backend configuration
       const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
       
       if (stripe) {
-        const { error: stripeError } = await stripe.redirectToCheckout({
+        // Type assertion needed as redirectToCheckout exists but may not be in all type definitions
+        const result = await (stripe as any).redirectToCheckout({
           sessionId: response.data.data.sessionId
         })
         
-        if (stripeError) {
-          error.value = stripeError.message || 'Failed to redirect to checkout'
+        if (result && result.error) {
+          error.value = result.error.message || 'Failed to redirect to checkout'
           processingCheckout.value = false
         }
       } else {

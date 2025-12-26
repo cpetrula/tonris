@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { ref } from 'vue'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Dropdown from 'primevue/dropdown'
 import InputMask from 'primevue/inputmask'
+import { RouterLink } from 'vue-router'
 import api from '@/services/api'
-
-const route = useRoute()
 
 // Form state
 const step = ref(1)
@@ -204,10 +202,6 @@ async function handleSubmit() {
     loading.value = false
   }
 }
-
-onMounted(() => {
-  // No need to check for cancelled checkout anymore
-})
 </script>
 
 <template>
