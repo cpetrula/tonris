@@ -400,15 +400,18 @@ const register = async ({ email, password, firstName, lastName, businessTypeId, 
       let agentId = null;
       if (businessTypeId) {
         const businessType = await BusinessType.findByPk(businessTypeId);
-        if (businessType) {
+        if (businessType && businessType.agentId) {
           agentId = businessType.agentId;
           logger.info(`Using agent ID ${agentId} from business type ${businessType.businessType}`);
+        } else if (businessType) {
+          logger.warn(`Business type ${businessType.businessType} has no agent ID configured, will skip agent assignment`);
         } else {
           logger.warn(`Business type ${businessTypeId} not found, will skip agent assignment`);
         }
       }
 
       // Import to ElevenLabs
+      // Note: Twilio credentials are shared with ElevenLabs to allow them to manage the phone number
       const elevenlabsService = getElevenLabsService();
       const importResult = await elevenlabsService.importPhoneNumber({
         phoneNumber: twilioPhoneNumber,

@@ -308,9 +308,10 @@ class ElevenLabsService extends AIProviderInterface {
     }
 
     try {
-      logger.info(`Importing phone number ${phoneNumber} to ElevenLabs with agent ${agentId}`);
+      logger.info(`Importing phone number ${phoneNumber} to ElevenLabs with agent ${agentId || 'none'}`);
       
       // Import phone number via ElevenLabs API
+      // Note: Twilio credentials (sid and token) are required by ElevenLabs to manage the phone number
       const response = await this.client.conversationalAi.phoneNumbers.create({
         provider: 'twilio',
         phoneNumber,
@@ -323,12 +324,18 @@ class ElevenLabsService extends AIProviderInterface {
 
       logger.info(`Phone number ${phoneNumber} imported to ElevenLabs with ID: ${response.phoneNumberId}`);
 
-      // Assign the agent to the phone number
+      // Assign the agent to the phone number if provided
       if (agentId) {
-        await this.client.conversationalAi.phoneNumbers.update(response.phoneNumberId, {
-          agentId,
-        });
-        logger.info(`Agent ${agentId} assigned to phone number ${phoneNumber}`);
+        try {
+          await this.client.conversationalAi.phoneNumbers.update(response.phoneNumberId, {
+            agentId,
+          });
+          logger.info(`Agent ${agentId} assigned to phone number ${phoneNumber}`);
+        } catch (agentError) {
+          // Log the error but don't fail the import - phone number is imported successfully
+          logger.error(`Failed to assign agent ${agentId} to phone number ${phoneNumber}: ${agentError.message}`);
+          logger.warn('Phone number imported but agent assignment failed. Agent can be assigned later.');
+        }
       }
 
       return {
