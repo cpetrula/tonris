@@ -339,9 +339,28 @@ const getUserById = async (userId, tenantId) => {
  * @param {string} registrationData.lastName - User last name
  * @param {string} registrationData.businessTypeId - Business type ID
  * @param {string} registrationData.contactPhone - Contact phone (optional)
+ * @param {string} registrationData.businessName - Business name
+ * @param {string} registrationData.businessPhone - Business phone (optional)
+ * @param {string} registrationData.businessAddress - Business address (optional)
+ * @param {string} registrationData.businessCity - Business city (optional)
+ * @param {string} registrationData.businessState - Business state (optional)
+ * @param {string} registrationData.businessZip - Business zip (optional)
  * @returns {Promise<Object>} - Created user and tokens
  */
-const register = async ({ email, password, firstName, lastName, businessTypeId, contactPhone }) => {
+const register = async ({ 
+  email, 
+  password, 
+  firstName, 
+  lastName, 
+  businessTypeId, 
+  contactPhone,
+  businessName,
+  businessPhone,
+  businessAddress,
+  businessCity,
+  businessState,
+  businessZip
+}) => {
   const tenantService = require('../tenants/tenant.service');
   const twilioService = require('../telephony/twilio.service');
   const { getElevenLabsService } = require('../ai-assistant/elevenlabs.service');
@@ -354,17 +373,25 @@ const register = async ({ email, password, firstName, lastName, businessTypeId, 
     throw new AppError('User already exists with this email', 400, 'USER_EXISTS');
   }
 
-  // Generate slug from business name (using email domain as business name for now)
-  const businessName = `${firstName} ${lastName}'s Business`;
-  const slug = `${firstName}-${lastName}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  // Generate slug from business name
+  const slug = `${businessName}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+
+  // Build address object if any address fields are provided
+  const address = (businessAddress || businessCity || businessState || businessZip) ? {
+    street: businessAddress || null,
+    city: businessCity || null,
+    state: businessState || null,
+    zip: businessZip || null,
+  } : null;
 
   // Create tenant with business type
   const tenant = await tenantService.createTenant({
     name: businessName,
     slug,
     contactEmail: email,
-    contactPhone,
+    contactPhone: businessPhone || contactPhone,
     businessTypeId,
+    address,
   });
 
   // Provision Twilio phone number for the new tenant

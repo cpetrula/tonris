@@ -685,6 +685,21 @@ describe('Authentication Module', () => {
         expect(response.body.error).toContain('Business type');
       });
 
+      it('should return 400 when businessName is missing', async () => {
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe',
+            businessTypeId: 'business-123'
+          });
+        
+        expect(response.status).toBe(400);
+        expect(response.body.error).toContain('Business name');
+      });
+
       it('should return 400 when user already exists', async () => {
         User.findOne.mockResolvedValue({ id: '123', email: 'test@example.com' });
         
@@ -695,7 +710,8 @@ describe('Authentication Module', () => {
             password: 'password123',
             firstName: 'John',
             lastName: 'Doe',
-            businessTypeId: 'business-123'
+            businessTypeId: 'business-123',
+            businessName: 'Test Business'
           });
         
         expect(response.status).toBe(400);
@@ -708,45 +724,14 @@ describe('Authentication Module', () => {
         const mockTenant = {
           id: 'tenant-123',
           tenantId: 'tenant-slug',
-          name: "John Doe's Business",
-          toSafeObject: () => ({ id: 'tenant-123', tenantId: 'tenant-slug' }),
-        };
-        
-        const mockUser = {
-          id: 'user-123',
-          email: 'test@example.com',
-          tenantId: 'tenant-123',
-          toSafeObject: () => ({ id: 'user-123', email: 'test@example.com', tenantId: 'tenant-123' }),
-        };
-        
-        mockTenantModel.create.mockResolvedValue(mockTenant);
-        mockTenantModel.findOne.mockResolvedValue(null); // No existing tenant
-        User.create.mockResolvedValue(mockUser);
-        
-        const response = await request(app)
-          .post('/api/auth/register')
-          .send({ 
-            email: 'test@example.com',
-            password: 'password123',
-            firstName: 'John',
-            lastName: 'Doe',
-            businessTypeId: 'business-123'
-          });
-        
-        expect(response.status).toBe(201);
-        expect(response.body.success).toBe(true);
-        expect(response.body.data.user).toBeDefined();
-        expect(response.body.data.tokens).toBeDefined();
-      });
-
-      it('should register successfully with contact phone', async () => {
-        User.findOne.mockResolvedValue(null);
-        
-        const mockTenant = {
-          id: 'tenant-123',
-          tenantId: 'tenant-slug',
-          name: "John Doe's Business",
-          toSafeObject: () => ({ id: 'tenant-123', tenantId: 'tenant-slug' }),
+          name: "My Test Business",
+          trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          toSafeObject: () => ({ 
+            id: 'tenant-123', 
+            tenantId: 'tenant-slug', 
+            name: 'My Test Business',
+            trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+          }),
         };
         
         const mockUser = {
@@ -768,7 +753,113 @@ describe('Authentication Module', () => {
             firstName: 'John',
             lastName: 'Doe',
             businessTypeId: 'business-123',
+            businessName: 'My Test Business'
+          });
+        
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.user).toBeDefined();
+        expect(response.body.data.tokens).toBeDefined();
+      });
+
+      it('should register successfully with contact phone', async () => {
+        User.findOne.mockResolvedValue(null);
+        
+        const mockTenant = {
+          id: 'tenant-123',
+          tenantId: 'tenant-slug',
+          name: "John's Salon",
+          trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          toSafeObject: () => ({ 
+            id: 'tenant-123', 
+            tenantId: 'tenant-slug', 
+            name: "John's Salon",
+            trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+          }),
+        };
+        
+        const mockUser = {
+          id: 'user-123',
+          email: 'test@example.com',
+          tenantId: 'tenant-123',
+          toSafeObject: () => ({ id: 'user-123', email: 'test@example.com', tenantId: 'tenant-123' }),
+        };
+        
+        mockTenantModel.create.mockResolvedValue(mockTenant);
+        mockTenantModel.findOne.mockResolvedValue(null); // No existing tenant
+        User.create.mockResolvedValue(mockUser);
+        
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe',
+            businessTypeId: 'business-123',
+            businessName: "John's Salon",
             contactPhone: '+1-415-555-1234'
+          });
+        
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.user).toBeDefined();
+        expect(response.body.data.tokens).toBeDefined();
+      });
+
+      it('should register successfully with business address details', async () => {
+        User.findOne.mockResolvedValue(null);
+        
+        const mockTenant = {
+          id: 'tenant-123',
+          tenantId: 'tenant-slug',
+          name: "Downtown Hair Studio",
+          trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          address: {
+            street: '123 Main St',
+            city: 'San Francisco',
+            state: 'CA',
+            zip: '94102'
+          },
+          toSafeObject: () => ({ 
+            id: 'tenant-123', 
+            tenantId: 'tenant-slug', 
+            name: "Downtown Hair Studio",
+            trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+            address: {
+              street: '123 Main St',
+              city: 'San Francisco',
+              state: 'CA',
+              zip: '94102'
+            }
+          }),
+        };
+        
+        const mockUser = {
+          id: 'user-123',
+          email: 'test@example.com',
+          tenantId: 'tenant-123',
+          toSafeObject: () => ({ id: 'user-123', email: 'test@example.com', tenantId: 'tenant-123' }),
+        };
+        
+        mockTenantModel.create.mockResolvedValue(mockTenant);
+        mockTenantModel.findOne.mockResolvedValue(null); // No existing tenant
+        User.create.mockResolvedValue(mockUser);
+        
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            businessTypeId: 'business-123',
+            businessName: 'Downtown Hair Studio',
+            businessPhone: '(415) 555-1234',
+            businessAddress: '123 Main St',
+            businessCity: 'San Francisco',
+            businessState: 'CA',
+            businessZip: '94102'
           });
         
         expect(response.status).toBe(201);
