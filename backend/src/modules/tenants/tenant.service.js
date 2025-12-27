@@ -33,10 +33,10 @@ const createTenant = async (tenantData) => {
     throw new AppError('A tenant with this slug already exists', 400, 'TENANT_EXISTS');
   }
 
-  // Calculate trial end date (15 days from now)
-  const TRIAL_DAYS = 15;
+  // Calculate trial end date using PLAN_CONFIG
+  const { PLAN_CONFIG } = require('../billing/subscription.model');
   const trialEndsAt = new Date();
-  trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+  trialEndsAt.setDate(trialEndsAt.getDate() + PLAN_CONFIG.TRIAL_DAYS);
 
   // Create tenant with default settings
   const tenant = await Tenant.create({
