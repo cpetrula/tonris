@@ -104,10 +104,10 @@ onMounted(async () => {
       <!-- Logo -->
       <div class="h-16 flex items-center justify-center border-b border-gray-200 px-4">
         <RouterLink to="/app" class="flex items-center space-x-2">
-          <img src="/criton-logo.svg" alt="CRITON.AI" class="h-8 w-auto" />
+          <img src="/logo1.png" alt="CRITON.AI" class="h-8 w-auto" />
           <div class="flex flex-col">
             <span class="text-base font-bold text-gray-900 tracking-tight">CRITON.AI</span>
-            <span class="text-[10px] text-gray-500 tracking-wider">AI ASSISTANT</span>
+            <span class="text-[10px] text-gray-500 tracking-wider">Smart Assistants</span>
           </div>
         </RouterLink>
       </div>
