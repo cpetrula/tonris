@@ -151,12 +151,13 @@ const deleteService = async (serviceId, tenantId) => {
 };
 
 /**
- * Seed default services for a tenant
+ * Seed default services for a tenant based on business type
  * @param {string} tenantId - Tenant identifier
+ * @param {string} businessTypeName - Business type name (optional)
  * @returns {Promise<Array>} - Created services
  */
-const seedDefaultServices = async (tenantId) => {
-  const defaultServices = Service.generateDefaultServices();
+const seedDefaultServices = async (tenantId, businessTypeName = null) => {
+  const defaultServices = Service.generateDefaultServices(businessTypeName);
   const createdServices = [];
 
   for (const serviceData of defaultServices) {
@@ -175,7 +176,7 @@ const seedDefaultServices = async (tenantId) => {
     createdServices.push(service.toSafeObject());
   }
 
-  logger.info(`Default services seeded for tenant: ${tenantId}`);
+  logger.info(`Default services seeded for tenant: ${tenantId}${businessTypeName ? ` (${businessTypeName})` : ''}`);
 
   return createdServices;
 };
