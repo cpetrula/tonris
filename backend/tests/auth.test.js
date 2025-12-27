@@ -4,6 +4,17 @@
  */
 const request = require('supertest');
 
+// Default business hours configuration used in tests
+const DEFAULT_BUSINESS_HOURS = {
+  monday: { open: '09:00', close: '17:00', enabled: true },
+  tuesday: { open: '09:00', close: '17:00', enabled: true },
+  wednesday: { open: '09:00', close: '17:00', enabled: true },
+  thursday: { open: '09:00', close: '17:00', enabled: true },
+  friday: { open: '09:00', close: '17:00', enabled: true },
+  saturday: { open: '10:00', close: '14:00', enabled: false },
+  sunday: { open: '10:00', close: '14:00', enabled: false },
+};
+
 // Define mocks before requiring the app
 const mockUserModel = {
   findOne: jest.fn(),
@@ -25,15 +36,7 @@ const mockTenantModel = {
       sms: false,
       push: true,
     },
-    businessHours: {
-      monday: { open: '09:00', close: '17:00', enabled: true },
-      tuesday: { open: '09:00', close: '17:00', enabled: true },
-      wednesday: { open: '09:00', close: '17:00', enabled: true },
-      thursday: { open: '09:00', close: '17:00', enabled: true },
-      friday: { open: '09:00', close: '17:00', enabled: true },
-      saturday: { open: '10:00', close: '14:00', enabled: false },
-      sunday: { open: '10:00', close: '14:00', enabled: false },
-    },
+    businessHours: DEFAULT_BUSINESS_HOURS,
   })),
   isValidTransition: jest.fn(),
 };
@@ -930,15 +933,7 @@ describe('Authentication Module', () => {
         expect(mockTenantModel.create).toHaveBeenCalledWith(
           expect.objectContaining({
             settings: expect.objectContaining({
-              businessHours: expect.objectContaining({
-                monday: { open: '09:00', close: '17:00', enabled: true },
-                tuesday: { open: '09:00', close: '17:00', enabled: true },
-                wednesday: { open: '09:00', close: '17:00', enabled: true },
-                thursday: { open: '09:00', close: '17:00', enabled: true },
-                friday: { open: '09:00', close: '17:00', enabled: true },
-                saturday: { open: '10:00', close: '14:00', enabled: false },
-                sunday: { open: '10:00', close: '14:00', enabled: false },
-              })
+              businessHours: expect.objectContaining(DEFAULT_BUSINESS_HOURS)
             })
           })
         );
