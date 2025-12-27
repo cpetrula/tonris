@@ -469,6 +469,26 @@ const register = async ({
     logger.warn('Registration will continue without Twilio phone number');
   }
 
+  // Seed default services based on business type
+  let businessTypeName = null;
+  if (businessTypeId) {
+    const businessType = await BusinessType.findByPk(businessTypeId);
+    if (businessType) {
+      businessTypeName = businessType.businessType;
+      logger.info(`Seeding default services for business type: ${businessTypeName}`);
+    }
+  }
+
+  try {
+    const serviceService = require('../services/service.service');
+    await serviceService.seedDefaultServices(tenant.id, businessTypeName);
+    logger.info(`Default services seeded for tenant ${tenant.id}`);
+  } catch (error) {
+    // Log the error but don't fail the registration
+    logger.error(`Failed to seed default services for tenant ${tenant.id}: ${error.message}`);
+    logger.warn('Registration will continue without default services');
+  }
+
   // Create user associated with the new tenant
   const user = await User.create({
     email,

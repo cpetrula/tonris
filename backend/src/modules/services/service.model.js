@@ -131,89 +131,20 @@ Service.prototype.removeAddOn = async function(addOnId) {
 };
 
 /**
- * Generate default salon services for a new tenant
+ * Generate default services for a new tenant based on business type
+ * @param {string} businessTypeName - Name of the business type (optional, defaults to Salon/Spa)
  * @returns {Array<Object>} - Array of default service objects
  */
-Service.generateDefaultServices = function() {
-  return [
-    {
-      name: 'Haircut',
-      description: 'Standard haircut service',
-      category: SERVICE_CATEGORIES.HAIR,
-      duration: 45,
-      price: 35.00,
-      addOns: [
-        { id: crypto.randomUUID(), name: 'Blow Dry', price: 15.00, duration: 15 },
-        { id: crypto.randomUUID(), name: 'Deep Conditioning', price: 20.00, duration: 20 },
-      ],
-    },
-    {
-      name: 'Hair Coloring',
-      description: 'Full hair coloring service',
-      category: SERVICE_CATEGORIES.HAIR,
-      duration: 120,
-      price: 85.00,
-      addOns: [
-        { id: crypto.randomUUID(), name: 'Highlights', price: 40.00, duration: 30 },
-        { id: crypto.randomUUID(), name: 'Toner', price: 25.00, duration: 15 },
-      ],
-    },
-    {
-      name: 'Manicure',
-      description: 'Classic manicure service',
-      category: SERVICE_CATEGORIES.NAILS,
-      duration: 30,
-      price: 25.00,
-      addOns: [
-        { id: crypto.randomUUID(), name: 'Gel Polish', price: 15.00, duration: 10 },
-        { id: crypto.randomUUID(), name: 'Nail Art', price: 10.00, duration: 15 },
-      ],
-    },
-    {
-      name: 'Pedicure',
-      description: 'Classic pedicure service',
-      category: SERVICE_CATEGORIES.NAILS,
-      duration: 45,
-      price: 35.00,
-      addOns: [
-        { id: crypto.randomUUID(), name: 'Callus Removal', price: 10.00, duration: 10 },
-        { id: crypto.randomUUID(), name: 'Hot Stone Massage', price: 15.00, duration: 15 },
-      ],
-    },
-    {
-      name: 'Facial',
-      description: 'Basic facial treatment',
-      category: SERVICE_CATEGORIES.SKIN,
-      duration: 60,
-      price: 65.00,
-      addOns: [
-        { id: crypto.randomUUID(), name: 'Microdermabrasion', price: 30.00, duration: 20 },
-        { id: crypto.randomUUID(), name: 'LED Light Therapy', price: 25.00, duration: 15 },
-      ],
-    },
-    {
-      name: 'Makeup Application',
-      description: 'Professional makeup application',
-      category: SERVICE_CATEGORIES.MAKEUP,
-      duration: 45,
-      price: 55.00,
-      addOns: [
-        { id: crypto.randomUUID(), name: 'Lash Extensions', price: 35.00, duration: 30 },
-        { id: crypto.randomUUID(), name: 'Bridal Upgrade', price: 50.00, duration: 30 },
-      ],
-    },
-    {
-      name: 'Swedish Massage',
-      description: 'Relaxing full body massage',
-      category: SERVICE_CATEGORIES.MASSAGE,
-      duration: 60,
-      price: 75.00,
-      addOns: [
-        { id: crypto.randomUUID(), name: 'Hot Stones', price: 20.00, duration: 15 },
-        { id: crypto.randomUUID(), name: 'Aromatherapy', price: 10.00, duration: 0 },
-      ],
-    },
-  ];
+Service.generateDefaultServices = function(businessTypeName = null) {
+  const { getServicesByBusinessType, SALON_SPA_SERVICES } = require('./service.seeds');
+  
+  // If no business type provided, return Salon/Spa services for backward compatibility
+  if (!businessTypeName) {
+    return SALON_SPA_SERVICES;
+  }
+  
+  // Get services for the specified business type
+  return getServicesByBusinessType(businessTypeName);
 };
 
 module.exports = {
