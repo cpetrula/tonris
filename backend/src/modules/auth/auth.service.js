@@ -344,6 +344,9 @@ const getUserById = async (userId, tenantId) => {
 const register = async ({ email, password, firstName, lastName, businessTypeId, contactPhone }) => {
   const tenantService = require('../tenants/tenant.service');
   const twilioService = require('../telephony/twilio.service');
+  const { getElevenLabsService } = require('../ai-assistant/elevenlabs.service');
+  const { BusinessType } = require('../business-types/businessType.model');
+  const env = require('../../config/env');
 
   // Check if user already exists (globally - email is unique)
   const existingUser = await User.findOne({ where: { email } });
@@ -366,6 +369,8 @@ const register = async ({ email, password, firstName, lastName, businessTypeId, 
 
   // Provision Twilio phone number for the new tenant
   let twilioPhoneNumber = null;
+  let twilioPhoneNumberSid = null;
+  let elevenlabsPhoneNumberId = null;
   
   try {
     // Extract area code from contact phone if provided
@@ -385,13 +390,52 @@ const register = async ({ email, password, firstName, lastName, businessTypeId, 
     });
     
     twilioPhoneNumber = provisionedNumber.phoneNumber;
-    
-    // Update tenant with the provisioned phone number
-    await tenantService.updateTenant(tenant.id, {
-      twilioPhoneNumber,
-    });
+    twilioPhoneNumberSid = provisionedNumber.sid;
     
     logger.info(`Twilio phone number ${twilioPhoneNumber} provisioned for tenant ${tenant.id}`);
+
+    // Import phone number to ElevenLabs
+    try {
+      // Get agent_id from business_types table
+      let agentId = null;
+      if (businessTypeId) {
+        const businessType = await BusinessType.findByPk(businessTypeId);
+        if (businessType && businessType.agentId) {
+          agentId = businessType.agentId;
+          logger.info(`Using agent ID ${agentId} from business type ${businessType.businessType}`);
+        } else if (businessType) {
+          logger.warn(`Business type ${businessType.businessType} has no agent ID configured, will skip agent assignment`);
+        } else {
+          logger.warn(`Business type ${businessTypeId} not found, will skip agent assignment`);
+        }
+      }
+
+      // Import to ElevenLabs
+      // Note: Twilio credentials are shared with ElevenLabs to allow them to manage the phone number
+      const elevenlabsService = getElevenLabsService();
+      const importResult = await elevenlabsService.importPhoneNumber({
+        phoneNumber: twilioPhoneNumber,
+        label: businessName,
+        agentId: agentId,
+        twilioAccountSid: env.TWILIO_ACCOUNT_SID,
+        twilioAuthToken: env.TWILIO_AUTH_TOKEN,
+      });
+
+      elevenlabsPhoneNumberId = importResult.phoneNumberId;
+      logger.info(`Phone number ${twilioPhoneNumber} imported to ElevenLabs with ID: ${elevenlabsPhoneNumberId}`);
+    } catch (error) {
+      // Log the error but don't fail the registration
+      logger.error(`Failed to import phone number to ElevenLabs for tenant ${tenant.id}: ${error.message}`);
+      logger.warn('Registration will continue without ElevenLabs phone import');
+    }
+    
+    // Update tenant with the provisioned phone number and SIDs
+    await tenantService.updateTenant(tenant.id, {
+      twilioPhoneNumber,
+      twilioPhoneNumberSid,
+      elevenlabsPhoneNumberId,
+    });
+    
   } catch (error) {
     // Log the error but don't fail the registration
     logger.error(`Failed to provision Twilio phone number for tenant ${tenant.id}: ${error.message}`);

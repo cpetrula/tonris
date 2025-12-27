@@ -112,6 +112,16 @@ const Tenant = sequelize.define('Tenant', {
       is: /^[+]?[0-9][0-9\s()-]{5,}$/,
     },
   },
+  twilioPhoneNumberSid: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'twilio_phone_number_sid',
+  },
+  elevenlabsPhoneNumberId: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'elevenlabs_phone_number_id',
+  },
   businessTypeId: {
     type: DataTypes.UUID,
     allowNull: true,
