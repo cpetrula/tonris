@@ -3,8 +3,8 @@ import { RouterLink } from 'vue-router'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 
-const demoPhoneNumber = '1-800-TONRIS-1'
-const demoPhoneNumberFormatted = '1-800-866-7471'
+const demoPhoneNumber = '1-800-CRITON-1'
+const demoPhoneNumberFormatted = '1-800-274-8661'
 
 const benefits = [
   {
@@ -48,7 +48,7 @@ const employeeCostComparison = {
       return Math.round(this.annualCost / 12)
     }
   },
-  tonris: {
+  critonAI: {
     monthlyCost: 295,
     get annualCost() {
       return this.monthlyCost * 12
@@ -69,7 +69,7 @@ const employeeCostComparison = {
               Your AI Phone Receptionist That Never Sleeps
             </h1>
             <p class="text-lg md:text-xl text-violet-100 mb-8">
-              Stop losing customers to missed calls. TONRIS answers every call professionally, books appointments, and saves you thousands.
+              Stop losing customers to missed calls. CRITON.AI answers every call professionally, books appointments, and saves you thousands.
             </p>
             
             <!-- Benefits List -->
@@ -295,13 +295,13 @@ const employeeCostComparison = {
               </p>
             </div>
 
-            <!-- TONRIS Cost -->
+            <!-- CRITON.AI Cost -->
             <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
               <div class="flex items-center gap-3 mb-4">
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                   <i class="pi pi-bolt text-2xl text-green-500"></i>
                 </div>
-                <h4 class="text-lg font-semibold text-gray-900">TONRIS AI Assistant</h4>
+                <h4 class="text-lg font-semibold text-gray-900">CRITON.AI Assistant</h4>
               </div>
               <div class="space-y-2 text-gray-700 mb-4">
                 <p class="flex justify-between">
@@ -320,7 +320,7 @@ const employeeCostComparison = {
               <div class="border-t border-green-200 pt-4">
                 <p class="flex justify-between items-center">
                   <span class="font-semibold">Monthly cost</span>
-                  <span class="text-2xl font-bold text-green-600">${{ employeeCostComparison.tonris.monthlyCost }}</span>
+                  <span class="text-2xl font-bold text-green-600">${{ employeeCostComparison.critonAI.monthlyCost }}</span>
                 </p>
               </div>
               <p class="text-sm text-green-600 mt-2">
@@ -332,7 +332,7 @@ const employeeCostComparison = {
 
           <div class="mt-8 text-center">
             <p class="text-2xl font-bold text-violet-600 mb-4">
-              Save over ${{ (employeeCostComparison.employee.monthlyCost - employeeCostComparison.tonris.monthlyCost).toLocaleString() }}/month
+              Save over ${{ (employeeCostComparison.employee.monthlyCost - employeeCostComparison.critonAI.monthlyCost).toLocaleString() }}/month
             </p>
             <RouterLink to="/signup">
               <Button
@@ -355,7 +355,7 @@ const employeeCostComparison = {
           Ready to Never Miss Another Call?
         </h2>
         <p class="text-lg text-violet-100 mb-8 max-w-2xl mx-auto">
-          Join hundreds of businesses who trust TONRIS to handle their calls professionally, 24/7.
+          Join hundreds of businesses who trust CRITON.AI to handle their calls professionally, 24/7.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <RouterLink to="/signup">

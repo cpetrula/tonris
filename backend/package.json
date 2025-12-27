@@ -1,7 +1,7 @@
 {
-  "name": "tonris-backend",
+  "name": "criton-ai-backend",
   "version": "1.0.0",
-  "description": "Backend infrastructure for TONRIS AI Assistant application",
+  "description": "Backend infrastructure for CRITON.AI Assistant application",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
@@ -10,7 +10,7 @@
     "lint": "eslint src/"
   },
   "keywords": [
-    "tonris",
+    "criton",
     "ai",
     "assistant",
     "backend"

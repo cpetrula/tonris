@@ -56,7 +56,7 @@ function goToBilling() {
           <div>
             <p class="font-bold text-lg">Your Free Trial Has Ended</p>
             <p class="mt-1">
-              To continue using TONRIS and keep your AI receptionist active, please set up your payment method.
+              To continue using CRITON.AI and keep your AI receptionist active, please set up your payment method.
             </p>
           </div>
         </div>

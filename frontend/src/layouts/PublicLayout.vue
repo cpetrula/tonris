@@ -23,8 +23,12 @@ function closeMobileMenu() {
         <div class="flex justify-between h-16">
           <!-- Logo -->
           <div class="flex items-center">
-            <RouterLink to="/" class="flex items-center space-x-2">
-              <img src="/logo.svg" alt="TONRIS" class="h-10" />
+            <RouterLink to="/" class="flex items-center space-x-3">
+              <img src="/criton-logo.svg" alt="CRITON.AI" class="h-10 w-auto sm:h-12" />
+              <div class="flex flex-col">
+                <span class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">CRITON.AI</span>
+                <span class="text-xs text-gray-500 tracking-wider">AI ASSISTANT</span>
+              </div>
             </RouterLink>
           </div>
 
@@ -139,7 +143,11 @@ function closeMobileMenu() {
           <!-- Brand -->
           <div class="col-span-1 md:col-span-2">
             <RouterLink to="/" class="flex items-center space-x-2 mb-4">
-              <img src="/logo.svg" alt="TONRIS" class="h-8" />
+              <img src="/criton-logo.svg" alt="CRITON.AI" class="h-8 w-auto" />
+              <div class="flex flex-col">
+                <span class="text-lg font-bold text-gray-900 tracking-tight">CRITON.AI</span>
+                <span class="text-xs text-gray-500 tracking-wider">AI ASSISTANT</span>
+              </div>
             </RouterLink>
             <p class="text-sm text-gray-500 max-w-md">
               Your AI-powered phone receptionist that never sleeps. Handle every call professionally, 24/7.
@@ -179,7 +187,7 @@ function closeMobileMenu() {
                 <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Terms of Service</a>
               </li>
               <li>
-                <a href="mailto:support@tonris.com" class="text-sm text-gray-500 hover:text-gray-700">Contact</a>
+                <a href="mailto:support@criton.ai" class="text-sm text-gray-500 hover:text-gray-700">Contact</a>
               </li>
             </ul>
           </div>
@@ -187,7 +195,7 @@ function closeMobileMenu() {
 
         <div class="mt-8 pt-8 border-t border-gray-200">
           <p class="text-sm text-gray-500 text-center">
-            &copy; {{ new Date().getFullYear() }} TONRIS. All rights reserved.
+            &copy; {{ new Date().getFullYear() }} CRITON.AI. All rights reserved.
           </p>
         </div>
       </div>

@@ -1,5 +1,5 @@
 /**
- * TONRIS Backend Application
+ * CRITON.AI Backend Application
  * Main Express application entry point
  */
 const express = require('express');
@@ -219,7 +219,7 @@ const startServer = () => {
   
   // Start the server
   server.listen(env.PORT, () => {
-    logger.info(`TONRIS Backend server running on port ${env.PORT}`);
+    logger.info(`CRITON.AI Backend server running on port ${env.PORT}`);
     logger.info(`Environment: ${env.NODE_ENV}`);
     logger.info(`Health check: http://localhost:${env.PORT}/health`);
     logger.info(`WebSocket media stream: ws://localhost:${env.PORT}/media-stream`);
