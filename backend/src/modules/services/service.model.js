@@ -136,11 +136,11 @@ Service.prototype.removeAddOn = async function(addOnId) {
  * @returns {Array<Object>} - Array of default service objects
  */
 Service.generateDefaultServices = function(businessTypeName = null) {
-  const { getServicesByBusinessType, SALON_SPA_SERVICES } = require('./service.seeds');
+  const { getServicesByBusinessType, generateSalonSpaServices } = require('./service.seeds');
   
   // If no business type provided, return Salon/Spa services for backward compatibility
   if (!businessTypeName) {
-    return SALON_SPA_SERVICES;
+    return generateSalonSpaServices();
   }
   
   // Get services for the specified business type

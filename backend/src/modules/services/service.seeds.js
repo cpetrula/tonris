@@ -4,14 +4,17 @@
  * 
  * This module provides default service configurations for different business types.
  * Each business type has its own set of services with appropriate pricing and durations.
+ * 
+ * Note: Add-on IDs are generated at runtime to ensure uniqueness per tenant.
  */
 const crypto = require('crypto');
 const { SERVICE_CATEGORIES } = require('./service.model');
 
 /**
- * Default services for Salon / Spa business type
+ * Generate default services for Salon / Spa business type
+ * @returns {Array<Object>} - Array of salon/spa service configurations
  */
-const SALON_SPA_SERVICES = [
+const generateSalonSpaServices = () => [
   {
     name: 'Haircut',
     description: 'Standard haircut service',
@@ -92,10 +95,11 @@ const SALON_SPA_SERVICES = [
 ];
 
 /**
- * Default services for Plumber business type
+ * Generate default services for Plumber business type
+ * @returns {Array<Object>} - Array of plumber service configurations
  * Note: Uses 'other' category as there are no plumbing-specific categories yet
  */
-const PLUMBER_SERVICES = [
+const generatePlumberServices = () => [
   {
     name: 'Drain Cleaning',
     description: 'Clear clogged drains and pipes',
@@ -176,22 +180,25 @@ const PLUMBER_SERVICES = [
 
 /**
  * Business type name mappings
- * Maps business type names to their service configurations
+ * Maps business type names to their service generator functions
  */
 const BUSINESS_TYPE_SERVICES = {
-  'Salon / Spa': SALON_SPA_SERVICES,
-  'Plumber': PLUMBER_SERVICES,
-  'Home Services': PLUMBER_SERVICES, // Home Services also gets plumber services as default
+  'Salon / Spa': generateSalonSpaServices,
+  'Plumber': generatePlumberServices,
+  'Home Services': generatePlumberServices, // Home Services also gets plumber services as default
 };
 
 /**
  * Get default services for a business type
  * @param {string} businessTypeName - Name of the business type
- * @returns {Array<Object>} - Array of service configurations
+ * @returns {Array<Object>} - Array of service configurations with unique add-on IDs
  */
 const getServicesByBusinessType = (businessTypeName) => {
-  // Return services for the business type, or empty array if not found
-  return BUSINESS_TYPE_SERVICES[businessTypeName] || [];
+  // Get the generator function for the business type
+  const generator = BUSINESS_TYPE_SERVICES[businessTypeName];
+  
+  // Return generated services if found, or empty array if not found
+  return generator ? generator() : [];
 };
 
 /**
@@ -203,8 +210,8 @@ const getSupportedBusinessTypes = () => {
 };
 
 module.exports = {
-  SALON_SPA_SERVICES,
-  PLUMBER_SERVICES,
+  generateSalonSpaServices,
+  generatePlumberServices,
   BUSINESS_TYPE_SERVICES,
   getServicesByBusinessType,
   getSupportedBusinessTypes,

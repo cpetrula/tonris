@@ -6,8 +6,8 @@
 const {
   getServicesByBusinessType,
   getSupportedBusinessTypes,
-  SALON_SPA_SERVICES,
-  PLUMBER_SERVICES,
+  generateSalonSpaServices,
+  generatePlumberServices,
 } = require('../src/modules/services/service.seeds');
 
 describe('Service Seed Data Module', () => {
@@ -34,21 +34,29 @@ describe('Service Seed Data Module', () => {
       const services = getServicesByBusinessType('Salon / Spa');
       expect(Array.isArray(services)).toBe(true);
       expect(services.length).toBeGreaterThan(0);
-      expect(services).toEqual(SALON_SPA_SERVICES);
+      // Verify it has the expected salon services
+      const serviceNames = services.map(s => s.name);
+      expect(serviceNames).toContain('Haircut');
+      expect(serviceNames).toContain('Manicure');
     });
 
     it('should return Plumber services for "Plumber" business type', () => {
       const services = getServicesByBusinessType('Plumber');
       expect(Array.isArray(services)).toBe(true);
       expect(services.length).toBeGreaterThan(0);
-      expect(services).toEqual(PLUMBER_SERVICES);
+      // Verify it has the expected plumber services
+      const serviceNames = services.map(s => s.name);
+      expect(serviceNames).toContain('Drain Cleaning');
+      expect(serviceNames).toContain('Faucet Repair');
     });
 
     it('should return Plumber services for "Home Services" business type', () => {
       const services = getServicesByBusinessType('Home Services');
       expect(Array.isArray(services)).toBe(true);
       expect(services.length).toBeGreaterThan(0);
-      expect(services).toEqual(PLUMBER_SERVICES);
+      // Verify it has the expected plumber services
+      const serviceNames = services.map(s => s.name);
+      expect(serviceNames).toContain('Drain Cleaning');
     });
 
     it('should return empty array for unsupported business type', () => {
@@ -62,11 +70,24 @@ describe('Service Seed Data Module', () => {
       expect(Array.isArray(services)).toBe(true);
       expect(services.length).toBe(0);
     });
+
+    it('should generate unique add-on IDs on each call', () => {
+      const services1 = getServicesByBusinessType('Salon / Spa');
+      const services2 = getServicesByBusinessType('Salon / Spa');
+      
+      // Get first add-on ID from first service in both calls
+      const addOn1 = services1[0].addOns[0].id;
+      const addOn2 = services2[0].addOns[0].id;
+      
+      // They should be different
+      expect(addOn1).not.toBe(addOn2);
+    });
   });
 
-  describe('SALON_SPA_SERVICES', () => {
+  describe('generateSalonSpaServices', () => {
     it('should have valid structure for all services', () => {
-      SALON_SPA_SERVICES.forEach((service) => {
+      const services = generateSalonSpaServices();
+      services.forEach((service) => {
         expect(service).toHaveProperty('name');
         expect(service).toHaveProperty('description');
         expect(service).toHaveProperty('category');
@@ -88,14 +109,16 @@ describe('Service Seed Data Module', () => {
     });
 
     it('should include common salon services', () => {
-      const serviceNames = SALON_SPA_SERVICES.map(s => s.name);
+      const services = generateSalonSpaServices();
+      const serviceNames = services.map(s => s.name);
       expect(serviceNames).toContain('Haircut');
       expect(serviceNames).toContain('Manicure');
       expect(serviceNames).toContain('Pedicure');
     });
 
     it('should have valid add-ons with proper structure', () => {
-      SALON_SPA_SERVICES.forEach((service) => {
+      const services = generateSalonSpaServices();
+      services.forEach((service) => {
         service.addOns.forEach((addOn) => {
           expect(addOn).toHaveProperty('id');
           expect(addOn).toHaveProperty('name');
@@ -115,9 +138,10 @@ describe('Service Seed Data Module', () => {
     });
   });
 
-  describe('PLUMBER_SERVICES', () => {
+  describe('generatePlumberServices', () => {
     it('should have valid structure for all services', () => {
-      PLUMBER_SERVICES.forEach((service) => {
+      const services = generatePlumberServices();
+      services.forEach((service) => {
         expect(service).toHaveProperty('name');
         expect(service).toHaveProperty('description');
         expect(service).toHaveProperty('category');
@@ -139,7 +163,8 @@ describe('Service Seed Data Module', () => {
     });
 
     it('should include common plumbing services', () => {
-      const serviceNames = PLUMBER_SERVICES.map(s => s.name);
+      const services = generatePlumberServices();
+      const serviceNames = services.map(s => s.name);
       expect(serviceNames).toContain('Drain Cleaning');
       expect(serviceNames).toContain('Faucet Repair');
       expect(serviceNames).toContain('Toilet Repair');
@@ -147,7 +172,8 @@ describe('Service Seed Data Module', () => {
     });
 
     it('should have valid add-ons with proper structure', () => {
-      PLUMBER_SERVICES.forEach((service) => {
+      const services = generatePlumberServices();
+      services.forEach((service) => {
         service.addOns.forEach((addOn) => {
           expect(addOn).toHaveProperty('id');
           expect(addOn).toHaveProperty('name');
@@ -166,23 +192,29 @@ describe('Service Seed Data Module', () => {
       });
     });
 
+    // Minimum reasonable price threshold for plumbing services
+    const MIN_PLUMBER_PRICE = 50;
+    
     it('should have reasonable pricing for plumbing services', () => {
-      PLUMBER_SERVICES.forEach((service) => {
+      const services = generatePlumberServices();
+      services.forEach((service) => {
         // Plumbing services should generally be higher priced than salon services
-        expect(service.price).toBeGreaterThan(50);
+        expect(service.price).toBeGreaterThan(MIN_PLUMBER_PRICE);
       });
     });
   });
 
   describe('Service uniqueness', () => {
     it('should have unique service names within Salon/Spa services', () => {
-      const names = SALON_SPA_SERVICES.map(s => s.name);
+      const services = generateSalonSpaServices();
+      const names = services.map(s => s.name);
       const uniqueNames = [...new Set(names)];
       expect(names.length).toBe(uniqueNames.length);
     });
 
     it('should have unique service names within Plumber services', () => {
-      const names = PLUMBER_SERVICES.map(s => s.name);
+      const services = generatePlumberServices();
+      const names = services.map(s => s.name);
       const uniqueNames = [...new Set(names)];
       expect(names.length).toBe(uniqueNames.length);
     });
