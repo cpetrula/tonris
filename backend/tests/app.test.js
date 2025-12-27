@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const { app } = require('../src/app');
 
-describe('TONRIS Backend', () => {
+describe('CRITON.AI Backend', () => {
   describe('Static File Serving', () => {
     const frontendDistPath = path.join(__dirname, '../../frontend/dist');
     const indexPath = path.join(frontendDistPath, 'index.html');
