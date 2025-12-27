@@ -148,7 +148,7 @@ describe('Authentication Module', () => {
       
       expect(uri).toContain('otpauth://totp/');
       expect(uri).toContain('test%40example.com'); // Email is URL encoded
-      expect(uri).toContain('TONRIS');
+      expect(uri).toContain('CRITON.AI');
     });
 
     it('should generate QR code', async () => {

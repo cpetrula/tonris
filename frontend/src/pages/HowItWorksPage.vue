@@ -13,7 +13,7 @@ const steps = [
   {
     number: 2,
     title: 'Forward Your Calls',
-    description: 'Forward your business phone to your new TONRIS number. Your AI assistant is ready to answer calls 24/7, even when you are busy or after hours.',
+    description: 'Forward your business phone to your new CRITON.AI number. Your AI assistant is ready to answer calls 24/7, even when you are busy or after hours.',
     icon: 'pi pi-phone',
     color: 'bg-cyan-500'
   },
@@ -66,7 +66,7 @@ const features = [
   }
 ]
 
-const demoPhoneNumber = '1-800-TONRIS-1'
+const demoPhoneNumber = '1-800-CRITON-1'
 </script>
 
 <template>
@@ -75,7 +75,7 @@ const demoPhoneNumber = '1-800-TONRIS-1'
     <section class="bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white py-16 md:py-20">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl md:text-5xl font-bold mb-6">
-          How TONRIS Works
+          How CRITON.AI Works
         </h1>
         <p class="text-xl text-violet-100 mb-8 max-w-3xl mx-auto">
           Get your AI-powered phone receptionist up and running in minutes. No technical expertise required.
@@ -220,7 +220,7 @@ const demoPhoneNumber = '1-800-TONRIS-1'
               Works With Your Existing Setup
             </h2>
             <p class="text-lg text-gray-600 mb-6">
-              TONRIS integrates seamlessly with your current phone system and business tools. 
+              CRITON.AI integrates seamlessly with your current phone system and business tools. 
               No need to change your phone number or learn new software.
             </p>
             <ul class="space-y-4">
@@ -282,7 +282,7 @@ const demoPhoneNumber = '1-800-TONRIS-1'
           Ready to Get Started?
         </h2>
         <p class="text-lg text-violet-100 mb-8 max-w-2xl mx-auto">
-          Join hundreds of businesses already using TONRIS to handle their calls professionally.
+          Join hundreds of businesses already using CRITON.AI to handle their calls professionally.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <RouterLink to="/signup">

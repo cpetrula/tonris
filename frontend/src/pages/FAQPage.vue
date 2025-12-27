@@ -23,16 +23,16 @@ const faqCategories: FAQCategory[] = [
     icon: 'pi pi-play',
     faqs: [
       {
-        question: 'How long does it take to set up TONRIS?',
+        question: 'How long does it take to set up CRITON.AI?',
         answer: 'Most businesses are up and running within 10-15 minutes. Simply create your account, enter your business details, and forward your phone number. Our setup wizard guides you through each step.'
       },
       {
-        question: 'Do I need any technical knowledge to use TONRIS?',
-        answer: 'Not at all! TONRIS is designed to be simple and intuitive. If you can forward a phone call, you can use TONRIS. We provide step-by-step instructions for setting up call forwarding with all major phone carriers.'
+        question: 'Do I need any technical knowledge to use CRITON.AI?',
+        answer: 'Not at all! CRITON.AI is designed to be simple and intuitive. If you can forward a phone call, you can use CRITON.AI. We provide step-by-step instructions for setting up call forwarding with all major phone carriers.'
       },
       {
         question: 'Can I keep my existing business phone number?',
-        answer: 'Yes! You keep your existing phone number. You simply forward calls from your current number to your new TONRIS number. Your customers will never know the difference.'
+        answer: 'Yes! You keep your existing phone number. You simply forward calls from your current number to your new CRITON.AI number. Your customers will never know the difference.'
       },
       {
         question: 'Is there a free trial?',
@@ -61,8 +61,8 @@ const faqCategories: FAQCategory[] = [
         answer: 'Yes! You can fully customize the greeting, the AI voice, the information it provides, and how it handles different types of calls. You can even set different greetings for business hours vs. after hours.'
       },
       {
-        question: 'Does TONRIS support multiple languages?',
-        answer: 'Currently, TONRIS supports English and Spanish. The AI can automatically detect the language the caller is speaking and respond appropriately. More languages are coming soon.'
+        question: 'Does CRITON.AI support multiple languages?',
+        answer: 'Currently, CRITON.AI supports English and Spanish. The AI can automatically detect the language the caller is speaking and respond appropriately. More languages are coming soon.'
       }
     ]
   },
@@ -71,8 +71,8 @@ const faqCategories: FAQCategory[] = [
     icon: 'pi pi-dollar',
     faqs: [
       {
-        question: 'How much does TONRIS cost?',
-        answer: 'TONRIS offers two plans: Monthly at $99/month or Yearly at $79/month (billed annually, saving you $240/year). Both plans include unlimited calls, 24/7 coverage, appointment booking, and all core features.'
+        question: 'How much does CRITON.AI cost?',
+        answer: 'CRITON.AI offers two plans: Monthly at $99/month or Yearly at $79/month (billed annually, saving you $240/year). Both plans include unlimited calls, 24/7 coverage, appointment booking, and all core features.'
       },
       {
         question: 'Are there any per-minute or per-call charges?',
@@ -84,7 +84,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Do you offer refunds?',
-        answer: 'We offer a 14-day free trial so you can test TONRIS risk-free. After the trial, we do not offer refunds, but you can cancel at any time to prevent future charges.'
+        answer: 'We offer a 14-day free trial so you can test CRITON.AI risk-free. After the trial, we do not offer refunds, but you can cancel at any time to prevent future charges.'
       }
     ]
   },
@@ -102,10 +102,10 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'What happens if the internet goes down?',
-        answer: 'TONRIS runs in the cloud with multiple redundant systems. We maintain 99.9% uptime. If our systems detect an issue, calls can automatically forward to a backup number you specify.'
+        answer: 'CRITON.AI runs in the cloud with multiple redundant systems. We maintain 99.9% uptime. If our systems detect an issue, calls can automatically forward to a backup number you specify.'
       },
       {
-        question: 'Can I integrate TONRIS with my CRM or other tools?',
+        question: 'Can I integrate CRITON.AI with my CRM or other tools?',
         answer: 'We integrate with Google Calendar, Outlook, Slack, and can send notifications via email or SMS. Additional integrations including Zapier and API access are available on our Enterprise plan.'
       }
     ]
@@ -140,7 +140,7 @@ const faqCategories: FAQCategory[] = [
           Frequently Asked Questions
         </h1>
         <p class="text-xl text-violet-100 mb-8 max-w-3xl mx-auto">
-          Everything you need to know about TONRIS. Can't find the answer you're looking for? Feel free to contact us.
+          Everything you need to know about CRITON.AI. Can't find the answer you're looking for? Feel free to contact us.
         </p>
       </div>
     </section>
@@ -196,7 +196,7 @@ const faqCategories: FAQCategory[] = [
             Can't find the answer you're looking for? Our friendly team is here to help. Reach out and we'll get back to you as soon as possible.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="mailto:support@tonris.com">
+            <a href="mailto:support@criton.ai">
               <Button
                 label="Email Support"
                 icon="pi pi-envelope"
@@ -224,7 +224,7 @@ const faqCategories: FAQCategory[] = [
           Ready to Get Started?
         </h2>
         <p class="text-lg text-violet-100 mb-8 max-w-2xl mx-auto">
-          Try TONRIS free for 14 days. No credit card required.
+          Try CRITON.AI free for 14 days. No credit card required.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <RouterLink to="/signup">

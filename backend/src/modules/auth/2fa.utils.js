@@ -50,7 +50,7 @@ const verifyToken = (token, secret) => {
  * @param {string} issuer - Application name
  * @returns {string} - otpauth URI
  */
-const generateOtpauthUri = (secret, email, issuer = 'TONRIS') => {
+const generateOtpauthUri = (secret, email, issuer = 'CRITON.AI') => {
   return authenticator.keyuri(email, issuer, secret);
 };
 

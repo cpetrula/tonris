@@ -244,7 +244,7 @@ onMounted(async () => {
             <i class="pi pi-credit-card text-6xl text-gray-300 mb-4"></i>
             <h3 class="text-xl font-bold text-gray-900 mb-2">No Active Subscription</h3>
             <p class="text-gray-600 mb-6">
-              {{ isInactive ? 'Your trial has ended. Subscribe now to continue using TONRIS.' : 'Subscribe to get started with TONRIS AI Assistant.' }}
+              {{ isInactive ? 'Your trial has ended. Subscribe now to continue using CRITON.AI.' : 'Subscribe to get started with CRITON.AI Assistant.' }}
             </p>
             
             <div class="max-w-md mx-auto">
