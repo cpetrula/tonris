@@ -470,16 +470,16 @@ const register = async ({
   }
 
   // Seed default services based on business type
-  let businessTypeName = null;
-  if (businessTypeId) {
-    const businessType = await BusinessType.findByPk(businessTypeId);
-    if (businessType) {
-      businessTypeName = businessType.businessType;
-      logger.info(`Seeding default services for business type: ${businessTypeName}`);
-    }
-  }
-
   try {
+    let businessTypeName = null;
+    if (businessTypeId) {
+      const businessType = await BusinessType.findByPk(businessTypeId);
+      if (businessType) {
+        businessTypeName = businessType.businessType;
+        logger.info(`Seeding default services for business type: ${businessTypeName}`);
+      }
+    }
+
     const serviceService = require('../services/service.service');
     await serviceService.seedDefaultServices(tenant.id, businessTypeName);
     logger.info(`Default services seeded for tenant ${tenant.id}`);
