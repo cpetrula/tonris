@@ -280,7 +280,20 @@ const getProfile = async (req, res, next) => {
  */
 const register = async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, businessTypeId, contactPhone } = req.body;
+    const { 
+      email, 
+      password, 
+      firstName, 
+      lastName, 
+      businessTypeId, 
+      contactPhone,
+      businessName,
+      businessPhone,
+      businessAddress,
+      businessCity,
+      businessState,
+      businessZip
+    } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -303,6 +316,14 @@ const register = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         error: 'Business type is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (!businessName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Business name is required',
         code: 'VALIDATION_ERROR',
       });
     }
@@ -333,6 +354,12 @@ const register = async (req, res, next) => {
       lastName, 
       businessTypeId,
       contactPhone,
+      businessName,
+      businessPhone,
+      businessAddress,
+      businessCity,
+      businessState,
+      businessZip,
     });
 
     res.status(201).json({

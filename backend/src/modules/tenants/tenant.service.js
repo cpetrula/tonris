@@ -21,16 +21,22 @@ const { Op } = require('sequelize');
  * @param {string} tenantData.contactPhone - Contact phone (optional)
  * @param {string} tenantData.planType - Plan type (optional)
  * @param {string} tenantData.businessTypeId - Business type ID (optional)
+ * @param {Object} tenantData.address - Business address (optional)
  * @returns {Promise<Object>} - Created tenant
  */
 const createTenant = async (tenantData) => {
-  const { name, slug, contactEmail, contactPhone, planType, businessTypeId } = tenantData;
+  const { name, slug, contactEmail, contactPhone, planType, businessTypeId, address } = tenantData;
 
   // Check if tenant with same slug exists
   const existingTenant = await Tenant.findOne({ where: { slug } });
   if (existingTenant) {
     throw new AppError('A tenant with this slug already exists', 400, 'TENANT_EXISTS');
   }
+
+  // Calculate trial end date (15 days from now)
+  const TRIAL_DAYS = 15;
+  const trialEndsAt = new Date();
+  trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
 
   // Create tenant with default settings
   const tenant = await Tenant.create({
@@ -42,9 +48,11 @@ const createTenant = async (tenantData) => {
     settings: Tenant.generateDefaultSettings(),
     status: TENANT_STATUS.ACTIVE, // Set to active immediately since trial is active
     businessTypeId: businessTypeId || null,
+    address: address || null,
+    trialEndsAt,
   });
 
-  logger.info(`New tenant created: ${name} (${slug})`);
+  logger.info(`New tenant created: ${name} (${slug}) with trial ending at ${trialEndsAt.toISOString()}`);
   
   // Create trial subscription automatically
   try {

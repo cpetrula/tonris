@@ -202,7 +202,13 @@ async function handleSubmit() {
       firstName: firstName.value,
       lastName: lastName.value,
       contactPhone: phone.value,
-      businessTypeId: businessType.value
+      businessTypeId: businessType.value,
+      businessName: businessName.value,
+      businessPhone: businessPhone.value,
+      businessAddress: businessAddress.value,
+      businessCity: businessCity.value,
+      businessState: businessState.value,
+      businessZip: businessZip.value
     })
 
     // Store the token
