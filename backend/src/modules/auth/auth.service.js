@@ -384,6 +384,19 @@ const register = async ({
     zip: businessZip || null,
   } : null;
 
+  // Fetch business type information once if businessTypeId is provided
+  let businessType = null;
+  if (businessTypeId) {
+    try {
+      businessType = await BusinessType.findByPk(businessTypeId);
+      if (!businessType) {
+        logger.warn(`Business type ${businessTypeId} not found`);
+      }
+    } catch (error) {
+      logger.error(`Failed to fetch business type ${businessTypeId}: ${error.message}`);
+    }
+  }
+
   // Create tenant with business type
   const tenant = await tenantService.createTenant({
     name: businessName,
@@ -423,18 +436,13 @@ const register = async ({
 
     // Import phone number to ElevenLabs
     try {
-      // Get agent_id from business_types table
+      // Get agent_id from business_types table (reuse the previously fetched businessType)
       let agentId = null;
-      if (businessTypeId) {
-        const businessType = await BusinessType.findByPk(businessTypeId);
-        if (businessType && businessType.agentId) {
-          agentId = businessType.agentId;
-          logger.info(`Using agent ID ${agentId} from business type ${businessType.businessType}`);
-        } else if (businessType) {
-          logger.warn(`Business type ${businessType.businessType} has no agent ID configured, will skip agent assignment`);
-        } else {
-          logger.warn(`Business type ${businessTypeId} not found, will skip agent assignment`);
-        }
+      if (businessType && businessType.agentId) {
+        agentId = businessType.agentId;
+        logger.info(`Using agent ID ${agentId} from business type ${businessType.businessType}`);
+      } else if (businessType) {
+        logger.warn(`Business type ${businessType.businessType} has no agent ID configured, will skip agent assignment`);
       }
 
       // Import to ElevenLabs
@@ -469,15 +477,12 @@ const register = async ({
     logger.warn('Registration will continue without Twilio phone number');
   }
 
-  // Seed default services based on business type
+  // Seed default services based on business type (reuse the previously fetched businessType)
   try {
     let businessTypeName = null;
-    if (businessTypeId) {
-      const businessType = await BusinessType.findByPk(businessTypeId);
-      if (businessType) {
-        businessTypeName = businessType.businessType;
-        logger.info(`Seeding default services for business type: ${businessTypeName}`);
-      }
+    if (businessType) {
+      businessTypeName = businessType.businessType;
+      logger.info(`Seeding default services for business type: ${businessTypeName}`);
     }
 
     const serviceService = require('../services/service.service');
