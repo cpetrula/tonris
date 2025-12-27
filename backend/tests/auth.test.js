@@ -14,7 +14,27 @@ const mockUserModel = {
 const mockTenantModel = {
   findOne: jest.fn(),
   create: jest.fn(),
-  generateDefaultSettings: jest.fn(() => ({})),
+  generateDefaultSettings: jest.fn(() => ({
+    timezone: 'UTC',
+    language: 'en',
+    dateFormat: 'YYYY-MM-DD',
+    timeFormat: '24h',
+    currency: 'USD',
+    notifications: {
+      email: true,
+      sms: false,
+      push: true,
+    },
+    businessHours: {
+      monday: { open: '09:00', close: '17:00', enabled: true },
+      tuesday: { open: '09:00', close: '17:00', enabled: true },
+      wednesday: { open: '09:00', close: '17:00', enabled: true },
+      thursday: { open: '09:00', close: '17:00', enabled: true },
+      friday: { open: '09:00', close: '17:00', enabled: true },
+      saturday: { open: '10:00', close: '14:00', enabled: false },
+      sunday: { open: '10:00', close: '14:00', enabled: false },
+    },
+  })),
   isValidTransition: jest.fn(),
 };
 
@@ -866,6 +886,65 @@ describe('Authentication Module', () => {
         expect(response.body.success).toBe(true);
         expect(response.body.data.user).toBeDefined();
         expect(response.body.data.tokens).toBeDefined();
+      });
+
+      it('should seed tenant with default business hours on registration', async () => {
+        User.findOne.mockResolvedValue(null);
+        
+        const mockUser = {
+          id: 'user-123',
+          email: 'test@example.com',
+          tenantId: 'tenant-123',
+          toSafeObject: () => ({ id: 'user-123', email: 'test@example.com', tenantId: 'tenant-123' }),
+        };
+        
+        const mockTenant = {
+          id: 'tenant-123',
+          tenantId: 'tenant-slug',
+          name: "New Business",
+          trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          toSafeObject: () => ({ 
+            id: 'tenant-123', 
+            tenantId: 'tenant-slug', 
+            name: "New Business",
+            trialEndsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+          }),
+        };
+        
+        mockTenantModel.create.mockResolvedValue(mockTenant);
+        mockTenantModel.findOne.mockResolvedValue(null);
+        User.create.mockResolvedValue(mockUser);
+        
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({ 
+            email: 'test@example.com',
+            password: 'password123',
+            firstName: 'John',
+            lastName: 'Doe',
+            businessTypeId: 'business-123',
+            businessName: 'New Business'
+          });
+        
+        // Verify tenant was created with default settings
+        expect(mockTenantModel.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            settings: expect.objectContaining({
+              businessHours: expect.objectContaining({
+                monday: { open: '09:00', close: '17:00', enabled: true },
+                tuesday: { open: '09:00', close: '17:00', enabled: true },
+                wednesday: { open: '09:00', close: '17:00', enabled: true },
+                thursday: { open: '09:00', close: '17:00', enabled: true },
+                friday: { open: '09:00', close: '17:00', enabled: true },
+                saturday: { open: '10:00', close: '14:00', enabled: false },
+                sunday: { open: '10:00', close: '14:00', enabled: false },
+              })
+            })
+          })
+        );
+        
+        expect(response.status).toBe(201);
+        expect(response.body.success).toBe(true);
       });
     });
   });
