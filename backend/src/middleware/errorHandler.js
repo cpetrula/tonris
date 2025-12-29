@@ -117,26 +117,55 @@ const isNotNullConstraintError = (error) => {
 };
 
 /**
+ * Sanitize field name to prevent information disclosure
+ * Only allows alphanumeric characters, underscores, and hyphens
+ * @param {string} fieldName - Raw field name from error message
+ * @returns {string} - Sanitized field name or generic placeholder
+ */
+const sanitizeFieldName = (fieldName) => {
+  // Only allow alphanumeric, underscore, and hyphen characters
+  // Limit length to prevent potential issues
+  if (!fieldName || typeof fieldName !== 'string') {
+    return 'required field';
+  }
+  
+  const sanitized = fieldName.replace(/[^a-zA-Z0-9_-]/g, '');
+  
+  // If sanitization removed everything or field name is too long, use generic name
+  if (!sanitized || sanitized.length > 64) {
+    return 'required field';
+  }
+  
+  return sanitized;
+};
+
+/**
  * Extract field name from database error message
  * @param {Object} error - Sequelize error object
  * @returns {string} - Field name or 'required field' if not found
  */
 const extractFieldNameFromError = (error) => {
+  let rawFieldName = null;
+  
   // MySQL: Column 'field_name' cannot be null
   if (error.parent && error.parent.sqlMessage) {
     const mysqlMatch = error.parent.sqlMessage.match(/Column '([^']+)'/);
-    if (mysqlMatch) return mysqlMatch[1];
+    if (mysqlMatch) rawFieldName = mysqlMatch[1];
   }
   
   // PostgreSQL: null value in column "field_name" violates not-null constraint
-  const postgresMatch = error.message && error.message.match(/column "([^"]+)" violates not-null constraint/);
-  if (postgresMatch) return postgresMatch[1];
+  if (!rawFieldName) {
+    const postgresMatch = error.message && error.message.match(/column "([^"]+)" violates not-null constraint/);
+    if (postgresMatch) rawFieldName = postgresMatch[1];
+  }
   
   // SQLite: NOT NULL constraint failed: table.field_name
-  const sqliteMatch = error.message && error.message.match(/NOT NULL constraint failed: [^.]+\.([^\s]+)/);
-  if (sqliteMatch) return sqliteMatch[1];
+  if (!rawFieldName) {
+    const sqliteMatch = error.message && error.message.match(/NOT NULL constraint failed: [^.]+\.([^\s]+)/);
+    if (sqliteMatch) rawFieldName = sqliteMatch[1];
+  }
   
-  return 'required field';
+  return sanitizeFieldName(rawFieldName);
 };
 
 /**
@@ -166,8 +195,11 @@ const databaseErrorHandler = (error) => {
     
     // Check for other constraint violations
     if (error.parent && error.parent.code) {
-      // Log the specific error code for debugging
-      logger.error(`Database error with code ${error.parent.code}: ${error.parent.sqlMessage || error.message}`);
+      // Log the error code for debugging, but limit sensitive information
+      logger.error(`Database constraint error: ${error.parent.code}`, {
+        errorType: error.name,
+        errorCode: error.parent.code,
+      });
     }
     
     return new AppError('Database constraint violation', 400, 'DATABASE_CONSTRAINT_ERROR');
@@ -204,4 +236,5 @@ module.exports = {
   databaseErrorHandler,
   isNotNullConstraintError,
   extractFieldNameFromError,
+  sanitizeFieldName,
 };

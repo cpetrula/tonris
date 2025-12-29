@@ -7,6 +7,7 @@ const {
   databaseErrorHandler,
   isNotNullConstraintError,
   extractFieldNameFromError,
+  sanitizeFieldName,
 } = require('../src/middleware/errorHandler');
 
 describe('Error Handler', () => {
@@ -323,6 +324,45 @@ describe('Error Handler', () => {
       };
       
       expect(extractFieldNameFromError(error)).toBe('required field');
+    });
+  });
+
+  describe('sanitizeFieldName', () => {
+    it('should allow valid field names with underscores', () => {
+      expect(sanitizeFieldName('customer_email')).toBe('customer_email');
+    });
+
+    it('should allow valid field names with hyphens', () => {
+      expect(sanitizeFieldName('customer-email')).toBe('customer-email');
+    });
+
+    it('should remove special characters', () => {
+      expect(sanitizeFieldName("customer'email")).toBe('customeremail');
+    });
+
+    it('should remove SQL injection attempts', () => {
+      expect(sanitizeFieldName("'; DROP TABLE users; --")).toBe('DROPTABLEusers--');
+    });
+
+    it('should return generic name for overly long field names', () => {
+      const longName = 'a'.repeat(100);
+      expect(sanitizeFieldName(longName)).toBe('required field');
+    });
+
+    it('should return generic name for null input', () => {
+      expect(sanitizeFieldName(null)).toBe('required field');
+    });
+
+    it('should return generic name for undefined input', () => {
+      expect(sanitizeFieldName(undefined)).toBe('required field');
+    });
+
+    it('should return generic name for non-string input', () => {
+      expect(sanitizeFieldName(123)).toBe('required field');
+    });
+
+    it('should return generic name when all characters are removed', () => {
+      expect(sanitizeFieldName('!@#$%^&*()')).toBe('required field');
     });
   });
 });
