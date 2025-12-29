@@ -258,5 +258,26 @@ describe('Admin API', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
+
+    it('should reject passwords of different lengths', async () => {
+      const response = await request(app)
+        .get('/api/admin/clients')
+        .set('X-Admin-Password', 'short');
+
+      expect(response.status).toBe(401);
+      expect(response.body.code).toBe('INVALID_PASSWORD');
+    });
+
+    it('should reject similar but not identical passwords', async () => {
+      // Change one character in the middle of the password
+      const almostCorrect = process.env.ADMIN_PASSWORD.slice(0, -1) + 'X';
+      
+      const response = await request(app)
+        .get('/api/admin/clients')
+        .set('X-Admin-Password', almostCorrect);
+
+      expect(response.status).toBe(401);
+      expect(response.body.code).toBe('INVALID_PASSWORD');
+    });
   });
 });

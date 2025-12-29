@@ -6,6 +6,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const adminController = require('./admin.controller');
 const { adminAuthMiddleware } = require('./admin.middleware');
+const env = require('../../config/env');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const router = express.Router();
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 50, // 50 requests per window
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: () => env.isTest(),
   message: {
     success: false,
     error: 'Too many requests, please try again later',
