@@ -17,6 +17,9 @@ const {
   handleMediaStreamConnection,
   getActiveStreamCount,
   getActiveStream,
+  getAllActiveStreams,
+  forceCloseStream,
+  forceCloseAllStreams,
 } = require('./media-stream.handler');
 const {
   AIProviderInterface,
@@ -39,6 +42,9 @@ module.exports = {
   handleMediaStreamConnection,
   getActiveStreamCount,
   getActiveStream,
+  getAllActiveStreams,
+  forceCloseStream,
+  forceCloseAllStreams,
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,

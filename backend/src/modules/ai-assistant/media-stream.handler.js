@@ -344,8 +344,50 @@ const getActiveStream = (streamSid) => {
   return activeStreams.get(streamSid) || null;
 };
 
+/**
+ * Get all active streams
+ * @returns {Array} - Array of [streamSid, streamInfo] pairs
+ */
+const getAllActiveStreams = () => {
+  return Array.from(activeStreams.entries());
+};
+
+/**
+ * Force close a specific stream
+ * @param {string} streamSid - Stream SID to close
+ */
+const forceCloseStream = (streamSid) => {
+  const stream = activeStreams.get(streamSid);
+  if (stream && stream.twilioWs) {
+    logger.info(`[MediaStream] Force closing stream: ${streamSid}`);
+    try {
+      stream.twilioWs.close(1000, 'Server shutdown');
+    } catch (error) {
+      logger.error(`[MediaStream] Error closing stream ${streamSid}: ${error.message}`);
+    }
+    activeStreams.delete(streamSid);
+  }
+};
+
+/**
+ * Force close all active streams
+ * Used during graceful shutdown
+ */
+const forceCloseAllStreams = () => {
+  const streamCount = activeStreams.size;
+  if (streamCount > 0) {
+    logger.info(`[MediaStream] Force closing ${streamCount} active stream(s)`);
+    for (const [streamSid] of activeStreams) {
+      forceCloseStream(streamSid);
+    }
+  }
+};
+
 module.exports = {
   handleMediaStreamConnection,
   getActiveStreamCount,
   getActiveStream,
+  getAllActiveStreams,
+  forceCloseStream,
+  forceCloseAllStreams,
 };
