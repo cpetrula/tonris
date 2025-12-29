@@ -11,6 +11,8 @@ const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
 const HowItWorksPage = () => import('@/pages/HowItWorksPage.vue')
 const FAQPage = () => import('@/pages/FAQPage.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
+const AdminLoginPage = () => import('@/pages/AdminLoginPage.vue')
+const AdminClientsPage = () => import('@/pages/AdminClientsPage.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -74,6 +76,18 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: false }
       }
     ]
+  },
+  {
+    path: '/criton-admin',
+    name: 'admin-login',
+    component: AdminLoginPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/admin/clients',
+    name: 'admin-clients',
+    component: AdminClientsPage,
+    meta: { requiresAuth: false }
   },
   {
     path: '/app',

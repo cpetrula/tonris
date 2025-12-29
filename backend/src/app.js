@@ -16,7 +16,7 @@ const logger = require('./utils/logger');
 // Initialize models and associations early
 require('./models');
 
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes, adminRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
 const { aiController, handleMediaStreamConnection } = require('./modules/ai-assistant');
@@ -165,6 +165,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/telephony', telephonyRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/business-types', businessTypesRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Static file serving - serve frontend build from frontend/dist directory
 const frontendDistPath = path.join(__dirname, '../../frontend/dist');

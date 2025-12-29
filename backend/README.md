@@ -115,6 +115,7 @@ backend/
 | DB_PASSWORD              | Database password                  | -           |
 | LOG_LEVEL                | Logging level                      | info        |
 | DEFAULT_TENANT_ID        | Default tenant identifier          | default     |
+| ADMIN_PASSWORD           | Admin API password protection      | -           |
 
 ### Twilio Configuration
 
@@ -185,6 +186,58 @@ curl -X POST http://localhost:3000/api/telephony/test-sms \
   "message": "Test SMS sent successfully"
 }
 ```
+
+## Admin API
+
+The admin API provides administrative endpoints for managing and viewing all clients (tenants).
+
+### Authentication
+
+Admin endpoints are protected by password-based authentication using the `ADMIN_PASSWORD` environment variable.
+
+**Configuration:**
+```bash
+ADMIN_PASSWORD=your-secure-admin-password
+```
+
+### Endpoints
+
+**GET /api/admin/clients** - Get all clients
+
+Retrieves a list of all clients (tenants) who have signed up.
+
+**Headers:**
+- `X-Admin-Password` (required): The admin password
+
+**Example:**
+```bash
+curl -X GET http://localhost:3000/api/admin/clients \
+  -H "X-Admin-Password: your-admin-password"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "clients": [
+      {
+        "id": "uuid",
+        "name": "Business Name",
+        "slug": "business-slug",
+        "status": "active",
+        "planType": "free",
+        "contactEmail": "contact@example.com",
+        "signUpDate": "2024-01-01T00:00:00.000Z",
+        "lastUpdated": "2024-01-15T00:00:00.000Z"
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+For detailed admin API documentation, see [Admin API README](src/modules/admin/README.md).
 
 ## Multi-Tenant Architecture
 
