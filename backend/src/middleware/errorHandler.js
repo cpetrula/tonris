@@ -194,6 +194,7 @@ const databaseErrorHandler = (error) => {
     }
     
     // Check for other constraint violations
+    // Note: Both error.parent and error.parent.code are checked to prevent runtime errors
     if (error.parent && error.parent.code) {
       // Log the error code for debugging, but limit sensitive information
       logger.error(`Database constraint error: ${error.parent.code}`, {
