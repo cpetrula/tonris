@@ -26,6 +26,13 @@ const {
   INTENT_TYPES,
   ACTION_TYPES,
 } = require('./ai-provider.interface');
+const {
+  Lead,
+  LEAD_QUALITY,
+  LEAD_SOURCE,
+  CONTACT_PREFERENCE,
+} = require('./lead.model');
+const leadExtractionService = require('./leadExtraction.service');
 
 module.exports = {
   aiRoutes,
@@ -48,4 +55,9 @@ module.exports = {
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,
+  Lead,
+  LEAD_QUALITY,
+  LEAD_SOURCE,
+  CONTACT_PREFERENCE,
+  leadExtractionService,
 };

@@ -11,6 +11,7 @@ const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = req
 const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../modules/telephony/callLog.model');
 const { SmsConsent, CONSENT_STATUS } = require('../modules/telephony/smsConsent.model');
 const { SmsMessage, MESSAGE_DIRECTION, MESSAGE_STATUS, MESSAGE_INTENT } = require('../modules/telephony/smsMessage.model');
+const { Lead, LEAD_QUALITY, LEAD_SOURCE, CONTACT_PREFERENCE } = require('../modules/ai-assistant/lead.model');
 const { BusinessType } = require('../modules/business-types/businessType.model');
 
 /**
@@ -49,5 +50,9 @@ module.exports = {
   MESSAGE_DIRECTION,
   MESSAGE_STATUS,
   MESSAGE_INTENT,
+  Lead,
+  LEAD_QUALITY,
+  LEAD_SOURCE,
+  CONTACT_PREFERENCE,
   BusinessType,
 };
