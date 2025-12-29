@@ -60,4 +60,32 @@ router.patch('/status', standardLimiter, authMiddleware, tenantController.update
 // GET /api/tenant/dashboard-stats - Get dashboard statistics
 router.get('/dashboard-stats', standardLimiter, authMiddleware, tenantController.getDashboardStats);
 
+/**
+ * Granular settings endpoints
+ */
+
+// GET /api/tenant/profile - Get business profile
+router.get('/profile', standardLimiter, authMiddleware, tenantController.getTenantProfile);
+
+// PATCH /api/tenant/profile - Update business profile
+router.patch('/profile', standardLimiter, authMiddleware, tenantController.updateTenantProfile);
+
+// GET /api/tenant/hours - Get business hours
+router.get('/hours', standardLimiter, authMiddleware, tenantController.getTenantHours);
+
+// PATCH /api/tenant/hours - Update business hours
+router.patch('/hours', standardLimiter, authMiddleware, tenantController.updateTenantHours);
+
+// GET /api/tenant/ai-settings - Get AI voice settings
+router.get('/ai-settings', standardLimiter, authMiddleware, tenantController.getTenantAiSettings);
+
+// PATCH /api/tenant/ai-settings - Update AI voice settings
+router.patch('/ai-settings', standardLimiter, authMiddleware, tenantController.updateTenantAiSettings);
+
+// GET /api/tenant/notifications - Get notification settings
+router.get('/notifications', standardLimiter, authMiddleware, tenantController.getTenantNotifications);
+
+// PATCH /api/tenant/notifications - Update notification settings
+router.patch('/notifications', standardLimiter, authMiddleware, tenantController.updateTenantNotifications);
+
 module.exports = router;

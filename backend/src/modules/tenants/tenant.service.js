@@ -456,6 +456,209 @@ const getDashboardStats = async (tenantId) => {
   };
 };
 
+/**
+ * Update tenant business profile
+ * @param {string} id - Tenant UUID
+ * @param {Object} profileData - Profile data to update
+ * @returns {Promise<Object>} - Updated profile data
+ */
+const updateTenantProfile = async (id, profileData) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  const { name, email, phone, address, city, state, zipCode, website, description } = profileData;
+
+  // Update tenant direct fields
+  if (name !== undefined) tenant.name = name;
+  if (email !== undefined) tenant.contactEmail = email;
+  if (phone !== undefined) tenant.contactPhone = phone;
+
+  // Store address as JSON object
+  const addressObj = tenant.address || {};
+  if (address !== undefined) addressObj.street = address;
+  if (city !== undefined) addressObj.city = city;
+  if (state !== undefined) addressObj.state = state;
+  if (zipCode !== undefined) addressObj.zipCode = zipCode;
+  tenant.address = addressObj;
+
+  // Store website and description in settings
+  const settings = tenant.settings || {};
+  if (website !== undefined) settings.website = website;
+  if (description !== undefined) settings.description = description;
+  tenant.settings = settings;
+
+  await tenant.save();
+
+  logger.info(`Tenant profile updated: ${id}`);
+
+  return {
+    name: tenant.name,
+    email: tenant.contactEmail,
+    phone: tenant.contactPhone,
+    address: tenant.address?.street || '',
+    city: tenant.address?.city || '',
+    state: tenant.address?.state || '',
+    zipCode: tenant.address?.zipCode || '',
+    website: tenant.settings?.website || '',
+    description: tenant.settings?.description || '',
+  };
+};
+
+/**
+ * Get tenant business profile
+ * @param {string} id - Tenant UUID
+ * @returns {Promise<Object>} - Profile data
+ */
+const getTenantProfile = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  return {
+    name: tenant.name || '',
+    email: tenant.contactEmail || '',
+    phone: tenant.contactPhone || '',
+    address: tenant.address?.street || '',
+    city: tenant.address?.city || '',
+    state: tenant.address?.state || '',
+    zipCode: tenant.address?.zipCode || '',
+    website: tenant.settings?.website || '',
+    description: tenant.settings?.description || '',
+  };
+};
+
+/**
+ * Update tenant business hours
+ * @param {string} id - Tenant UUID
+ * @param {Object} hoursData - Business hours data
+ * @returns {Promise<Object>} - Updated hours data
+ */
+const updateTenantHours = async (id, hoursData) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  const settings = tenant.settings || {};
+  settings.businessHours = hoursData;
+  tenant.settings = settings;
+
+  await tenant.save();
+
+  logger.info(`Tenant business hours updated: ${id}`);
+
+  return settings.businessHours;
+};
+
+/**
+ * Get tenant business hours
+ * @param {string} id - Tenant UUID
+ * @returns {Promise<Object>} - Business hours data
+ */
+const getTenantHours = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  return tenant.settings?.businessHours || Tenant.generateDefaultSettings().businessHours;
+};
+
+/**
+ * Update tenant AI voice settings
+ * @param {string} id - Tenant UUID
+ * @param {Object} aiSettings - AI settings data
+ * @returns {Promise<Object>} - Updated AI settings
+ */
+const updateTenantAiSettings = async (id, aiSettings) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  const settings = tenant.settings || {};
+  settings.aiVoice = aiSettings;
+  tenant.settings = settings;
+
+  await tenant.save();
+
+  logger.info(`Tenant AI settings updated: ${id}`);
+
+  return settings.aiVoice;
+};
+
+/**
+ * Get tenant AI voice settings
+ * @param {string} id - Tenant UUID
+ * @returns {Promise<Object>} - AI settings data
+ */
+const getTenantAiSettings = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  return tenant.settings?.aiVoice || {
+    voiceType: 'female-professional',
+    language: 'en-US',
+    greetingMessage: '',
+    appointmentReminders: true,
+    reminderHours: 24,
+    followUpCalls: false,
+  };
+};
+
+/**
+ * Update tenant notification settings
+ * @param {string} id - Tenant UUID
+ * @param {Object} notificationSettings - Notification settings data
+ * @returns {Promise<Object>} - Updated notification settings
+ */
+const updateTenantNotifications = async (id, notificationSettings) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  const settings = tenant.settings || {};
+  settings.notifications = notificationSettings;
+  tenant.settings = settings;
+
+  await tenant.save();
+
+  logger.info(`Tenant notification settings updated: ${id}`);
+
+  return settings.notifications;
+};
+
+/**
+ * Get tenant notification settings
+ * @param {string} id - Tenant UUID
+ * @returns {Promise<Object>} - Notification settings data
+ */
+const getTenantNotifications = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  return tenant.settings?.notifications || {
+    email: { newAppointments: true, cancellations: true, dailyDigest: false },
+    sms: { newAppointments: false, cancellations: false, reminders: true },
+  };
+};
+
 module.exports = {
   createTenant,
   getTenantById,
@@ -468,6 +671,15 @@ module.exports = {
   tenantExists,
   updateTenant,
   getDashboardStats,
+  // Granular settings
+  updateTenantProfile,
+  getTenantProfile,
+  updateTenantHours,
+  getTenantHours,
+  updateTenantAiSettings,
+  getTenantAiSettings,
+  updateTenantNotifications,
+  getTenantNotifications,
   TENANT_STATUS,
   PLAN_TYPES,
 };

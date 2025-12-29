@@ -270,6 +270,179 @@ const getDashboardStats = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/tenant/profile
+ * Get tenant business profile
+ */
+const getTenantProfile = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const profile = await tenantService.getTenantProfile(tenantUUID);
+
+    res.status(200).json({
+      success: true,
+      data: profile,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/tenant/profile
+ * Update tenant business profile
+ */
+const updateTenantProfile = async (req, res, next) => {
+  try {
+    const { name, email, phone, address, city, state, zipCode, website, description } = req.body;
+
+    // Validate email format if provided
+    if (email && !VALIDATION.EMAIL_REGEX.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const profile = await tenantService.updateTenantProfile(tenantUUID, {
+      name, email, phone, address, city, state, zipCode, website, description,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: profile,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/tenant/hours
+ * Get tenant business hours
+ */
+const getTenantHours = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const hours = await tenantService.getTenantHours(tenantUUID);
+
+    res.status(200).json({
+      success: true,
+      data: hours,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/tenant/hours
+ * Update tenant business hours
+ */
+const updateTenantHours = async (req, res, next) => {
+  try {
+    const { hours } = req.body;
+
+    if (!hours || typeof hours !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'Hours object is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const updatedHours = await tenantService.updateTenantHours(tenantUUID, hours);
+
+    res.status(200).json({
+      success: true,
+      data: updatedHours,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/tenant/ai-settings
+ * Get tenant AI voice settings
+ */
+const getTenantAiSettings = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const aiSettings = await tenantService.getTenantAiSettings(tenantUUID);
+
+    res.status(200).json({
+      success: true,
+      data: aiSettings,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/tenant/ai-settings
+ * Update tenant AI voice settings
+ */
+const updateTenantAiSettings = async (req, res, next) => {
+  try {
+    const { voiceType, language, greetingMessage, appointmentReminders, reminderHours, followUpCalls } = req.body;
+
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const aiSettings = await tenantService.updateTenantAiSettings(tenantUUID, {
+      voiceType, language, greetingMessage, appointmentReminders, reminderHours, followUpCalls,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: aiSettings,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/tenant/notifications
+ * Get tenant notification settings
+ */
+const getTenantNotifications = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const notifications = await tenantService.getTenantNotifications(tenantUUID);
+
+    res.status(200).json({
+      success: true,
+      data: notifications,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/tenant/notifications
+ * Update tenant notification settings
+ */
+const updateTenantNotifications = async (req, res, next) => {
+  try {
+    const { email, sms } = req.body;
+
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const notifications = await tenantService.updateTenantNotifications(tenantUUID, { email, sms });
+
+    res.status(200).json({
+      success: true,
+      data: notifications,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCurrentUserAndTenant,
   getTenantSettings,
@@ -280,4 +453,13 @@ module.exports = {
   activateTenant,
   updateTenantStatus,
   getDashboardStats,
+  // Granular settings
+  getTenantProfile,
+  updateTenantProfile,
+  getTenantHours,
+  updateTenantHours,
+  getTenantAiSettings,
+  updateTenantAiSettings,
+  getTenantNotifications,
+  updateTenantNotifications,
 };
