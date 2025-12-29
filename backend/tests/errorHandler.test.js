@@ -5,6 +5,8 @@
 const {
   AppError,
   databaseErrorHandler,
+  isNotNullConstraintError,
+  extractFieldNameFromError,
 } = require('../src/middleware/errorHandler');
 
 describe('Error Handler', () => {
@@ -249,6 +251,78 @@ describe('Error Handler', () => {
       
       expect(appError.statusCode).toBe(500);
       expect(appError.code).toBe('DATABASE_ERROR');
+    });
+  });
+
+  describe('isNotNullConstraintError', () => {
+    it('should detect MySQL NOT NULL constraint error', () => {
+      const error = {
+        parent: {
+          code: 'ER_BAD_NULL_ERROR',
+        },
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(true);
+    });
+
+    it('should detect PostgreSQL NOT NULL constraint error', () => {
+      const error = {
+        message: 'null value in column "field_name" violates not-null constraint',
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(true);
+    });
+
+    it('should detect SQLite NOT NULL constraint error', () => {
+      const error = {
+        message: 'NOT NULL constraint failed: table.field_name',
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(true);
+    });
+
+    it('should return false for non-NOT-NULL errors', () => {
+      const error = {
+        message: 'Some other error',
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(false);
+    });
+  });
+
+  describe('extractFieldNameFromError', () => {
+    it('should extract field name from MySQL error', () => {
+      const error = {
+        parent: {
+          sqlMessage: "Column 'customer_email' cannot be null",
+        },
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('customer_email');
+    });
+
+    it('should extract field name from PostgreSQL error', () => {
+      const error = {
+        message: 'null value in column "customer_email" violates not-null constraint',
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('customer_email');
+    });
+
+    it('should extract field name from SQLite error', () => {
+      const error = {
+        message: 'NOT NULL constraint failed: appointments.customer_email',
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('customer_email');
+    });
+
+    it('should return default when field name cannot be extracted', () => {
+      const error = {
+        message: 'Unknown error format',
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('required field');
     });
   });
 });

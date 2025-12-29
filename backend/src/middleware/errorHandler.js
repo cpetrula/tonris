@@ -93,6 +93,53 @@ const validationErrorHandler = (errors) => {
 };
 
 /**
+ * Check if error is a NOT NULL constraint violation
+ * @param {Object} error - Sequelize error object
+ * @returns {boolean} - True if it's a NOT NULL constraint error
+ */
+const isNotNullConstraintError = (error) => {
+  // MySQL: ER_BAD_NULL_ERROR
+  if (error.parent && error.parent.code === 'ER_BAD_NULL_ERROR') {
+    return true;
+  }
+  
+  // PostgreSQL: error message contains "violates not-null constraint"
+  if (error.message && error.message.toLowerCase().includes('violates not-null constraint')) {
+    return true;
+  }
+  
+  // SQLite: error message contains "not null constraint failed"
+  if (error.message && error.message.toLowerCase().includes('not null constraint failed')) {
+    return true;
+  }
+  
+  return false;
+};
+
+/**
+ * Extract field name from database error message
+ * @param {Object} error - Sequelize error object
+ * @returns {string} - Field name or 'required field' if not found
+ */
+const extractFieldNameFromError = (error) => {
+  // MySQL: Column 'field_name' cannot be null
+  if (error.parent && error.parent.sqlMessage) {
+    const mysqlMatch = error.parent.sqlMessage.match(/Column '([^']+)'/);
+    if (mysqlMatch) return mysqlMatch[1];
+  }
+  
+  // PostgreSQL: null value in column "field_name" violates not-null constraint
+  const postgresMatch = error.message && error.message.match(/column "([^"]+)" violates not-null constraint/);
+  if (postgresMatch) return postgresMatch[1];
+  
+  // SQLite: NOT NULL constraint failed: table.field_name
+  const sqliteMatch = error.message && error.message.match(/NOT NULL constraint failed: [^.]+\.([^\s]+)/);
+  if (sqliteMatch) return sqliteMatch[1];
+  
+  return 'required field';
+};
+
+/**
  * Handle database errors
  */
 const databaseErrorHandler = (error) => {
@@ -112,32 +159,8 @@ const databaseErrorHandler = (error) => {
   
   // Handle database errors (includes NOT NULL constraint violations)
   if (error.name === 'SequelizeDatabaseError') {
-    // Check if it's a NOT NULL constraint violation
-    // MySQL: ER_BAD_NULL_ERROR, PostgreSQL: error message contains "violates not-null constraint"
-    const isNotNullError = 
-      (error.parent && error.parent.code === 'ER_BAD_NULL_ERROR') || // MySQL
-      (error.message && error.message.toLowerCase().includes('violates not-null constraint')) || // PostgreSQL
-      (error.message && error.message.toLowerCase().includes('not null constraint failed')); // SQLite
-    
-    if (isNotNullError) {
-      // Extract the field name from the error message if possible
-      // Try multiple patterns for different databases
-      let fieldName = 'required field';
-      
-      // MySQL: Column 'field_name' cannot be null
-      if (error.parent && error.parent.sqlMessage) {
-        const mysqlMatch = error.parent.sqlMessage.match(/Column '([^']+)'/);
-        if (mysqlMatch) fieldName = mysqlMatch[1];
-      }
-      
-      // PostgreSQL: null value in column "field_name" violates not-null constraint
-      const postgresMatch = error.message && error.message.match(/column "([^"]+)" violates not-null constraint/);
-      if (postgresMatch) fieldName = postgresMatch[1];
-      
-      // SQLite: NOT NULL constraint failed: table.field_name
-      const sqliteMatch = error.message && error.message.match(/NOT NULL constraint failed: [^.]+\.([^\s]+)/);
-      if (sqliteMatch) fieldName = sqliteMatch[1];
-      
+    if (isNotNullConstraintError(error)) {
+      const fieldName = extractFieldNameFromError(error);
       return new AppError(`Missing required field: ${fieldName}`, 400, 'REQUIRED_FIELD_MISSING');
     }
     
@@ -179,4 +202,6 @@ module.exports = {
   errorHandler,
   validationErrorHandler,
   databaseErrorHandler,
+  isNotNullConstraintError,
+  extractFieldNameFromError,
 };
