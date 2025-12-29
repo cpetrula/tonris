@@ -271,39 +271,6 @@ function getTenantIdFromToken(): string | null {
   }
 }
 
-async function updateStatus(appointment: Appointment, status: Appointment['status']) {
-  try {
-    const updateData = {
-      status,
-      tenantId: getTenantIdFromToken()
-    }
-
-    const response = await api.patch(`/api/appointments/${appointment.id}`, updateData)
-    
-    if (response.data.success) {
-      await fetchAppointments()
-    }
-  } catch (err) {
-    console.error('Error updating appointment status:', err)
-    error.value = 'Failed to update appointment status'
-  }
-}
-
-async function cancelAppointment(appointment: Appointment) {
-  if (confirm(`Are you sure you want to cancel the appointment for ${appointment.customerName}?`)) {
-    try {
-      const response = await api.delete(`/api/appointments/${appointment.id}`)
-      
-      if (response.data.success) {
-        await fetchAppointments()
-      }
-    } catch (err) {
-      console.error('Error cancelling appointment:', err)
-      error.value = 'Failed to cancel appointment'
-    }
-  }
-}
-
 function clearFilters() {
   searchQuery.value = ''
   selectedDate.value = null
