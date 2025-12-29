@@ -105,6 +105,30 @@ const databaseErrorHandler = (error) => {
     return new AppError('Resource already exists', 409, 'DUPLICATE_ENTRY');
   }
   
+  // Handle foreign key constraint errors
+  if (error.name === 'SequelizeForeignKeyConstraintError') {
+    return new AppError('Invalid reference to related resource', 400, 'FOREIGN_KEY_CONSTRAINT_ERROR');
+  }
+  
+  // Handle database errors (includes NOT NULL constraint violations)
+  if (error.name === 'SequelizeDatabaseError') {
+    // Check if it's a NOT NULL constraint violation
+    if (error.parent && error.parent.code === 'ER_BAD_NULL_ERROR') {
+      // Extract the field name from the error message if possible
+      const fieldMatch = error.parent.sqlMessage && error.parent.sqlMessage.match(/Column '([^']+)'/);
+      const fieldName = fieldMatch ? fieldMatch[1] : 'required field';
+      return new AppError(`Missing required field: ${fieldName}`, 400, 'REQUIRED_FIELD_MISSING');
+    }
+    
+    // Check for other constraint violations
+    if (error.parent && error.parent.code) {
+      // Log the specific error code for debugging
+      logger.error(`Database error with code ${error.parent.code}: ${error.parent.sqlMessage || error.message}`);
+    }
+    
+    return new AppError('Database constraint violation', 400, 'DATABASE_CONSTRAINT_ERROR');
+  }
+  
   // Handle all connection errors (SequelizeConnectionError and subclasses)
   // These include: SequelizeConnectionError, SequelizeConnectionRefusedError,
   // SequelizeConnectionTimedOutError, SequelizeConnectionAcquireTimeoutError,

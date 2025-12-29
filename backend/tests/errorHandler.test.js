@@ -144,6 +144,65 @@ describe('Error Handler', () => {
       expect(appError.code).toBe('DATABASE_CONNECTION_ERROR');
     });
 
+    it('should handle SequelizeForeignKeyConstraintError', () => {
+      const sequelizeError = {
+        name: 'SequelizeForeignKeyConstraintError',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('FOREIGN_KEY_CONSTRAINT_ERROR');
+      expect(appError.message).toBe('Invalid reference to related resource');
+    });
+
+    it('should handle SequelizeDatabaseError with NOT NULL constraint', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        parent: {
+          code: 'ER_BAD_NULL_ERROR',
+          sqlMessage: "Column 'customer_email' cannot be null",
+        },
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('customer_email');
+    });
+
+    it('should handle SequelizeDatabaseError without specific field name', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        parent: {
+          code: 'ER_BAD_NULL_ERROR',
+        },
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('required field');
+    });
+
+    it('should handle SequelizeDatabaseError with other constraint violations', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        parent: {
+          code: 'ER_SOME_OTHER_ERROR',
+          sqlMessage: 'Some other constraint violation',
+        },
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('DATABASE_CONSTRAINT_ERROR');
+      expect(appError.message).toBe('Database constraint violation');
+    });
+
     it('should handle unknown Sequelize errors', () => {
       const sequelizeError = {
         name: 'SequelizeUnknownError',
