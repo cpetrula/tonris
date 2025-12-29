@@ -379,6 +379,144 @@ const testSms = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/telephony/sms/consent/:phone
+ * Check SMS consent status for a phone number
+ */
+const checkSmsConsent = async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const tenantId = req.tenant?.id;
+
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tenant context required',
+        code: 'TENANT_REQUIRED',
+      });
+    }
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required',
+        code: 'PHONE_REQUIRED',
+      });
+    }
+
+    const result = await smsHandler.checkSmsConsent(phone, tenantId);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    logger.error(`Check SMS consent failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check SMS consent',
+      code: 'CONSENT_CHECK_FAILED',
+    });
+  }
+};
+
+/**
+ * POST /api/telephony/sms/consent
+ * Record SMS consent for a phone number
+ */
+const recordSmsConsent = async (req, res) => {
+  try {
+    const { phoneNumber, consented, source } = req.body;
+    const tenantId = req.tenant?.id;
+
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tenant context required',
+        code: 'TENANT_REQUIRED',
+      });
+    }
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required',
+        code: 'PHONE_REQUIRED',
+      });
+    }
+
+    if (typeof consented !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: 'Consented must be a boolean',
+        code: 'INVALID_CONSENT_VALUE',
+      });
+    }
+
+    const result = await smsHandler.recordSmsConsent({
+      phoneNumber,
+      tenantId,
+      consented,
+      source: source || 'api',
+      metadata: { recordedBy: req.user?.id },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    logger.error(`Record SMS consent failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to record SMS consent',
+      code: 'CONSENT_RECORD_FAILED',
+    });
+  }
+};
+
+/**
+ * GET /api/telephony/sms/messages/:phone
+ * Get SMS conversation history for a phone number
+ */
+const getSmsConversation = async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const { limit = 100 } = req.query;
+    const tenantId = req.tenant?.id;
+
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tenant context required',
+        code: 'TENANT_REQUIRED',
+      });
+    }
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required',
+        code: 'PHONE_REQUIRED',
+      });
+    }
+
+    const result = await smsHandler.getSmsConversation(phone, tenantId, parseInt(limit, 10));
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    logger.error(`Get SMS conversation failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get SMS conversation',
+      code: 'CONVERSATION_FETCH_FAILED',
+    });
+  }
+};
+
 module.exports = {
   handleVoiceWebhook,
   handleSmsWebhook,
@@ -391,4 +529,7 @@ module.exports = {
   getCallLogs,
   makeCall,
   testSms,
+  checkSmsConsent,
+  recordSmsConsent,
+  getSmsConversation,
 };

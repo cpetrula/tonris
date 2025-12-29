@@ -66,9 +66,22 @@ router.get('/call-logs', standardLimiter, authMiddleware, telephonyController.ge
 // POST /api/telephony/make-call - Make outbound call
 router.post('/make-call', standardLimiter, authMiddleware, telephonyController.makeCall);
 
-// POST /api/telephony/test-sms - Test SMS functionality 
+// POST /api/telephony/test-sms - Test SMS functionality
 // WARNING: No authentication required - for development/testing only
 // In production, consider disabling this endpoint or adding IP restrictions
 router.post('/test-sms', smsLimiter, telephonyController.testSms);
+
+/**
+ * SMS Consent Management Routes
+ */
+
+// GET /api/telephony/sms/consent/:phone - Check SMS consent status
+router.get('/sms/consent/:phone', standardLimiter, authMiddleware, telephonyController.checkSmsConsent);
+
+// POST /api/telephony/sms/consent - Record SMS consent
+router.post('/sms/consent', standardLimiter, authMiddleware, telephonyController.recordSmsConsent);
+
+// GET /api/telephony/sms/messages/:phone - Get SMS conversation history
+router.get('/sms/messages/:phone', standardLimiter, authMiddleware, telephonyController.getSmsConversation);
 
 module.exports = router;
