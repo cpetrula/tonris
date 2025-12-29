@@ -143,10 +143,10 @@ function closeMobileMenu() {
           <!-- Brand -->
           <div class="col-span-1 md:col-span-2">
             <RouterLink to="/" class="flex items-center space-x-2 mb-4">
-              <img src="/criton-logo.svg" alt="CRITON.AI" class="h-8 w-auto" />
+              <img src="/logo1.png" alt="CRITON.AI" class="h-8 w-auto" />
               <div class="flex flex-col">
                 <span class="text-lg font-bold text-gray-900 tracking-tight">CRITON.AI</span>
-                <span class="text-xs text-gray-500 tracking-wider">AI ASSISTANT</span>
+                <span class="text-xs text-gray-500 tracking-wider">Smart Assistants</span>
               </div>
             </RouterLink>
             <p class="text-sm text-gray-500 max-w-md">

@@ -3,8 +3,8 @@ import { RouterLink } from 'vue-router'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 
-const demoPhoneNumber = '1-800-CRITON-1'
-const demoPhoneNumberFormatted = '1-800-274-8661'
+const demoPhoneNumber = '1-424-283-9238'
+const demoPhoneNumberFormatted = '1-424-283-9238'
 
 const benefits = [
   {
@@ -127,7 +127,7 @@ const employeeCostComparison = {
               >
                 <span class="text-sm text-gray-500 block mb-1">Demo Phone Number</span>
                 <span class="text-3xl md:text-4xl font-bold tracking-wide">{{ demoPhoneNumber }}</span>
-                <span class="text-sm text-gray-500 block mt-1">({{ demoPhoneNumberFormatted }})</span>
+                <!-- <span class="text-sm text-gray-500 block mt-1">({{ demoPhoneNumberFormatted }})</span> -->
               </a>
               
               <p class="text-sm text-violet-200">
