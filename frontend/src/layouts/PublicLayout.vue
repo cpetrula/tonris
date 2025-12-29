@@ -27,7 +27,7 @@ function closeMobileMenu() {
               <img src="/logo1.png" alt="CRITON.AI" class="h-10 w-auto sm:h-12" />
               <div class="flex flex-col">
                 <span class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">CRITON.AI</span>
-                <span class="text-xs text-gray-500 tracking-wider">Smart Assistants</span>
+                <span class="text-xs text-gray-500 tracking-widest">Smart Assistants</span>
               </div>
             </RouterLink>
           </div>

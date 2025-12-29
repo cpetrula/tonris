@@ -36,7 +36,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Is there a free trial?',
-        answer: 'Yes! We offer a 14-day free trial with full access to all features. No credit card required to start. You can cancel anytime during the trial period.'
+        answer: 'Yes! We offer a 15-day free trial with full access to all features. No credit card required to start. You can cancel anytime during the trial period.'
       }
     ]
   },
@@ -72,7 +72,7 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: 'How much does CRITON.AI cost?',
-        answer: 'CRITON.AI offers two plans: Monthly at $99/month or Yearly at $79/month (billed annually, saving you $240/year). Both plans include unlimited calls, 24/7 coverage, appointment booking, and all core features.'
+        answer: 'CRITON.AI is $295/month and include unlimited calls, 24/7 coverage, appointment booking, and all core features.'
       },
       {
         question: 'Are there any per-minute or per-call charges?',
@@ -84,7 +84,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Do you offer refunds?',
-        answer: 'We offer a 14-day free trial so you can test CRITON.AI risk-free. After the trial, we do not offer refunds, but you can cancel at any time to prevent future charges.'
+        answer: 'We offer a 15-day free trial so you can test CRITON.AI risk-free. After the trial, we do not offer refunds, but you can cancel at any time to prevent future charges.'
       }
     ]
   },
@@ -106,7 +106,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Can I integrate CRITON.AI with my CRM or other tools?',
-        answer: 'We integrate with Google Calendar, Outlook, Slack, and can send notifications via email or SMS. Additional integrations including Zapier and API access are available on our Enterprise plan.'
+        answer: 'We integrate with Google Calendar and can send notifications via email or SMS.'
       }
     ]
   },
@@ -120,11 +120,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Do you offer onboarding assistance?',
-        answer: 'Yes! All new customers receive a welcome email with video tutorials and a detailed setup guide. Yearly subscribers also get a complimentary onboarding call with our team.'
-      },
-      {
-        question: 'Can I switch between monthly and yearly plans?',
-        answer: 'Yes, you can upgrade from monthly to yearly at any time and receive prorated credit for your remaining monthly subscription. Contact support to make the switch.'
+        answer: 'Yes! All new customers receive a welcome email with video tutorials and a detailed setup guide.'
       }
     ]
   }
@@ -170,10 +166,10 @@ const faqCategories: FAQCategory[] = [
                 :value="String(faqIndex)"
               >
                 <AccordionHeader>
-                  <span class="font-medium text-gray-900">{{ faq.question }}</span>
+                  <span class="font-medium text-white-900">{{ faq.question }}</span>
                 </AccordionHeader>
                 <AccordionContent>
-                  <p class="text-gray-600 leading-relaxed">{{ faq.answer }}</p>
+                  <p class="text-white-600 leading-relaxed">{{ faq.answer }}</p>
                 </AccordionContent>
               </AccordionPanel>
             </Accordion>

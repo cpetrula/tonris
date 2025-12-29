@@ -379,3 +379,8 @@ const employeeCostComparison = {
     </section>
   </div>
 </template>
+<style scoped>
+.pi-phone {
+  font-size:2rem;
+}
+</style>
