@@ -33,6 +33,7 @@ const {
   CONTACT_PREFERENCE,
 } = require('./lead.model');
 const leadExtractionService = require('./leadExtraction.service');
+const callSummaryService = require('./callSummary.service');
 
 module.exports = {
   aiRoutes,
@@ -60,4 +61,5 @@ module.exports = {
   LEAD_SOURCE,
   CONTACT_PREFERENCE,
   leadExtractionService,
+  callSummaryService,
 };
