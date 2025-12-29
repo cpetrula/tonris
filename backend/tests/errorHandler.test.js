@@ -5,6 +5,9 @@
 const {
   AppError,
   databaseErrorHandler,
+  isNotNullConstraintError,
+  extractFieldNameFromError,
+  sanitizeFieldName,
 } = require('../src/middleware/errorHandler');
 
 describe('Error Handler', () => {
@@ -144,6 +147,91 @@ describe('Error Handler', () => {
       expect(appError.code).toBe('DATABASE_CONNECTION_ERROR');
     });
 
+    it('should handle SequelizeForeignKeyConstraintError', () => {
+      const sequelizeError = {
+        name: 'SequelizeForeignKeyConstraintError',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('FOREIGN_KEY_CONSTRAINT_ERROR');
+      expect(appError.message).toBe('Invalid reference to related resource');
+    });
+
+    it('should handle SequelizeDatabaseError with NOT NULL constraint (MySQL)', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        parent: {
+          code: 'ER_BAD_NULL_ERROR',
+          sqlMessage: "Column 'customer_email' cannot be null",
+        },
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('customer_email');
+    });
+
+    it('should handle SequelizeDatabaseError with NOT NULL constraint (PostgreSQL)', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        message: 'null value in column "customer_email" violates not-null constraint',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('customer_email');
+    });
+
+    it('should handle SequelizeDatabaseError with NOT NULL constraint (SQLite)', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        message: 'NOT NULL constraint failed: appointments.customer_email',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('customer_email');
+    });
+
+    it('should handle SequelizeDatabaseError without specific field name', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        parent: {
+          code: 'ER_BAD_NULL_ERROR',
+        },
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('required field');
+    });
+
+    it('should handle SequelizeDatabaseError with other constraint violations', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        parent: {
+          code: 'ER_SOME_OTHER_ERROR',
+          sqlMessage: 'Some other constraint violation',
+        },
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('DATABASE_CONSTRAINT_ERROR');
+      expect(appError.message).toBe('Database constraint violation');
+    });
+
     it('should handle unknown Sequelize errors', () => {
       const sequelizeError = {
         name: 'SequelizeUnknownError',
@@ -164,6 +252,117 @@ describe('Error Handler', () => {
       
       expect(appError.statusCode).toBe(500);
       expect(appError.code).toBe('DATABASE_ERROR');
+    });
+  });
+
+  describe('isNotNullConstraintError', () => {
+    it('should detect MySQL NOT NULL constraint error', () => {
+      const error = {
+        parent: {
+          code: 'ER_BAD_NULL_ERROR',
+        },
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(true);
+    });
+
+    it('should detect PostgreSQL NOT NULL constraint error', () => {
+      const error = {
+        message: 'null value in column "field_name" violates not-null constraint',
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(true);
+    });
+
+    it('should detect SQLite NOT NULL constraint error', () => {
+      const error = {
+        message: 'NOT NULL constraint failed: table.field_name',
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(true);
+    });
+
+    it('should return false for non-NOT-NULL errors', () => {
+      const error = {
+        message: 'Some other error',
+      };
+      
+      expect(isNotNullConstraintError(error)).toBe(false);
+    });
+  });
+
+  describe('extractFieldNameFromError', () => {
+    it('should extract field name from MySQL error', () => {
+      const error = {
+        parent: {
+          sqlMessage: "Column 'customer_email' cannot be null",
+        },
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('customer_email');
+    });
+
+    it('should extract field name from PostgreSQL error', () => {
+      const error = {
+        message: 'null value in column "customer_email" violates not-null constraint',
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('customer_email');
+    });
+
+    it('should extract field name from SQLite error', () => {
+      const error = {
+        message: 'NOT NULL constraint failed: appointments.customer_email',
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('customer_email');
+    });
+
+    it('should return default when field name cannot be extracted', () => {
+      const error = {
+        message: 'Unknown error format',
+      };
+      
+      expect(extractFieldNameFromError(error)).toBe('required field');
+    });
+  });
+
+  describe('sanitizeFieldName', () => {
+    it('should allow valid field names with underscores', () => {
+      expect(sanitizeFieldName('customer_email')).toBe('customer_email');
+    });
+
+    it('should allow valid field names with hyphens', () => {
+      expect(sanitizeFieldName('customer-email')).toBe('customer-email');
+    });
+
+    it('should remove special characters', () => {
+      expect(sanitizeFieldName("customer'email")).toBe('customeremail');
+    });
+
+    it('should remove SQL injection attempts', () => {
+      expect(sanitizeFieldName("'; DROP TABLE users; --")).toBe('DROPTABLEusers--');
+    });
+
+    it('should return generic name for overly long field names', () => {
+      const longName = 'a'.repeat(100);
+      expect(sanitizeFieldName(longName)).toBe('required field');
+    });
+
+    it('should return generic name for null input', () => {
+      expect(sanitizeFieldName(null)).toBe('required field');
+    });
+
+    it('should return generic name for undefined input', () => {
+      expect(sanitizeFieldName(undefined)).toBe('required field');
+    });
+
+    it('should return generic name for non-string input', () => {
+      expect(sanitizeFieldName(123)).toBe('required field');
+    });
+
+    it('should return generic name when all characters are removed', () => {
+      expect(sanitizeFieldName('!@#$%^&*()')).toBe('required field');
     });
   });
 });

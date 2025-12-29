@@ -93,6 +93,82 @@ const validationErrorHandler = (errors) => {
 };
 
 /**
+ * Check if error is a NOT NULL constraint violation
+ * @param {Object} error - Sequelize error object
+ * @returns {boolean} - True if it's a NOT NULL constraint error
+ */
+const isNotNullConstraintError = (error) => {
+  // MySQL: ER_BAD_NULL_ERROR
+  if (error.parent && error.parent.code === 'ER_BAD_NULL_ERROR') {
+    return true;
+  }
+  
+  // PostgreSQL: error message contains "violates not-null constraint"
+  if (error.message && error.message.toLowerCase().includes('violates not-null constraint')) {
+    return true;
+  }
+  
+  // SQLite: error message contains "not null constraint failed"
+  if (error.message && error.message.toLowerCase().includes('not null constraint failed')) {
+    return true;
+  }
+  
+  return false;
+};
+
+/**
+ * Sanitize field name to prevent information disclosure
+ * Only allows alphanumeric characters, underscores, and hyphens
+ * @param {string} fieldName - Raw field name from error message
+ * @returns {string} - Sanitized field name or generic placeholder
+ */
+const sanitizeFieldName = (fieldName) => {
+  // Only allow alphanumeric, underscore, and hyphen characters
+  // Limit length to prevent potential issues
+  if (!fieldName || typeof fieldName !== 'string') {
+    return 'required field';
+  }
+  
+  const sanitized = fieldName.replace(/[^a-zA-Z0-9_-]/g, '');
+  
+  // If sanitization removed everything or field name is too long, use generic name
+  if (!sanitized || sanitized.length > 64) {
+    return 'required field';
+  }
+  
+  return sanitized;
+};
+
+/**
+ * Extract field name from database error message
+ * @param {Object} error - Sequelize error object
+ * @returns {string} - Field name or 'required field' if not found
+ */
+const extractFieldNameFromError = (error) => {
+  let rawFieldName = null;
+  
+  // MySQL: Column 'field_name' cannot be null
+  if (error.parent && error.parent.sqlMessage) {
+    const mysqlMatch = error.parent.sqlMessage.match(/Column '([^']+)'/);
+    if (mysqlMatch) rawFieldName = mysqlMatch[1];
+  }
+  
+  // PostgreSQL: null value in column "field_name" violates not-null constraint
+  if (!rawFieldName) {
+    const postgresMatch = error.message && error.message.match(/column "([^"]+)" violates not-null constraint/);
+    if (postgresMatch) rawFieldName = postgresMatch[1];
+  }
+  
+  // SQLite: NOT NULL constraint failed: table.field_name
+  if (!rawFieldName) {
+    const sqliteMatch = error.message && error.message.match(/NOT NULL constraint failed: [^.]+\.([^\s]+)/);
+    if (sqliteMatch) rawFieldName = sqliteMatch[1];
+  }
+  
+  return sanitizeFieldName(rawFieldName);
+};
+
+/**
  * Handle database errors
  */
 const databaseErrorHandler = (error) => {
@@ -103,6 +179,31 @@ const databaseErrorHandler = (error) => {
   
   if (error.name === 'SequelizeUniqueConstraintError') {
     return new AppError('Resource already exists', 409, 'DUPLICATE_ENTRY');
+  }
+  
+  // Handle foreign key constraint errors
+  if (error.name === 'SequelizeForeignKeyConstraintError') {
+    return new AppError('Invalid reference to related resource', 400, 'FOREIGN_KEY_CONSTRAINT_ERROR');
+  }
+  
+  // Handle database errors (includes NOT NULL constraint violations)
+  if (error.name === 'SequelizeDatabaseError') {
+    if (isNotNullConstraintError(error)) {
+      const fieldName = extractFieldNameFromError(error);
+      return new AppError(`Missing required field: ${fieldName}`, 400, 'REQUIRED_FIELD_MISSING');
+    }
+    
+    // Check for other constraint violations
+    // Note: Both error.parent and error.parent.code are checked to prevent runtime errors
+    if (error.parent && error.parent.code) {
+      // Log the error code for debugging, but limit sensitive information
+      logger.error(`Database constraint error: ${error.parent.code}`, {
+        errorType: error.name,
+        errorCode: error.parent.code,
+      });
+    }
+    
+    return new AppError('Database constraint violation', 400, 'DATABASE_CONSTRAINT_ERROR');
   }
   
   // Handle all connection errors (SequelizeConnectionError and subclasses)
@@ -134,4 +235,7 @@ module.exports = {
   errorHandler,
   validationErrorHandler,
   databaseErrorHandler,
+  isNotNullConstraintError,
+  extractFieldNameFromError,
+  sanitizeFieldName,
 };
