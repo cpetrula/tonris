@@ -156,13 +156,39 @@ describe('Error Handler', () => {
       expect(appError.message).toBe('Invalid reference to related resource');
     });
 
-    it('should handle SequelizeDatabaseError with NOT NULL constraint', () => {
+    it('should handle SequelizeDatabaseError with NOT NULL constraint (MySQL)', () => {
       const sequelizeError = {
         name: 'SequelizeDatabaseError',
         parent: {
           code: 'ER_BAD_NULL_ERROR',
           sqlMessage: "Column 'customer_email' cannot be null",
         },
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('customer_email');
+    });
+
+    it('should handle SequelizeDatabaseError with NOT NULL constraint (PostgreSQL)', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        message: 'null value in column "customer_email" violates not-null constraint',
+      };
+      
+      const appError = databaseErrorHandler(sequelizeError);
+      
+      expect(appError.statusCode).toBe(400);
+      expect(appError.code).toBe('REQUIRED_FIELD_MISSING');
+      expect(appError.message).toContain('customer_email');
+    });
+
+    it('should handle SequelizeDatabaseError with NOT NULL constraint (SQLite)', () => {
+      const sequelizeError = {
+        name: 'SequelizeDatabaseError',
+        message: 'NOT NULL constraint failed: appointments.customer_email',
       };
       
       const appError = databaseErrorHandler(sequelizeError);
