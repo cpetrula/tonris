@@ -153,7 +153,7 @@ onMounted(async () => {
           <!-- AI Phone Number Display -->
           <div v-if="tenantStore.currentTenant?.twilioPhoneNumber" class="flex items-center space-x-2">
             <i class="pi pi-phone text-violet-600"></i>
-            <span class="text-sm font-medium text-surface-700 dark:text-surface-300">
+            <span class="text-sm font-medium text-surface-700 dark:text-surface-300 text-violet-600">
               Your AI phone #: 
             </span>
             <span class="text-sm font-semibold text-violet-600 dark:text-violet-400">
@@ -164,13 +164,13 @@ onMounted(async () => {
 
         <!-- User Menu -->
         <div class="flex items-center space-x-4">
-          <Button
+          <!-- <Button
             icon="pi pi-bell"
             text
             badge="3"
             badge-severity="danger"
             aria-label="Notifications"
-          />
+          /> -->
           
           <div class="relative">
             <Button

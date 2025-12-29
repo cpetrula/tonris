@@ -167,8 +167,8 @@ onMounted(async () => {
               <i :class="[stat.icon, 'text-xl text-white']"></i>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">{{ stat.label }}</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stat.value }}</p>
+              <p class="text-sm font-medium text-white-600">{{ stat.label }}</p>
+              <p class="text-2xl font-bold text-white-900">{{ stat.value }}</p>
             </div>
           </div>
         </template>
@@ -198,14 +198,14 @@ onMounted(async () => {
               class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
               <div>
-                <p class="font-medium text-gray-900">{{ appointment.customerName }}</p>
-                <p class="text-sm text-gray-600">{{ appointment.service }} with {{ appointment.employee }}</p>
+                <p class="font-medium text-white-900">{{ appointment.customerName }}</p>
+                <p class="text-sm text-white-600">{{ appointment.service }} with {{ appointment.employee }}</p>
               </div>
               <div class="text-right">
                 <p class="text-sm font-medium text-violet-600">{{ appointment.time }}</p>
               </div>
             </div>
-            <div v-if="upcomingAppointments.length === 0" class="text-center py-8 text-gray-600">
+            <div v-if="upcomingAppointments.length === 0" class="text-center py-8 text-white-600">
               No appointments scheduled for today
             </div>
           </div>
@@ -234,9 +234,9 @@ onMounted(async () => {
             >
               <div class="w-2 h-2 mt-2 rounded-full bg-violet-500"></div>
               <div class="ml-3">
-                <p class="text-sm font-medium text-gray-900">{{ activity.action }}</p>
-                <p class="text-sm text-gray-600">{{ activity.item }}</p>
-                <p class="text-xs text-gray-500 mt-1">{{ activity.time }}</p>
+                <p class="text-sm font-medium text-white-900">{{ activity.action }}</p>
+                <p class="text-sm text-white-600">{{ activity.item }}</p>
+                <p class="text-xs text-white-500 mt-1">{{ activity.time }}</p>
               </div>
             </div>
           </div>
@@ -244,7 +244,7 @@ onMounted(async () => {
       </Card>
 
       <!-- Quick Actions -->
-      <Card class="shadow-sm lg:col-span-2">
+      <!-- <Card class="shadow-sm lg:col-span-2">
         <template #title>Quick Actions</template>
         <template #content>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -278,7 +278,7 @@ onMounted(async () => {
             </button>
           </div>
         </template>
-      </Card>
+      </Card> -->
     </div>
   </div>
 </template>

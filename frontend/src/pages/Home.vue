@@ -285,7 +285,7 @@ const employeeCostComparison = {
               </div>
               <div class="border-t border-red-200 pt-4">
                 <p class="flex justify-between items-center">
-                  <span class="font-semibold">Monthly cost</span>
+                  <span class="font-semibold text-black">Monthly cost</span>
                   <span class="text-2xl font-bold text-red-600">${{ employeeCostComparison.employee.monthlyCost.toLocaleString() }}+</span>
                 </p>
               </div>
@@ -319,7 +319,7 @@ const employeeCostComparison = {
               </div>
               <div class="border-t border-green-200 pt-4">
                 <p class="flex justify-between items-center">
-                  <span class="font-semibold">Monthly cost</span>
+                  <span class="font-semibold text-black">Monthly cost</span>
                   <span class="text-2xl font-bold text-green-600">${{ employeeCostComparison.critonAI.monthlyCost }}</span>
                 </p>
               </div>

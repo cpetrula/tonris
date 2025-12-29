@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
+import InputIcon from 'primevue/inputicon'
+import IconField from 'primevue/iconfield'
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import DataTable from 'primevue/datatable'
@@ -404,7 +406,7 @@ async function fetchServices() {
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-violet-600">{{ todayAppointments.length }}</p>
-            <p class="text-sm text-gray-600">Today</p>
+            <p class="text-sm text-white-600">Today</p>
           </div>
         </template>
       </Card>
@@ -412,7 +414,7 @@ async function fetchServices() {
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-blue-600">{{ upcomingAppointments.length }}</p>
-            <p class="text-sm text-gray-600">Upcoming</p>
+            <p class="text-sm text-white-600">Upcoming</p>
           </div>
         </template>
       </Card>
@@ -420,7 +422,7 @@ async function fetchServices() {
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-green-600">{{ appointments.filter(a => a.status === 'completed').length }}</p>
-            <p class="text-sm text-gray-600">Completed</p>
+            <p class="text-sm text-white-600">Completed</p>
           </div>
         </template>
       </Card>
@@ -428,7 +430,7 @@ async function fetchServices() {
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-red-600">{{ appointments.filter(a => a.status === 'cancelled').length }}</p>
-            <p class="text-sm text-gray-600">Cancelled</p>
+            <p class="text-sm text-white-600">Cancelled</p>
           </div>
         </template>
       </Card>
@@ -492,7 +494,7 @@ async function fetchServices() {
                     />
                   </div>
                 </div>
-                <div v-if="(selectedDate ? filteredAppointments : todayAppointments).length === 0" class="text-center py-8 text-gray-500">
+                <div v-if="(selectedDate ? filteredAppointments : todayAppointments).length === 0" class="text-center py-8 text-white-500">
                   No appointments for this day
                 </div>
               </div>
@@ -508,14 +510,14 @@ async function fetchServices() {
           <template #content>
             <div class="flex flex-col sm:flex-row gap-4">
               <div class="flex-1">
-                <span class="p-input-icon-left w-full">
-                  <i class="pi pi-search" />
+                <IconField>
+                  <InputIcon class="pi pi-search" />
                   <InputText
                     v-model="searchQuery"
                     placeholder="Search appointments..."
                     class="w-full"
                   />
-                </span>
+                </IconField>
               </div>
               <Dropdown
                 v-model="statusFilter"
@@ -551,7 +553,7 @@ async function fetchServices() {
               :sortOrder="-1"
             >
               <template #empty>
-                <div class="text-center py-8 text-gray-500">
+                <div class="text-center py-8 text-white-500">
                   No appointments found
                 </div>
               </template>
@@ -559,8 +561,8 @@ async function fetchServices() {
               <Column field="date" header="Date" sortable>
                 <template #body="{ data }">
                   <div>
-                    <p class="font-medium text-gray-900">{{ formatDate(data.date) }}</p>
-                    <p class="text-sm text-violet-600">{{ data.time }}</p>
+                    <p class="font-medium text-white-900">{{ formatDate(data.date) }}</p>
+                    <p class="text-sm text-white-600">{{ data.time }}</p>
                   </div>
                 </template>
               </Column>
@@ -568,8 +570,8 @@ async function fetchServices() {
               <Column field="customerName" header="Customer" sortable>
                 <template #body="{ data }">
                   <div>
-                    <p class="font-medium text-gray-900">{{ data.customerName }}</p>
-                    <p class="text-sm text-gray-600">{{ data.customerPhone }}</p>
+                    <p class="font-medium text-white-900">{{ data.customerName }}</p>
+                    <p class="text-sm text-white-600">{{ data.customerPhone }}</p>
                   </div>
                 </template>
               </Column>
@@ -586,10 +588,10 @@ async function fetchServices() {
                 </template>
               </Column>
 
-              <Column header="Actions" :exportable="false" style="min-width: 12rem">
+              <Column header="Edit" :exportable="false" style="min-width: 12rem">
                 <template #body="{ data }">
                   <div class="flex gap-1">
-                    <Button
+                    <!-- <Button
                       v-if="data.status === 'scheduled'"
                       icon="pi pi-check"
                       text
@@ -597,8 +599,8 @@ async function fetchServices() {
                       severity="success"
                       v-tooltip.top="'Confirm'"
                       @click="updateStatus(data, 'confirmed')"
-                    />
-                    <Button
+                    /> -->
+                    <!-- <Button
                       v-if="data.status === 'confirmed'"
                       icon="pi pi-check-circle"
                       text
@@ -606,7 +608,7 @@ async function fetchServices() {
                       severity="success"
                       v-tooltip.top="'Complete'"
                       @click="updateStatus(data, 'completed')"
-                    />
+                    /> -->
                     <Button
                       icon="pi pi-pencil"
                       text
@@ -615,7 +617,7 @@ async function fetchServices() {
                       v-tooltip.top="'Edit'"
                       @click="openEditDialog(data)"
                     />
-                    <Button
+                    <!-- <Button
                       v-if="data.status !== 'cancelled' && data.status !== 'completed'"
                       icon="pi pi-times"
                       text
@@ -623,7 +625,7 @@ async function fetchServices() {
                       severity="danger"
                       v-tooltip.top="'Cancel'"
                       @click="cancelAppointment(data)"
-                    />
+                    /> -->
                   </div>
                 </template>
               </Column>
@@ -645,22 +647,22 @@ async function fetchServices() {
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div class="col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Customer Name *</label>
             <InputText v-model="currentAppointment.customerName" class="w-full" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Email</label>
             <InputText v-model="currentAppointment.customerEmail" type="email" class="w-full" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Phone</label>
             <InputText v-model="currentAppointment.customerPhone" class="w-full" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Service *</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Service *</label>
             <Dropdown
               v-model="currentAppointment.service"
               :options="services"
@@ -671,7 +673,7 @@ async function fetchServices() {
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Employee *</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Employee *</label>
             <Dropdown
               v-model="currentAppointment.employee"
               :options="employees"
@@ -685,11 +687,11 @@ async function fetchServices() {
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Date *</label>
             <Calendar v-model="currentAppointment.date" class="w-full" dateFormat="mm/dd/yy" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Time *</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Time *</label>
             <Dropdown
               v-model="currentAppointment.time"
               :options="timeSlots"
@@ -700,7 +702,7 @@ async function fetchServices() {
         </div>
 
         <div v-if="editMode">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <label class="block text-sm font-medium text-white-700 mb-1">Status</label>
           <Dropdown
             v-model="currentAppointment.status"
             :options="statusOptions.filter(s => s.value)"
@@ -711,7 +713,7 @@ async function fetchServices() {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <label class="block text-sm font-medium text-white-700 mb-1">Notes</label>
           <InputText v-model="currentAppointment.notes" class="w-full" placeholder="Any special requests or notes..." />
         </div>
       </div>

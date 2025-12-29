@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
+import InputIcon from 'primevue/inputicon'
+import IconField from 'primevue/iconfield'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
@@ -181,18 +183,14 @@ async function fetchEmployees() {
     <!-- Search and Filter -->
     <Card class="mb-6 shadow-sm">
       <template #content>
-        <div class="flex flex-col sm:flex-row gap-4">
-          <div class="flex-1">
-            <span class="p-input-icon-left w-full">
-              <i class="pi pi-search" />
+        <IconField>
+              <InputIcon class="pi pi-search" />
               <InputText
                 v-model="searchQuery"
                 placeholder="Search employees..."
                 class="w-full"
               />
-            </span>
-          </div>
-        </div>
+        </IconField>
       </template>
     </Card>
 
@@ -209,7 +207,7 @@ async function fetchEmployees() {
           class="p-datatable-sm"
         >
           <template #empty>
-            <div class="text-center py-8 text-gray-500">
+            <div class="text-center py-8 text-white-500">
               No employees found
             </div>
           </template>
@@ -223,8 +221,8 @@ async function fetchEmployees() {
                   </span>
                 </div>
                 <div>
-                  <p class="font-medium text-gray-900">{{ data.firstName }} {{ data.lastName }}</p>
-                  <p class="text-sm text-gray-500">{{ data.email }}</p>
+                  <p class="font-medium text-white-900">{{ data.firstName }} {{ data.lastName }}</p>
+                  <p class="text-sm text-white-600">{{ data.email }}</p>
                 </div>
               </div>
             </template>
@@ -307,27 +305,27 @@ async function fetchEmployees() {
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">First Name *</label>
             <InputText v-model="currentEmployee.firstName" class="w-full" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+            <label class="block text-sm font-medium text-white-700 mb-1">Last Name *</label>
             <InputText v-model="currentEmployee.lastName" class="w-full" />
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+          <label class="block text-sm font-medium text-white-700 mb-1">Email *</label>
           <InputText v-model="currentEmployee.email" type="email" class="w-full" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+          <label class="block text-sm font-medium text-white-700 mb-1">Phone</label>
           <InputText v-model="currentEmployee.phone" class="w-full" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+          <label class="block text-sm font-medium text-white-700 mb-1">Role</label>
           <InputText v-model="currentEmployee.role" class="w-full" placeholder="e.g., Stylist, Barber" />
         </div>
       </div>
