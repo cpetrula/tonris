@@ -19,7 +19,8 @@ require('./models');
 const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes, adminRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
-const { aiController, handleMediaStreamConnection } = require('./modules/ai-assistant');
+const { aiController, handleMediaStreamConnection, getActiveStreamCount, forceCloseAllStreams } = require('./modules/ai-assistant');
+const { liveCallStream } = require('./services/liveCallStream.service');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -213,9 +214,28 @@ const startServer = () => {
     logger.info('[WebSocket] New media stream connection');
     handleMediaStreamConnection(ws, req);
   });
-  
+
   wss.on('error', (error) => {
     logger.error(`[WebSocket] Server error: ${error.message}`);
+  });
+
+  // Create WebSocket server for live call monitoring
+  const liveCallsWss = new WebSocketServer({
+    server,
+    path: '/live-calls',
+  });
+
+  // Handle WebSocket connections for live call monitoring dashboard
+  liveCallsWss.on('connection', (ws, req) => {
+    // Extract tenant_id from query params for filtering
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const tenantId = url.searchParams.get('tenant_id');
+    logger.info(`[WebSocket] New live calls client${tenantId ? ` (tenant: ${tenantId})` : ''}`);
+    liveCallStream.addClient(ws, tenantId);
+  });
+
+  liveCallsWss.on('error', (error) => {
+    logger.error(`[WebSocket] Live calls server error: ${error.message}`);
   });
   
   // Start the server
@@ -224,30 +244,83 @@ const startServer = () => {
     logger.info(`Environment: ${env.NODE_ENV}`);
     logger.info(`Health check: http://localhost:${env.PORT}/health`);
     logger.info(`WebSocket media stream: ws://localhost:${env.PORT}/media-stream`);
+    logger.info(`WebSocket live calls: ws://localhost:${env.PORT}/live-calls`);
   });
 
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    logger.info('SIGTERM signal received: closing HTTP server');
-    wss.close(() => {
-      logger.info('WebSocket server closed');
-    });
-    server.close(() => {
-      logger.info('HTTP server closed');
-      process.exit(0);
-    });
-  });
+  // Graceful shutdown configuration
+  const SHUTDOWN_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes max wait for calls
+  const SHUTDOWN_POLL_INTERVAL_MS = 5000; // Check every 5 seconds
+  let isShuttingDown = false;
 
-  process.on('SIGINT', () => {
-    logger.info('SIGINT signal received: closing HTTP server');
+  /**
+   * Graceful shutdown handler
+   * Waits for active calls to complete before closing
+   * @param {string} signal - The signal that triggered shutdown
+   */
+  const gracefulShutdown = async (signal) => {
+    if (isShuttingDown) {
+      logger.info(`[Shutdown] Already shutting down, ignoring ${signal}`);
+      return;
+    }
+    isShuttingDown = true;
+
+    logger.info(`[Shutdown] ${signal} received: initiating graceful shutdown`);
+
+    // Stop accepting new connections
     wss.close(() => {
-      logger.info('WebSocket server closed');
+      logger.info('[Shutdown] Media stream WebSocket server closed to new connections');
     });
+
+    liveCallsWss.close(() => {
+      logger.info('[Shutdown] Live calls WebSocket server closed');
+    });
+
+    // Close all live call stream clients
+    liveCallStream.closeAllClients();
+
+    // Check for active calls
+    const initialCount = getActiveStreamCount();
+    if (initialCount > 0) {
+      logger.info(`[Shutdown] Waiting for ${initialCount} active call(s) to complete...`);
+
+      const startTime = Date.now();
+
+      // Wait for active calls to complete (max 5 minutes)
+      while (getActiveStreamCount() > 0) {
+        const elapsed = Date.now() - startTime;
+
+        if (elapsed >= SHUTDOWN_TIMEOUT_MS) {
+          const remaining = getActiveStreamCount();
+          logger.warn(`[Shutdown] Timeout reached. Force-closing ${remaining} active call(s)`);
+          forceCloseAllStreams();
+          break;
+        }
+
+        const remaining = getActiveStreamCount();
+        const timeLeft = Math.round((SHUTDOWN_TIMEOUT_MS - elapsed) / 1000);
+        logger.info(`[Shutdown] ${remaining} active call(s) remaining. Timeout in ${timeLeft}s`);
+
+        // Wait before checking again
+        await new Promise(resolve => setTimeout(resolve, SHUTDOWN_POLL_INTERVAL_MS));
+      }
+    }
+
+    logger.info('[Shutdown] All calls completed. Closing HTTP server...');
+
     server.close(() => {
-      logger.info('HTTP server closed');
+      logger.info('[Shutdown] HTTP server closed. Goodbye!');
       process.exit(0);
     });
-  });
+
+    // Force exit if server.close hangs
+    setTimeout(() => {
+      logger.error('[Shutdown] Forced exit after server.close timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
   return server;
 };

@@ -12,6 +12,16 @@ const {
   CALL_DIRECTION,
   CALL_STATUS,
 } = require('./callLog.model');
+const {
+  SmsConsent,
+  CONSENT_STATUS,
+} = require('./smsConsent.model');
+const {
+  SmsMessage,
+  MESSAGE_DIRECTION,
+  MESSAGE_STATUS,
+  MESSAGE_INTENT,
+} = require('./smsMessage.model');
 
 module.exports = {
   telephonyRoutes,
@@ -22,4 +32,10 @@ module.exports = {
   CallLog,
   CALL_DIRECTION,
   CALL_STATUS,
+  SmsConsent,
+  CONSENT_STATUS,
+  SmsMessage,
+  MESSAGE_DIRECTION,
+  MESSAGE_STATUS,
+  MESSAGE_INTENT,
 };

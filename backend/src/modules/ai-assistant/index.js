@@ -17,12 +17,23 @@ const {
   handleMediaStreamConnection,
   getActiveStreamCount,
   getActiveStream,
+  getAllActiveStreams,
+  forceCloseStream,
+  forceCloseAllStreams,
 } = require('./media-stream.handler');
 const {
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,
 } = require('./ai-provider.interface');
+const {
+  Lead,
+  LEAD_QUALITY,
+  LEAD_SOURCE,
+  CONTACT_PREFERENCE,
+} = require('./lead.model');
+const leadExtractionService = require('./leadExtraction.service');
+const callSummaryService = require('./callSummary.service');
 
 module.exports = {
   aiRoutes,
@@ -39,7 +50,16 @@ module.exports = {
   handleMediaStreamConnection,
   getActiveStreamCount,
   getActiveStream,
+  getAllActiveStreams,
+  forceCloseStream,
+  forceCloseAllStreams,
   AIProviderInterface,
   INTENT_TYPES,
   ACTION_TYPES,
+  Lead,
+  LEAD_QUALITY,
+  LEAD_SOURCE,
+  CONTACT_PREFERENCE,
+  leadExtractionService,
+  callSummaryService,
 };
