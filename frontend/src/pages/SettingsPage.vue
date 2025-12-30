@@ -184,6 +184,24 @@ onMounted(async () => {
 
     <Message v-if="successMessage" severity="success" class="mb-6">{{ successMessage }}</Message>
 
+    <!-- Phone Forwarding Link -->
+    <Card class="mb-6 cursor-pointer hover:shadow-md transition-shadow" @click="router.push('/app/phone-forwarding')">
+      <template #content>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="bg-violet-100 p-3 rounded-lg">
+              <i class="pi pi-phone text-xl text-violet-600"></i>
+            </div>
+            <div>
+              <h3 class="font-medium text-gray-900">Phone Forwarding Setup</h3>
+              <p class="text-sm text-gray-600">View instructions to forward calls to your Criton.AI number</p>
+            </div>
+          </div>
+          <i class="pi pi-chevron-right text-gray-400"></i>
+        </div>
+      </template>
+    </Card>
+
     <TabView>
       <!-- Business Profile Tab -->
       <TabPanel value="0" header="Business Profile">
