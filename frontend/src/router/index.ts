@@ -22,6 +22,7 @@ const AppointmentsPage = () => import('@/pages/AppointmentsPage.vue')
 const BillingPage = () => import('@/pages/BillingPage.vue')
 const ReportsPage = () => import('@/pages/ReportsPage.vue')
 const SettingsPage = () => import('@/pages/SettingsPage.vue')
+const PhoneForwardingPage = () => import('@/pages/PhoneForwardingPage.vue')
 
 // Public Layout
 const PublicLayout = () => import('@/layouts/PublicLayout.vue')
@@ -128,6 +129,11 @@ const routes: RouteRecordRaw[] = [
         path: 'settings',
         name: 'settings',
         component: SettingsPage
+      },
+      {
+        path: 'phone-forwarding',
+        name: 'phone-forwarding',
+        component: PhoneForwardingPage
       }
     ]
   },

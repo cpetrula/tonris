@@ -153,6 +153,31 @@ onMounted(async () => {
       <p class="text-red-800 dark:text-red-300">{{ error }}</p>
     </div>
 
+    <!-- Phone Forwarding Setup Banner -->
+    <Card class="mb-6 bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200">
+      <template #content>
+        <div class="flex items-center justify-between">
+          <div class="flex items-start gap-4">
+            <div class="bg-violet-100 p-3 rounded-lg">
+              <i class="pi pi-phone text-2xl text-violet-600"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900">Set Up Call Forwarding</h3>
+              <p class="text-gray-600 text-sm mt-1">
+                Forward calls from your business phone to Criton.AI so our AI receptionist can handle them.
+              </p>
+            </div>
+          </div>
+          <Button
+            label="View Instructions"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            @click="navigateTo('/app/phone-forwarding')"
+          />
+        </div>
+      </template>
+    </Card>
+
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <Card 

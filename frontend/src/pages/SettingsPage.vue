@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -13,6 +14,7 @@ import { useToast } from 'primevue/usetoast'
 import api from '@/services/api'
 
 const toast = useToast()
+const router = useRouter()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -199,7 +201,26 @@ onMounted(() => {
       <i class="pi pi-spin pi-spinner text-4xl text-gray-400"></i>
     </div>
 
-    <TabView v-else>
+    <template v-else>
+      <!-- Phone Forwarding Link -->
+      <Card class="mb-6 cursor-pointer hover:shadow-md transition-shadow" @click="router.push('/app/phone-forwarding')">
+        <template #content>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="bg-violet-100 p-3 rounded-lg">
+                <i class="pi pi-phone text-xl text-violet-600"></i>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-900">Phone Forwarding Setup</h3>
+                <p class="text-sm text-gray-600">View instructions to forward calls to your Criton.AI number</p>
+              </div>
+            </div>
+            <i class="pi pi-chevron-right text-gray-400"></i>
+          </div>
+        </template>
+      </Card>
+
+      <TabView>
       <!-- Business Profile Tab -->
       <TabPanel value="0" header="Business Profile">
         <Card class="shadow-sm">
@@ -462,5 +483,6 @@ onMounted(() => {
         </Card>
       </TabPanel>
     </TabView>
+    </template>
   </div>
 </template>

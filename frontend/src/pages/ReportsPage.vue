@@ -141,16 +141,18 @@ async function fetchCallLogs() {
   try {
     const response = await api.get('/api/telephony/call-logs')
     if (response.data.success && response.data.data) {
-      callLogs.value = response.data.data.map((log: any) => ({
+      // Backend returns { logs: [...], total, limit, offset }
+      const logs = response.data.data.logs || response.data.data
+      callLogs.value = (Array.isArray(logs) ? logs : []).map((log: any) => ({
         id: log.id,
         phoneNumber: log.fromNumber || log.toNumber || 'Unknown',
-        callerName: log.callerName || 'Unknown',
+        callerName: log.metadata?.callerName || 'Unknown',
         date: new Date(log.createdAt),
         duration: log.duration || 0,
         outcome: mapCallStatus(log.status),
-        notes: log.notes || ''
+        notes: log.transcription || ''
       }))
-      
+
       // Calculate overview stats from call logs
       calculateOverviewStats()
     }
@@ -163,8 +165,11 @@ async function fetchAppointmentStats() {
   try {
     const response = await api.get('/api/appointments')
     if (response.data.success && response.data.data) {
-      calculateAppointmentStats(response.data.data)
-      calculateTopServices(response.data.data)
+      // Backend returns { appointments: [...], total, limit, offset }
+      const appointments = response.data.data.appointments || response.data.data
+      const appointmentsArray = Array.isArray(appointments) ? appointments : []
+      calculateAppointmentStats(appointmentsArray)
+      calculateTopServices(appointmentsArray)
     }
   } catch (err) {
     console.error('Error fetching appointment stats:', err)
@@ -173,12 +178,14 @@ async function fetchAppointmentStats() {
 
 function mapCallStatus(status: string): CallLog['outcome'] {
   const statusMap: Record<string, CallLog['outcome']> = {
-    'completed': 'appointment_booked',
-    'in-progress': 'inquiry',
-    'busy': 'missed',
-    'no-answer': 'missed',
-    'failed': 'missed',
-    'voicemail': 'voicemail'
+    'completed': 'inquiry',      // Completed calls are inquiries by default
+    'in-progress': 'inquiry',    // In-progress calls
+    'busy': 'missed',            // Caller got busy signal
+    'no-answer': 'missed',       // No answer
+    'canceled': 'missed',        // Call was canceled
+    'failed': 'missed',          // Call failed
+    'initiated': 'inquiry',      // Call initiated
+    'ringing': 'inquiry'         // Call ringing
   }
   return statusMap[status] || 'inquiry'
 }
@@ -220,23 +227,24 @@ function calculateOverviewStats() {
 function calculateAppointmentStats(appointments: any[]) {
   // Group by week
   const weeklyStats: Record<string, { booked: number; completed: number; cancelled: number; noShow: number }> = {}
-  
+
   appointments.forEach(apt => {
     const date = new Date(apt.startTime)
     const weekStart = new Date(date)
     weekStart.setDate(date.getDate() - date.getDay())
     const weekKey = weekStart.toISOString().split('T')[0]!
-    
+
     if (!weeklyStats[weekKey]) {
       weeklyStats[weekKey] = { booked: 0, completed: 0, cancelled: 0, noShow: 0 }
     }
-    
+
     weeklyStats[weekKey]!.booked++
+    // Backend uses: scheduled, confirmed, in_progress, completed, cancelled, no_show
     if (apt.status === 'completed') weeklyStats[weekKey]!.completed++
     if (apt.status === 'cancelled') weeklyStats[weekKey]!.cancelled++
-    if (apt.status === 'no-show') weeklyStats[weekKey]!.noShow++
+    if (apt.status === 'no_show') weeklyStats[weekKey]!.noShow++
   })
-  
+
   appointmentStats.value = Object.entries(weeklyStats)
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-4) // Last 4 weeks

@@ -8,6 +8,8 @@ const appointmentService = require('./appointment.service');
 const availabilityService = require('./availability.service');
 const appointmentController = require('./appointment.controller');
 const { Appointment, APPOINTMENT_STATUS, CANCELLATION_REASONS } = require('./appointment.model');
+const { WaitingList, WAITING_STATUS } = require('./waitingList.model');
+const waitingListService = require('./waitingList.service');
 
 module.exports = {
   appointmentRoutes,
@@ -18,4 +20,7 @@ module.exports = {
   Appointment,
   APPOINTMENT_STATUS,
   CANCELLATION_REASONS,
+  WaitingList,
+  WAITING_STATUS,
+  waitingListService,
 };
