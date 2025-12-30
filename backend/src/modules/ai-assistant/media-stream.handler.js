@@ -6,6 +6,7 @@ const WebSocket = require('ws');
 const { URL } = require('url');
 const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
+const { liveCallStream } = require('../../services/liveCallStream.service');
 
 /**
  * Active stream connections map
@@ -207,10 +208,22 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         break;
 
       case 'agent_response':
+        // Broadcast agent transcript to live call clients
+        if (message.agent_response_event?.response) {
+          liveCallStream.transcriptUpdate(callSid, 'assistant', message.agent_response_event.response);
+        } else if (message.agent_response) {
+          liveCallStream.transcriptUpdate(callSid, 'assistant', message.agent_response);
+        }
         logger.debug(`[MediaStream] Agent response for call ${callSid}`);
         break;
 
       case 'user_transcript':
+        // Broadcast user transcript to live call clients
+        if (message.user_transcript_event?.user_transcript) {
+          liveCallStream.transcriptUpdate(callSid, 'user', message.user_transcript_event.user_transcript);
+        } else if (message.user_transcript) {
+          liveCallStream.transcriptUpdate(callSid, 'user', message.user_transcript);
+        }
         logger.debug(`[MediaStream] User transcript for call ${callSid}`);
         break;
       
@@ -252,11 +265,22 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
           logger.info(`[MediaStream] Stream started: ${streamSid}, call: ${callSid}`);
 
           // Store the active stream
+          const streamStartTime = new Date();
           activeStreams.set(streamSid, {
             twilioWs,
             callSid,
             tenantId,
-            startTime: new Date(),
+            startTime: streamStartTime,
+          });
+
+          // Notify live call stream clients
+          liveCallStream.callStarted({
+            callSid,
+            callerNumber: customParameters.caller_number || customParameters.from,
+            tenantId,
+            tenantName: customParameters.tenant_name || customParameters.business_name,
+            agentName: customParameters.agent_name || 'AI Assistant',
+            startTime: streamStartTime,
           });
 
           // Initialize ElevenLabs connection when stream starts
@@ -275,6 +299,15 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
 
         case 'stop':
           logger.info(`[MediaStream] Stream stopped: ${streamSid}`);
+          // Calculate call duration
+          {
+            const streamInfo = activeStreams.get(streamSid);
+            if (streamInfo && streamInfo.startTime) {
+              const duration = Math.round((new Date() - streamInfo.startTime) / 1000);
+              // Notify live call stream clients
+              liveCallStream.callEnded(callSid, duration);
+            }
+          }
           // Clean up ElevenLabs connection
           if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
             elevenLabsWs.close();

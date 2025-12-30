@@ -20,6 +20,7 @@ const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, servic
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
 const { aiController, handleMediaStreamConnection, getActiveStreamCount, forceCloseAllStreams } = require('./modules/ai-assistant');
+const { liveCallStream } = require('./services/liveCallStream.service');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -213,9 +214,28 @@ const startServer = () => {
     logger.info('[WebSocket] New media stream connection');
     handleMediaStreamConnection(ws, req);
   });
-  
+
   wss.on('error', (error) => {
     logger.error(`[WebSocket] Server error: ${error.message}`);
+  });
+
+  // Create WebSocket server for live call monitoring
+  const liveCallsWss = new WebSocketServer({
+    server,
+    path: '/live-calls',
+  });
+
+  // Handle WebSocket connections for live call monitoring dashboard
+  liveCallsWss.on('connection', (ws, req) => {
+    // Extract tenant_id from query params for filtering
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const tenantId = url.searchParams.get('tenant_id');
+    logger.info(`[WebSocket] New live calls client${tenantId ? ` (tenant: ${tenantId})` : ''}`);
+    liveCallStream.addClient(ws, tenantId);
+  });
+
+  liveCallsWss.on('error', (error) => {
+    logger.error(`[WebSocket] Live calls server error: ${error.message}`);
   });
   
   // Start the server
@@ -224,6 +244,7 @@ const startServer = () => {
     logger.info(`Environment: ${env.NODE_ENV}`);
     logger.info(`Health check: http://localhost:${env.PORT}/health`);
     logger.info(`WebSocket media stream: ws://localhost:${env.PORT}/media-stream`);
+    logger.info(`WebSocket live calls: ws://localhost:${env.PORT}/live-calls`);
   });
 
   // Graceful shutdown configuration
@@ -247,8 +268,15 @@ const startServer = () => {
 
     // Stop accepting new connections
     wss.close(() => {
-      logger.info('[Shutdown] WebSocket server closed to new connections');
+      logger.info('[Shutdown] Media stream WebSocket server closed to new connections');
     });
+
+    liveCallsWss.close(() => {
+      logger.info('[Shutdown] Live calls WebSocket server closed');
+    });
+
+    // Close all live call stream clients
+    liveCallStream.closeAllClients();
 
     // Check for active calls
     const initialCount = getActiveStreamCount();
