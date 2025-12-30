@@ -30,7 +30,10 @@ const adminLimiter = rateLimit({
  * Admin routes - all require admin password authentication
  */
 
-// GET /api/admin/clients - Get all clients (tenants)
+// GET /api/admin/clients - Get all clients (tenants) with usage metrics
 router.get('/clients', adminLimiter, adminAuthMiddleware, adminController.getClients);
+
+// GET /api/admin/clients/:id/usage - Get detailed usage for a specific client
+router.get('/clients/:id/usage', adminLimiter, adminAuthMiddleware, adminController.getClientUsage);
 
 module.exports = router;
