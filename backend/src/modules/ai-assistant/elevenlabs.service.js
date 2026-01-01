@@ -290,6 +290,13 @@ class ElevenLabsService extends AIProviderInterface {
 
   /**
    * Import a Twilio phone number into ElevenLabs
+   * @deprecated This method is deprecated. Use backend webhook routing instead.
+   * Importing phone numbers directly to ElevenLabs creates a direct Twilio → ElevenLabs
+   * connection which bypasses our backend. The preferred method is to configure Twilio
+   * webhooks to point to our backend at /api/webhooks/twilio/elevenlabs, which then
+   * establishes a WebSocket connection to ElevenLabs. This provides better security,
+   * monitoring, and flexibility.
+   * 
    * @param {Object} params - Import parameters
    * @param {string} params.phoneNumber - The phone number to import (E.164 format)
    * @param {string} params.label - Label for the phone number (business name)

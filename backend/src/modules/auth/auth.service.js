@@ -410,7 +410,6 @@ const register = async ({
   // Provision Twilio phone number for the new tenant
   let twilioPhoneNumber = null;
   let twilioPhoneNumberSid = null;
-  let elevenlabsPhoneNumberId = null;
   
   try {
     // Extract area code from contact phone if provided
@@ -434,42 +433,32 @@ const register = async ({
     
     logger.info(`Twilio phone number ${twilioPhoneNumber} provisioned for tenant ${tenant.id}`);
 
-    // Import phone number to ElevenLabs
-    try {
-      // Get agent_id from business_types table (reuse the previously fetched businessType)
-      let agentId = null;
-      if (businessType && businessType.agentId) {
-        agentId = businessType.agentId;
-        logger.info(`Using agent ID ${agentId} from business type ${businessType.businessType}`);
-      } else if (businessType) {
-        logger.warn(`Business type ${businessType.businessType} has no agent ID configured, will skip agent assignment`);
-      }
-
-      // Import to ElevenLabs
-      // Note: Twilio credentials are shared with ElevenLabs to allow them to manage the phone number
-      const elevenlabsService = getElevenLabsService();
-      const importResult = await elevenlabsService.importPhoneNumber({
-        phoneNumber: twilioPhoneNumber,
-        label: businessName,
-        agentId: agentId,
-        twilioAccountSid: env.TWILIO_ACCOUNT_SID,
-        twilioAuthToken: env.TWILIO_AUTH_TOKEN,
-      });
-
-      elevenlabsPhoneNumberId = importResult.phoneNumberId;
-      logger.info(`Phone number ${twilioPhoneNumber} imported to ElevenLabs with ID: ${elevenlabsPhoneNumberId}`);
-    } catch (error) {
-      // Log the error but don't fail the registration
-      logger.error(`Failed to import phone number to ElevenLabs for tenant ${tenant.id}: ${error.message}`);
-      logger.warn('Registration will continue without ElevenLabs phone import');
+    // Store agent_id from business type for later use in webhook routing
+    // Note: Phone numbers are NOT imported directly to ElevenLabs
+    // Instead, Twilio webhooks route through our backend, which then connects to ElevenLabs
+    // This provides better security, monitoring, and flexibility
+    let agentId = null;
+    if (businessType && businessType.agentId) {
+      agentId = businessType.agentId;
+      logger.info(`Agent ID ${agentId} from business type ${businessType.businessType} will be used for AI calls`);
+    } else if (businessType) {
+      logger.info(`Business type ${businessType.businessType} has no agent ID configured, will use default agent`);
     }
     
-    // Update tenant with the provisioned phone number and SIDs
-    await tenantService.updateTenant(tenant.id, {
+    // Update tenant with the provisioned phone number, SID, and agent configuration
+    const updateData = {
       twilioPhoneNumber,
       twilioPhoneNumberSid,
-      elevenlabsPhoneNumberId,
-    });
+    };
+    
+    // Store agent_id in tenant settings for webhook routing
+    if (agentId) {
+      updateData.settings = {
+        elevenLabsAgentId: agentId,
+      };
+    }
+    
+    await tenantService.updateTenant(tenant.id, updateData);
     
   } catch (error) {
     // Log the error but don't fail the registration

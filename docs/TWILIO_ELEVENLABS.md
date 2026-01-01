@@ -1,17 +1,34 @@
 # Twilio to ElevenLabs Integration
 
-This document explains how to set up and use the Twilio to ElevenLabs integration in the TONRIS platform. This integration allows incoming phone calls to be connected directly to an ElevenLabs Conversational AI agent, enabling natural voice interactions with customers.
+This document explains how to set up and use the Twilio to ElevenLabs integration in the TONRIS platform. This integration allows incoming phone calls to be connected to an ElevenLabs Conversational AI agent through our backend, enabling natural voice interactions with customers while maintaining security and control.
+
+## Quick Start
+
+**For detailed webhook configuration instructions, see [WEBHOOK_CONFIGURATION.md](./WEBHOOK_CONFIGURATION.md).**
+
+### Setup Checklist
+
+- [ ] Configure environment variables (API keys, credentials)
+- [ ] Set up ElevenLabs agent and voice
+- [ ] Configure Twilio webhook to point to TONRIS backend
+- [ ] Configure ElevenLabs webhooks to point to TONRIS backend
+- [ ] Test with a phone call
 
 ## Overview
 
-The integration creates a bridge between Twilio (telephony provider) and ElevenLabs (conversational AI provider), allowing:
+The integration creates a secure bridge between Twilio (telephony provider) and ElevenLabs (conversational AI provider) through the TONRIS backend, allowing:
 
 - Incoming phone calls to be handled by an AI voice agent
 - Real-time voice conversations with natural speech synthesis
 - Access to tenant-specific data (services, availability, appointments) during conversations
 - Automatic appointment booking, cancellation, and information lookup
+- Full monitoring and logging of all calls through the backend
 
 ## Architecture
+
+**Recommended Workflow: Backend-First Routing**
+
+All calls are routed through the TONRIS backend for security, monitoring, and control.
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -23,19 +40,39 @@ The integration creates a bridge between Twilio (telephony provider) and ElevenL
                                  │   with <Stream>       │
                                  │<──────────────────────│
                                  │                       │
-                                 │                       │
                         ┌────────▼────────┐              │
                         │   WebSocket     │              │
-                        │   Connection    │              │
+                        │   Media Stream  │              │
+                        │   (Backend)     │              │
                         └────────┬────────┘              │
-                                 │                       │
                                  │                       │
                         ┌────────▼────────┐     ┌────────▼────────┐
                         │   ElevenLabs    │     │   Tool Calls    │
                         │   Agent API     │────>│   (Services,    │
-                        │                 │     │   Availability) │
+                        │   (WebSocket)   │     │   Availability) │
                         └─────────────────┘     └─────────────────┘
 ```
+
+### Call Flow Details
+
+1. **Customer calls** Twilio phone number
+2. **Twilio webhook** sends call data to TONRIS backend at `/api/webhooks/twilio/elevenlabs`
+3. **Backend validates** tenant and configuration
+4. **Backend generates TwiML** with WebSocket URL pointing back to backend at `/media-stream`
+5. **Twilio establishes WebSocket** connection to backend
+6. **Backend bridges** audio between Twilio and ElevenLabs via WebSocket
+7. **ElevenLabs processes** conversation and makes tool calls back to backend as needed
+
+### Security Benefits
+
+This architecture provides several security advantages:
+
+- **Centralized Control**: All calls are routed through your backend first
+- **Authentication**: Backend validates requests before connecting to ElevenLabs
+- **Monitoring**: Full visibility into all calls and conversations
+- **Tenant Isolation**: Backend ensures proper tenant data isolation
+- **Rate Limiting**: Backend can implement rate limiting and abuse prevention
+- **Audit Trail**: Complete logging of all call events and AI interactions
 
 ## Prerequisites
 
@@ -149,27 +186,44 @@ Add these tools to your ElevenLabs agent to enable interaction with TONRIS servi
 
 ### 3. Twilio Webhook Configuration
 
-Configure your Twilio phone number to use the ElevenLabs webhook:
+**IMPORTANT**: Configure your Twilio phone number to route calls through the TONRIS backend first. This is the recommended and secure approach.
 
 1. Go to [Twilio Console](https://console.twilio.com)
 2. Navigate to **Phone Numbers** > **Manage** > **Active Numbers**
 3. Select your phone number
-4. Under **Voice & Fax**, set:
+4. Under **Voice & Fax**, configure:
    - **A CALL COMES IN**: Webhook
    - **URL**: `https://your-domain.com/api/webhooks/twilio/elevenlabs`
    - **HTTP Method**: POST
+5. Under **Status Callback** (optional but recommended for call tracking):
+   - **URL**: `https://your-domain.com/api/webhooks/twilio/status`
+   - **HTTP Method**: POST
 
-> **Note**: The standard voice webhook (`/api/webhooks/twilio/voice`) handles calls differently and does not automatically connect to ElevenLabs. Use the ElevenLabs-specific webhook endpoint for AI voice conversations.
+> **Critical**: Always use the `/api/webhooks/twilio/elevenlabs` endpoint as your primary webhook URL. This ensures all calls are routed through your backend first, providing security, monitoring, and proper tenant identification.
+
+> **Note**: The standard voice webhook (`/api/webhooks/twilio/voice`) is for non-AI call handling. Use the ElevenLabs-specific webhook endpoint for AI voice conversations.
+
+#### Why Backend-First Routing?
+
+Routing calls through your backend first provides:
+- **Security**: Validate and authenticate calls before connecting to ElevenLabs
+- **Flexibility**: Add custom logic, logging, or call routing as needed
+- **Monitoring**: Track all calls in your database with full context
+- **Tenant Management**: Properly identify and isolate tenant data
+- **Control**: Ability to implement rate limiting, abuse prevention, and cost controls
 
 ### 4. Tenant Configuration
 
-Each tenant must have their Twilio phone number configured to identify incoming calls. Update the tenant record with:
+Each tenant must have their Twilio phone number configured to identify incoming calls. The tenant record should include:
 
 ```javascript
 {
   "twilioPhoneNumber": "+15551234567",  // Required: Twilio phone number for this tenant
+  "twilioPhoneNumberSid": "PN123...",   // Twilio phone number SID
   "settings": {
     "elevenLabsAgentId": "tenant-specific-agent-id",  // Optional: tenant-specific agent
+    "aiGreeting": "Hello! Welcome to our business.",  // Optional: custom greeting
+    "aiTone": "professional and friendly",            // Optional: AI tone/personality
     "businessHours": {
       "monday": { "open": "09:00", "close": "17:00", "enabled": true },
       // ... other days
@@ -178,7 +232,26 @@ Each tenant must have their Twilio phone number configured to identify incoming 
 }
 ```
 
-The `twilio_phone_number` column is used to identify which tenant an incoming call belongs to when Twilio webhooks are triggered.
+**Important Fields:**
+- `twilioPhoneNumber`: Used to identify which tenant an incoming call belongs to when Twilio webhooks are triggered
+- `twilioPhoneNumberSid`: Twilio's unique identifier for the phone number
+- `settings.elevenLabsAgentId`: Optional tenant-specific ElevenLabs agent. If not set, uses the default agent from environment variables
+
+### 5. ElevenLabs Webhook Configuration
+
+Configure ElevenLabs to send webhook callbacks to your backend for conversation events:
+
+1. Log in to [ElevenLabs Dashboard](https://elevenlabs.io)
+2. Navigate to your Agent settings
+3. Under **Webhooks** section, configure:
+   - **Conversation Initiation Webhook**: `https://your-domain.com/api/webhooks/elevenlabs/conversation-initiation`
+   - **Webhook Secret**: Set a secure random string and add it to your `.env` as `ELEVENLABS_WEBHOOK_SECRET`
+
+This webhook allows your backend to provide dynamic configuration for each conversation, including:
+- Tenant-specific context and variables
+- Business hours and information
+- Custom greeting messages
+- Audio format settings for Twilio compatibility
 
 ## API Endpoints
 
