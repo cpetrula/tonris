@@ -350,8 +350,8 @@ const getUserById = async (userId, tenantId) => {
 const register = async ({ 
   email, 
   password, 
-  firstName, 
-  lastName, 
+  firstName: _firstName,  // Prefixed with _ to indicate intentionally unused
+  lastName: _lastName,     // Prefixed with _ to indicate intentionally unused
   businessTypeId, 
   contactPhone,
   businessName,
@@ -363,9 +363,7 @@ const register = async ({
 }) => {
   const tenantService = require('../tenants/tenant.service');
   const twilioService = require('../telephony/twilio.service');
-  const { getElevenLabsService } = require('../ai-assistant/elevenlabs.service');
   const { BusinessType } = require('../business-types/businessType.model');
-  const env = require('../../config/env');
 
   // Check if user already exists (globally - email is unique)
   const existingUser = await User.findOne({ where: { email } });
