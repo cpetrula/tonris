@@ -7,6 +7,7 @@ const env = require('../../config/env');
 const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
 const { Tenant } = require('../tenants/tenant.model');
+const { BusinessType } = require('../business-types/businessType.model');
 
 // Lazy-loaded service references to avoid circular dependencies
 let _availabilityService = null;
@@ -81,6 +82,44 @@ const findTenantByPhoneNumber = async (phoneNumber) => {
     return null;
   } catch (error) {
     logger.error(`Error finding tenant by phone number: ${error.message}`);
+    return null;
+  }
+};
+
+/**
+ * Get agent ID for a tenant based on their business type
+ * @param {Object} tenant - Tenant object
+ * @returns {Promise<string|null>} - Agent ID or null
+ */
+const getAgentIdForTenant = async (tenant) => {
+  try {
+    // First, check if tenant has a business_type_id
+    if (tenant.businessTypeId) {
+      // Look up the business type to get the agent_id
+      const businessType = await BusinessType.findByPk(tenant.businessTypeId);
+      
+      if (businessType && businessType.active) {
+        logger.info(`Using agent ID from business type ${businessType.businessType} for tenant ${tenant.id}`);
+        return businessType.agentId;
+      } else if (businessType && !businessType.active) {
+        logger.warn(`Business type ${businessType.businessType} is not active for tenant ${tenant.id}`);
+      } else {
+        logger.warn(`Business type not found for business_type_id ${tenant.businessTypeId} for tenant ${tenant.id}`);
+      }
+    }
+    
+    // Fallback to tenant-specific agent ID in settings/metadata for backward compatibility
+    const agentId = tenant.settings?.elevenLabsAgentId || tenant.metadata?.elevenLabsAgentId;
+    
+    if (agentId) {
+      logger.info(`Using tenant-specific agent ID for tenant ${tenant.id}`);
+      return agentId;
+    }
+    
+    logger.warn(`No agent ID found for tenant ${tenant.id}`);
+    return null;
+  } catch (error) {
+    logger.error(`Error getting agent ID for tenant ${tenant.id}: ${error.message}`);
     return null;
   }
 };
@@ -179,8 +218,8 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       };
     }
     
-    // Get the agent ID - use tenant-specific agent if configured, otherwise use default
-    const agentId = tenant.settings?.elevenLabsAgentId || tenant.metadata?.elevenLabsAgentId || env.ELEVENLABS_AGENT_ID;
+    // Get the agent ID - use business type agent if configured, otherwise use tenant-specific agent
+    const agentId = await getAgentIdForTenant(tenant);
     
     if (!agentId) {
       logger.error(`Twilio-ElevenLabs: No agent ID configured for tenant: ${tenant.id}`);
@@ -636,6 +675,7 @@ module.exports = {
   generateElevenLabsConnectTwiml,
   generateErrorTwiml,
   findTenantByPhoneNumber,
+  getAgentIdForTenant,
   buildMediaStreamUrl,
   formatAvailabilityResponse,
   formatServicesResponse,
