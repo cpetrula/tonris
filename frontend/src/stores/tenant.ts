@@ -9,6 +9,19 @@ export interface Tenant {
   plan: string
   status: 'active' | 'inactive' | 'suspended'
   twilioPhoneNumber?: string
+  contactEmail?: string
+  contactPhone?: string
+  address?: {
+    street?: string
+    city?: string
+    state?: string
+    zipCode?: string
+  }
+  metadata?: {
+    website?: string
+    description?: string
+    [key: string]: unknown
+  }
   createdAt: string
 }
 
@@ -16,7 +29,23 @@ export interface TenantSettings {
   timezone: string
   language: string
   dateFormat: string
-  features: Record<string, boolean>
+  timeFormat?: string
+  currency?: string
+  features?: Record<string, boolean>
+  notifications?: {
+    email: boolean
+    sms: boolean
+    push: boolean
+  }
+  businessHours?: {
+    monday?: { open: string; close: string; enabled: boolean }
+    tuesday?: { open: string; close: string; enabled: boolean }
+    wednesday?: { open: string; close: string; enabled: boolean }
+    thursday?: { open: string; close: string; enabled: boolean }
+    friday?: { open: string; close: string; enabled: boolean }
+    saturday?: { open: string; close: string; enabled: boolean }
+    sunday?: { open: string; close: string; enabled: boolean }
+  }
 }
 
 export const useTenantStore = defineStore('tenant', () => {
@@ -92,12 +121,13 @@ export const useTenantStore = defineStore('tenant', () => {
     }
   }
 
-  async function fetchSettings(): Promise<void> {
-    if (!currentTenant.value) return
+  async function fetchSettings(): Promise<TenantSettings | null> {
+    if (!currentTenant.value) return null
 
     try {
       const response = await api.get('/api/tenant/settings')
-      settings.value = response.data.settings
+      settings.value = response.data.data.settings
+      return settings.value
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { message?: string } } }
@@ -105,6 +135,7 @@ export const useTenantStore = defineStore('tenant', () => {
       } else {
         error.value = 'Failed to fetch settings'
       }
+      return null
     }
   }
 
@@ -117,9 +148,9 @@ export const useTenantStore = defineStore('tenant', () => {
     try {
       const response = await api.patch(
         '/api/tenant/settings',
-        newSettings
+        { settings: newSettings }
       )
-      settings.value = response.data.settings
+      settings.value = response.data.data.settings
       return true
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -127,6 +158,39 @@ export const useTenantStore = defineStore('tenant', () => {
         error.value = axiosError.response?.data?.message || 'Failed to update settings'
       } else {
         error.value = 'Failed to update settings'
+      }
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function updateTenant(updates: Partial<Tenant>): Promise<boolean> {
+    if (!currentTenant.value) return false
+
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await api.patch('/api/tenant', updates)
+      const updatedTenant = response.data.data.tenant
+      
+      // Update current tenant with new data - cast to ensure type safety
+      currentTenant.value = { ...currentTenant.value, ...updatedTenant } as Tenant
+      
+      // Update in tenants array
+      const index = tenants.value.findIndex(t => t.id === updatedTenant.id)
+      if (index !== -1) {
+        tenants.value[index] = currentTenant.value
+      }
+      
+      return true
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string } } }
+        error.value = axiosError.response?.data?.message || 'Failed to update tenant'
+      } else {
+        error.value = 'Failed to update tenant'
       }
       return false
     } finally {
@@ -161,6 +225,7 @@ export const useTenantStore = defineStore('tenant', () => {
     selectTenant,
     fetchSettings,
     updateSettings,
+    updateTenant,
     clearTenant,
     clearError
   }
