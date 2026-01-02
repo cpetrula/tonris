@@ -703,4 +703,194 @@ describe('Tenant Module', () => {
       expect(response.body.data.recentActivity).toBeDefined();
     });
   });
+
+  describe('GET /api/tenant/business-hours', () => {
+    const validToken = () => jwtUtils.generateAccessToken({
+      userId: '123',
+      email: 'test@example.com',
+      tenantId: 'test-tenant',
+    });
+
+    it('should return 401 without authentication', async () => {
+      const response = await request(app)
+        .get('/api/tenant/business-hours')
+        .set('X-Tenant-ID', 'test-tenant');
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should return business hours with valid token', async () => {
+      const mockTenantInstance = {
+        id: 'tenant-uuid-123',
+        name: 'Test Salon',
+        settings: {
+          businessHours: {
+            monday: { open: '09:00', close: '17:00', enabled: true },
+            tuesday: { open: '09:00', close: '17:00', enabled: true },
+            wednesday: { open: '09:00', close: '17:00', enabled: true },
+            thursday: { open: '09:00', close: '17:00', enabled: true },
+            friday: { open: '09:00', close: '17:00', enabled: true },
+            saturday: { open: '10:00', close: '14:00', enabled: false },
+            sunday: { open: '10:00', close: '14:00', enabled: false },
+          },
+        },
+      };
+      mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+      const response = await request(app)
+        .get('/api/tenant/business-hours')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.businessHours).toBeDefined();
+      expect(response.body.data.businessHours.monday).toEqual({ open: '09:00', close: '17:00', enabled: true });
+    });
+
+    it('should return default business hours if not set', async () => {
+      const mockTenantInstance = {
+        id: 'tenant-uuid-123',
+        name: 'Test Salon',
+        settings: {},
+      };
+      mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+      const response = await request(app)
+        .get('/api/tenant/business-hours')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.businessHours).toBeDefined();
+      expect(response.body.data.businessHours.monday).toBeDefined();
+    });
+  });
+
+  describe('PUT /api/tenant/business-hours', () => {
+    const validToken = () => jwtUtils.generateAccessToken({
+      userId: '123',
+      email: 'test@example.com',
+      tenantId: 'test-tenant',
+    });
+
+    it('should return 401 without authentication', async () => {
+      const response = await request(app)
+        .put('/api/tenant/business-hours')
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({
+          businessHours: {
+            monday: { open: '08:00', close: '18:00', enabled: true },
+          },
+        });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should return 400 when businessHours object is missing', async () => {
+      const response = await request(app)
+        .put('/api/tenant/business-hours')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should return 400 with invalid day name', async () => {
+      const mockTenantInstance = {
+        id: 'tenant-uuid-123',
+        tenantId: 'test-tenant',
+        name: 'Test Salon',
+        settings: {},
+        updateSettings: jest.fn().mockImplementation(function(newSettings) {
+          this.settings = { ...this.settings, ...newSettings };
+          return Promise.resolve(this);
+        }),
+      };
+      mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+      const response = await request(app)
+        .put('/api/tenant/business-hours')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({
+          businessHours: {
+            invalidday: { open: '08:00', close: '18:00', enabled: true },
+          },
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.code).toBe('INVALID_DAY');
+    });
+
+    it('should return 400 with invalid time format', async () => {
+      const mockTenantInstance = {
+        id: 'tenant-uuid-123',
+        tenantId: 'test-tenant',
+        name: 'Test Salon',
+        settings: {},
+        updateSettings: jest.fn().mockImplementation(function(newSettings) {
+          this.settings = { ...this.settings, ...newSettings };
+          return Promise.resolve(this);
+        }),
+      };
+      mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+      const response = await request(app)
+        .put('/api/tenant/business-hours')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({
+          businessHours: {
+            monday: { open: '25:00', close: '18:00', enabled: true },
+          },
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.code).toBe('INVALID_TIME_FORMAT');
+    });
+
+    it('should update business hours successfully', async () => {
+      const mockTenantInstance = {
+        id: 'tenant-uuid-123',
+        tenantId: 'test-tenant',
+        name: 'Test Salon',
+        settings: {
+          businessHours: {
+            monday: { open: '09:00', close: '17:00', enabled: true },
+          },
+        },
+        updateSettings: jest.fn().mockImplementation(function(newSettings) {
+          this.settings = { ...this.settings, ...newSettings };
+          return Promise.resolve(this);
+        }),
+      };
+      mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+      const newBusinessHours = {
+        monday: { open: '08:00', close: '18:00', enabled: true },
+        tuesday: { open: '08:00', close: '18:00', enabled: true },
+        wednesday: { open: '08:00', close: '18:00', enabled: true },
+        thursday: { open: '08:00', close: '18:00', enabled: true },
+        friday: { open: '08:00', close: '16:00', enabled: true },
+        saturday: { open: '09:00', close: '13:00', enabled: true },
+        sunday: { open: '10:00', close: '14:00', enabled: false },
+      };
+
+      const response = await request(app)
+        .put('/api/tenant/business-hours')
+        .set('Authorization', `Bearer ${validToken()}`)
+        .set('X-Tenant-ID', 'test-tenant')
+        .send({ businessHours: newBusinessHours });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(mockTenantInstance.updateSettings).toHaveBeenCalled();
+      expect(response.body.data.businessHours).toBeDefined();
+    });
+  });
 });

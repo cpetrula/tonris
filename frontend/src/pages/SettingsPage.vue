@@ -193,8 +193,8 @@ async function saveBusinessHours() {
       }
     }
 
-    // Call the backend API to update settings
-    await tenantStore.updateSettings({ businessHours: backendHours })
+    // Call the dedicated business hours endpoint
+    await tenantStore.updateBusinessHours(backendHours)
     
     toast.add({ severity: 'success', summary: 'Success', detail: 'Business hours saved', life: 3000 })
   } catch (error) {
@@ -270,17 +270,17 @@ onMounted(async () => {
       businessProfile.value.description = tenant.metadata?.description || ''
     }
 
-    // Fetch tenant settings (includes business hours)
-    const settings = await tenantStore.fetchSettings()
+    // Fetch business hours using dedicated endpoint
+    const hours = await tenantStore.fetchBusinessHours()
     
-    if (settings?.businessHours) {
+    if (hours) {
       // Convert backend format (24h time, enabled flag) to frontend format (12h time, closed flag)
-      for (const [day, hours] of Object.entries(settings.businessHours)) {
+      for (const [day, dayHours] of Object.entries(hours)) {
         if (businessHours.value[day as keyof typeof businessHours.value]) {
           businessHours.value[day as keyof typeof businessHours.value] = {
-            open: convert24hTo12h(hours.open),
-            close: convert24hTo12h(hours.close),
-            closed: !hours.enabled
+            open: convert24hTo12h(dayHours.open),
+            close: convert24hTo12h(dayHours.close),
+            closed: !dayHours.enabled
           }
         }
       }

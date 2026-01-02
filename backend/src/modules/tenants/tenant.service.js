@@ -150,6 +150,86 @@ const updateTenantSettings = async (id, settings) => {
 };
 
 /**
+ * Get business hours for a tenant
+ * @param {string} id - Tenant UUID
+ * @returns {Promise<Object>} - Business hours
+ */
+const getBusinessHours = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+  
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  // Return business hours from settings, or default if not set
+  const businessHours = tenant.settings?.businessHours || Tenant.generateDefaultSettings().businessHours;
+
+  return {
+    id: tenant.id,
+    businessHours,
+  };
+};
+
+/**
+ * Update business hours for a tenant
+ * @param {string} id - Tenant UUID
+ * @param {Object} businessHours - Business hours object with days and times
+ * @returns {Promise<Object>} - Updated business hours
+ */
+const updateBusinessHours = async (id, businessHours) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+  
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  // Validate business hours structure
+  if (!businessHours || typeof businessHours !== 'object') {
+    throw new AppError('Business hours must be an object', 400, 'INVALID_BUSINESS_HOURS');
+  }
+
+  // Validate each day's hours
+  const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  for (const day of Object.keys(businessHours)) {
+    if (!validDays.includes(day)) {
+      throw new AppError(`Invalid day: ${day}`, 400, 'INVALID_DAY');
+    }
+
+    const hours = businessHours[day];
+    if (typeof hours !== 'object' || 
+        typeof hours.open !== 'string' || 
+        typeof hours.close !== 'string' || 
+        typeof hours.enabled !== 'boolean') {
+      throw new AppError(
+        `Invalid hours format for ${day}. Expected { open: string, close: string, enabled: boolean }`,
+        400,
+        'INVALID_HOURS_FORMAT'
+      );
+    }
+
+    // Validate time format (HH:MM)
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (hours.enabled && (!timeRegex.test(hours.open) || !timeRegex.test(hours.close))) {
+      throw new AppError(
+        `Invalid time format for ${day}. Expected HH:MM format`,
+        400,
+        'INVALID_TIME_FORMAT'
+      );
+    }
+  }
+
+  // Update business hours in settings
+  await tenant.updateSettings({ businessHours });
+
+  logger.info(`Business hours updated for tenant: ${id}`);
+
+  return {
+    id: tenant.id,
+    businessHours: tenant.settings.businessHours,
+  };
+};
+
+/**
  * Update tenant status
  * @param {string} id - Tenant UUID
  * @param {string} newStatus - New status
@@ -462,6 +542,8 @@ module.exports = {
   getTenantByPhoneNumber,
   getTenantSettings,
   updateTenantSettings,
+  getBusinessHours,
+  updateBusinessHours,
   updateTenantStatus,
   activateTenant,
   getCurrentUserAndTenant,

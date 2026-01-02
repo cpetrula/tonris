@@ -165,6 +165,61 @@ export const useTenantStore = defineStore('tenant', () => {
     }
   }
 
+  async function fetchBusinessHours(): Promise<TenantSettings['businessHours'] | null> {
+    if (!currentTenant.value) return null
+
+    try {
+      const response = await api.get('/api/tenant/business-hours')
+      const businessHours = response.data.data.businessHours
+      
+      // Update settings with business hours
+      if (settings.value) {
+        settings.value.businessHours = businessHours
+      }
+      
+      return businessHours
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string } } }
+        error.value = axiosError.response?.data?.message || 'Failed to fetch business hours'
+      } else {
+        error.value = 'Failed to fetch business hours'
+      }
+      return null
+    }
+  }
+
+  async function updateBusinessHours(businessHours: TenantSettings['businessHours']): Promise<boolean> {
+    if (!currentTenant.value) return false
+
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await api.put(
+        '/api/tenant/business-hours',
+        { businessHours }
+      )
+      
+      // Update settings with new business hours
+      if (settings.value) {
+        settings.value.businessHours = response.data.data.businessHours
+      }
+      
+      return true
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string } } }
+        error.value = axiosError.response?.data?.message || 'Failed to update business hours'
+      } else {
+        error.value = 'Failed to update business hours'
+      }
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function updateTenant(updates: Partial<Tenant>): Promise<boolean> {
     if (!currentTenant.value) return false
 
@@ -225,6 +280,8 @@ export const useTenantStore = defineStore('tenant', () => {
     selectTenant,
     fetchSettings,
     updateSettings,
+    fetchBusinessHours,
+    updateBusinessHours,
     updateTenant,
     clearTenant,
     clearError
