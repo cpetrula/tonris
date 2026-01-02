@@ -65,8 +65,9 @@ function formatDuration(minutes: number): string {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
 }
 
-function formatPrice(price: number): string {
-  return `$${price.toFixed(2)}`
+function formatPrice(price: number | string): string {
+  const numPrice = typeof price === 'string' ? parseFloat(price) : price
+  return `$${numPrice.toFixed(2)}`
 }
 
 function openCreateDialog() {
@@ -135,8 +136,8 @@ async function fetchServices() {
         id: svc.id,
         name: svc.name || '',
         description: svc.description || '',
-        duration: svc.duration || 30,
-        price: svc.price || 0,
+        duration: typeof svc.duration === 'string' ? parseInt(svc.duration, 10) : (svc.duration || 30),
+        price: typeof svc.price === 'string' ? parseFloat(svc.price) : (svc.price || 0),
         category: svc.category || '',
         status: svc.status || 'active'
       }))
