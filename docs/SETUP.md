@@ -232,11 +232,26 @@ OPENAI_MODEL=gpt-4
 
 ```env
 ELEVENLABS_API_KEY=your_api_key
-ELEVENLABS_AGENT_ID=your_agent_id
+# DEPRECATED: ELEVENLABS_AGENT_ID - Agent ID is now configured per business type in the database
+# ELEVENLABS_AGENT_ID=your_agent_id  # Only for backward compatibility
 ELEVENLABS_VOICE_ID=your_voice_id
 ```
 
-4. For Twilio integration, see [TWILIO_ELEVENLABS.md](./TWILIO_ELEVENLABS.md)
+4. Configure agent IDs for each business type in the `business_types` table:
+
+```sql
+-- Update business types with your ElevenLabs agent IDs
+UPDATE business_types 
+SET agent_id = 'your-salon-agent-id' 
+WHERE business_type = 'Salon / Spa';
+
+UPDATE business_types 
+SET agent_id = 'your-healthcare-agent-id' 
+WHERE business_type = 'Healthcare / Medical';
+-- etc.
+```
+
+5. For Twilio integration, see [TWILIO_ELEVENLABS.md](./TWILIO_ELEVENLABS.md)
 
 ## Project Structure
 

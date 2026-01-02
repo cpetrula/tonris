@@ -45,6 +45,8 @@ const env = {
   
   // ElevenLabs Configuration
   ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY || '',
+  // DEPRECATED: ELEVENLABS_AGENT_ID - Agent ID is now determined dynamically based on tenant's business type
+  // This is kept for backward compatibility only
   ELEVENLABS_AGENT_ID: process.env.ELEVENLABS_AGENT_ID || '',
   ELEVENLABS_VOICE_ID: process.env.ELEVENLABS_VOICE_ID || '',
   ELEVENLABS_WEBHOOK_SECRET: process.env.ELEVENLABS_WEBHOOK_SECRET || '',

@@ -17,7 +17,9 @@ class ElevenLabsService extends AIProviderInterface {
   constructor(config = {}) {
     super(config);
     this.apiKey = config.apiKey || env.ELEVENLABS_API_KEY;
-    this.agentId = config.agentId || env.ELEVENLABS_AGENT_ID;
+    // Agent ID should be passed explicitly or retrieved from business type
+    // env.ELEVENLABS_AGENT_ID is deprecated but kept for backward compatibility
+    this.agentId = config.agentId || env.ELEVENLABS_AGENT_ID || null;
     this.baseUrl = 'https://api.elevenlabs.io/v1';
     this.sessions = new Map();
     
@@ -38,7 +40,8 @@ class ElevenLabsService extends AIProviderInterface {
    * @returns {Promise<boolean>} - True if configured
    */
   async isAvailable() {
-    return !!(this.apiKey && this.agentId);
+    // Only require API key; agent ID is now determined dynamically per tenant
+    return !!this.apiKey;
   }
 
   /**

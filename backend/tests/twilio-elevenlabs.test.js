@@ -10,6 +10,12 @@ const mockTenantModel = {
   findAll: jest.fn(),
 };
 
+const mockBusinessTypeModel = {
+  findByPk: jest.fn(),
+  findAll: jest.fn(),
+  findOne: jest.fn(),
+};
+
 const mockAppointmentModel = {
   findOne: jest.fn(),
   findAll: jest.fn(),
@@ -102,6 +108,10 @@ jest.mock('../src/modules/employees/employee.model', () => ({
     EMPLOYEE: 'employee',
     CONTRACTOR: 'contractor',
   },
+}));
+
+jest.mock('../src/modules/business-types/businessType.model', () => ({
+  BusinessType: mockBusinessTypeModel,
 }));
 
 jest.mock('../src/models', () => ({
@@ -205,6 +215,8 @@ describe('Twilio-ElevenLabs Integration', () => {
 
     it('should return TwiML to connect to ElevenLabs when tenant is found by twilioPhoneNumber', async () => {
       mockTenantModel.findAll.mockResolvedValue([mockTenant]);
+      // Mock BusinessType lookup returning null (uses tenant-specific agent ID as fallback)
+      mockBusinessTypeModel.findByPk.mockResolvedValue(null);
       mockElevenLabsService.isAvailable.mockResolvedValue(true);
       mockElevenLabsService.getTwilioSignedUrl.mockResolvedValue({
         signedUrl: 'wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent-123',
@@ -240,6 +252,8 @@ describe('Twilio-ElevenLabs Integration', () => {
         metadata: { twilioPhoneNumber: '+15551234567' },
       };
       mockTenantModel.findAll.mockResolvedValue([mockTenantWithMetadata]);
+      // Mock BusinessType lookup returning null (uses tenant-specific agent ID as fallback)
+      mockBusinessTypeModel.findByPk.mockResolvedValue(null);
       mockElevenLabsService.isAvailable.mockResolvedValue(true);
       mockElevenLabsService.getTwilioSignedUrl.mockResolvedValue({
         signedUrl: 'wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent-123',
@@ -262,6 +276,44 @@ describe('Twilio-ElevenLabs Integration', () => {
       expect(response.text).toContain('Response');
       expect(response.text).toContain('Connect');
       expect(response.text).toContain('Stream');
+    });
+
+    it('should use agent ID from business type when tenant has business_type_id', async () => {
+      const mockTenantWithBusinessType = {
+        ...mockTenant,
+        businessTypeId: 'business-type-123',
+        settings: {}, // No tenant-specific agent ID
+      };
+      
+      const mockBusinessType = {
+        id: 'business-type-123',
+        businessType: 'Salon / Spa',
+        agentId: 'business-type-agent-456',
+        active: true,
+      };
+      
+      mockTenantModel.findAll.mockResolvedValue([mockTenantWithBusinessType]);
+      mockBusinessTypeModel.findByPk.mockResolvedValue(mockBusinessType);
+      mockElevenLabsService.isAvailable.mockResolvedValue(true);
+
+      const response = await request(app)
+        .post('/api/webhooks/twilio/elevenlabs')
+        .type('form')
+        .send({
+          CallSid: 'CA123456789',
+          From: '+15559876543',
+          To: '+15551234567',
+          CallStatus: 'ringing',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.type).toBe('text/xml');
+      expect(response.text).toContain('<?xml');
+      expect(response.text).toContain('Response');
+      expect(response.text).toContain('Connect');
+      expect(response.text).toContain('Stream');
+      // Verify BusinessType.findByPk was called with the correct ID
+      expect(mockBusinessTypeModel.findByPk).toHaveBeenCalledWith('business-type-123');
     });
 
     it('should return error TwiML when no tenant found', async () => {
@@ -302,6 +354,33 @@ describe('Twilio-ElevenLabs Integration', () => {
       expect(response.text).toContain('temporarily unavailable');
     });
 
+    it('should return error TwiML when no agent ID is configured', async () => {
+      const mockTenantWithoutAgent = {
+        ...mockTenant,
+        businessTypeId: null,
+        settings: {}, // No tenant-specific agent ID
+        metadata: {},
+      };
+      
+      mockTenantModel.findAll.mockResolvedValue([mockTenantWithoutAgent]);
+      mockBusinessTypeModel.findByPk.mockResolvedValue(null);
+      mockElevenLabsService.isAvailable.mockResolvedValue(true);
+
+      const response = await request(app)
+        .post('/api/webhooks/twilio/elevenlabs')
+        .type('form')
+        .send({
+          CallSid: 'CA123456789',
+          From: '+15559876543',
+          To: '+15551234567',
+          CallStatus: 'ringing',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.type).toBe('text/xml');
+      expect(response.text).toContain('not properly configured');
+    });
+
     it('should handle missing CallSid gracefully', async () => {
       mockTenantModel.findAll.mockResolvedValue([]);
 
@@ -325,7 +404,107 @@ describe('Twilio-ElevenLabs Handler Functions', () => {
     formatServicesResponse,
     formatBusinessHoursResponse,
     buildMediaStreamUrl,
+    getAgentIdForTenant,
   } = require('../src/modules/ai-assistant/twilio-elevenlabs.handler');
+
+  describe('getAgentIdForTenant', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return agent ID from business type when tenant has business_type_id', async () => {
+      const tenant = {
+        id: 'tenant-123',
+        businessTypeId: 'business-type-456',
+        settings: {},
+      };
+
+      const mockBusinessType = {
+        id: 'business-type-456',
+        businessType: 'Salon / Spa',
+        agentId: 'agent-from-business-type',
+        active: true,
+      };
+
+      mockBusinessTypeModel.findByPk.mockResolvedValue(mockBusinessType);
+
+      const agentId = await getAgentIdForTenant(tenant);
+
+      expect(agentId).toBe('agent-from-business-type');
+      expect(mockBusinessTypeModel.findByPk).toHaveBeenCalledWith('business-type-456');
+    });
+
+    it('should return null when business type is not active', async () => {
+      const tenant = {
+        id: 'tenant-123',
+        businessTypeId: 'business-type-456',
+        settings: {},
+      };
+
+      const mockBusinessType = {
+        id: 'business-type-456',
+        businessType: 'Salon / Spa',
+        agentId: 'agent-from-business-type',
+        active: false,
+      };
+
+      mockBusinessTypeModel.findByPk.mockResolvedValue(mockBusinessType);
+
+      const agentId = await getAgentIdForTenant(tenant);
+
+      expect(agentId).toBeNull();
+    });
+
+    it('should fallback to tenant-specific agent ID when no business type', async () => {
+      const tenant = {
+        id: 'tenant-123',
+        businessTypeId: null,
+        settings: {
+          elevenLabsAgentId: 'tenant-specific-agent',
+        },
+      };
+
+      mockBusinessTypeModel.findByPk.mockResolvedValue(null);
+
+      const agentId = await getAgentIdForTenant(tenant);
+
+      expect(agentId).toBe('tenant-specific-agent');
+    });
+
+    it('should use tenant settings agent ID over metadata', async () => {
+      const tenant = {
+        id: 'tenant-123',
+        businessTypeId: null,
+        settings: {
+          elevenLabsAgentId: 'settings-agent',
+        },
+        metadata: {
+          elevenLabsAgentId: 'metadata-agent',
+        },
+      };
+
+      mockBusinessTypeModel.findByPk.mockResolvedValue(null);
+
+      const agentId = await getAgentIdForTenant(tenant);
+
+      expect(agentId).toBe('settings-agent');
+    });
+
+    it('should return null when no agent ID is configured', async () => {
+      const tenant = {
+        id: 'tenant-123',
+        businessTypeId: null,
+        settings: {},
+        metadata: {},
+      };
+
+      mockBusinessTypeModel.findByPk.mockResolvedValue(null);
+
+      const agentId = await getAgentIdForTenant(tenant);
+
+      expect(agentId).toBeNull();
+    });
+  });
 
   describe('buildMediaStreamUrl', () => {
     it('should build WebSocket URL with wss protocol for HTTPS base URL', () => {

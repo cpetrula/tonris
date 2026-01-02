@@ -57,20 +57,53 @@ APP_BASE_URL=https://your-domain.com
 
 # ElevenLabs Configuration
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
-ELEVENLABS_AGENT_ID=your_agent_id
+# DEPRECATED: ELEVENLABS_AGENT_ID - Agent ID is now determined dynamically based on tenant's business type
+# ELEVENLABS_AGENT_ID=your_agent_id  # Only needed for backward compatibility
 ELEVENLABS_VOICE_ID=your_voice_id  # Optional
 ELEVENLABS_WEBHOOK_SECRET=your_webhook_secret  # Required for production webhook verification
 ```
 
-### 2. ElevenLabs Agent Setup
+### 2. Business Types Configuration
+
+**NEW**: Agent IDs are now configured per business type rather than globally. Each tenant is assigned a business type, and the system automatically selects the appropriate ElevenLabs agent based on that business type.
+
+#### Setting Up Business Types
+
+1. Business types are stored in the `business_types` table
+2. Each business type has an associated `agent_id` that specifies which ElevenLabs agent to use
+3. Tenants are assigned a `business_type_id` which links them to their business type
+
+Example business types:
+- Restaurant / Food Service → agent-food-service-123
+- Healthcare / Medical → agent-healthcare-456
+- Salon / Spa → agent-salon-789
+- Legal Services → agent-legal-012
+
+To configure business types, update the `business_types` table with your ElevenLabs agent IDs:
+
+```sql
+UPDATE business_types 
+SET agent_id = 'your-elevenlabs-agent-id' 
+WHERE business_type = 'Salon / Spa';
+```
+
+#### Agent ID Resolution Order
+
+When a call comes in, the system determines which agent to use in the following order:
+
+1. **Business Type Agent** (Recommended): If the tenant has a `business_type_id`, the agent ID from the associated business type is used
+2. **Tenant-Specific Agent** (Fallback): If no business type is configured, the system checks `tenant.settings.elevenLabsAgentId` or `tenant.metadata.elevenLabsAgentId`
+3. **Error**: If no agent ID is found through any of these methods, the call returns an error
+
+### 3. ElevenLabs Agent Setup
 
 1. Log in to your ElevenLabs account
 2. Navigate to **Conversational AI** > **Agents**
-3. Create a new agent or use an existing one
-4. Copy the **Agent ID** and add it to your environment variables
-5. Configure the agent's:
+3. Create agents for each business type you support (or use existing ones)
+4. Copy the **Agent ID** for each agent and update the `business_types` table accordingly
+5. Configure each agent's:
    - **Voice**: Select the voice for the agent
-   - **System Prompt**: Define the agent's personality and capabilities
+   - **System Prompt**: Define the agent's personality and capabilities (customize for each business type)
    - **Tools**: Add the following tools for TONRIS integration
 
 #### Recommended Agent Tools Configuration
@@ -147,7 +180,7 @@ Add these tools to your ElevenLabs agent to enable interaction with TONRIS servi
 }
 ```
 
-### 3. Twilio Webhook Configuration
+### 4. Twilio Webhook Configuration
 
 Configure your Twilio phone number to use the ElevenLabs webhook:
 
@@ -161,15 +194,19 @@ Configure your Twilio phone number to use the ElevenLabs webhook:
 
 > **Note**: The standard voice webhook (`/api/webhooks/twilio/voice`) handles calls differently and does not automatically connect to ElevenLabs. Use the ElevenLabs-specific webhook endpoint for AI voice conversations.
 
-### 4. Tenant Configuration
+### 5. Tenant Configuration
 
-Each tenant must have their Twilio phone number configured to identify incoming calls. Update the tenant record with:
+Each tenant must be configured with:
+
+1. **Twilio Phone Number** (Required): To identify which tenant owns the incoming call
+2. **Business Type** (Recommended): To automatically select the appropriate ElevenLabs agent
 
 ```javascript
 {
   "twilioPhoneNumber": "+15551234567",  // Required: Twilio phone number for this tenant
+  "businessTypeId": "business-type-uuid",  // Recommended: Links to business_types table for agent selection
   "settings": {
-    "elevenLabsAgentId": "tenant-specific-agent-id",  // Optional: tenant-specific agent
+    "elevenLabsAgentId": "tenant-specific-agent-id",  // Optional: Override agent for this specific tenant (fallback)
     "businessHours": {
       "monday": { "open": "09:00", "close": "17:00", "enabled": true },
       // ... other days
@@ -178,7 +215,10 @@ Each tenant must have their Twilio phone number configured to identify incoming 
 }
 ```
 
-The `twilio_phone_number` column is used to identify which tenant an incoming call belongs to when Twilio webhooks are triggered.
+**Important**: When setting up a new tenant:
+1. Assign a `business_type_id` to automatically use the agent configured for that business type
+2. Optionally set `settings.elevenLabsAgentId` to override the business type's agent for special cases
+3. If neither is set, calls will fail with a "not properly configured" error
 
 ## API Endpoints
 
@@ -565,10 +605,17 @@ Monitor these logs to track:
 
 ### Call Not Connecting to ElevenLabs
 
-1. Verify `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID` are set
+1. Verify `ELEVENLABS_API_KEY` is set
 2. Check tenant has a matching phone number configured
-3. Ensure `APP_BASE_URL` is accessible from the internet
-4. Review logs for error messages
+3. Verify tenant has a valid `business_type_id` or `settings.elevenLabsAgentId`
+4. Check that the business type has an active agent ID configured
+5. Ensure `APP_BASE_URL` is accessible from the internet
+6. Review logs for error messages
+
+Common error messages:
+- "No agent ID configured for tenant" - Check that tenant has `business_type_id` or `settings.elevenLabsAgentId`
+- "Business type not found" - The `business_type_id` references a non-existent business type
+- "Business type is not active" - The business type exists but is marked as inactive
 
 ### Call Immediately Disconnects After Connecting
 

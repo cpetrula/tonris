@@ -14,6 +14,12 @@ const mockTenantModel = {
   findOne: jest.fn(),
 };
 
+const mockBusinessTypeModel = {
+  findByPk: jest.fn(),
+  findAll: jest.fn(),
+  findOne: jest.fn(),
+};
+
 // Mock the subscription model
 jest.mock('../src/modules/billing/subscription.model', () => ({
   Subscription: mockSubscriptionModel,
@@ -59,6 +65,10 @@ jest.mock('../src/modules/tenants/tenant.model', () => ({
     suspended: ['active', 'cancelled'],
     cancelled: [],
   },
+}));
+
+jest.mock('../src/modules/business-types/businessType.model', () => ({
+  BusinessType: mockBusinessTypeModel,
 }));
 
 // Mock the models index

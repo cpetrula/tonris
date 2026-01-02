@@ -38,6 +38,12 @@ const mockTenantModel = {
   findOne: jest.fn(),
 };
 
+const mockBusinessTypeModel = {
+  findByPk: jest.fn(),
+  findAll: jest.fn(),
+  findOne: jest.fn(),
+};
+
 const mockUserModel = {
   findOne: jest.fn(),
   findByPk: jest.fn(),
@@ -107,6 +113,10 @@ jest.mock('../src/modules/tenants/tenant.model', () => ({
     PROFESSIONAL: 'professional',
     ENTERPRISE: 'enterprise',
   },
+}));
+
+jest.mock('../src/modules/business-types/businessType.model', () => ({
+  BusinessType: mockBusinessTypeModel,
 }));
 
 jest.mock('../src/models', () => ({
