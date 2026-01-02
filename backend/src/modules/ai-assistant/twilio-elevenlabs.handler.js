@@ -537,7 +537,6 @@ const handleConversationInitiation = async (params) => {
     let tenant = null;
     let businessName = dynamicVariables.business_name || 'Our Business';
     let businessHours = null;
-    let greeting = null;
     let aiTone = null;
 
     if (tenantId) {
@@ -547,7 +546,6 @@ const handleConversationInitiation = async (params) => {
         if (tenant) {
           businessName = tenant.name || businessName;
           businessHours = tenant.settings?.businessHours || getDefaultBusinessHours();
-          greeting = tenant.settings?.aiGreeting;
           aiTone = tenant.settings?.aiTone;
         }
       } catch (tenantError) {
