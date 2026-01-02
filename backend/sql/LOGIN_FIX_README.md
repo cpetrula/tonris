@@ -23,7 +23,7 @@ Use `fix_double_hashed_passwords.sql` to generate password reset tokens for all 
 
 **Note:** This script resets passwords for ALL active users. If you want to target only users created before a specific date (e.g., before PR #162 was merged), you can modify the WHERE clause. For example:
 ```sql
-WHERE is_active = 1 AND createdAt < '2026-01-02'  -- Adjust date as needed
+WHERE is_active = 1 AND createdAt < 'YYYY-MM-DD'  -- Replace with actual date, e.g., '2026-01-02'
 ```
 
 **Steps:**

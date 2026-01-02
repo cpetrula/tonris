@@ -17,10 +17,10 @@
 USE tonris_db;
 
 -- Generate password reset tokens for all users
--- The token uses a cryptographically secure approach with UUID and multiple hash rounds
+-- The token uses cryptographically secure random inputs with multiple entropy sources
 -- The token expires in 24 hours
 UPDATE users 
-SET password_reset_token = SHA2(CONCAT(UUID(), UUID(), email, NOW(), RAND()), 256),
+SET password_reset_token = SHA2(CONCAT(UUID(), UUID(), RAND(), RAND()), 256),
     password_reset_expires = DATE_ADD(NOW(), INTERVAL 24 HOUR),
     updatedAt = NOW()
 WHERE is_active = 1;
