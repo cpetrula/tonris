@@ -66,7 +66,7 @@ function formatDuration(minutes: number): string {
 }
 
 function formatPrice(price: number | string): string {
-  const numPrice = typeof price === 'string' ? parseFloat(price) : price
+  const numPrice = typeof price === 'string' ? (parseFloat(price) || 0) : price
   return `$${numPrice.toFixed(2)}`
 }
 
