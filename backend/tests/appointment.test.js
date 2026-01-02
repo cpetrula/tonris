@@ -35,6 +35,12 @@ const mockServiceModel = {
   generateDefaultServices: jest.fn(() => []),
 };
 
+const mockBusinessTypeModel = {
+  findByPk: jest.fn(),
+  findAll: jest.fn(),
+  findOne: jest.fn(),
+};
+
 const mockUserModel = {
   findOne: jest.fn(),
   findByPk: jest.fn(),
@@ -88,6 +94,10 @@ jest.mock('../src/modules/services/service.model', () => ({
     MASSAGE: 'massage',
     OTHER: 'other',
   },
+}));
+
+jest.mock('../src/modules/business-types/businessType.model', () => ({
+  BusinessType: mockBusinessTypeModel,
 }));
 
 jest.mock('../src/models', () => ({

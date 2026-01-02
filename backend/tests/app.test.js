@@ -5,6 +5,19 @@
 const request = require('supertest');
 const path = require('path');
 const fs = require('fs');
+
+// Define mocks before requiring the app
+const mockBusinessTypeModel = {
+  findByPk: jest.fn(),
+  findAll: jest.fn(),
+  findOne: jest.fn(),
+};
+
+// Mock the business types model
+jest.mock('../src/modules/business-types/businessType.model', () => ({
+  BusinessType: mockBusinessTypeModel,
+}));
+
 const { app } = require('../src/app');
 
 describe('CRITON.AI Backend', () => {
