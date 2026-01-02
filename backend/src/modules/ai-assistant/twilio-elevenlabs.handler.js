@@ -537,7 +537,6 @@ const handleConversationInitiation = async (params) => {
     let tenant = null;
     let businessName = dynamicVariables.business_name || 'Our Business';
     let businessHours = null;
-    let greeting = null;
     let aiTone = null;
 
     if (tenantId) {
@@ -547,7 +546,6 @@ const handleConversationInitiation = async (params) => {
         if (tenant) {
           businessName = tenant.name || businessName;
           businessHours = tenant.settings?.businessHours || getDefaultBusinessHours();
-          greeting = tenant.settings?.aiGreeting;
           aiTone = tenant.settings?.aiTone;
         }
       } catch (tenantError) {
@@ -572,6 +570,9 @@ const handleConversationInitiation = async (params) => {
     }
 
     // Build the response with conversation configuration overrides
+    // NOTE: first_message cannot be overridden via this webhook or WebSocket connection.
+    // It must be configured in the ElevenLabs agent dashboard, where you can use
+    // dynamic variables like {{business_name}} in the greeting message.
     const response = {
       // Dynamic variables that will be available to the agent during the conversation
       dynamic_variables: responseVariables,
@@ -590,10 +591,9 @@ const handleConversationInitiation = async (params) => {
       },
     };
 
-    // Add custom first message if greeting is configured
-    if (greeting) {
-      response.conversation_config_override.agent.first_message = greeting;
-    }
+    // NOTE: Greeting and first_message cannot be overridden at runtime.
+    // The greeting must be configured in the ElevenLabs agent dashboard.
+    // Dynamic variables like business_name are available for use in the dashboard configuration.
 
     // Add custom prompt if tone is configured
     // Note: The prompt is added as a direct property on the agent object

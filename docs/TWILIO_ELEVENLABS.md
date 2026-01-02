@@ -311,14 +311,15 @@ The webhook handler supports both `type` (ElevenLabs standard) and `event` (lega
     "agent": {
       "agent_output_audio_format": "ulaw_8000",
       "user_input_audio_format": "ulaw_8000",
-      "language": "en",
-      "first_message": "Hello! Welcome to My Business."
+      "language": "en"
     },
     "tts": {
       "output_format": "ulaw_8000"
     }
   }
 }
+
+**Note**: `first_message` cannot be overridden via the API. The greeting message must be configured directly in the ElevenLabs agent dashboard. You can use dynamic variables like `{{business_name}}` in the dashboard to personalize greetings.
 ```
 
 **Configuration in ElevenLabs Dashboard**:
@@ -595,8 +596,10 @@ This is often caused by audio format incompatibility. Check the following:
    - Check for `conversation_initiation_metadata` message - if not received, initialization failed
 
 5. **First Message Configuration**:
+   - The greeting/first message **must** be configured in the ElevenLabs agent dashboard
+   - It **cannot** be overridden via the API or WebSocket connection
    - If your agent doesn't have a first message configured in the dashboard, it may wait for user input
-   - Ensure your agent has a greeting/first message configured, or configure one via the override
+   - Use dynamic variables like `{{business_name}}` in the dashboard to personalize greetings
 
 ### Tool Calls Not Working
 
@@ -624,7 +627,9 @@ When setting up your ElevenLabs agent, ensure these settings are configured:
    - This ensures audio is compatible with Twilio
 
 3. **Agent Settings > Conversation**:
-   - Configure a first message/greeting for the agent
+   - **IMPORTANT**: Configure a first message/greeting for the agent in the dashboard
+   - This cannot be set via API - it must be configured directly in ElevenLabs
+   - Use dynamic variables like `{{business_name}}`, `{{tenant_name}}` in the greeting to personalize it
    - Set appropriate language settings
 
 ## Security Considerations

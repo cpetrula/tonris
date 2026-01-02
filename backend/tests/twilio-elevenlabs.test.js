@@ -625,7 +625,7 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
       expect(response.body).toHaveProperty('conversation_config_override');
     });
 
-    it('should include custom greeting in response when configured', async () => {
+    it('should NOT include first_message override even when greeting is configured', async () => {
       const mockTenantData = {
         tenantId: 'test-tenant',
         name: 'Test Salon',
@@ -654,8 +654,10 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
         });
 
       expect(response.status).toBe(200);
-      expect(response.body.conversation_config_override.agent.first_message)
-        .toBe('Welcome to Test Salon! How can I help you today?');
+      // first_message should NOT be in the response as it cannot be overridden
+      expect(response.body.conversation_config_override.agent.first_message).toBeUndefined();
+      // But dynamic variables should still be set for use in ElevenLabs dashboard configuration
+      expect(response.body.dynamic_variables.business_name).toBe('Test Salon');
     });
   });
 });
