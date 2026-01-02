@@ -7,6 +7,7 @@ const telephonyController = require('./telephony.controller');
 const twilioService = require('./twilio.service');
 const callHandler = require('./call.handler');
 const smsHandler = require('./sms.handler');
+const callLogService = require('./callLog.service');
 const {
   CallLog,
   CALL_DIRECTION,
@@ -19,6 +20,7 @@ module.exports = {
   twilioService,
   callHandler,
   smsHandler,
+  callLogService,
   CallLog,
   CALL_DIRECTION,
   CALL_STATUS,

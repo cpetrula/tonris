@@ -5,6 +5,7 @@
 const twilioService = require('./twilio.service');
 const callHandler = require('./call.handler');
 const smsHandler = require('./sms.handler');
+const callLogService = require('./callLog.service');
 const { Tenant } = require('../tenants/tenant.model');
 const { getTenantUUID } = require('../../utils/tenant');
 const logger = require('../../utils/logger');
@@ -246,7 +247,7 @@ const sendAppointmentReminder = async (req, res, next) => {
 
 /**
  * GET /api/telephony/call-logs
- * Get call logs for the tenant
+ * Get call logs for the tenant with ElevenLabs enrichment
  */
 const getCallLogs = async (req, res, next) => {
   try {
@@ -257,16 +258,20 @@ const getCallLogs = async (req, res, next) => {
       status,
       startDate,
       endDate,
+      includeElevenLabsData,
     } = req.query;
     
     const tenantUUID = await getTenantUUID(req.tenantId);
-    const result = await callHandler.getCallLogs(tenantUUID, {
+    
+    // Use the new callLogService which includes ElevenLabs enrichment
+    const result = await callLogService.getCallLogs(tenantUUID, {
       limit: limit ? parseInt(limit, 10) : undefined,
       offset: offset ? parseInt(offset, 10) : undefined,
       direction,
       status,
       startDate,
       endDate,
+      includeElevenLabsData: includeElevenLabsData !== 'false', // Default to true
     });
     
     res.status(200).json({
@@ -379,6 +384,55 @@ const testSms = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/telephony/call-logs/:id
+ * Get detailed call log with ElevenLabs conversation transcript
+ */
+const getCallLogDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    
+    const result = await callLogService.getCallLogWithDetails(id, tenantUUID);
+    
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error.message === 'Call log not found') {
+      return res.status(404).json({
+        success: false,
+        error: 'Call log not found',
+        code: 'CALL_LOG_NOT_FOUND',
+      });
+    }
+    next(error);
+  }
+};
+
+/**
+ * POST /api/telephony/sync-elevenlabs
+ * Sync call logs with ElevenLabs conversations
+ */
+const syncElevenLabs = async (req, res, next) => {
+  try {
+    const { daysBack } = req.body;
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    
+    const result = await callLogService.syncWithElevenLabs(tenantUUID, {
+      daysBack: daysBack ? parseInt(daysBack, 10) : 7,
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   handleVoiceWebhook,
   handleSmsWebhook,
@@ -389,6 +443,8 @@ module.exports = {
   sendEmployeeSms,
   sendAppointmentReminder,
   getCallLogs,
+  getCallLogDetails,
+  syncElevenLabs,
   makeCall,
   testSms,
 };
