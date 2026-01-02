@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
+import InputIcon from 'primevue/inputicon'
+import IconField from 'primevue/iconfield'
 import Accordion from 'primevue/accordion'
 import AccordionPanel from 'primevue/accordionpanel'
 import AccordionHeader from 'primevue/accordionheader'
@@ -445,7 +447,7 @@ function goBack() {
         @click="goBack"
       />
       <h1 class="text-2xl font-bold text-gray-900">Phone Forwarding Instructions</h1>
-      <p class="text-gray-600 mt-2">
+      <p class="text-gray-700 mt-2">
         Set up call forwarding from your business phone to your Criton.AI number so our AI receptionist can handle your calls.
       </p>
     </div>
@@ -458,8 +460,8 @@ function goBack() {
             <i class="pi pi-info-circle text-2xl text-violet-600"></i>
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900 mb-2">Quick Setup</h3>
-            <ol class="list-decimal list-inside space-y-2 text-gray-700">
+            <h3 class="font-semibold mb-2">Quick Setup</h3>
+            <ol class="list-decimal list-inside space-y-2 ">
               <li>Find your carrier below and note the activation code</li>
               <li>Replace <code class="bg-violet-100 px-2 py-1 rounded text-violet-800">[forwarding number]</code> with your Criton.AI number</li>
               <li>Dial the code on your business phone</li>
@@ -474,12 +476,14 @@ function goBack() {
     <!-- Search -->
     <div class="mb-6">
       <div class="relative">
-        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <IconField>
+        <InputIcon class="pi pi-search text-gray-400" />
         <InputText
           v-model="searchQuery"
           placeholder="Search for your carrier..."
           class="w-full pl-10"
         />
+</IconField>
       </div>
     </div>
 
@@ -507,7 +511,7 @@ function goBack() {
                 <div class="space-y-4">
                   <!-- Forward All Calls -->
                   <div>
-                    <h4 class="font-medium text-gray-900 mb-2">Forward All Calls</h4>
+                    <h4 class="font-medium mb-2">Forward All Calls</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div class="bg-green-50 p-3 rounded-lg">
                         <p class="text-xs text-green-600 font-medium mb-1">ACTIVATE</p>
@@ -523,7 +527,7 @@ function goBack() {
                   <!-- Forward When Busy -->
                   <div v-if="carrier.forwardBusy">
                     <Divider />
-                    <h4 class="font-medium text-gray-900 mb-2">Forward When Busy</h4>
+                    <h4 class="font-medium mb-2">Forward When Busy</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div class="bg-green-50 p-3 rounded-lg">
                         <p class="text-xs text-green-600 font-medium mb-1">ACTIVATE</p>
@@ -539,7 +543,7 @@ function goBack() {
                   <!-- Forward When No Answer -->
                   <div v-if="carrier.forwardNoAnswer">
                     <Divider />
-                    <h4 class="font-medium text-gray-900 mb-2">Forward When No Answer</h4>
+                    <h4 class="font-medium mb-2">Forward When No Answer</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div class="bg-green-50 p-3 rounded-lg">
                         <p class="text-xs text-green-600 font-medium mb-1">ACTIVATE</p>
@@ -555,8 +559,8 @@ function goBack() {
                   <!-- Notes -->
                   <div v-if="carrier.notes && carrier.notes.length > 0">
                     <Divider />
-                    <h4 class="font-medium text-gray-900 mb-2">Notes</h4>
-                    <ul class="list-disc list-inside space-y-1 text-gray-600">
+                    <h4 class="font-medium mb-2">Notes</h4>
+                    <ul class="list-disc list-inside space-y-1 ">
                       <li v-for="note in carrier.notes" :key="note">{{ note }}</li>
                     </ul>
                   </div>
@@ -603,7 +607,7 @@ function goBack() {
               <AccordionContent>
                 <div class="space-y-4">
                   <div>
-                    <h4 class="font-medium text-gray-900 mb-2">Forward All Calls</h4>
+                    <h4 class="font-medium mb-2">Forward All Calls</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div class="bg-green-50 p-3 rounded-lg">
                         <p class="text-xs text-green-600 font-medium mb-1">ACTIVATE</p>
@@ -618,8 +622,8 @@ function goBack() {
 
                   <div v-if="carrier.notes && carrier.notes.length > 0">
                     <Divider />
-                    <h4 class="font-medium text-gray-900 mb-2">Notes</h4>
-                    <ul class="list-disc list-inside space-y-1 text-gray-600">
+                    <h4 class="font-medium mb-2">Notes</h4>
+                    <ul class="list-disc list-inside space-y-1 ">
                       <li v-for="note in carrier.notes" :key="note">{{ note }}</li>
                     </ul>
                   </div>
@@ -665,7 +669,7 @@ function goBack() {
               <AccordionContent>
                 <div class="space-y-4">
                   <div>
-                    <h4 class="font-medium text-gray-900 mb-2">Forward All Calls</h4>
+                    <h4 class="font-medium mb-2">Forward All Calls</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div class="bg-green-50 p-3 rounded-lg">
                         <p class="text-xs text-green-600 font-medium mb-1">ACTIVATE</p>
@@ -680,7 +684,7 @@ function goBack() {
 
                   <div v-if="carrier.forwardBusy">
                     <Divider />
-                    <h4 class="font-medium text-gray-900 mb-2">Forward When Busy</h4>
+                    <h4 class="font-medium mb-2">Forward When Busy</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div class="bg-green-50 p-3 rounded-lg">
                         <p class="text-xs text-green-600 font-medium mb-1">ACTIVATE</p>
@@ -695,8 +699,8 @@ function goBack() {
 
                   <div v-if="carrier.notes && carrier.notes.length > 0">
                     <Divider />
-                    <h4 class="font-medium text-gray-900 mb-2">Notes</h4>
-                    <ul class="list-disc list-inside space-y-1 text-gray-600">
+                    <h4 class="font-medium mb-2">Notes</h4>
+                    <ul class="list-disc list-inside space-y-1 ">
                       <li v-for="note in carrier.notes" :key="note">{{ note }}</li>
                     </ul>
                   </div>
@@ -722,7 +726,7 @@ function goBack() {
     <!-- No Results -->
     <div v-if="filteredCarriers.length === 0" class="text-center py-12">
       <i class="pi pi-search text-4xl text-gray-300 mb-4"></i>
-      <p class="text-gray-600">No carriers found matching "{{ searchQuery }}"</p>
+      <p class="">No carriers found matching "{{ searchQuery }}"</p>
       <p class="text-gray-500 text-sm mt-2">
         Try a different search term or <a href="#" class="text-violet-600" @click.prevent="searchQuery = ''">clear the search</a>
       </p>
@@ -733,13 +737,13 @@ function goBack() {
       <template #content>
         <div class="flex items-start gap-4">
           <div class="bg-gray-200 p-3 rounded-lg">
-            <i class="pi pi-question-circle text-2xl text-gray-600"></i>
+            <i class="pi pi-question-circle text-gray-900 text-2xl "></i>
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900 mb-2">Don't see your carrier?</h3>
-            <p class="text-gray-600 mb-3">
-              Most carriers use standard codes. Try <code class="bg-gray-200 px-2 py-1 rounded">*72</code> to forward
-              and <code class="bg-gray-200 px-2 py-1 rounded">*73</code> to deactivate. If that doesn't work,
+            <h3 class="font-semibold mb-2">Don't see your carrier?</h3>
+            <p class=" mb-3">
+              Most carriers use standard codes. Try <code class="bg-gray-200 px-2 text-gray-700 py-1 rounded">*72</code> to forward
+              and <code class="bg-gray-200 px-2 py-1 text-gray-700 rounded">*73</code> to deactivate. If that doesn't work,
               contact your carrier's customer support for specific instructions.
             </p>
             <Button

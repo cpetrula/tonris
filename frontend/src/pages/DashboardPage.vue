@@ -162,8 +162,8 @@ onMounted(async () => {
               <i class="pi pi-phone text-2xl text-violet-600"></i>
             </div>
             <div>
-              <h3 class="font-semibold text-gray-900">Set Up Call Forwarding</h3>
-              <p class="text-gray-600 text-sm mt-1">
+              <h3 class="font-semibold">Set Up Call Forwarding</h3>
+              <p class="text-sm mt-1">
                 Forward calls from your business phone to Criton.AI so our AI receptionist can handle them.
               </p>
             </div>
