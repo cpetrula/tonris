@@ -56,6 +56,13 @@ function convert24hTo12h(time: string): string {
   const hours = parts[0]
   const minutes = parts[1]
   const hour = parseInt(hours, 10)
+  
+  // Validate that hour is a valid number
+  if (isNaN(hour) || hour < 0 || hour > 23) {
+    console.warn('Invalid hour value:', hours)
+    return ''
+  }
+  
   const ampm = hour >= 12 ? 'PM' : 'AM'
   const hour12 = hour % 12 || 12
   return `${hour12}:${minutes} ${ampm}`
@@ -77,6 +84,12 @@ function convert12hTo24h(time: string): string {
   if (!hourStr || !ampm) return ''
   
   let hours = parseInt(hourStr, 10)
+  
+  // Validate that hours is a valid number
+  if (isNaN(hours) || hours < 1 || hours > 12) {
+    console.warn('Invalid hour value:', hourStr)
+    return ''
+  }
   
   if (ampm === 'PM' && hours !== 12) hours += 12
   if (ampm === 'AM' && hours === 12) hours = 0
