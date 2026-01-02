@@ -1,10 +1,33 @@
 /**
  * User Model
  * Defines the User schema for authentication
+ * 
+ * Password Hashing:
+ * - Passwords are automatically hashed using bcrypt before saving to the database
+ * - The model intelligently detects if a password is already hashed to prevent double-hashing
+ * - This allows for safe use of pre-hashed passwords in seed data or bulk operations
+ * - Hash detection works for bcrypt formats: $2a$, $2b$, and $2y$
  */
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 const bcrypt = require('bcrypt');
+
+/**
+ * Check if a string is already a bcrypt hash
+ * @param {string} password - The password to check
+ * @returns {boolean} - True if the password is already a bcrypt hash
+ */
+const isBcryptHash = (password) => {
+  // Handle null, undefined, or non-string values
+  if (!password || typeof password !== 'string') {
+    return false;
+  }
+  
+  // Bcrypt hashes have a distinctive format: $2a$, $2b$, or $2y$ followed by cost factor
+  // and should be exactly 60 characters long
+  // Example: $2b$10$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+  return /^\$2[aby]\$\d{2}\$.{53}$/.test(password) && password.length === 60;
+};
 
 const User = sequelize.define('User', {
   id: {
@@ -68,13 +91,15 @@ const User = sequelize.define('User', {
   timestamps: true,
   hooks: {
     beforeCreate: async (user) => {
-      if (user.password) {
+      // Only hash the password if it's not already a bcrypt hash
+      if (user.password && !isBcryptHash(user.password)) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }
     },
     beforeUpdate: async (user) => {
-      if (user.changed('password')) {
+      // Only hash the password if it changed and it's not already a bcrypt hash
+      if (user.changed('password') && user.password && !isBcryptHash(user.password)) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }
