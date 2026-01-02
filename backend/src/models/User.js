@@ -6,6 +6,17 @@ const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 const bcrypt = require('bcrypt');
 
+/**
+ * Check if a string is already a bcrypt hash
+ * @param {string} password - The password to check
+ * @returns {boolean} - True if the password is already a bcrypt hash
+ */
+const isBcryptHash = (password) => {
+  // Bcrypt hashes have a distinctive format: $2a$, $2b$, or $2y$ followed by cost factor
+  // Example: $2b$10$abcdefghijklmnopqrstuvwxyz...
+  return /^\$2[aby]\$\d{2}\$/.test(password);
+};
+
 const User = sequelize.define('User', {
   id: {
     type: DataTypes.UUID,
@@ -68,13 +79,15 @@ const User = sequelize.define('User', {
   timestamps: true,
   hooks: {
     beforeCreate: async (user) => {
-      if (user.password) {
+      // Only hash the password if it's not already a bcrypt hash
+      if (user.password && !isBcryptHash(user.password)) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }
     },
     beforeUpdate: async (user) => {
-      if (user.changed('password')) {
+      // Only hash the password if it changed and it's not already a bcrypt hash
+      if (user.changed('password') && user.password && !isBcryptHash(user.password)) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }
