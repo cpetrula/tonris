@@ -261,7 +261,7 @@ async function fetchServices() {
               <span
                 :class="[
                   'px-2 py-1 rounded-full text-xs font-medium',
-                  data.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-white'
+                  data.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                 ]"
               >
                 {{ data.status === 'active' ? 'Active' : 'Inactive' }}
