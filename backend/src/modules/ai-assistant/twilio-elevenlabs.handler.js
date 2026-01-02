@@ -203,7 +203,8 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       business_name: tenant.name || 'Our Business',
       caller_number: From,
       call_status: CallStatus,
-      ai_greeting: tenant.settings?.aiGreeting || '',
+      // Use custom greeting if set, otherwise generate a default using business name
+      ai_greeting: tenant.settings?.aiGreeting || `Thanks for calling ${tenant.name || 'our business'}! How can I help you today?`,
     };
     
     // Add business hours if available
