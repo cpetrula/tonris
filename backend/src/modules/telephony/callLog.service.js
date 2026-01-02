@@ -98,12 +98,22 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
       return callLogs;
     }
     
-    // Get the date range from call logs
-    const dates = callLogs.map(log => new Date(log.createdAt).getTime() / 1000);
+    // Get the date range from call logs - use startedAt if available, otherwise createdAt
+    const dates = callLogs.map(log => {
+      const timestamp = log.startedAt || log.createdAt;
+      return new Date(timestamp).getTime() / 1000;
+    });
+    
+    // Guard against empty dates array
+    if (dates.length === 0) {
+      return callLogs;
+    }
+    
     const startTimeUnixSecs = Math.min(...dates) - 3600; // Add 1 hour buffer
     const endTimeUnixSecs = Math.max(...dates) + 3600;
     
     // Fetch ElevenLabs conversations for this time range
+    // Note: This fetches up to 100 conversations. For more, implement pagination.
     const conversationsResult = await elevenlabsService.listConversations({
       startTimeUnixSecs,
       endTimeUnixSecs,
@@ -112,7 +122,7 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
     
     const conversations = conversationsResult.conversations || [];
     
-    // Create a map of conversations by call_sid or phone number for quick lookup
+    // Create a map of conversations by call_sid or phone number + time range for quick lookup
     const conversationMap = new Map();
     
     conversations.forEach(conv => {
@@ -124,10 +134,16 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
         conversationMap.set(callSid, conv);
       }
       
-      // Also map by caller number and approximate timestamp
+      // Also map by caller number and approximate timestamp with a time window
       if (callerNumber && conv.metadata?.start_time_unix_secs) {
-        const key = `${callerNumber}_${conv.metadata.start_time_unix_secs}`;
-        conversationMap.set(key, conv);
+        // Create multiple keys for a ±30 second time window to handle timing differences
+        const convTime = conv.metadata.start_time_unix_secs;
+        for (let offset = -30; offset <= 30; offset += 5) {
+          const key = `${callerNumber}_${convTime + offset}`;
+          if (!conversationMap.has(key)) {
+            conversationMap.set(key, conv);
+          }
+        }
       }
     });
     
@@ -135,16 +151,22 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
     const enrichedLogs = callLogs.map(log => {
       let elevenLabsData = null;
       
-      // Try to find matching conversation by Twilio Call SID
+      // Try to find matching conversation by Twilio Call SID (most reliable)
       if (log.twilioCallSid) {
         elevenLabsData = conversationMap.get(log.twilioCallSid);
       }
       
-      // If not found, try matching by phone number and time
+      // If not found, try matching by phone number and time with a time window
       if (!elevenLabsData && log.fromNumber) {
-        const logTime = Math.floor(new Date(log.createdAt).getTime() / 1000);
-        const key = `${log.fromNumber}_${logTime}`;
-        elevenLabsData = conversationMap.get(key);
+        // Use startedAt if available for more accurate matching
+        const timestamp = log.startedAt || log.createdAt;
+        const logTime = Math.floor(new Date(timestamp).getTime() / 1000);
+        
+        // Try to find a match within a ±30 second window
+        for (let offset = -30; offset <= 30 && !elevenLabsData; offset += 5) {
+          const key = `${log.fromNumber}_${logTime + offset}`;
+          elevenLabsData = conversationMap.get(key);
+        }
       }
       
       if (elevenLabsData) {

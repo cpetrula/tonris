@@ -190,16 +190,39 @@ async function fetchAppointmentStats() {
 }
 
 function mapCallStatus(status: string, elevenLabsData?: any): CallLog['outcome'] {
-  // If we have ElevenLabs data with call_successful, use that for better accuracy
-  if (elevenLabsData?.callSuccessful === 'success') {
-    return 'appointment_booked'
-  } else if (elevenLabsData?.callSuccessful === 'failure') {
-    return 'missed'
+  // If we have ElevenLabs data, use more nuanced logic
+  if (elevenLabsData) {
+    // Check end reason for more accurate outcome determination
+    const endReason = elevenLabsData.endReason?.toLowerCase() || '';
+    
+    // If call was successful and ended normally, consider it an inquiry or potentially booked
+    if (elevenLabsData.callSuccessful === 'success') {
+      // Check for appointment-related keywords in transcript summary
+      const summary = (elevenLabsData.transcriptSummary || '').toLowerCase();
+      if (summary.includes('booked') || summary.includes('appointment') || summary.includes('scheduled')) {
+        return 'appointment_booked'
+      }
+      // Default to inquiry for successful calls
+      return 'inquiry'
+    }
+    
+    // Handle specific end reasons
+    if (endReason.includes('voicemail')) {
+      return 'voicemail'
+    } else if (endReason.includes('transfer')) {
+      return 'transferred'
+    } else if (elevenLabsData.callSuccessful === 'failure') {
+      // Could be missed, but if there were messages exchanged, it's an inquiry
+      if (elevenLabsData.messageCount > 1) {
+        return 'inquiry'
+      }
+      return 'missed'
+    }
   }
   
   // Fall back to Twilio status mapping
   const statusMap: Record<string, CallLog['outcome']> = {
-    'completed': 'appointment_booked',
+    'completed': 'inquiry', // Changed from appointment_booked - need more info to determine
     'in-progress': 'inquiry',
     'busy': 'missed',
     'no-answer': 'missed',
