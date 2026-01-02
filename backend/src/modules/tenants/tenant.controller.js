@@ -88,6 +88,55 @@ const updateTenantSettings = async (req, res, next) => {
 };
 
 /**
+ * GET /api/tenant/business-hours
+ * Get business hours for the tenant
+ */
+const getBusinessHours = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const businessHours = await tenantService.getBusinessHours(tenantUUID);
+
+    res.status(200).json({
+      success: true,
+      data: businessHours,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PUT /api/tenant/business-hours
+ * Update business hours for the tenant
+ */
+const updateBusinessHours = async (req, res, next) => {
+  try {
+    const { businessHours } = req.body;
+
+    if (!businessHours) {
+      return res.status(400).json({
+        success: false,
+        error: 'Business hours object is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const updatedBusinessHours = await tenantService.updateBusinessHours(
+      tenantUUID,
+      businessHours
+    );
+
+    res.status(200).json({
+      success: true,
+      data: updatedBusinessHours,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * POST /api/tenant
  * Create a new tenant (for signup flow)
  */
@@ -274,6 +323,8 @@ module.exports = {
   getCurrentUserAndTenant,
   getTenantSettings,
   updateTenantSettings,
+  getBusinessHours,
+  updateBusinessHours,
   createTenant,
   getTenant,
   updateTenant,
