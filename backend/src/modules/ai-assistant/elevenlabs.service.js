@@ -366,6 +366,83 @@ class ElevenLabsService extends AIProviderInterface {
   }
 
   /**
+   * List conversations from ElevenLabs
+   * @param {Object} options - Query options
+   * @param {string} options.agentId - Filter by agent ID
+   * @param {number} options.pageSize - Number of conversations per page (default: 30, max: 100)
+   * @param {string} options.cursor - Cursor for pagination
+   * @param {number} options.startTimeUnixSecs - Filter conversations after this time
+   * @param {number} options.endTimeUnixSecs - Filter conversations before this time
+   * @returns {Promise<Object>} - Conversations list with pagination
+   */
+  async listConversations(options = {}) {
+    if (!await this.isAvailable()) {
+      throw new Error('ElevenLabs is not configured');
+    }
+
+    if (!this.client) {
+      throw new Error('ElevenLabs client is not initialized');
+    }
+
+    try {
+      const {
+        agentId,
+        pageSize = 30,
+        cursor,
+        startTimeUnixSecs,
+        endTimeUnixSecs,
+      } = options;
+
+      const requestParams = {
+        ...(agentId && { agentId }),
+        ...(pageSize && { pageSize: Math.min(pageSize, 100) }),
+        ...(cursor && { cursor }),
+        ...(startTimeUnixSecs && { callStartAfterUnixSecs: startTimeUnixSecs }),
+        ...(endTimeUnixSecs && { callStartBeforeUnixSecs: endTimeUnixSecs }),
+      };
+
+      logger.info(`Fetching ElevenLabs conversations with params: ${JSON.stringify(requestParams)}`);
+      
+      const response = await this.client.conversationalAi.conversations.list(requestParams);
+      
+      return {
+        conversations: response.conversations || [],
+        hasMore: response.hasMore || false,
+        nextCursor: response.nextCursor || null,
+      };
+    } catch (error) {
+      logger.error(`Failed to list ElevenLabs conversations: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed conversation history by conversation ID
+   * @param {string} conversationId - ElevenLabs conversation ID
+   * @returns {Promise<Object>} - Detailed conversation with transcript
+   */
+  async getConversationDetails(conversationId) {
+    if (!await this.isAvailable()) {
+      throw new Error('ElevenLabs is not configured');
+    }
+
+    if (!this.client) {
+      throw new Error('ElevenLabs client is not initialized');
+    }
+
+    try {
+      logger.info(`Fetching ElevenLabs conversation details: ${conversationId}`);
+      
+      const response = await this.client.conversationalAi.conversations.get(conversationId);
+      
+      return response;
+    } catch (error) {
+      logger.error(`Failed to get ElevenLabs conversation details: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Extract entities from input based on intent
    * @param {string} input - User input
    * @param {string} _intent - Detected intent (unused in current implementation)

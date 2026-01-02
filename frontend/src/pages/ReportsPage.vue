@@ -18,6 +18,19 @@ interface CallLog {
   duration: number // in seconds
   outcome: 'appointment_booked' | 'inquiry' | 'voicemail' | 'transferred' | 'missed'
   notes: string
+  // ElevenLabs enrichment
+  elevenLabsConversationId?: string
+  elevenLabsData?: {
+    conversationId: string
+    agentId: string
+    status: string
+    callSuccessful?: string
+    callDurationSecs?: number
+    messageCount?: number
+    transcriptSummary?: string
+    userSatisfactionRating?: number
+    endReason?: string
+  }
 }
 
 interface AppointmentStat {
@@ -50,7 +63,8 @@ const overviewStats = ref({
   appointmentsBooked: 0,
   conversionRate: 0,
   missedCalls: 0,
-  peakHour: 'N/A'
+  peakHour: 'N/A',
+  aiEnrichedCalls: 0
 })
 
 // Call logs - fetched from API
@@ -141,14 +155,18 @@ async function fetchCallLogs() {
   try {
     const response = await api.get('/api/telephony/call-logs')
     if (response.data.success && response.data.data) {
-      callLogs.value = response.data.data.map((log: any) => ({
+      // The response now contains { logs: [], total: number, limit: number, offset: number }
+      const logs = response.data.data.logs || []
+      callLogs.value = logs.map((log: any) => ({
         id: log.id,
         phoneNumber: log.fromNumber || log.toNumber || 'Unknown',
         callerName: log.callerName || 'Unknown',
         date: new Date(log.createdAt),
-        duration: log.duration || 0,
-        outcome: mapCallStatus(log.status),
-        notes: log.notes || ''
+        duration: log.duration || log.elevenLabsData?.callDurationSecs || 0,
+        outcome: mapCallStatus(log.status, log.elevenLabsData),
+        notes: log.notes || log.elevenLabsData?.transcriptSummary || '',
+        elevenLabsConversationId: log.elevenLabsConversationId,
+        elevenLabsData: log.elevenLabsData
       }))
       
       // Calculate overview stats from call logs
@@ -171,9 +189,40 @@ async function fetchAppointmentStats() {
   }
 }
 
-function mapCallStatus(status: string): CallLog['outcome'] {
+function mapCallStatus(status: string, elevenLabsData?: any): CallLog['outcome'] {
+  // If we have ElevenLabs data, use more nuanced logic
+  if (elevenLabsData) {
+    // Check end reason for more accurate outcome determination
+    const endReason = elevenLabsData.endReason?.toLowerCase() || '';
+    
+    // If call was successful and ended normally, consider it an inquiry or potentially booked
+    if (elevenLabsData.callSuccessful === 'success') {
+      // Check for appointment-related keywords in transcript summary
+      const summary = (elevenLabsData.transcriptSummary || '').toLowerCase();
+      if (summary.includes('booked') || summary.includes('appointment') || summary.includes('scheduled')) {
+        return 'appointment_booked'
+      }
+      // Default to inquiry for successful calls
+      return 'inquiry'
+    }
+    
+    // Handle specific end reasons
+    if (endReason.includes('voicemail')) {
+      return 'voicemail'
+    } else if (endReason.includes('transfer')) {
+      return 'transferred'
+    } else if (elevenLabsData.callSuccessful === 'failure') {
+      // Could be missed, but if there were messages exchanged, it's an inquiry
+      if (elevenLabsData.messageCount > 1) {
+        return 'inquiry'
+      }
+      return 'missed'
+    }
+  }
+  
+  // Fall back to Twilio status mapping
   const statusMap: Record<string, CallLog['outcome']> = {
-    'completed': 'appointment_booked',
+    'completed': 'inquiry', // Changed from appointment_booked - need more info to determine
     'in-progress': 'inquiry',
     'busy': 'missed',
     'no-answer': 'missed',
@@ -194,6 +243,9 @@ function calculateOverviewStats() {
     overviewStats.value.appointmentsBooked = logs.filter(log => log.outcome === 'appointment_booked').length
     overviewStats.value.conversionRate = parseFloat(((overviewStats.value.appointmentsBooked / logs.length) * 100).toFixed(1))
     overviewStats.value.missedCalls = logs.filter(log => log.outcome === 'missed').length
+    
+    // Count AI-enriched calls
+    overviewStats.value.aiEnrichedCalls = logs.filter(log => log.elevenLabsData).length
     
     // Calculate peak hour
     const hourCounts: Record<number, number> = {}
@@ -307,7 +359,7 @@ function calculateTopServices(appointments: any[]) {
     </Card>
 
     <!-- Overview Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
       <Card class="shadow-sm">
         <template #content>
           <div class="text-center">
@@ -356,6 +408,14 @@ function calculateTopServices(appointments: any[]) {
           </div>
         </template>
       </Card>
+      <Card class="shadow-sm">
+        <template #content>
+          <div class="text-center">
+            <p class="text-3xl font-bold text-purple-600">{{ overviewStats.aiEnrichedCalls }}</p>
+            <p class="text-sm text-gray-500">AI Enhanced</p>
+          </div>
+        </template>
+      </Card>
     </div>
 
     <TabView>
@@ -390,29 +450,58 @@ function calculateTopServices(appointments: any[]) {
 
               <Column field="callerName" header="Caller" sortable>
                 <template #body="{ data }">
-                  <span :class="data.callerName === 'Unknown' ? 'text-gray-400' : ''">
-                    {{ data.callerName }}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <span :class="data.callerName === 'Unknown' ? 'text-gray-400' : ''">
+                      {{ data.callerName }}
+                    </span>
+                    <span 
+                      v-if="data.elevenLabsData" 
+                      class="px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700"
+                      title="Enhanced with AI data"
+                    >
+                      AI
+                    </span>
+                  </div>
                 </template>
               </Column>
 
               <Column field="duration" header="Duration" sortable>
                 <template #body="{ data }">
-                  <span>{{ formatDuration(data.duration) }}</span>
+                  <div class="flex flex-col">
+                    <span>{{ formatDuration(data.duration) }}</span>
+                    <span 
+                      v-if="data.elevenLabsData?.messageCount" 
+                      class="text-xs text-gray-400"
+                    >
+                      {{ data.elevenLabsData.messageCount }} messages
+                    </span>
+                  </div>
                 </template>
               </Column>
 
               <Column field="outcome" header="Outcome" sortable>
                 <template #body="{ data }">
-                  <span :class="['px-2 py-1 rounded-full text-xs font-medium', getOutcomeColor(data.outcome)]">
-                    {{ getOutcomeLabel(data.outcome) }}
-                  </span>
+                  <div class="flex flex-col gap-1">
+                    <span :class="['px-2 py-1 rounded-full text-xs font-medium', getOutcomeColor(data.outcome)]">
+                      {{ getOutcomeLabel(data.outcome) }}
+                    </span>
+                    <span 
+                      v-if="data.elevenLabsData?.userSatisfactionRating" 
+                      class="text-xs text-gray-500"
+                      :title="`Customer rating: ${data.elevenLabsData.userSatisfactionRating}/5`"
+                    >
+                      ⭐ {{ data.elevenLabsData.userSatisfactionRating }}/5
+                    </span>
+                  </div>
                 </template>
               </Column>
 
-              <Column field="notes" header="Notes">
+              <Column field="notes" header="AI Summary" style="max-width: 300px">
                 <template #body="{ data }">
-                  <span class="text-gray-500 text-sm">{{ data.notes || '-' }}</span>
+                  <div class="text-gray-500 text-sm">
+                    <span v-if="data.notes">{{ data.notes }}</span>
+                    <span v-else class="text-gray-400">-</span>
+                  </div>
                 </template>
               </Column>
             </DataTable>

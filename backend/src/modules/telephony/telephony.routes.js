@@ -63,6 +63,12 @@ router.post('/send-appointment-reminder', smsLimiter, authMiddleware, telephonyC
 // GET /api/telephony/call-logs - Get call logs
 router.get('/call-logs', standardLimiter, authMiddleware, telephonyController.getCallLogs);
 
+// GET /api/telephony/call-logs/:id - Get detailed call log with transcript
+router.get('/call-logs/:id', standardLimiter, authMiddleware, telephonyController.getCallLogDetails);
+
+// POST /api/telephony/sync-elevenlabs - Sync call logs with ElevenLabs
+router.post('/sync-elevenlabs', standardLimiter, authMiddleware, telephonyController.syncElevenLabs);
+
 // POST /api/telephony/make-call - Make outbound call
 router.post('/make-call', standardLimiter, authMiddleware, telephonyController.makeCall);
 
