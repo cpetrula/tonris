@@ -309,7 +309,7 @@ async function fetchAppointments() {
         employeeId: apt.employeeId,
         date: new Date(apt.startTime),
         time: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-        duration: apt.duration || apt.totalDuration || 30,
+        duration: typeof apt.duration === 'string' ? parseInt(apt.duration, 10) : (apt.duration || (typeof apt.totalDuration === 'string' ? parseInt(apt.totalDuration, 10) : apt.totalDuration) || 30),
         status: apt.status || 'scheduled',
         notes: apt.notes || ''
       }))
@@ -342,7 +342,7 @@ async function fetchServices() {
         label: svc.name,
         value: svc.name,
         id: svc.id,
-        duration: svc.duration
+        duration: typeof svc.duration === 'string' ? parseInt(svc.duration, 10) : (svc.duration || 30)
       }))
     }
   } catch (err) {
