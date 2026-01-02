@@ -11,9 +11,12 @@ import TabPanel from 'primevue/tabpanel'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
+import { useTenantStore } from '@/stores/tenant'
+import api from '@/services/api'
 
 const toast = useToast()
 const router = useRouter()
+const tenantStore = useTenantStore()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -21,15 +24,15 @@ const successMessage = ref('')
 
 // Business profile
 const businessProfile = ref({
-  name: 'Sample Salon',
-  email: 'contact@samplesalon.com',
-  phone: '(555) 123-4567',
-  address: '123 Main Street',
-  city: 'New York',
-  state: 'NY',
-  zipCode: '10001',
-  website: 'https://samplesalon.com',
-  description: 'A premier hair salon offering a wide range of services including haircuts, coloring, and styling.'
+  name: '',
+  email: '',
+  phone: '',
+  address: '',
+  city: '',
+  state: '',
+  zipCode: '',
+  website: '',
+  description: ''
 })
 
 // Business hours
@@ -42,6 +45,32 @@ const businessHours = ref({
   saturday: { open: '10:00 AM', close: '4:00 PM', closed: false },
   sunday: { open: '', close: '', closed: true }
 })
+
+// Helper function to convert 24h time to 12h format with AM/PM
+function convert24hTo12h(time: string): string {
+  if (!time) return ''
+  const [hours, minutes] = time.split(':')
+  const hour = parseInt(hours)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${minutes} ${ampm}`
+}
+
+// Helper function to convert 12h format to 24h format
+function convert12hTo24h(time: string): string {
+  if (!time) return ''
+  const match = time.match(/^(\d+):(\d+)\s*(AM|PM)$/i)
+  if (!match) return time
+  
+  let hours = parseInt(match[1])
+  const minutes = match[2]
+  const ampm = match[3].toUpperCase()
+  
+  if (ampm === 'PM' && hours !== 12) hours += 12
+  if (ampm === 'AM' && hours === 12) hours = 0
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes}`
+}
 
 // AI Voice Settings
 const aiSettings = ref({
@@ -96,11 +125,25 @@ const timeSlots = [
 async function saveBusinessProfile() {
   saving.value = true
   try {
-    // In a real app, save to API
-    // await api.patch(`/api/tenants/${tenantStore.tenantId}/profile`, businessProfile.value)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Prepare the update data
+    const updateData = {
+      name: businessProfile.value.name,
+      contactEmail: businessProfile.value.email,
+      contactPhone: businessProfile.value.phone,
+      address: {
+        street: businessProfile.value.address,
+        city: businessProfile.value.city,
+        state: businessProfile.value.state,
+        zipCode: businessProfile.value.zipCode
+      }
+    }
+
+    // Call the backend API
+    await tenantStore.updateTenant(updateData)
+    
     toast.add({ severity: 'success', summary: 'Success', detail: 'Business profile saved', life: 3000 })
-  } catch {
+  } catch (error) {
+    console.error('Failed to save business profile:', error)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save profile', life: 3000 })
   } finally {
     saving.value = false
@@ -110,11 +153,23 @@ async function saveBusinessProfile() {
 async function saveBusinessHours() {
   saving.value = true
   try {
-    // In a real app, save to API
-    // await api.patch(`/api/tenants/${tenantStore.tenantId}/hours`, businessHours.value)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Convert business hours to backend format (24h time, enabled flag)
+    const backendHours: Record<string, { open: string; close: string; enabled: boolean }> = {}
+    
+    for (const [day, hours] of Object.entries(businessHours.value)) {
+      backendHours[day] = {
+        open: convert12hTo24h(hours.open),
+        close: convert12hTo24h(hours.close),
+        enabled: !hours.closed
+      }
+    }
+
+    // Call the backend API to update settings
+    await tenantStore.updateSettings({ businessHours: backendHours })
+    
     toast.add({ severity: 'success', summary: 'Success', detail: 'Business hours saved', life: 3000 })
-  } catch {
+  } catch (error) {
+    console.error('Failed to save business hours:', error)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save hours', life: 3000 })
   } finally {
     saving.value = false
@@ -168,9 +223,45 @@ function connectOutlookCalendar() {
 
 onMounted(async () => {
   loading.value = true
-  // In a real app, fetch settings from API using tenantStore.tenantId
-  // await api.get(`/api/tenants/${tenantStore.tenantId}/settings`)
-  loading.value = false
+  try {
+    // Fetch tenant profile
+    await tenantStore.fetchTenants()
+    const tenant = tenantStore.currentTenant
+    
+    if (tenant) {
+      // Populate business profile from tenant data
+      businessProfile.value.name = tenant.name || ''
+      businessProfile.value.email = tenant.contactEmail || ''
+      businessProfile.value.phone = tenant.contactPhone || ''
+      businessProfile.value.address = tenant.address?.street || ''
+      businessProfile.value.city = tenant.address?.city || ''
+      businessProfile.value.state = tenant.address?.state || ''
+      businessProfile.value.zipCode = tenant.address?.zipCode || ''
+      businessProfile.value.website = tenant.website || ''
+      businessProfile.value.description = tenant.description || ''
+    }
+
+    // Fetch tenant settings (includes business hours)
+    const settings = await tenantStore.fetchSettings()
+    
+    if (settings?.businessHours) {
+      // Convert backend format (24h time, enabled flag) to frontend format (12h time, closed flag)
+      for (const [day, hours] of Object.entries(settings.businessHours)) {
+        if (businessHours.value[day as keyof typeof businessHours.value]) {
+          businessHours.value[day as keyof typeof businessHours.value] = {
+            open: convert24hTo12h(hours.open),
+            close: convert24hTo12h(hours.close),
+            closed: !hours.enabled
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load settings:', error)
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load settings', life: 3000 })
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
