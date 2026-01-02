@@ -1019,11 +1019,8 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
     }
     
     const {
-      employeeId: rawEmployeeId,
-      serviceId: rawServiceId,
-      serviceName,
-      stylistName,
-      employeeName,
+      employeeId,
+      serviceId,
       customerName,
       customerEmail,
       customerPhone,
@@ -1031,83 +1028,31 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
       addOns,
       notes,
     } = req.body;
-
-    // Resolve service ID from name if needed
-    let serviceId = rawServiceId;
-    if (!serviceId && serviceName) {
-      const services = await serviceService.getServices(tenantId, { status: 'active' });
-      const service = services.find(s =>
-        s.name.toLowerCase().includes(serviceName.toLowerCase())
-      );
-      if (!service) {
-        throw new AppError(
-          `Service "${serviceName}" not found. Available services: ${services.map(s => s.name).join(', ')}`,
-          400,
-          'VALIDATION_ERROR'
-        );
-      }
-      serviceId = service.id;
-      logger.info(`ElevenLabs booking: Resolved service "${serviceName}" to ID ${serviceId}`);
-    }
-
-    // Resolve employee ID from name if needed
-    let employeeId = rawEmployeeId;
-    const stylistSearch = stylistName || employeeName;
-    if (!employeeId && stylistSearch) {
-      const employees = await employeeService.getEmployees(tenantId, { status: 'active' });
-      const employee = employees.find(e =>
-        `${e.firstName} ${e.lastName}`.toLowerCase().includes(stylistSearch.toLowerCase()) ||
-        e.firstName.toLowerCase().includes(stylistSearch.toLowerCase())
-      );
-      if (!employee) {
-        throw new AppError(
-          `Stylist "${stylistSearch}" not found. Available stylists: ${employees.map(e => `${e.firstName} ${e.lastName}`).join(', ')}`,
-          400,
-          'VALIDATION_ERROR'
-        );
-      }
-      employeeId = employee.id;
-      logger.info(`ElevenLabs booking: Resolved stylist "${stylistSearch}" to ID ${employeeId}`);
-    } else if (!employeeId) {
-      // Default to first available employee if no stylist specified
-      const employees = await employeeService.getEmployees(tenantId, { status: 'active' });
-      if (employees.length > 0) {
-        employeeId = employees[0].id;
-        logger.info(`ElevenLabs booking: No stylist specified, defaulting to ${employees[0].firstName} ${employees[0].lastName}`);
-      }
-    }
-
+    
     // Validate required fields
-    if (!serviceId || !customerName || !startTime) {
+    if (!employeeId || !serviceId || !customerName || !startTime) {
       throw new AppError(
-        'serviceId (or serviceName), customerName, and startTime are required',
+        'employeeId, serviceId, customerName, and startTime are required',
         400,
         'VALIDATION_ERROR'
       );
     }
-
-    if (!employeeId) {
+    
+    if (!customerEmail && !customerPhone) {
       throw new AppError(
-        'No available stylist found',
+        'Either customerEmail or customerPhone is required',
         400,
         'VALIDATION_ERROR'
       );
     }
-
-    // customerPhone is typically provided by caller ID, make it optional
-    // Allow booking without explicit contact if it's from a phone call
-    const hasContactInfo = customerEmail || customerPhone || notes?.includes('phone call');
-    if (!hasContactInfo) {
-      logger.warn('ElevenLabs booking: No explicit contact info, proceeding anyway for phone bookings');
-    }
-
-    // Validate UUID formats if IDs were provided directly
-    if (rawServiceId && !isValidUUID(rawServiceId)) {
-      throw new AppError('Invalid service ID format', 400, 'VALIDATION_ERROR');
-    }
-
-    if (rawEmployeeId && !isValidUUID(rawEmployeeId)) {
+    
+    // Validate UUID formats
+    if (!isValidUUID(employeeId)) {
       throw new AppError('Invalid employee ID format', 400, 'VALIDATION_ERROR');
+    }
+    
+    if (!isValidUUID(serviceId)) {
+      throw new AppError('Invalid service ID format', 400, 'VALIDATION_ERROR');
     }
     
     // Validate email format if provided
