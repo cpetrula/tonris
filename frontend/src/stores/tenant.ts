@@ -62,6 +62,15 @@ export const useTenantStore = defineStore('tenant', () => {
   const tenantName = computed(() => currentTenant.value?.name || '')
   const isActiveTenant = computed(() => currentTenant.value?.status === 'active')
 
+  // Helper function to handle API errors
+  function handleApiError(err: unknown, defaultMessage: string): string {
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosError = err as { response?: { data?: { message?: string } } }
+      return axiosError.response?.data?.message || defaultMessage
+    }
+    return defaultMessage
+  }
+
   // Actions
   async function fetchTenants(): Promise<void> {
     loading.value = true
@@ -80,12 +89,7 @@ export const useTenantStore = defineStore('tenant', () => {
       currentTenant.value = tenant
       tenants.value = [tenant]
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to fetch tenant'
-      } else {
-        error.value = 'Failed to fetch tenant'
-      }
+      error.value = handleApiError(err, 'Failed to fetch tenant')
     } finally {
       loading.value = false
     }
@@ -109,12 +113,7 @@ export const useTenantStore = defineStore('tenant', () => {
       
       return true
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to select tenant'
-      } else {
-        error.value = 'Failed to select tenant'
-      }
+      error.value = handleApiError(err, 'Failed to select tenant')
       return false
     } finally {
       loading.value = false
@@ -129,12 +128,7 @@ export const useTenantStore = defineStore('tenant', () => {
       settings.value = response.data.data.settings
       return settings.value
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to fetch settings'
-      } else {
-        error.value = 'Failed to fetch settings'
-      }
+      error.value = handleApiError(err, 'Failed to fetch settings')
       return null
     }
   }
@@ -153,12 +147,7 @@ export const useTenantStore = defineStore('tenant', () => {
       settings.value = response.data.data.settings
       return true
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to update settings'
-      } else {
-        error.value = 'Failed to update settings'
-      }
+      error.value = handleApiError(err, 'Failed to update settings')
       return false
     } finally {
       loading.value = false
@@ -179,12 +168,7 @@ export const useTenantStore = defineStore('tenant', () => {
       
       return businessHours
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to fetch business hours'
-      } else {
-        error.value = 'Failed to fetch business hours'
-      }
+      error.value = handleApiError(err, 'Failed to fetch business hours')
       return null
     }
   }
@@ -208,12 +192,7 @@ export const useTenantStore = defineStore('tenant', () => {
       
       return true
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to update business hours'
-      } else {
-        error.value = 'Failed to update business hours'
-      }
+      error.value = handleApiError(err, 'Failed to update business hours')
       return false
     } finally {
       loading.value = false
@@ -241,12 +220,7 @@ export const useTenantStore = defineStore('tenant', () => {
       
       return true
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } }
-        error.value = axiosError.response?.data?.message || 'Failed to update tenant'
-      } else {
-        error.value = 'Failed to update tenant'
-      }
+      error.value = handleApiError(err, 'Failed to update tenant')
       return false
     } finally {
       loading.value = false

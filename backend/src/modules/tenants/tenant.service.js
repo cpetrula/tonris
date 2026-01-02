@@ -207,11 +207,11 @@ const updateBusinessHours = async (id, businessHours) => {
       );
     }
 
-    // Validate time format (HH:MM)
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (hours.enabled && (!timeRegex.test(hours.open) || !timeRegex.test(hours.close))) {
+    // Validate time format (HH:MM) - require zero-padded format for consistency
+    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(hours.open) || !timeRegex.test(hours.close)) {
       throw new AppError(
-        `Invalid time format for ${day}. Expected HH:MM format`,
+        `Invalid time format for ${day}. Expected zero-padded HH:MM format (e.g., 09:00)`,
         400,
         'INVALID_TIME_FORMAT'
       );
