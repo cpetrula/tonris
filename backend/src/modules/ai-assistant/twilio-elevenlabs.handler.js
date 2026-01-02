@@ -172,7 +172,7 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     const isAvailable = await elevenlabsService.isAvailable();
     
     if (!isAvailable) {
-      logger.warn(`Twilio-ElevenLabs: ElevenLabs not configured for tenant: ${tenant.tenantId}`);
+      logger.warn(`Twilio-ElevenLabs: ElevenLabs not configured for tenant: ${tenant.id}`);
       return {
         success: false,
         twiml: generateErrorTwiml('Our AI assistant is temporarily unavailable. Please try again later.'),
@@ -183,7 +183,7 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     const agentId = tenant.settings?.elevenLabsAgentId || tenant.metadata?.elevenLabsAgentId || env.ELEVENLABS_AGENT_ID;
     
     if (!agentId) {
-      logger.error(`Twilio-ElevenLabs: No agent ID configured for tenant: ${tenant.tenantId}`);
+      logger.error(`Twilio-ElevenLabs: No agent ID configured for tenant: ${tenant.id}`);
       return {
         success: false,
         twiml: generateErrorTwiml('Our AI assistant is not properly configured. Please contact support.'),
@@ -193,12 +193,12 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     // Build the WebSocket URL for the application's media stream handler
     // The media stream handler will bridge between Twilio and ElevenLabs
     const baseUrl = hostUrl || env.APP_BASE_URL;
-    const mediaStreamUrl = buildMediaStreamUrl(baseUrl, agentId, tenant.tenantId, CallSid);
+    const mediaStreamUrl = buildMediaStreamUrl(baseUrl, agentId, tenant.id, CallSid);
     
     // Prepare custom parameters for context
     // Include tenant_id and tenant_name for ElevenLabs webhook callbacks
     const customParameters = {
-      tenant_id: tenant.tenantId,
+      tenant_id: tenant.id,
       tenant_name: tenant.name || 'Our Business',
       business_name: tenant.name || 'Our Business',
       caller_number: From,
@@ -217,16 +217,16 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     const twiml = generateElevenLabsConnectTwiml({
       mediaStreamUrl,
       agentId,
-      tenantId: tenant.tenantId,
+      tenantId: tenant.id,
       callSid: CallSid,
       customParameters,
     });
     
-    logger.info(`Twilio-ElevenLabs: Connected call ${CallSid} to ElevenLabs agent ${agentId} for tenant ${tenant.tenantId}`);
+    logger.info(`Twilio-ElevenLabs: Connected call ${CallSid} to ElevenLabs agent ${agentId} for tenant ${tenant.id}`);
     
     return {
       success: true,
-      tenantId: tenant.tenantId,
+      tenantId: tenant.id,
       agentId,
       callSid: CallSid,
       twiml,

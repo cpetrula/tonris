@@ -184,7 +184,7 @@ describe('Twilio-ElevenLabs Integration', () => {
 
   describe('POST /api/webhooks/twilio/elevenlabs', () => {
     const mockTenant = {
-      tenantId: 'test-tenant',
+      id: 'test-tenant',
       name: 'Test Salon',
       status: 'active',
       twilioPhoneNumber: '+15551234567',
@@ -524,7 +524,7 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
   describe('POST /api/webhooks/elevenlabs/conversation-initiation', () => {
     it('should return conversation configuration with dynamic variables', async () => {
       const mockTenantData = {
-        tenantId: 'test-tenant',
+        id: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
         settings: {
@@ -627,7 +627,7 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
 
     it('should NOT include first_message override even when greeting is configured', async () => {
       const mockTenantData = {
-        tenantId: 'test-tenant',
+        id: 'test-tenant',
         name: 'Test Salon',
         settings: {
           aiGreeting: 'Welcome to Test Salon! How can I help you today?',

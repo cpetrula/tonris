@@ -66,9 +66,11 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         
         // Build dynamic variables from custom parameters
         // Include tenant_id and tenant_name for webhook callbacks and query params
+        // ElevenLabs requires 'name' as a dynamic variable
         const dynamicVariables = {
           tenant_id: tenantId,
           tenant_name: customParameters.tenant_name || customParameters.business_name || '',
+          name: customParameters.tenant_name || customParameters.business_name || 'Our Business',
         };
         if (customParameters.business_name) {
           dynamicVariables.business_name = customParameters.business_name;
