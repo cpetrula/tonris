@@ -182,6 +182,9 @@ Tenant.prototype.updateSettings = async function(newSettings) {
     ...this.settings,
     ...newSettings,
   };
+  // Explicitly mark the settings field as changed for Sequelize
+  // This is necessary because Sequelize doesn't always detect changes to JSON columns
+  this.changed('settings', true);
   await this.save();
   return this;
 };
