@@ -78,7 +78,8 @@ APP_BASE_URL=https://api.yourdomain.com
 # ElevenLabs Configuration
 # ===========================================
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
-ELEVENLABS_AGENT_ID=your_elevenlabs_agent_id
+# DEPRECATED: ELEVENLABS_AGENT_ID - Agent ID is now configured per business type in the database
+# ELEVENLABS_AGENT_ID=your_elevenlabs_agent_id  # Only for backward compatibility
 ELEVENLABS_VOICE_ID=your_elevenlabs_voice_id
 
 # ===========================================
