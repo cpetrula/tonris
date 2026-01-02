@@ -14,7 +14,7 @@ USE tonris_db;
 -- Temporary password: 'TempPassword123!'
 -- This is a properly hashed bcrypt password (single hash, 10 rounds)
 -- Generated with: await bcrypt.hash('TempPassword123!', 10)
-SET @temp_password = '$2b$10$YcVSGe9rKbz6z5A.RLKxD.3TqU.9Cq1K8DQp3KvYzZ.XEHbqJ3YYu';
+SET @temp_password = '$2b$10$amqwfNqs/I1Ndhsd1LqrO.GfTGWq0Al1nFJcgY/nYe4z959GaH/lW';
 
 -- Backup current passwords (optional, uncomment if needed)
 -- CREATE TABLE IF NOT EXISTS users_password_backup AS 
