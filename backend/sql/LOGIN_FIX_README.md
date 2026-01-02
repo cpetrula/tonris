@@ -21,16 +21,29 @@ We need to reset passwords for affected users. There are two approaches:
 
 Use `fix_double_hashed_passwords.sql` to generate password reset tokens for all users, then send them reset emails.
 
+**Note:** This script resets passwords for ALL active users. If you want to target only users created before a specific date (e.g., before PR #162 was merged), you can modify the WHERE clause. For example:
+```sql
+WHERE is_active = 1 AND createdAt < '2026-01-02'  -- Adjust date as needed
+```
+
 **Steps:**
-1. Run the SQL script: `fix_double_hashed_passwords.sql`
-2. Extract reset tokens from database
-3. Send password reset emails to all affected users
-4. Users click the link and set a new password
-5. New passwords will be properly hashed by the fixed User model
+1. (Optional) Modify the WHERE clause to target specific users
+2. Run the SQL script: `fix_double_hashed_passwords.sql`
+3. Extract reset tokens from database
+4. Send password reset emails to all affected users
+5. Users click the link and set a new password
+6. New passwords will be properly hashed by the fixed User model
 
 ### Option 2: Temporary Password (Development/Testing Only)
 
+⚠️ **SECURITY WARNING:** This sets a publicly-known password. Only use in development!
+
 Use `fix_double_hashed_passwords_temp.sql` to set all user passwords to a known temporary password.
+
+**For better security in development:**
+1. Generate a unique password: `node -e "require('bcrypt').hash('YourPassword', 10).then(console.log)"`
+2. Replace the hash in the script with your generated hash
+3. Communicate the password securely to your team
 
 **Steps:**
 1. Run the SQL script: `fix_double_hashed_passwords_temp.sql`

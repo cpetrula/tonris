@@ -2,11 +2,19 @@
 -- Fix Double-Hashed Passwords - Temporary Password Approach
 -- =============================================================================
 -- 
--- WARNING: This script is for DEVELOPMENT/TESTING environments only!
--- For PRODUCTION, use fix_double_hashed_passwords.sql instead.
+-- ⚠️  SECURITY WARNING: FOR DEVELOPMENT/TESTING ENVIRONMENTS ONLY! ⚠️
+-- 
+-- This script sets a known temporary password that is publicly visible in the
+-- repository. DO NOT USE IN PRODUCTION or any environment with real user data.
 --
--- This script sets all user passwords to a known temporary password.
--- Use this only when you need immediate access to test accounts.
+-- For PRODUCTION environments, use fix_double_hashed_passwords.sql instead,
+-- which generates unique reset tokens and forces users through the secure
+-- password reset flow.
+--
+-- ALTERNATIVE: Generate a unique temporary password per environment:
+-- 1. Generate: node -e "require('bcrypt').hash('YourUniquePassword', 10).then(console.log)"
+-- 2. Replace @temp_password below with the generated hash
+-- 3. Communicate the unique password securely to your team
 -- =============================================================================
 
 USE tonris_db;
