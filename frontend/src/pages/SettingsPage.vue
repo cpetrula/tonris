@@ -12,7 +12,6 @@ import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
 import { useTenantStore } from '@/stores/tenant'
-import api from '@/services/api'
 
 const toast = useToast()
 const router = useRouter()
@@ -49,8 +48,11 @@ const businessHours = ref({
 // Helper function to convert 24h time to 12h format with AM/PM
 function convert24hTo12h(time: string): string {
   if (!time) return ''
-  const [hours, minutes] = time.split(':')
-  const hour = parseInt(hours)
+  const parts = time.split(':')
+  if (parts.length < 2 || !parts[0] || !parts[1]) return time
+  const hours = parts[0]
+  const minutes = parts[1]
+  const hour = parseInt(hours, 10)
   const ampm = hour >= 12 ? 'PM' : 'AM'
   const hour12 = hour % 12 || 12
   return `${hour12}:${minutes} ${ampm}`
@@ -62,9 +64,13 @@ function convert12hTo24h(time: string): string {
   const match = time.match(/^(\d+):(\d+)\s*(AM|PM)$/i)
   if (!match) return time
   
-  let hours = parseInt(match[1])
+  const hourStr = match[1]
   const minutes = match[2]
-  const ampm = match[3].toUpperCase()
+  const ampm = match[3]?.toUpperCase()
+  
+  if (!hourStr || !ampm) return time
+  
+  let hours = parseInt(hourStr, 10)
   
   if (ampm === 'PM' && hours !== 12) hours += 12
   if (ampm === 'AM' && hours === 12) hours = 0
