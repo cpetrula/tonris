@@ -176,14 +176,12 @@ export const useTenantStore = defineStore('tenant', () => {
       const updatedTenant = response.data.data.tenant
       
       // Update current tenant with new data - cast to ensure type safety
-      if (currentTenant.value) {
-        currentTenant.value = { ...currentTenant.value, ...updatedTenant } as Tenant
-        
-        // Update in tenants array
-        const index = tenants.value.findIndex(t => t.id === updatedTenant.id)
-        if (index !== -1 && currentTenant.value) {
-          tenants.value[index] = currentTenant.value
-        }
+      currentTenant.value = { ...currentTenant.value, ...updatedTenant } as Tenant
+      
+      // Update in tenants array
+      const index = tenants.value.findIndex(t => t.id === updatedTenant.id)
+      if (index !== -1) {
+        tenants.value[index] = currentTenant.value
       }
       
       return true

@@ -49,7 +49,10 @@ const businessHours = ref({
 function convert24hTo12h(time: string): string {
   if (!time) return ''
   const parts = time.split(':')
-  if (parts.length < 2 || !parts[0] || !parts[1]) return time
+  if (parts.length < 2 || !parts[0] || !parts[1]) {
+    console.warn('Invalid time format:', time)
+    return ''
+  }
   const hours = parts[0]
   const minutes = parts[1]
   const hour = parseInt(hours, 10)
@@ -62,13 +65,16 @@ function convert24hTo12h(time: string): string {
 function convert12hTo24h(time: string): string {
   if (!time) return ''
   const match = time.match(/^(\d+):(\d+)\s*(AM|PM)$/i)
-  if (!match) return time
+  if (!match) {
+    console.warn('Invalid 12h time format:', time)
+    return ''
+  }
   
   const hourStr = match[1]
   const minutes = match[2]
   const ampm = match[3]?.toUpperCase()
   
-  if (!hourStr || !ampm) return time
+  if (!hourStr || !ampm) return ''
   
   let hours = parseInt(hourStr, 10)
   
