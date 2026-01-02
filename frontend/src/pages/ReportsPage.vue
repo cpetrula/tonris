@@ -162,7 +162,7 @@ async function fetchCallLogs() {
         phoneNumber: log.fromNumber || log.toNumber || 'Unknown',
         callerName: log.callerName || 'Unknown',
         date: new Date(log.createdAt),
-        duration: log.duration || log.elevenLabsData?.callDurationSecs || 0,
+        duration: typeof log.duration === 'string' ? parseInt(log.duration, 10) : (log.duration || (log.elevenLabsData?.callDurationSecs ? (typeof log.elevenLabsData.callDurationSecs === 'string' ? parseInt(log.elevenLabsData.callDurationSecs, 10) : log.elevenLabsData.callDurationSecs) : 0)),
         outcome: mapCallStatus(log.status, log.elevenLabsData),
         notes: log.notes || log.elevenLabsData?.transcriptSummary || '',
         elevenLabsConversationId: log.elevenLabsConversationId,
