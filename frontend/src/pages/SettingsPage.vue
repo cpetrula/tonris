@@ -141,6 +141,10 @@ async function saveBusinessProfile() {
         city: businessProfile.value.city,
         state: businessProfile.value.state,
         zipCode: businessProfile.value.zipCode
+      },
+      metadata: {
+        website: businessProfile.value.website,
+        description: businessProfile.value.description
       }
     }
 
@@ -243,8 +247,8 @@ onMounted(async () => {
       businessProfile.value.city = tenant.address?.city || ''
       businessProfile.value.state = tenant.address?.state || ''
       businessProfile.value.zipCode = tenant.address?.zipCode || ''
-      businessProfile.value.website = tenant.website || ''
-      businessProfile.value.description = tenant.description || ''
+      businessProfile.value.website = tenant.metadata?.website || ''
+      businessProfile.value.description = tenant.metadata?.description || ''
     }
 
     // Fetch tenant settings (includes business hours)

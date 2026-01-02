@@ -17,8 +17,11 @@ export interface Tenant {
     state?: string
     zipCode?: string
   }
-  website?: string
-  description?: string
+  metadata?: {
+    website?: string
+    description?: string
+    [key: string]: unknown
+  }
   createdAt: string
 }
 
