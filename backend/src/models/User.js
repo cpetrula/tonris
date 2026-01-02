@@ -1,6 +1,12 @@
 /**
  * User Model
  * Defines the User schema for authentication
+ * 
+ * Password Hashing:
+ * - Passwords are automatically hashed using bcrypt before saving to the database
+ * - The model intelligently detects if a password is already hashed to prevent double-hashing
+ * - This allows for safe use of pre-hashed passwords in seed data or bulk operations
+ * - Hash detection works for bcrypt formats: $2a$, $2b$, and $2y$
  */
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
@@ -12,9 +18,15 @@ const bcrypt = require('bcrypt');
  * @returns {boolean} - True if the password is already a bcrypt hash
  */
 const isBcryptHash = (password) => {
+  // Handle null, undefined, or non-string values
+  if (!password || typeof password !== 'string') {
+    return false;
+  }
+  
   // Bcrypt hashes have a distinctive format: $2a$, $2b$, or $2y$ followed by cost factor
-  // Example: $2b$10$abcdefghijklmnopqrstuvwxyz...
-  return /^\$2[aby]\$\d{2}\$/.test(password);
+  // and should be exactly 60 characters long
+  // Example: $2b$10$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+  return /^\$2[aby]\$\d{2}\$.{53}$/.test(password) && password.length === 60;
 };
 
 const User = sequelize.define('User', {

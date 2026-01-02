@@ -6,7 +6,15 @@ const bcrypt = require('bcrypt');
 
 // Helper function to check if a string is already a bcrypt hash
 const isBcryptHash = (password) => {
-  return /^\$2[aby]\$\d{2}\$/.test(password);
+  // Handle null, undefined, or non-string values
+  if (!password || typeof password !== 'string') {
+    return false;
+  }
+  
+  // Bcrypt hashes have a distinctive format: $2a$, $2b$, or $2y$ followed by cost factor
+  // and should be exactly 60 characters long
+  // Example: $2b$10$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+  return /^\$2[aby]\$\d{2}\$.{53}$/.test(password) && password.length === 60;
 };
 
 // Simulate the beforeCreate hook logic
@@ -33,12 +41,14 @@ describe('User Model Password Hashing Logic', () => {
     });
 
     it('should detect bcrypt hash with $2a$ prefix', () => {
-      const hash = '$2a$10$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST';
+      // Valid bcrypt hash with $2a$ prefix (same hash but different format)
+      const hash = '$2a$10$cuxtDMGAPnYN595um0PtauSaGMXy9SQIHIhMqAHrUYcwjAGEiPZXi';
       expect(isBcryptHash(hash)).toBe(true);
     });
 
     it('should detect bcrypt hash with $2y$ prefix', () => {
-      const hash = '$2y$12$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST';
+      // Valid bcrypt hash with $2y$ prefix (same hash but different format)
+      const hash = '$2y$12$cuxtDMGAPnYN595um0PtauSaGMXy9SQIHIhMqAHrUYcwjAGEiPZXi';
       expect(isBcryptHash(hash)).toBe(true);
     });
 
@@ -52,6 +62,21 @@ describe('User Model Password Hashing Logic', () => {
       expect(isBcryptHash('$2c$10$invalid')).toBe(false);
       expect(isBcryptHash('$2b$1$tooshort')).toBe(false);
       expect(isBcryptHash('notahash')).toBe(false);
+    });
+
+    it('should handle null, undefined, and non-string values', () => {
+      expect(isBcryptHash(null)).toBe(false);
+      expect(isBcryptHash(undefined)).toBe(false);
+      expect(isBcryptHash('')).toBe(false);
+      expect(isBcryptHash(123)).toBe(false);
+      expect(isBcryptHash({})).toBe(false);
+    });
+
+    it('should reject hashes with incorrect length', () => {
+      // Too short
+      expect(isBcryptHash('$2b$10$short')).toBe(false);
+      // Too long (more than 60 characters)
+      expect(isBcryptHash('$2b$10$cuxtDMGAPnYN595um0PtauSaGMXy9SQIHIhMqAHrUYcwjAGEiPZXiEXTRA')).toBe(false);
     });
   });
 
