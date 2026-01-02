@@ -203,6 +203,7 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       business_name: tenant.name || 'Our Business',
       caller_number: From,
       call_status: CallStatus,
+      ai_greeting: tenant.settings?.aiGreeting || '',
     };
     
     // Add business hours if available

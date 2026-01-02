@@ -92,14 +92,22 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // NOTE: We also specify first_message as empty to let the agent use its configured greeting.
         // If no greeting is configured in the ElevenLabs dashboard, the agent will wait for user input.
         // The tts section ensures the agent uses the correct TTS output format.
+        // Build agent config with audio format settings
+        const agentConfig = {
+          language: 'en',
+          agent_output_audio_format: 'ulaw_8000',
+          user_input_audio_format: 'ulaw_8000',
+        };
+
+        // Add custom first message if ai_greeting is provided
+        if (customParameters.ai_greeting) {
+          agentConfig.first_message = customParameters.ai_greeting;
+        }
+
         const initMessage = {
           type: 'conversation_initiation_client_data',
           conversation_config_override: {
-            agent: {
-              language: 'en',
-              agent_output_audio_format: 'ulaw_8000',
-              user_input_audio_format: 'ulaw_8000',
-            },
+            agent: agentConfig,
             tts: {
               // Ensure TTS output uses the correct format for Twilio
               output_format: 'ulaw_8000',
