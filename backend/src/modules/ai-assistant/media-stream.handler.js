@@ -6,6 +6,7 @@ const WebSocket = require('ws');
 const { URL } = require('url');
 const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
+const { CallLog } = require('../telephony/callLog.model');
 
 /**
  * Active stream connections map
@@ -138,10 +139,10 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
       });
 
       // Handle messages from ElevenLabs
-      elevenLabsWs.on('message', (data) => {
+      elevenLabsWs.on('message', async (data) => {
         try {
           const message = JSON.parse(data.toString());
-          handleElevenLabsMessage(message);
+          await handleElevenLabsMessage(message);
         } catch (error) {
           logger.error(`[MediaStream] Error parsing ElevenLabs message: ${error.message}`);
         }
@@ -183,7 +184,7 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
    * Handle messages from ElevenLabs
    * @param {Object} message - Parsed message from ElevenLabs
    */
-  const handleElevenLabsMessage = (message) => {
+  const handleElevenLabsMessage = async (message) => {
     switch (message.type) {
       case 'conversation_initiation_metadata':
         // This confirms the conversation has been initialized successfully
@@ -191,6 +192,30 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         {
           const conversationId = message.conversation_initiation_metadata_event?.conversation_id || 'unknown';
           logger.info(`[MediaStream] Conversation initiated for call ${callSid}, conversation_id: ${conversationId}`);
+          
+          // Save the conversation ID to the call log for later retrieval
+          if (callSid && conversationId && conversationId !== 'unknown') {
+            try {
+              const callLog = await CallLog.findOne({
+                where: { twilioCallSid: callSid },
+              });
+              
+              if (callLog) {
+                // Update the metadata with ElevenLabs conversation ID
+                callLog.metadata = {
+                  ...callLog.metadata,
+                  elevenLabsConversationId: conversationId,
+                  elevenLabsAgentId: agentId,
+                };
+                await callLog.save();
+                logger.info(`[MediaStream] Saved conversation ID ${conversationId} to call log ${callLog.id}`);
+              } else {
+                logger.warn(`[MediaStream] Call log not found for CallSid: ${callSid}`);
+              }
+            } catch (error) {
+              logger.error(`[MediaStream] Failed to save conversation ID to call log: ${error.message}`);
+            }
+          }
         }
         break;
 

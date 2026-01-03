@@ -98,100 +98,148 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
       return callLogs;
     }
     
-    // Get the date range from call logs - use startedAt if available, otherwise createdAt
-    const dates = callLogs.map(log => {
-      const timestamp = log.startedAt || log.createdAt;
-      return new Date(timestamp).getTime() / 1000;
+    // First, try to enrich logs that have conversation IDs stored in metadata
+    const logsWithStoredConvId = [];
+    const logsWithoutStoredConvId = [];
+    
+    callLogs.forEach(log => {
+      if (log.metadata?.elevenLabsConversationId) {
+        logsWithStoredConvId.push(log);
+      } else {
+        logsWithoutStoredConvId.push(log);
+      }
     });
     
-    // Guard against empty dates array
-    if (dates.length === 0) {
-      return callLogs;
+    // Fetch conversation details for logs with stored IDs
+    const enrichedLogsWithIds = await Promise.all(
+      logsWithStoredConvId.map(async (log) => {
+        try {
+          const conversationId = log.metadata.elevenLabsConversationId;
+          const conversation = await elevenlabsService.getConversationDetails(conversationId);
+          
+          return {
+            ...log,
+            elevenLabsConversationId: conversation.conversation_id,
+            elevenLabsData: {
+              conversationId: conversation.conversation_id,
+              agentId: conversation.agent_id,
+              status: conversation.status,
+              callSuccessful: conversation.call_successful,
+              callDurationSecs: conversation.call_duration_secs,
+              messageCount: conversation.message_count,
+              transcriptSummary: conversation.transcript_summary,
+              userSatisfactionRating: conversation.user_satisfaction_rating,
+              endReason: conversation.end_reason,
+              startTimeUnixSecs: conversation.metadata?.start_time_unix_secs,
+            },
+          };
+        } catch (error) {
+          logger.warn(`Failed to fetch conversation ${log.metadata.elevenLabsConversationId}: ${error.message}`);
+          return log; // Return original log if fetch fails
+        }
+      })
+    );
+    
+    // For logs without stored IDs, try time-based matching
+    let enrichedLogsWithoutIds = logsWithoutStoredConvId;
+    
+    if (logsWithoutStoredConvId.length > 0) {
+      // Get the date range from call logs - use startedAt if available, otherwise createdAt
+      const dates = logsWithoutStoredConvId.map(log => {
+        const timestamp = log.startedAt || log.createdAt;
+        return new Date(timestamp).getTime() / 1000;
+      });
+      
+      // Guard against empty dates array
+      if (dates.length > 0) {
+        const startTimeUnixSecs = Math.min(...dates) - 3600; // Add 1 hour buffer
+        const endTimeUnixSecs = Math.max(...dates) + 3600;
+        
+        // Fetch ElevenLabs conversations for this time range
+        // Note: This fetches up to 100 conversations. For more, implement pagination.
+        const conversationsResult = await elevenlabsService.listConversations({
+          startTimeUnixSecs,
+          endTimeUnixSecs,
+          pageSize: 100,
+        });
+        
+        const conversations = conversationsResult.conversations || [];
+        
+        // Create a map of conversations by call_sid or phone number + time range for quick lookup
+        const conversationMap = new Map();
+        
+        conversations.forEach(conv => {
+          // ElevenLabs stores metadata about the call
+          const callSid = conv.metadata?.call_sid || conv.metadata?.callSid;
+          const callerNumber = conv.metadata?.caller_number || conv.metadata?.from;
+          
+          if (callSid) {
+            conversationMap.set(callSid, conv);
+          }
+          
+          // Also map by caller number and approximate timestamp with a time window
+          if (callerNumber && conv.metadata?.start_time_unix_secs) {
+            // Create multiple keys for a ±30 second time window to handle timing differences
+            const convTime = conv.metadata.start_time_unix_secs;
+            for (let offset = -30; offset <= 30; offset += 5) {
+              const key = `${callerNumber}_${convTime + offset}`;
+              if (!conversationMap.has(key)) {
+                conversationMap.set(key, conv);
+              }
+            }
+          }
+        });
+        
+        // Enrich each call log using time-based matching
+        enrichedLogsWithoutIds = logsWithoutStoredConvId.map(log => {
+          let elevenLabsData = null;
+          
+          // Try to find matching conversation by Twilio Call SID (most reliable)
+          if (log.twilioCallSid) {
+            elevenLabsData = conversationMap.get(log.twilioCallSid);
+          }
+          
+          // If not found, try matching by phone number and time with a time window
+          if (!elevenLabsData && log.fromNumber) {
+            // Use startedAt if available for more accurate matching
+            const timestamp = log.startedAt || log.createdAt;
+            const logTime = Math.floor(new Date(timestamp).getTime() / 1000);
+            
+            // Try to find a match within a ±30 second window
+            for (let offset = -30; offset <= 30 && !elevenLabsData; offset += 5) {
+              const key = `${log.fromNumber}_${logTime + offset}`;
+              elevenLabsData = conversationMap.get(key);
+            }
+          }
+          
+          if (elevenLabsData) {
+            return {
+              ...log,
+              elevenLabsConversationId: elevenLabsData.conversation_id,
+              elevenLabsData: {
+                conversationId: elevenLabsData.conversation_id,
+                agentId: elevenLabsData.agent_id,
+                status: elevenLabsData.status,
+                callSuccessful: elevenLabsData.call_successful,
+                callDurationSecs: elevenLabsData.call_duration_secs,
+                messageCount: elevenLabsData.message_count,
+                transcriptSummary: elevenLabsData.transcript_summary,
+                userSatisfactionRating: elevenLabsData.user_satisfaction_rating,
+                endReason: elevenLabsData.end_reason,
+                startTimeUnixSecs: elevenLabsData.metadata?.start_time_unix_secs,
+              },
+            };
+          }
+          
+          return log;
+        });
+      }
     }
     
-    const startTimeUnixSecs = Math.min(...dates) - 3600; // Add 1 hour buffer
-    const endTimeUnixSecs = Math.max(...dates) + 3600;
+    // Combine both sets of enriched logs
+    const enrichedLogs = [...enrichedLogsWithIds, ...enrichedLogsWithoutIds];
     
-    // Fetch ElevenLabs conversations for this time range
-    // Note: This fetches up to 100 conversations. For more, implement pagination.
-    const conversationsResult = await elevenlabsService.listConversations({
-      startTimeUnixSecs,
-      endTimeUnixSecs,
-      pageSize: 100,
-    });
-    
-    const conversations = conversationsResult.conversations || [];
-    
-    // Create a map of conversations by call_sid or phone number + time range for quick lookup
-    const conversationMap = new Map();
-    
-    conversations.forEach(conv => {
-      // ElevenLabs stores metadata about the call
-      const callSid = conv.metadata?.call_sid || conv.metadata?.callSid;
-      const callerNumber = conv.metadata?.caller_number || conv.metadata?.from;
-      
-      if (callSid) {
-        conversationMap.set(callSid, conv);
-      }
-      
-      // Also map by caller number and approximate timestamp with a time window
-      if (callerNumber && conv.metadata?.start_time_unix_secs) {
-        // Create multiple keys for a ±30 second time window to handle timing differences
-        const convTime = conv.metadata.start_time_unix_secs;
-        for (let offset = -30; offset <= 30; offset += 5) {
-          const key = `${callerNumber}_${convTime + offset}`;
-          if (!conversationMap.has(key)) {
-            conversationMap.set(key, conv);
-          }
-        }
-      }
-    });
-    
-    // Enrich each call log
-    const enrichedLogs = callLogs.map(log => {
-      let elevenLabsData = null;
-      
-      // Try to find matching conversation by Twilio Call SID (most reliable)
-      if (log.twilioCallSid) {
-        elevenLabsData = conversationMap.get(log.twilioCallSid);
-      }
-      
-      // If not found, try matching by phone number and time with a time window
-      if (!elevenLabsData && log.fromNumber) {
-        // Use startedAt if available for more accurate matching
-        const timestamp = log.startedAt || log.createdAt;
-        const logTime = Math.floor(new Date(timestamp).getTime() / 1000);
-        
-        // Try to find a match within a ±30 second window
-        for (let offset = -30; offset <= 30 && !elevenLabsData; offset += 5) {
-          const key = `${log.fromNumber}_${logTime + offset}`;
-          elevenLabsData = conversationMap.get(key);
-        }
-      }
-      
-      if (elevenLabsData) {
-        return {
-          ...log,
-          elevenLabsConversationId: elevenLabsData.conversation_id,
-          elevenLabsData: {
-            conversationId: elevenLabsData.conversation_id,
-            agentId: elevenLabsData.agent_id,
-            status: elevenLabsData.status,
-            callSuccessful: elevenLabsData.call_successful,
-            callDurationSecs: elevenLabsData.call_duration_secs,
-            messageCount: elevenLabsData.message_count,
-            transcriptSummary: elevenLabsData.transcript_summary,
-            userSatisfactionRating: elevenLabsData.user_satisfaction_rating,
-            endReason: elevenLabsData.end_reason,
-            startTimeUnixSecs: elevenLabsData.metadata?.start_time_unix_secs,
-          },
-        };
-      }
-      
-      return log;
-    });
-    
-    logger.info(`Enriched ${enrichedLogs.filter(log => log.elevenLabsData).length} of ${callLogs.length} call logs with ElevenLabs data`);
+    logger.info(`Enriched ${enrichedLogs.filter(log => log.elevenLabsData).length} of ${callLogs.length} call logs with ElevenLabs data (${enrichedLogsWithIds.length} from stored IDs, ${enrichedLogsWithoutIds.filter(log => log.elevenLabsData).length} from time-based matching)`);
     
     return enrichedLogs;
   } catch (error) {
