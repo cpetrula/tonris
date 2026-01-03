@@ -127,7 +127,6 @@ describe('Telephony Module', () => {
       // Mock tenant lookup - findAll for matching phone number
       mockTenantModel.findAll.mockResolvedValue([{
         id: 'test-tenant-uuid',
-        tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -186,7 +185,6 @@ describe('Telephony Module', () => {
       // Mock tenant lookup - findAll for matching phone number
       mockTenantModel.findAll.mockResolvedValue([{
         id: 'test-tenant-uuid',
-        tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -213,7 +211,6 @@ describe('Telephony Module', () => {
     it('should handle CONFIRM command', async () => {
       mockTenantModel.findAll.mockResolvedValue([{
         id: 'test-tenant-uuid',
-        tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -241,7 +238,6 @@ describe('Telephony Module', () => {
     it('should handle HELP command', async () => {
       mockTenantModel.findAll.mockResolvedValue([{
         id: 'test-tenant-uuid',
-        tenantId: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -355,7 +351,6 @@ describe('Telephony Module', () => {
     it('should send SMS successfully', async () => {
       mockTenantModel.findOne.mockResolvedValue({
         id: 'test-tenant-uuid',
-        tenantId: 'test-tenant',
         name: 'Test Salon',
         metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},
@@ -417,7 +412,6 @@ describe('Telephony Module', () => {
     it('should send appointment reminder successfully', async () => {
       mockTenantModel.findOne.mockResolvedValue({
         id: 'test-tenant-uuid',
-        tenantId: 'test-tenant',
         name: 'Test Salon',
         metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},
