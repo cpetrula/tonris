@@ -377,7 +377,9 @@ const register = async ({
   const slug = `${businessName}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
 
   // Build address object if any address fields are provided
-  // Include both 'zip' and 'zipCode' for backward compatibility
+  // Include both 'zip' and 'zipCode' for backward compatibility with existing data
+  // This ensures data can be read by both old and new code versions
+  // Both fields are intentionally set to the same value to support gradual migration
   const address = (businessAddress || businessCity || businessState || businessZip) ? {
     street: businessAddress || null,
     city: businessCity || null,
