@@ -202,8 +202,9 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
               
               if (callLog) {
                 // Update the metadata with ElevenLabs conversation ID
+                // Safely handle null/undefined metadata
                 callLog.metadata = {
-                  ...callLog.metadata,
+                  ...(callLog.metadata || {}),
                   elevenLabsConversationId: conversationId,
                   elevenLabsAgentId: agentId,
                 };
