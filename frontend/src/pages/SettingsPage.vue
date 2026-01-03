@@ -286,8 +286,8 @@ onMounted(async () => {
               <i class="pi pi-phone text-xl text-violet-600"></i>
             </div>
             <div>
-              <h3 class="font-medium text-gray-900">Phone Forwarding Setup</h3>
-              <p class="text-sm text-gray-600">View instructions to forward calls to your Criton.AI number</p>
+              <h3 class="font-medium ">Phone Forwarding Setup</h3>
+              <p class="text-sm ">View instructions to forward calls to your Criton.AI number</p>
             </div>
           </div>
           <i class="pi pi-chevron-right text-gray-400"></i>
@@ -303,48 +303,48 @@ onMounted(async () => {
             <div class="space-y-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+                  <label class="block text-sm font-medium  mb-1">Business Name</label>
                   <InputText v-model="businessProfile.name" class="w-full" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label class="block text-sm font-medium  mb-1">Email</label>
                   <InputText v-model="businessProfile.email" type="email" class="w-full" />
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <label class="block text-sm font-medium  mb-1">Phone Number</label>
                   <InputText v-model="businessProfile.phone" class="w-full" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                  <label class="block text-sm font-medium  mb-1">Website</label>
                   <InputText v-model="businessProfile.website" class="w-full" placeholder="https://" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+                <label class="block text-sm font-medium  mb-1">Street Address</label>
                 <InputText v-model="businessProfile.address" class="w-full" />
               </div>
 
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="col-span-2">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <label class="block text-sm font-medium  mb-1">City</label>
                   <InputText v-model="businessProfile.city" class="w-full" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                  <label class="block text-sm font-medium  mb-1">State</label>
                   <InputText v-model="businessProfile.state" class="w-full" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
+                  <label class="block text-sm font-medium  mb-1">ZIP Code</label>
                   <InputText v-model="businessProfile.zipCode" class="w-full" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+                <label class="block text-sm font-medium  mb-1">Business Description</label>
                 <Textarea v-model="businessProfile.description" rows="3" class="w-full" />
               </div>
 
@@ -414,7 +414,7 @@ onMounted(async () => {
           <template #content>
             <div class="space-y-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Voice Type</label>
+                <label class="block text-sm font-medium  mb-1">Voice Type</label>
                 <Dropdown
                   v-model="aiSettings.voiceType"
                   :options="voiceOptions"
@@ -425,9 +425,9 @@ onMounted(async () => {
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Greeting Message</label>
+                <label class="block text-sm font-medium  mb-1">Greeting Message</label>
                 <Textarea v-model="aiSettings.greeting" rows="2" class="w-full" />
-                <p class="text-sm text-gray-500 mt-1">This message will be used to greet callers</p>
+                <p class="text-sm mt-1">This message will be used to greet callers</p>
               </div>
 
               <div class="flex justify-end pt-4">
@@ -449,73 +449,65 @@ onMounted(async () => {
           <template #content>
             <div class="space-y-6">
               <div>
-                <h3 class="font-medium text-gray-900 mb-4">Email Notifications</h3>
+          
                 <div class="space-y-4">
+                   
                   <div class="flex items-center justify-between">
                     <div>
-                      <p class="font-medium text-gray-700">New Appointments</p>
-                      <p class="text-sm text-gray-500">Receive email when a new appointment is booked</p>
+                     
+                      <p class="text-sm">Receive email when a new appointment is booked</p>
                     </div>
                     <InputSwitch v-model="notifications.emailNewAppointment" />
                   </div>
-                  <div class="flex items-center justify-between">
+                   <div class="flex items-center justify-between">
                     <div>
-                      <p class="font-medium text-gray-700">Cancellations</p>
-                      <p class="text-sm text-gray-500">Receive email when an appointment is cancelled</p>
+                    
+                      <p class="text-sm">Receive SMS when a new appointment is booked</p>
                     </div>
-                    <InputSwitch v-model="notifications.emailCancellation" />
+                    <InputSwitch v-model="notifications.smsNewAppointment" />
                   </div>
                   <div class="flex items-center justify-between">
                     <div>
-                      <p class="font-medium text-gray-700">Daily Digest</p>
-                      <p class="text-sm text-gray-500">Receive a daily summary of activity</p>
+                      
+                      <p class="text-sm">Receive email when an appointment is cancelled</p>
+                    </div>
+                    <InputSwitch v-model="notifications.emailCancellation" />
+                  </div>
+                   <div class="flex items-center justify-between">
+                    <div>
+                    
+                      <p class="text-sm">Receive SMS when an appointment is cancelled</p>
+                    </div>
+                    <InputSwitch v-model="notifications.smsCancellation" />
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div>
+                     
+                      <p class="text-sm">Receive a daily summary email of activity</p>
                     </div>
                     <InputSwitch v-model="notifications.emailDailyDigest" />
                   </div>
                 </div>
               </div>
 
-              <div class="border-t border-gray-200 pt-6">
-                <h3 class="font-medium text-gray-900 mb-4">SMS Notifications</h3>
-                <div class="space-y-4">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="font-medium text-gray-700">New Appointments</p>
-                      <p class="text-sm text-gray-500">Receive SMS when a new appointment is booked</p>
-                    </div>
-                    <InputSwitch v-model="notifications.smsNewAppointment" />
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="font-medium text-gray-700">Cancellations</p>
-                      <p class="text-sm text-gray-500">Receive SMS when an appointment is cancelled</p>
-                    </div>
-                    <InputSwitch v-model="notifications.smsCancellation" />
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="font-medium text-gray-700">Appointment Reminders</p>
-                      <p class="text-sm text-gray-500">Send SMS reminders to customers</p>
-                    </div>
-                    <InputSwitch v-model="notifications.smsReminder" />
-                  </div>
-                </div>
-              </div>
+              
 
               <div class="border-t border-gray-200 pt-6">
                 <h3 class="font-medium text-gray-900 mb-4">Automated Actions</h3>
                 
                 <div class="space-y-4">
-                  <div class="flex items-center justify-between">
+                  
+                    <div class="flex items-center justify-between">
                     <div>
-                      <p class="font-medium text-gray-700">Appointment Reminders</p>
-                      <p class="text-sm text-gray-500">Automatically call customers to remind them of appointments</p>
+                
+                      <p class="text-sm">Send SMS reminders to customers</p>
                     </div>
-                    <InputSwitch v-model="aiSettings.appointmentReminders" />
+                    <InputSwitch v-model="notifications.smsReminder" />
                   </div>
+                 
 
                   <div v-if="aiSettings.appointmentReminders" class="ml-4 pl-4 border-l-2 border-gray-200">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Remind customers (hours before)</label>
+                    <label class="block text-sm font-medium  mb-1">Remind customers (hours before)</label>
                     <Dropdown
                       v-model="aiSettings.reminderHours"
                       :options="[12, 24, 48]"
@@ -525,10 +517,10 @@ onMounted(async () => {
 
                   <div class="flex items-center justify-between">
                     <div>
-                      <p class="font-medium text-gray-700">Follow-up Calls</p>
-                      <p class="text-sm text-gray-500">Call customers after appointments for feedback</p>
+            
+                      <p class="text-sm">Text customers after appointments for feedback</p>
                     </div>
-                    <InputSwitch v-model="aiSettings.followUpCalls" />
+                    <InputSwitch v-model="aiSettings.followUpText" />
                   </div>
                 </div>
               </div>
