@@ -66,8 +66,8 @@ if (businessHours === undefined || businessHours === null) {
 ### 2. tenant.service.js
 
 #### `updateBusinessHours()` function
-- Added `await tenant.reload()` after `updateSettings()`
-- Ensures the returned businessHours value reflects what was actually saved
+- Delegates to `updateSettings()` which handles reload internally
+- Ensures the returned businessHours value reflects what was actually saved (through model layer reload)
 
 #### `getBusinessHours()` function
 - Changed from using `||` operator to explicit `=== undefined || === null` check
