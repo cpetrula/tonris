@@ -240,10 +240,12 @@ const handleOutboundCall = async (params) => {
       logger.info(`Outbound call log already exists: ${callLog.id}`);
     }
     
-    // Generate TwiML to connect the call (e.g., to ElevenLabs AI or a simple dial)
-    // For now, we'll use a simple message. This can be customized based on requirements.
+    // Generate TwiML to handle the outbound call
+    // For outbound calls, we return empty TwiML with <Say> to keep the call active
+    // This allows Twilio to connect the call to the destination
+    // If more complex call handling is needed (e.g., AI, recording), customize here
     const twiml = twilioService.generateVoiceResponse(
-      'Connecting your call, please wait.',
+      '', // Empty message - call proceeds normally to destination
       { hangup: false }
     );
     

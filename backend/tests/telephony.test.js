@@ -583,8 +583,8 @@ describe('CallLog Model Constants', () => {
 
   describe('POST /api/webhooks/twilio/outbound-voice', () => {
     it('should handle outbound voice call and return TwiML', async () => {
-      // Mock tenant lookup - findAll for matching phone number (From for outbound)
-      mockTenantModel.findAll.mockResolvedValue([{
+      // Reset and mock tenant lookup
+      mockTenantModel.findAll.mockReset().mockResolvedValue([{
         id: 'test-tenant-uuid',
         name: 'Test Salon',
         status: 'active',
@@ -592,9 +592,9 @@ describe('CallLog Model Constants', () => {
         businessHours: {},
       }]);
 
-      // Mock call log creation
-      mockCallLogModel.findOne.mockResolvedValue(null); // No existing call log
-      mockCallLogModel.create.mockResolvedValue({
+      // Reset and mock call log methods
+      mockCallLogModel.findOne.mockReset().mockResolvedValue(null);
+      mockCallLogModel.create.mockReset().mockResolvedValue({
         id: 'call-log-outbound-123',
         tenantId: 'test-tenant-uuid',
         twilioCallSid: 'CA987654321',
@@ -631,11 +631,8 @@ describe('CallLog Model Constants', () => {
     });
 
     it('should not create duplicate call logs for same CallSid', async () => {
-      // Clear previous mock calls
-      jest.clearAllMocks();
-      
-      // Mock tenant lookup
-      mockTenantModel.findAll.mockResolvedValue([{
+      // Reset and mock tenant lookup
+      mockTenantModel.findAll.mockReset().mockResolvedValue([{
         id: 'test-tenant-uuid',
         name: 'Test Salon',
         status: 'active',
@@ -643,8 +640,8 @@ describe('CallLog Model Constants', () => {
         businessHours: {},
       }]);
 
-      // Mock existing call log
-      mockCallLogModel.findOne.mockResolvedValue({
+      // Reset and mock existing call log (no create should happen)
+      mockCallLogModel.findOne.mockReset().mockResolvedValue({
         id: 'existing-call-log-123',
         tenantId: 'test-tenant-uuid',
         twilioCallSid: 'CA987654321',
@@ -653,6 +650,7 @@ describe('CallLog Model Constants', () => {
         fromNumber: '+15551234567',
         toNumber: '+18059736595',
       });
+      mockCallLogModel.create.mockReset();
 
       const response = await request(app)
         .post('/api/webhooks/twilio/outbound-voice')
@@ -671,7 +669,7 @@ describe('CallLog Model Constants', () => {
     });
 
     it('should return error TwiML when no tenant found for outbound call', async () => {
-      mockTenantModel.findAll.mockResolvedValue([]);
+      mockTenantModel.findAll.mockReset().mockResolvedValue([]);
 
       const response = await request(app)
         .post('/api/webhooks/twilio/outbound-voice')
