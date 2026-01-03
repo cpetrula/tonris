@@ -235,21 +235,70 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     const mediaStreamUrl = buildMediaStreamUrl(baseUrl, agentId, tenant.id, CallSid);
     
     // Prepare custom parameters for context
-    // Include tenant_id and tenant_name for ElevenLabs webhook callbacks
+    // Include ALL tenant data and metadata for ElevenLabs to use as dynamic variables
     const customParameters = {
+      // Core tenant identification (always required)
       tenant_id: tenant.id,
       tenant_name: tenant.name || 'Our Business',
       business_name: tenant.name || 'Our Business',
+      
+      // Call context
       caller_number: From,
       call_status: CallStatus,
-      // Use custom greeting if set, otherwise generate a default using business name
+      
+      // Contact information
+      contact_email: tenant.contactEmail,
+      contact_phone: tenant.contactPhone,
+      
+      // AI assistant settings with fallbacks
       ai_greeting: tenant.metadata?.aiGreeting || `Thanks for calling ${tenant.name || 'our business'}! How can I help you today?`,
+      ai_tone: tenant.metadata?.aiTone,
     };
     
-    // Add business hours if available
+    // Add business hours if available (as JSON string for ElevenLabs)
     if (tenant.businessHours?.businessHours) {
       customParameters.business_hours = JSON.stringify(tenant.businessHours.businessHours);
     }
+    
+    // Add address information if available
+    if (tenant.address) {
+      // Flatten address into individual fields for easier use in ElevenLabs
+      const address = typeof tenant.address === 'string' ? JSON.parse(tenant.address) : tenant.address;
+      if (address) {
+        customParameters.address_street = address.street;
+        customParameters.address_city = address.city;
+        customParameters.address_state = address.state;
+        customParameters.address_zip = address.zipCode || address.zip;
+        customParameters.address_country = address.country;
+        // Also provide full address as JSON string for backward compatibility
+        customParameters.address = JSON.stringify(address);
+      }
+    }
+    
+    // Include ALL metadata fields as dynamic variables
+    // This ensures any custom fields added to tenant metadata are available to ElevenLabs
+    if (tenant.metadata && typeof tenant.metadata === 'object') {
+      const metadata = typeof tenant.metadata === 'string' ? JSON.parse(tenant.metadata) : tenant.metadata;
+      
+      // Add each metadata field to customParameters
+      // Skip fields we've already explicitly set above to avoid conflicts
+      const reservedKeys = ['aiGreeting', 'aiTone', 'elevenLabsAgentId', 'twilioPhoneNumber'];
+      for (const [key, value] of Object.entries(metadata)) {
+        // Skip reserved keys and null/undefined values
+        if (!reservedKeys.includes(key) && value !== null && value !== undefined) {
+          // Convert objects to JSON strings for ElevenLabs
+          if (typeof value === 'object') {
+            customParameters[key] = JSON.stringify(value);
+          } else {
+            customParameters[key] = value;
+          }
+        }
+      }
+    }
+    
+    // Add tenant plan and status for potential use in agent logic
+    customParameters.plan_type = tenant.planType;
+    customParameters.tenant_status = tenant.status;
     
     // Generate TwiML to connect to the application's media stream WebSocket
     // The media stream handler will bridge to ElevenLabs
