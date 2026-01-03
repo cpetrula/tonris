@@ -39,7 +39,7 @@ const handleIncomingCall = async (params) => {
     
     // Create call log entry
     const callLog = await CallLog.create({
-      tenantId: tenant.tenantId,
+      tenantId: tenant.id,
       twilioCallSid: CallSid,
       direction: CALL_DIRECTION.INBOUND,
       status: CallStatus || CALL_STATUS.INITIATED,
@@ -52,7 +52,7 @@ const handleIncomingCall = async (params) => {
       },
     });
     
-    logger.info(`Call log created: ${callLog.id} for tenant: ${tenant.tenantId}`);
+    logger.info(`Call log created: ${callLog.id} for tenant: ${tenant.id}`);
     
     // Generate TwiML to forward to AI (business hours check could be added here)
     const welcomeMessage = getWelcomeMessage(tenant);
@@ -61,7 +61,7 @@ const handleIncomingCall = async (params) => {
     return {
       success: true,
       callLogId: callLog.id,
-      tenantId: tenant.tenantId,
+      tenantId: tenant.id,
       twiml,
     };
   } catch (error) {
