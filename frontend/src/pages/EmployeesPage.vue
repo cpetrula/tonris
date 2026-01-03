@@ -52,6 +52,8 @@ const showScheduleDialog = ref(false)
 const selectedEmployee = ref<Employee | null>(null)
 const error = ref('')
 
+// Employee type options - both full-time and part-time map to 'employee' in the database
+// The distinction between full-time and part-time can be managed through employee schedules
 const employeeTypeOptions = [
   { label: 'Employee (Full-time)', value: 'employee' },
   { label: 'Employee (Part-time)', value: 'employee' },
