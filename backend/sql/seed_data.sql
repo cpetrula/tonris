@@ -36,7 +36,7 @@ INSERT INTO tenants (
     slug,
     status,
     plan_type,
-    settings,
+    business_hours,
     contact_email,
     contact_phone,
     address,
@@ -53,16 +53,6 @@ INSERT INTO tenants (
     'active',
     'professional',
     JSON_OBJECT(
-        'timezone', 'America/New_York',
-        'language', 'en',
-        'dateFormat', 'YYYY-MM-DD',
-        'timeFormat', '12h',
-        'currency', 'USD',
-        'notifications', JSON_OBJECT(
-            'email', true,
-            'sms', true,
-            'push', true
-        ),
         'businessHours', JSON_OBJECT(
             'monday', JSON_OBJECT('open', '09:00', 'close', '19:00', 'enabled', true),
             'tuesday', JSON_OBJECT('open', '09:00', 'close', '19:00', 'enabled', true),

@@ -38,14 +38,14 @@ const createTenant = async (tenantData) => {
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + PLAN_CONFIG.TRIAL_DAYS);
 
-  // Create tenant with default settings
+  // Create tenant with default business hours
   const tenant = await Tenant.create({
     name,
     slug,
     contactEmail,
     contactPhone,
     planType: planType || PLAN_TYPES.FREE,
-    settings: Tenant.generateDefaultSettings(),
+    businessHours: Tenant.generateDefaultBusinessHours(),
     status: TENANT_STATUS.ACTIVE, // Set to active immediately since trial is active
     businessTypeId: businessTypeId || null,
     address: address || null,
@@ -98,9 +98,9 @@ const getTenantByPhoneNumber = async (phoneNumber) => {
 }
 
 /**
- * Get tenant settings
+ * Get tenant settings (returns business hours)
  * @param {string} id - Tenant UUID
- * @returns {Promise<Object>} - Tenant settings
+ * @returns {Promise<Object>} - Tenant settings (business hours)
  */
 const getTenantSettings = async (id) => {
   const tenant = await Tenant.findOne({ where: { id } });
@@ -112,16 +112,16 @@ const getTenantSettings = async (id) => {
   return {
     id: tenant.id,
     name: tenant.name,
-    settings: tenant.settings,
+    settings: tenant.businessHours,
     planType: tenant.planType,
     status: tenant.status,
   };
 };
 
 /**
- * Update tenant settings
+ * Update tenant settings (updates business hours)
  * @param {string} id - Tenant UUID
- * @param {Object} settings - New settings to merge
+ * @param {Object} settings - New settings to merge (should contain businessHours)
  * @returns {Promise<Object>} - Updated tenant settings
  */
 const updateTenantSettings = async (id, settings) => {
@@ -143,7 +143,7 @@ const updateTenantSettings = async (id, settings) => {
   return {
     id: tenant.id,
     name: tenant.name,
-    settings: tenant.settings,
+    settings: tenant.businessHours,
     planType: tenant.planType,
     status: tenant.status,
   };
@@ -161,16 +161,13 @@ const getBusinessHours = async (id) => {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
   }
 
-  // Get business hours from settings
-  // If businessHours is explicitly set to undefined/null/missing, return defaults
-  // But if settings itself is not a valid object, we should fix it
-  let businessHours = tenant.settings?.businessHours;
+  // Get business hours from business_hours column
+  // The column structure is { "businessHours": { "monday": {...}, ... } }
+  let businessHours = tenant.businessHours?.businessHours;
   
   // Only return defaults if businessHours is not set at all (undefined or null)
-  // Don't return defaults if businessHours is an empty object {} - that would indicate
-  // the user explicitly cleared it or there's a save issue we need to surface
   if (businessHours === undefined || businessHours === null) {
-    businessHours = Tenant.generateDefaultSettings().businessHours;
+    businessHours = Tenant.generateDefaultBusinessHours().businessHours;
   }
 
   return {
@@ -192,9 +189,9 @@ const updateBusinessHours = async (id, businessHours) => {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
   }
 
-  // Log current settings to help diagnose bad data issues (only in development)
+  // Log current business_hours to help diagnose bad data issues (only in development)
   if (process.env.NODE_ENV === 'development') {
-    logger.debug(`Updating business hours for tenant ${id}. Current settings type: ${typeof tenant.settings}`);
+    logger.debug(`Updating business hours for tenant ${id}. Current business_hours type: ${typeof tenant.businessHours}`);
   }
 
   // Validate business hours structure
@@ -232,14 +229,14 @@ const updateBusinessHours = async (id, businessHours) => {
     }
   }
 
-  // Update business hours in settings
-  await tenant.updateSettings({ businessHours });
+  // Update business hours
+  await tenant.updateBusinessHours(businessHours);
 
   logger.info(`Business hours updated for tenant: ${id}`);
 
   return {
     id: tenant.id,
-    businessHours: tenant.settings.businessHours,
+    businessHours: tenant.businessHours.businessHours,
   };
 };
 

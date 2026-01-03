@@ -198,9 +198,10 @@ describe('Twilio-ElevenLabs Integration', () => {
       name: 'Test Salon',
       status: 'active',
       twilioPhoneNumber: '+15551234567',
-      metadata: {},
-      settings: {
+      metadata: {
         elevenLabsAgentId: 'agent-123',
+      },
+      businessHours: {
         businessHours: {
           monday: { open: '09:00', close: '17:00', enabled: true },
           tuesday: { open: '09:00', close: '17:00', enabled: true },
@@ -282,7 +283,7 @@ describe('Twilio-ElevenLabs Integration', () => {
       const mockTenantWithBusinessType = {
         ...mockTenant,
         businessTypeId: 'business-type-123',
-        settings: {}, // No tenant-specific agent ID
+        businessHours: {}, // No tenant-specific agent ID
       };
       
       const mockBusinessType = {
@@ -358,7 +359,7 @@ describe('Twilio-ElevenLabs Integration', () => {
       const mockTenantWithoutAgent = {
         ...mockTenant,
         businessTypeId: null,
-        settings: {}, // No tenant-specific agent ID
+        businessHours: {}, // No tenant-specific agent ID
         metadata: {},
       };
       
@@ -416,7 +417,7 @@ describe('Twilio-ElevenLabs Handler Functions', () => {
       const tenant = {
         id: 'tenant-123',
         businessTypeId: 'business-type-456',
-        settings: {},
+        businessHours: {},
       };
 
       const mockBusinessType = {
@@ -438,7 +439,7 @@ describe('Twilio-ElevenLabs Handler Functions', () => {
       const tenant = {
         id: 'tenant-123',
         businessTypeId: 'business-type-456',
-        settings: {},
+        businessHours: {},
       };
 
       const mockBusinessType = {
@@ -459,9 +460,10 @@ describe('Twilio-ElevenLabs Handler Functions', () => {
       const tenant = {
         id: 'tenant-123',
         businessTypeId: null,
-        settings: {
+        metadata: {
           elevenLabsAgentId: 'tenant-specific-agent',
         },
+        businessHours: {},
       };
 
       mockBusinessTypeModel.findByPk.mockResolvedValue(null);
@@ -471,30 +473,28 @@ describe('Twilio-ElevenLabs Handler Functions', () => {
       expect(agentId).toBe('tenant-specific-agent');
     });
 
-    it('should use tenant settings agent ID over metadata', async () => {
+    it('should use tenant metadata agent ID', async () => {
       const tenant = {
         id: 'tenant-123',
         businessTypeId: null,
-        settings: {
-          elevenLabsAgentId: 'settings-agent',
-        },
         metadata: {
           elevenLabsAgentId: 'metadata-agent',
         },
+        businessHours: {},
       };
 
       mockBusinessTypeModel.findByPk.mockResolvedValue(null);
 
       const agentId = await getAgentIdForTenant(tenant);
 
-      expect(agentId).toBe('settings-agent');
+      expect(agentId).toBe('metadata-agent');
     });
 
     it('should return null when no agent ID is configured', async () => {
       const tenant = {
         id: 'tenant-123',
         businessTypeId: null,
-        settings: {},
+        businessHours: {},
         metadata: {},
       };
 
@@ -706,7 +706,7 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
         id: 'test-tenant',
         name: 'Test Salon',
         status: 'active',
-        settings: {
+        businessHours: {
           businessHours: {
             monday: { open: '09:00', close: '17:00', enabled: true },
             tuesday: { open: '09:00', close: '17:00', enabled: true },
@@ -716,6 +716,8 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
             saturday: { open: '10:00', close: '14:00', enabled: false },
             sunday: { open: '10:00', close: '14:00', enabled: false },
           },
+        },
+        metadata: {
           timezone: 'America/New_York',
           aiGreeting: 'Hello! Welcome to Test Salon.',
           aiTone: 'friendly and professional',
@@ -808,9 +810,10 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
       const mockTenantData = {
         id: 'test-tenant',
         name: 'Test Salon',
-        settings: {
+        metadata: {
           aiGreeting: 'Welcome to Test Salon! How can I help you today?',
         },
+        businessHours: {},
       };
       
       const mockTenant = {

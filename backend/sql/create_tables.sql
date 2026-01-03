@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS tenants (
     slug VARCHAR(128) NOT NULL,
     status ENUM('pending', 'active', 'suspended', 'cancelled') NOT NULL DEFAULT 'pending',
     plan_type ENUM('free', 'basic', 'professional', 'enterprise') NOT NULL DEFAULT 'free',
-    settings JSON NOT NULL DEFAULT (JSON_OBJECT()),
+    business_hours JSON NOT NULL DEFAULT (JSON_OBJECT()),
     contact_email VARCHAR(255) NOT NULL,
     contact_phone VARCHAR(50) NULL,
     address JSON NULL,

@@ -9,17 +9,18 @@ const { AppError } = require('../src/middleware/errorHandler');
 const mockTenantModel = {
   findOne: jest.fn(),
   create: jest.fn(),
-  generateDefaultSettings: jest.fn(() => ({
-    timezone: 'UTC',
-    language: 'en',
-    dateFormat: 'YYYY-MM-DD',
-    timeFormat: '24h',
-    currency: 'USD',
-    notifications: {
-      email: true,
-      sms: false,
-      push: true,
+  generateDefaultBusinessHours: jest.fn(() => ({
+    businessHours: {
+      monday: { open: '09:00', close: '17:00', enabled: true },
+      tuesday: { open: '09:00', close: '17:00', enabled: true },
+      wednesday: { open: '09:00', close: '17:00', enabled: true },
+      thursday: { open: '09:00', close: '17:00', enabled: true },
+      friday: { open: '09:00', close: '17:00', enabled: true },
+      saturday: { open: '10:00', close: '14:00', enabled: false },
+      sunday: { open: '10:00', close: '14:00', enabled: false },
     },
+  })),
+  generateDefaultSettings: jest.fn(() => ({
     businessHours: {
       monday: { open: '09:00', close: '17:00', enabled: true },
       tuesday: { open: '09:00', close: '17:00', enabled: true },
@@ -238,7 +239,7 @@ describe('Tenant Module', () => {
         contactEmail: 'test@example.com',
         status: 'pending',
         planType: 'free',
-        settings: {},
+        businessHours: {},
         toSafeObject: () => ({
           id: '123',
           tenantId: 'test-salon',
@@ -247,7 +248,7 @@ describe('Tenant Module', () => {
           contactEmail: 'test@example.com',
           status: 'pending',
           planType: 'free',
-          settings: {},
+          businessHours: {},
         }),
       };
       mockTenantModel.create.mockResolvedValue(mockTenantInstance);
@@ -330,11 +331,11 @@ describe('Tenant Module', () => {
         expect(response.status).toBe(401);
       });
 
-      it('should return tenant settings with valid token', async () => {
+      it('should return tenant settings (business hours) with valid token', async () => {
         const mockTenantInstance = {
           tenantId: 'test-tenant',
           name: 'Test Salon',
-          settings: { timezone: 'UTC' },
+          businessHours: { businessHours: { monday: { open: '09:00', close: '17:00', enabled: true } } },
           planType: 'free',
           status: 'active',
         };
@@ -356,7 +357,7 @@ describe('Tenant Module', () => {
         const response = await request(app)
           .patch('/api/tenant/settings')
           .set('X-Tenant-ID', 'test-tenant')
-          .send({ settings: { timezone: 'America/New_York' } });
+          .send({ settings: { businessHours: { monday: { open: '09:00', close: '17:00', enabled: true } } } });
 
         expect(response.status).toBe(401);
       });
@@ -376,11 +377,11 @@ describe('Tenant Module', () => {
         const mockTenantInstance = {
           tenantId: 'test-tenant',
           name: 'Test Salon',
-          settings: { timezone: 'UTC' },
+          businessHours: { businessHours: { monday: { open: '09:00', close: '17:00', enabled: true } } },
           planType: 'free',
           status: 'active',
           updateSettings: jest.fn().mockImplementation(function(newSettings) {
-            this.settings = { ...this.settings, ...newSettings };
+            this.businessHours = { businessHours: newSettings.businessHours };
             return Promise.resolve(this);
           }),
         };
@@ -390,7 +391,7 @@ describe('Tenant Module', () => {
           .patch('/api/tenant/settings')
           .set('Authorization', `Bearer ${validToken()}`)
           .set('X-Tenant-ID', 'test-tenant')
-          .send({ settings: { timezone: 'America/New_York' } });
+          .send({ settings: { businessHours: { monday: { open: '08:00', close: '18:00', enabled: true } } } });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -723,7 +724,7 @@ describe('Tenant Module', () => {
       const mockTenantInstance = {
         id: 'tenant-uuid-123',
         name: 'Test Salon',
-        settings: {
+        businessHours: {
           businessHours: {
             monday: { open: '09:00', close: '17:00', enabled: true },
             tuesday: { open: '09:00', close: '17:00', enabled: true },
@@ -753,7 +754,7 @@ describe('Tenant Module', () => {
       const mockTenantInstance = {
         id: 'tenant-uuid-123',
         name: 'Test Salon',
-        settings: {},
+        businessHours: {},
       };
       mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
 
@@ -805,9 +806,9 @@ describe('Tenant Module', () => {
         id: 'tenant-uuid-123',
         tenantId: 'test-tenant',
         name: 'Test Salon',
-        settings: {},
-        updateSettings: jest.fn().mockImplementation(function(newSettings) {
-          this.settings = { ...this.settings, ...newSettings };
+        businessHours: {},
+        updateBusinessHours: jest.fn().mockImplementation(function(newHours) {
+          this.businessHours = { businessHours: newHours };
           return Promise.resolve(this);
         }),
       };
@@ -832,9 +833,9 @@ describe('Tenant Module', () => {
         id: 'tenant-uuid-123',
         tenantId: 'test-tenant',
         name: 'Test Salon',
-        settings: {},
-        updateSettings: jest.fn().mockImplementation(function(newSettings) {
-          this.settings = { ...this.settings, ...newSettings };
+        businessHours: {},
+        updateBusinessHours: jest.fn().mockImplementation(function(newHours) {
+          this.businessHours = { businessHours: newHours };
           return Promise.resolve(this);
         }),
       };
@@ -859,13 +860,13 @@ describe('Tenant Module', () => {
         id: 'tenant-uuid-123',
         tenantId: 'test-tenant',
         name: 'Test Salon',
-        settings: {
+        businessHours: {
           businessHours: {
             monday: { open: '09:00', close: '17:00', enabled: true },
           },
         },
-        updateSettings: jest.fn().mockImplementation(function(newSettings) {
-          this.settings = { ...this.settings, ...newSettings };
+        updateBusinessHours: jest.fn().mockImplementation(function(newHours) {
+          this.businessHours = { businessHours: newHours };
           return Promise.resolve(this);
         }),
         reload: jest.fn().mockImplementation(function() {
@@ -892,7 +893,7 @@ describe('Tenant Module', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(mockTenantInstance.updateSettings).toHaveBeenCalled();
+      expect(mockTenantInstance.updateBusinessHours).toHaveBeenCalled();
       expect(response.body.data.businessHours).toBeDefined();
     });
   });
