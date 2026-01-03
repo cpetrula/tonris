@@ -84,10 +84,11 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         
         // Include ALL custom parameters as dynamic variables so they're available to ElevenLabs
         // This ensures fields like business_hours, ai_greeting, call_status, etc. are sent
+        // Note: tenant_id is handled above, tenant_name may be overridden if present in customParameters
         for (const [key, value] of Object.entries(customParameters)) {
-          // Skip tenant_id and tenant_name as they're already handled above
-          // Only add if value is truthy and key doesn't already exist
-          if (value && !dynamicVariables.hasOwnProperty(key)) {
+          // Only add if value is not null/undefined and key doesn't already exist
+          // Use != null to exclude only null and undefined, allowing 0, false, empty strings
+          if (value != null && !(key in dynamicVariables)) {
             dynamicVariables[key] = value;
           }
         }
