@@ -929,10 +929,10 @@ describe('Authentication Module', () => {
             businessName: 'New Business'
           });
         
-        // Verify tenant was created with default settings
+        // Verify tenant was created with default business hours
         expect(mockTenantModel.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            settings: expect.objectContaining({
+            businessHours: expect.objectContaining({
               businessHours: expect.objectContaining(DEFAULT_BUSINESS_HOURS)
             })
           })

@@ -130,7 +130,7 @@ describe('Telephony Module', () => {
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
-        settings: {},
+        businessHours: {}, metadata: {},
       }]);
 
       // Mock call log creation
@@ -188,7 +188,7 @@ describe('Telephony Module', () => {
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
-        settings: {},
+        businessHours: {}, metadata: {},
       }]);
 
       const response = await request(app)
@@ -214,7 +214,7 @@ describe('Telephony Module', () => {
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
-        settings: {},
+        businessHours: {}, metadata: {},
       }]);
 
       const response = await request(app)
@@ -241,7 +241,7 @@ describe('Telephony Module', () => {
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
-        settings: {},
+        businessHours: {}, metadata: {},
       }]);
 
       const response = await request(app)
@@ -353,7 +353,7 @@ describe('Telephony Module', () => {
         tenantId: 'test-tenant',
         name: 'Test Salon',
         metadata: { twilioPhoneNumber: '+15551234567' },
-        settings: {},
+        businessHours: {}, metadata: {},
       });
 
       twilioService.sendSms.mockResolvedValue({
@@ -414,7 +414,7 @@ describe('Telephony Module', () => {
         tenantId: 'test-tenant',
         name: 'Test Salon',
         metadata: { twilioPhoneNumber: '+15551234567' },
-        settings: {},
+        businessHours: {}, metadata: {},
       });
 
       twilioService.sendSms.mockResolvedValue({

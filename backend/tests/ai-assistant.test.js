@@ -483,7 +483,7 @@ describe('AI Assistant Module', () => {
       const mockTenant = {
         tenantId: 'test-tenant',
         name: 'Test Salon',
-        settings: {
+        businessHours: {
           businessHours: {
             monday: { open: '09:00', close: '17:00', enabled: true },
             tuesday: { open: '09:00', close: '17:00', enabled: true },
@@ -493,6 +493,8 @@ describe('AI Assistant Module', () => {
             saturday: { open: '10:00', close: '14:00', enabled: false },
             sunday: { open: '10:00', close: '14:00', enabled: false },
           },
+        },
+        metadata: {
           timezone: 'America/New_York',
         },
         toSafeObject: function() { return this; },
@@ -597,7 +599,7 @@ describe('AI Assistant Module', () => {
       mockTenantModel.findOne.mockResolvedValue({
         tenantId: 'test-tenant',
         name: 'Test Salon',
-        settings: {
+        businessHours: {
           businessHours: {
             monday: { open: '09:00', close: '17:00', enabled: true },
           },
@@ -630,10 +632,12 @@ describe('AI Assistant Module', () => {
       mockTenantModel.findOne.mockResolvedValue({
         tenantId: 'test-tenant',
         name: 'Test Salon',
-        settings: {
+        businessHours: {
+          businessHours: {},
+        },
+        metadata: {
           aiGreeting: 'Welcome to Test Salon!',
           aiTone: 'friendly',
-          businessHours: {},
         },
         toSafeObject: function() { return this; },
       });
