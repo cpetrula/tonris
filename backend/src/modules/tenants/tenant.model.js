@@ -179,7 +179,21 @@ Tenant.prototype.toSafeObject = function() {
  */
 Tenant.prototype.updateSettings = async function(newSettings) {
   // Get the current settings as a plain object to avoid Sequelize getter issues
-  const currentSettings = this.getDataValue('settings') || {};
+  let currentSettings = this.getDataValue('settings');
+  
+  // Handle bad data scenarios - if settings is not a valid object, reset to empty
+  if (!currentSettings || typeof currentSettings !== 'object' || Array.isArray(currentSettings)) {
+    currentSettings = {};
+  }
+  
+  // Ensure we're working with a plain object by deep cloning
+  // This handles cases where the settings might be a Sequelize proxy or have circular references
+  try {
+    currentSettings = JSON.parse(JSON.stringify(currentSettings));
+  } catch (error) {
+    // If JSON serialization fails (e.g., circular references), start fresh
+    currentSettings = {};
+  }
   
   // Create a new settings object by merging
   const updatedSettings = {
@@ -224,6 +238,60 @@ Tenant.generateDefaultSettings = function() {
       sunday: { open: '10:00', close: '14:00', enabled: false },
     },
   };
+};
+
+/**
+ * Sanitize and repair tenant settings
+ * This method fixes corrupt or malformed settings data
+ * @returns {Promise<Tenant>} - Tenant with sanitized settings
+ */
+Tenant.prototype.sanitizeSettings = async function() {
+  let currentSettings = this.getDataValue('settings');
+  
+  // If settings is completely invalid, reset to defaults
+  if (!currentSettings || typeof currentSettings !== 'object' || Array.isArray(currentSettings)) {
+    this.setDataValue('settings', Tenant.generateDefaultSettings());
+    this.changed('settings', true);
+    await this.save();
+    return this;
+  }
+  
+  // Try to parse and re-serialize to catch any hidden issues
+  try {
+    currentSettings = JSON.parse(JSON.stringify(currentSettings));
+  } catch (error) {
+    // If serialization fails, reset to defaults
+    this.setDataValue('settings', Tenant.generateDefaultSettings());
+    this.changed('settings', true);
+    await this.save();
+    return this;
+  }
+  
+  // Ensure required top-level settings exist
+  const defaultSettings = Tenant.generateDefaultSettings();
+  const sanitizedSettings = {
+    timezone: currentSettings.timezone || defaultSettings.timezone,
+    language: currentSettings.language || defaultSettings.language,
+    dateFormat: currentSettings.dateFormat || defaultSettings.dateFormat,
+    timeFormat: currentSettings.timeFormat || defaultSettings.timeFormat,
+    currency: currentSettings.currency || defaultSettings.currency,
+    notifications: currentSettings.notifications || defaultSettings.notifications,
+    businessHours: currentSettings.businessHours || defaultSettings.businessHours,
+  };
+  
+  // Validate and fix businessHours if it's malformed
+  if (typeof sanitizedSettings.businessHours !== 'object' || Array.isArray(sanitizedSettings.businessHours)) {
+    sanitizedSettings.businessHours = defaultSettings.businessHours;
+  }
+  
+  // Only update if changes were made
+  if (JSON.stringify(currentSettings) !== JSON.stringify(sanitizedSettings)) {
+    this.setDataValue('settings', sanitizedSettings);
+    this.changed('settings', true);
+    await this.save();
+  }
+  
+  return this;
 };
 
 module.exports = {

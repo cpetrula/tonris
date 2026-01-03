@@ -183,6 +183,9 @@ const updateBusinessHours = async (id, businessHours) => {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
   }
 
+  // Log current settings to help diagnose bad data issues
+  logger.debug(`Updating business hours for tenant ${id}. Current settings type: ${typeof tenant.settings}, Current businessHours: ${JSON.stringify(tenant.settings?.businessHours || null)}`);
+
   // Validate business hours structure
   if (!businessHours || typeof businessHours !== 'object') {
     throw new AppError('Business hours must be an object', 400, 'INVALID_BUSINESS_HOURS');

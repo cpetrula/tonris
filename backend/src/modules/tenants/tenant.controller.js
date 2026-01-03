@@ -4,6 +4,8 @@
  */
 const tenantService = require('./tenant.service');
 const { getTenantUUID } = require('../../utils/tenant');
+const { Tenant } = require('./tenant.model');
+const logger = require('../../utils/logger');
 
 /**
  * Validation patterns
@@ -319,12 +321,53 @@ const getDashboardStats = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/tenant/sanitize-settings
+ * Sanitize and repair tenant settings (useful for fixing corrupt data)
+ */
+const sanitizeSettings = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const tenant = await Tenant.findOne({ where: { id: tenantUUID } });
+
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tenant not found',
+        code: 'TENANT_NOT_FOUND',
+      });
+    }
+
+    // Log before sanitization for debugging
+    logger.info(`Sanitizing settings for tenant ${tenantUUID}. Current settings: ${JSON.stringify(tenant.settings)}`);
+
+    // Sanitize settings
+    await tenant.sanitizeSettings();
+
+    // Reload to get fresh data
+    await tenant.reload();
+
+    logger.info(`Settings sanitized for tenant ${tenantUUID}. New settings: ${JSON.stringify(tenant.settings)}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Settings sanitized successfully',
+      data: {
+        settings: tenant.settings,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCurrentUserAndTenant,
   getTenantSettings,
   updateTenantSettings,
   getBusinessHours,
   updateBusinessHours,
+  sanitizeSettings,
   createTenant,
   getTenant,
   updateTenant,
