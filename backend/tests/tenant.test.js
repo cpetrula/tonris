@@ -310,7 +310,7 @@ describe('Tenant Module', () => {
       });
 
       it('should return tenant info with address data', async () => {
-        const mockTenantInstance = {
+        const tenantData = {
           id: '123',
           tenantId: 'test-tenant',
           name: 'Test Salon',
@@ -327,24 +327,10 @@ describe('Tenant Module', () => {
             website: 'https://testsalon.com',
             description: 'A test salon',
           },
-          toSafeObject: () => ({
-            id: '123',
-            tenantId: 'test-tenant',
-            name: 'Test Salon',
-            status: 'active',
-            contactEmail: 'test@example.com',
-            contactPhone: '+15551234567',
-            address: {
-              street: '123 Main St',
-              city: 'New York',
-              state: 'NY',
-              zipCode: '10001',
-            },
-            metadata: {
-              website: 'https://testsalon.com',
-              description: 'A test salon',
-            },
-          }),
+        };
+        const mockTenantInstance = {
+          ...tenantData,
+          toSafeObject: () => tenantData,
         };
         mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
 
@@ -616,7 +602,7 @@ describe('Tenant Module', () => {
       });
 
       it('should update tenant with address data successfully', async () => {
-        const mockTenantInstance = {
+        const tenantData = {
           tenantId: 'test-tenant',
           name: 'Test Salon',
           contactEmail: 'test@example.com',
@@ -626,18 +612,11 @@ describe('Tenant Module', () => {
             state: 'CA',
             zipCode: '90001',
           },
+        };
+        const mockTenantInstance = {
+          ...tenantData,
           update: jest.fn().mockResolvedValue(true),
-          toSafeObject: () => ({
-            tenantId: 'test-tenant',
-            name: 'Test Salon',
-            contactEmail: 'test@example.com',
-            address: {
-              street: '456 Oak Ave',
-              city: 'Los Angeles',
-              state: 'CA',
-              zipCode: '90001',
-            },
-          }),
+          toSafeObject: () => tenantData,
         };
         mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
 
