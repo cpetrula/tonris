@@ -178,13 +178,22 @@ Tenant.prototype.toSafeObject = function() {
  * @returns {Promise<Tenant>} - Updated tenant
  */
 Tenant.prototype.updateSettings = async function(newSettings) {
-  this.settings = {
-    ...this.settings,
+  // Get the current settings as a plain object to avoid Sequelize getter issues
+  const currentSettings = this.getDataValue('settings') || {};
+  
+  // Create a new settings object by merging
+  const updatedSettings = {
+    ...currentSettings,
     ...newSettings,
   };
+  
+  // Set the new settings value
+  this.setDataValue('settings', updatedSettings);
+  
   // Explicitly mark the settings field as changed for Sequelize
   // This is necessary because Sequelize doesn't always detect changes to JSON columns
   this.changed('settings', true);
+  
   await this.save();
   return this;
 };
