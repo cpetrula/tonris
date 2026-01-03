@@ -250,7 +250,10 @@ describe('Twilio-ElevenLabs Integration', () => {
       const mockTenantWithMetadata = {
         ...mockTenant,
         twilioPhoneNumber: null,
-        metadata: { twilioPhoneNumber: '+15551234567' },
+        metadata: { 
+          twilioPhoneNumber: '+15551234567',
+          elevenLabsAgentId: 'agent-123', // Preserve agent ID from mockTenant
+        },
       };
       mockTenantModel.findAll.mockResolvedValue([mockTenantWithMetadata]);
       // Mock BusinessType lookup returning null (uses tenant-specific agent ID as fallback)

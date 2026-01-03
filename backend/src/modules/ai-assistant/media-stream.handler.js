@@ -67,19 +67,37 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // Build dynamic variables from custom parameters
         // Include tenant_id and tenant_name for webhook callbacks and query params
         // ElevenLabs requires 'name' as a dynamic variable
-        const dynamicVariables = {
-          tenant_id: tenantId,
-          tenant_name: customParameters.tenant_name || customParameters.business_name || '',
-          name: customParameters.tenant_name || customParameters.business_name || 'Our Business',
-        };
-        if (customParameters.business_name) {
-          dynamicVariables.business_name = customParameters.business_name;
+        const dynamicVariables = {};
+        
+        // Always include tenant_id - it should always be present
+        // Use the value from customParameters if available, otherwise use the tenantId variable
+        dynamicVariables.tenant_id = customParameters.tenant_id || tenantId;
+        
+        const tenantName = customParameters.tenant_name || customParameters.business_name;
+        if (tenantName) {
+          dynamicVariables.tenant_name = tenantName;
+          dynamicVariables.name = tenantName;
+        } else {
+          // Fallback name if no tenant/business name
+          dynamicVariables.name = 'Our Business';
         }
-        if (customParameters.caller_number) {
-          dynamicVariables.caller_number = customParameters.caller_number;
+        
+        // Include ALL custom parameters as dynamic variables so they're available to ElevenLabs
+        // This ensures fields like business_hours, ai_greeting, call_status, etc. are sent
+        // Note: tenant_id is handled above, tenant_name may be overridden if present in customParameters
+        for (const [key, value] of Object.entries(customParameters)) {
+          // Only add if value is not null/undefined and key doesn't already exist
+          // Use != null to exclude only null and undefined, allowing 0, false, empty strings
+          if (value != null && !(key in dynamicVariables)) {
+            dynamicVariables[key] = value;
+          }
         }
-        if (customParameters.call_sid) {
-          dynamicVariables.call_sid = customParameters.call_sid;
+        
+        logger.info(`[MediaStream] Dynamic variables being sent: ${Object.keys(dynamicVariables).join(', ')}`);
+        logger.info(`[MediaStream] Tenant ID: ${dynamicVariables.tenant_id}, Call SID: ${callSid}`);
+        // Note: debug logging may contain sensitive data - use only for development/troubleshooting
+        if (process.env.LOG_LEVEL === 'debug') {
+          logger.debug(`[MediaStream] Dynamic variables content: ${JSON.stringify(dynamicVariables)}`);
         }
         
         // Send initialization message to ElevenLabs to start the conversation
