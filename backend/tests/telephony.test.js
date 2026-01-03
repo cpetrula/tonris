@@ -581,6 +581,114 @@ describe('CallLog Model Constants', () => {
     });
   });
 
+  describe('POST /api/webhooks/twilio/outbound-voice', () => {
+    it('should handle outbound voice call and return TwiML', async () => {
+      // Mock tenant lookup - findAll for matching phone number (From for outbound)
+      mockTenantModel.findAll.mockResolvedValue([{
+        id: 'test-tenant-uuid',
+        name: 'Test Salon',
+        status: 'active',
+        metadata: { twilioPhoneNumber: '+15551234567' },
+        businessHours: {},
+      }]);
+
+      // Mock call log creation
+      mockCallLogModel.findOne.mockResolvedValue(null); // No existing call log
+      mockCallLogModel.create.mockResolvedValue({
+        id: 'call-log-outbound-123',
+        tenantId: 'test-tenant-uuid',
+        twilioCallSid: 'CA987654321',
+        direction: 'outbound',
+        status: 'initiated',
+        fromNumber: '+15551234567',
+        toNumber: '+18059736595',
+      });
+
+      const response = await request(app)
+        .post('/api/webhooks/twilio/outbound-voice')
+        .type('form')
+        .send({
+          CallSid: 'CA987654321',
+          From: '+15551234567',
+          To: '+18059736595',
+          CallStatus: 'initiated',
+          Direction: 'outbound-api',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.type).toBe('text/xml');
+      expect(response.text).toContain('<?xml');
+      expect(response.text).toContain('Response');
+      expect(mockCallLogModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: 'test-tenant-uuid',
+          twilioCallSid: 'CA987654321',
+          direction: 'outbound',
+          fromNumber: '+15551234567',
+          toNumber: '+18059736595',
+        })
+      );
+    });
+
+    it('should not create duplicate call logs for same CallSid', async () => {
+      // Clear previous mock calls
+      jest.clearAllMocks();
+      
+      // Mock tenant lookup
+      mockTenantModel.findAll.mockResolvedValue([{
+        id: 'test-tenant-uuid',
+        name: 'Test Salon',
+        status: 'active',
+        metadata: { twilioPhoneNumber: '+15551234567' },
+        businessHours: {},
+      }]);
+
+      // Mock existing call log
+      mockCallLogModel.findOne.mockResolvedValue({
+        id: 'existing-call-log-123',
+        tenantId: 'test-tenant-uuid',
+        twilioCallSid: 'CA987654321',
+        direction: 'outbound',
+        status: 'initiated',
+        fromNumber: '+15551234567',
+        toNumber: '+18059736595',
+      });
+
+      const response = await request(app)
+        .post('/api/webhooks/twilio/outbound-voice')
+        .type('form')
+        .send({
+          CallSid: 'CA987654321',
+          From: '+15551234567',
+          To: '+18059736595',
+          CallStatus: 'ringing',
+          Direction: 'outbound-api',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.type).toBe('text/xml');
+      expect(mockCallLogModel.create).not.toHaveBeenCalled();
+    });
+
+    it('should return error TwiML when no tenant found for outbound call', async () => {
+      mockTenantModel.findAll.mockResolvedValue([]);
+
+      const response = await request(app)
+        .post('/api/webhooks/twilio/outbound-voice')
+        .type('form')
+        .send({
+          CallSid: 'CA987654321',
+          From: '+15551234567',
+          To: '+18059736595',
+          CallStatus: 'initiated',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.type).toBe('text/xml');
+      expect(response.text).toContain('not configured');
+    });
+  });
+
   describe('CALL_STATUS', () => {
     it('should have correct status values', () => {
       const { CALL_STATUS } = require('../src/modules/telephony/callLog.model');
