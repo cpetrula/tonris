@@ -103,8 +103,7 @@ const aiSettings = ref({
   greeting: 'Thank you for calling Sample Salon. How can I help you today?',
   appointmentReminders: true,
   reminderHours: 24,
-  followUpCalls: true,
-  language: 'en-US'
+  followUpCalls: true
 })
 
 // Notification preferences
@@ -117,25 +116,11 @@ const notifications = ref({
   smsReminder: true
 })
 
-// Integration settings
-const integrations = ref({
-  googleCalendar: { connected: true, email: 'business@gmail.com' },
-  outlookCalendar: { connected: false, email: '' },
-  stripe: { connected: true, accountId: 'acct_xxx' }
-})
-
 const voiceOptions = [
   { label: 'Female Professional', value: 'female_professional' },
   { label: 'Female Friendly', value: 'female_friendly' },
   { label: 'Male Professional', value: 'male_professional' },
   { label: 'Male Friendly', value: 'male_friendly' }
-]
-
-const languageOptions = [
-  { label: 'English (US)', value: 'en-US' },
-  { label: 'English (UK)', value: 'en-GB' },
-  { label: 'Spanish', value: 'es-ES' },
-  { label: 'French', value: 'fr-FR' }
 ]
 
 const timeSlots = [
@@ -234,23 +219,6 @@ async function saveNotifications() {
   } finally {
     saving.value = false
   }
-}
-
-function connectGoogleCalendar() {
-  // In a real app, initiate OAuth flow
-  alert('Google Calendar OAuth flow would start here')
-}
-
-function disconnectGoogleCalendar() {
-  if (confirm('Are you sure you want to disconnect Google Calendar?')) {
-    integrations.value.googleCalendar.connected = false
-    integrations.value.googleCalendar.email = ''
-  }
-}
-
-function connectOutlookCalendar() {
-  // In a real app, initiate OAuth flow
-  alert('Outlook Calendar OAuth flow would start here')
 }
 
 onMounted(async () => {
@@ -445,64 +413,21 @@ onMounted(async () => {
         <Card class="shadow-sm">
           <template #content>
             <div class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Voice Type</label>
-                  <Dropdown
-                    v-model="aiSettings.voiceType"
-                    :options="voiceOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    class="w-full"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                  <Dropdown
-                    v-model="aiSettings.language"
-                    :options="languageOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    class="w-full"
-                  />
-                </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Voice Type</label>
+                <Dropdown
+                  v-model="aiSettings.voiceType"
+                  :options="voiceOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full"
+                />
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Greeting Message</label>
                 <Textarea v-model="aiSettings.greeting" rows="2" class="w-full" />
                 <p class="text-sm text-gray-500 mt-1">This message will be used to greet callers</p>
-              </div>
-
-              <div class="border-t border-gray-200 pt-4">
-                <h3 class="font-medium text-gray-900 mb-4">Automated Actions</h3>
-                
-                <div class="space-y-4">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="font-medium text-gray-700">Appointment Reminders</p>
-                      <p class="text-sm text-gray-500">Automatically call customers to remind them of appointments</p>
-                    </div>
-                    <InputSwitch v-model="aiSettings.appointmentReminders" />
-                  </div>
-
-                  <div v-if="aiSettings.appointmentReminders" class="ml-4 pl-4 border-l-2 border-gray-200">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Remind customers (hours before)</label>
-                    <Dropdown
-                      v-model="aiSettings.reminderHours"
-                      :options="[12, 24, 48]"
-                      class="w-32"
-                    />
-                  </div>
-
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="font-medium text-gray-700">Follow-up Calls</p>
-                      <p class="text-sm text-gray-500">Call customers after appointments for feedback</p>
-                    </div>
-                    <InputSwitch v-model="aiSettings.followUpCalls" />
-                  </div>
-                </div>
               </div>
 
               <div class="flex justify-end pt-4">
@@ -577,6 +502,37 @@ onMounted(async () => {
                 </div>
               </div>
 
+              <div class="border-t border-gray-200 pt-6">
+                <h3 class="font-medium text-gray-900 mb-4">Automated Actions</h3>
+                
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-medium text-gray-700">Appointment Reminders</p>
+                      <p class="text-sm text-gray-500">Automatically call customers to remind them of appointments</p>
+                    </div>
+                    <InputSwitch v-model="aiSettings.appointmentReminders" />
+                  </div>
+
+                  <div v-if="aiSettings.appointmentReminders" class="ml-4 pl-4 border-l-2 border-gray-200">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Remind customers (hours before)</label>
+                    <Dropdown
+                      v-model="aiSettings.reminderHours"
+                      :options="[12, 24, 48]"
+                      class="w-32"
+                    />
+                  </div>
+
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-medium text-gray-700">Follow-up Calls</p>
+                      <p class="text-sm text-gray-500">Call customers after appointments for feedback</p>
+                    </div>
+                    <InputSwitch v-model="aiSettings.followUpCalls" />
+                  </div>
+                </div>
+              </div>
+
               <div class="flex justify-end pt-4">
                 <Button
                   label="Save Preferences"
@@ -590,99 +546,7 @@ onMounted(async () => {
         </Card>
       </TabPanel>
 
-      <!-- Integrations Tab -->
-      <TabPanel value="4" header="Integrations">
-        <div class="space-y-6">
-          <!-- Google Calendar -->
-          <Card class="shadow-sm">
-            <template #content>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                  <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-                    <i class="pi pi-google text-2xl text-red-600"></i>
-                  </div>
-                  <div>
-                    <h3 class="font-medium text-gray-900">Google Calendar</h3>
-                    <p v-if="integrations.googleCalendar.connected" class="text-sm text-green-600">
-                      Connected as {{ integrations.googleCalendar.email }}
-                    </p>
-                    <p v-else class="text-sm text-gray-500">
-                      Sync appointments with Google Calendar
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  v-if="integrations.googleCalendar.connected"
-                  label="Disconnect"
-                  severity="danger"
-                  outlined
-                  @click="disconnectGoogleCalendar"
-                />
-                <Button
-                  v-else
-                  label="Connect"
-                  @click="connectGoogleCalendar"
-                />
-              </div>
-            </template>
-          </Card>
 
-          <!-- Outlook Calendar -->
-          <Card class="shadow-sm">
-            <template #content>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                  <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                    <i class="pi pi-microsoft text-2xl text-blue-600"></i>
-                  </div>
-                  <div>
-                    <h3 class="font-medium text-gray-900">Outlook Calendar</h3>
-                    <p v-if="integrations.outlookCalendar.connected" class="text-sm text-green-600">
-                      Connected as {{ integrations.outlookCalendar.email }}
-                    </p>
-                    <p v-else class="text-sm text-gray-500">
-                      Sync appointments with Outlook Calendar
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  v-if="!integrations.outlookCalendar.connected"
-                  label="Connect"
-                  @click="connectOutlookCalendar"
-                />
-              </div>
-            </template>
-          </Card>
-
-          <!-- Stripe -->
-          <Card class="shadow-sm">
-            <template #content>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                  <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                    <i class="pi pi-credit-card text-2xl text-purple-600"></i>
-                  </div>
-                  <div>
-                    <h3 class="font-medium text-gray-900">Stripe</h3>
-                    <p v-if="integrations.stripe.connected" class="text-sm text-green-600">
-                      Connected - Payments enabled
-                    </p>
-                    <p v-else class="text-sm text-gray-500">
-                      Accept payments from customers
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  v-if="integrations.stripe.connected"
-                  label="Manage"
-                  outlined
-                  @click="router.push('/app/billing')"
-                />
-              </div>
-            </template>
-          </Card>
-        </div>
-      </TabPanel>
     </TabView>
   </div>
 </template>
