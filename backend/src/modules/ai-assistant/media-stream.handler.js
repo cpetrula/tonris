@@ -67,19 +67,33 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // Build dynamic variables from custom parameters
         // Include tenant_id and tenant_name for webhook callbacks and query params
         // ElevenLabs requires 'name' as a dynamic variable
-        const dynamicVariables = {
-          tenant_id: tenantId,
-          tenant_name: customParameters.tenant_name || customParameters.business_name || '',
-          name: customParameters.tenant_name || customParameters.business_name || 'Our Business',
-        };
+        const dynamicVariables = {};
+        
+        // Add core variables only if they have values
+        if (tenantId) {
+          dynamicVariables.tenant_id = tenantId;
+        }
+        
+        const tenantName = customParameters.tenant_name || customParameters.business_name;
+        if (tenantName) {
+          dynamicVariables.tenant_name = tenantName;
+          dynamicVariables.name = tenantName;
+        } else {
+          // Fallback name if no tenant/business name
+          dynamicVariables.name = 'Our Business';
+        }
         
         // Include ALL custom parameters as dynamic variables so they're available to ElevenLabs
         // This ensures fields like business_hours, ai_greeting, call_status, etc. are sent
         for (const [key, value] of Object.entries(customParameters)) {
-          if (value !== undefined && value !== null && !dynamicVariables[key]) {
+          // Only add if value is not empty and key doesn't already exist
+          if (value !== undefined && value !== null && value !== '' && !dynamicVariables.hasOwnProperty(key)) {
             dynamicVariables[key] = value;
           }
         }
+        
+        logger.info(`[MediaStream] Dynamic variables being sent: ${Object.keys(dynamicVariables).join(', ')}`);
+        logger.debug(`[MediaStream] Dynamic variables content: ${JSON.stringify(dynamicVariables)}`);
         
         // Send initialization message to ElevenLabs to start the conversation
         // This is required by ElevenLabs Conversational AI WebSocket protocol
