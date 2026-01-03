@@ -134,7 +134,11 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
             },
           };
         } catch (error) {
-          logger.warn(`Failed to fetch conversation ${log.metadata.elevenLabsConversationId}: ${error.message}`);
+          // Provide more specific error details for debugging
+          const errorType = error.response?.status === 404 ? 'not found' : 
+                          error.response?.status === 403 ? 'permission denied' : 
+                          error.code === 'ENOTFOUND' ? 'network error' : 'unknown error';
+          logger.warn(`Failed to fetch conversation ${log.metadata.elevenLabsConversationId} (${errorType}): ${error.message}`);
           return log; // Return original log if fetch fails
         }
       })
@@ -239,7 +243,11 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
     // Combine both sets of enriched logs
     const enrichedLogs = [...enrichedLogsWithIds, ...enrichedLogsWithoutIds];
     
-    logger.info(`Enriched ${enrichedLogs.filter(log => log.elevenLabsData).length} of ${callLogs.length} call logs with ElevenLabs data (${enrichedLogsWithIds.length} from stored IDs, ${enrichedLogsWithoutIds.filter(log => log.elevenLabsData).length} from time-based matching)`);
+    // Calculate enrichment counts for logging (avoid multiple filter iterations)
+    const totalEnriched = enrichedLogs.filter(log => log.elevenLabsData).length;
+    const enrichedFromTimeMatch = enrichedLogsWithoutIds.filter(log => log.elevenLabsData).length;
+    
+    logger.info(`Enriched ${totalEnriched} of ${callLogs.length} call logs with ElevenLabs data (${enrichedLogsWithIds.length} from stored IDs, ${enrichedFromTimeMatch} from time-based matching)`);
     
     return enrichedLogs;
   } catch (error) {
