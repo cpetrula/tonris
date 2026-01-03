@@ -210,6 +210,10 @@ Tenant.prototype.updateSettings = async function(newSettings) {
   this.changed('settings', true);
   
   await this.save();
+  
+  // Reload from database to ensure the value was persisted correctly
+  await this.reload();
+  
   return this;
 };
 

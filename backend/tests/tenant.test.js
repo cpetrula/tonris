@@ -868,6 +868,9 @@ describe('Tenant Module', () => {
           this.settings = { ...this.settings, ...newSettings };
           return Promise.resolve(this);
         }),
+        reload: jest.fn().mockImplementation(function() {
+          return Promise.resolve(this);
+        }),
       };
       mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
 
@@ -890,6 +893,7 @@ describe('Tenant Module', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockTenantInstance.updateSettings).toHaveBeenCalled();
+      expect(mockTenantInstance.reload).toHaveBeenCalled();
       expect(response.body.data.businessHours).toBeDefined();
     });
   });
