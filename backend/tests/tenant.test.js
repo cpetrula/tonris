@@ -309,6 +309,95 @@ describe('Tenant Module', () => {
         expect(response.body.data.tenant).toBeDefined();
       });
 
+      it('should return tenant info with address data', async () => {
+        const tenantData = {
+          id: '123',
+          tenantId: 'test-tenant',
+          name: 'Test Salon',
+          status: 'active',
+          contactEmail: 'test@example.com',
+          contactPhone: '+15551234567',
+          address: {
+            street: '123 Main St',
+            city: 'New York',
+            state: 'NY',
+            zipCode: '10001',
+          },
+          metadata: {
+            website: 'https://testsalon.com',
+            description: 'A test salon',
+          },
+        };
+        const mockTenantInstance = {
+          ...tenantData,
+          toSafeObject: () => tenantData,
+        };
+        mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+        const response = await request(app)
+          .get('/api/tenant')
+          .set('Authorization', `Bearer ${validToken()}`)
+          .set('X-Tenant-ID', 'test-tenant');
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.tenant).toBeDefined();
+        expect(response.body.data.tenant.address).toBeDefined();
+        expect(response.body.data.tenant.address.street).toBe('123 Main St');
+        expect(response.body.data.tenant.address.city).toBe('New York');
+        expect(response.body.data.tenant.address.state).toBe('NY');
+        expect(response.body.data.tenant.address.zipCode).toBe('10001');
+      });
+
+      it('should handle address stored as JSON string', async () => {
+        const addressString = '{"street":"74107 Pinon Dr","city":"Twentynine Palms","state":"CA","zip":"91360","zipCode":"91360"}';
+        const mockTenantInstance = {
+          id: '123',
+          tenantId: 'test-tenant',
+          name: 'Test Salon',
+          status: 'active',
+          contactEmail: 'test@example.com',
+          address: addressString, // Address stored as JSON string
+          toJSON: function() {
+            return {
+              id: this.id,
+              tenantId: this.tenantId,
+              name: this.name,
+              status: this.status,
+              contactEmail: this.contactEmail,
+              address: this.address, // Returns as string
+            };
+          },
+          toSafeObject: function() {
+            const tenantJson = this.toJSON();
+            // Parse address if it's a string
+            if (tenantJson.address && typeof tenantJson.address === 'string') {
+              try {
+                tenantJson.address = JSON.parse(tenantJson.address);
+              } catch (error) {
+                tenantJson.address = null;
+              }
+            }
+            return tenantJson;
+          },
+        };
+        mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+        const response = await request(app)
+          .get('/api/tenant')
+          .set('Authorization', `Bearer ${validToken()}`)
+          .set('X-Tenant-ID', 'test-tenant');
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.tenant.address).toBeDefined();
+        expect(typeof response.body.data.tenant.address).toBe('object');
+        expect(response.body.data.tenant.address.street).toBe('74107 Pinon Dr');
+        expect(response.body.data.tenant.address.city).toBe('Twentynine Palms');
+        expect(response.body.data.tenant.address.state).toBe('CA');
+        expect(response.body.data.tenant.address.zipCode).toBe('91360');
+      });
+
       it('should return 404 when tenant not found', async () => {
         mockTenantModel.findOne.mockResolvedValue(null);
 
@@ -559,6 +648,55 @@ describe('Tenant Module', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.error).toContain('Twilio phone number');
+      });
+
+      it('should update tenant with address data successfully', async () => {
+        const tenantData = {
+          tenantId: 'test-tenant',
+          name: 'Test Salon',
+          contactEmail: 'test@example.com',
+          address: {
+            street: '456 Oak Ave',
+            city: 'Los Angeles',
+            state: 'CA',
+            zipCode: '90001',
+          },
+        };
+        const mockTenantInstance = {
+          ...tenantData,
+          update: jest.fn().mockResolvedValue(true),
+          toSafeObject: () => tenantData,
+        };
+        mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+        const response = await request(app)
+          .patch('/api/tenant')
+          .set('Authorization', `Bearer ${validToken()}`)
+          .set('X-Tenant-ID', 'test-tenant')
+          .send({
+            address: {
+              street: '456 Oak Ave',
+              city: 'Los Angeles',
+              state: 'CA',
+              zipCode: '90001',
+            },
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(mockTenantInstance.update).toHaveBeenCalledWith({
+          address: {
+            street: '456 Oak Ave',
+            city: 'Los Angeles',
+            state: 'CA',
+            zipCode: '90001',
+          },
+        });
+        expect(response.body.data.tenant.address).toBeDefined();
+        expect(response.body.data.tenant.address.street).toBe('456 Oak Ave');
+        expect(response.body.data.tenant.address.city).toBe('Los Angeles');
+        expect(response.body.data.tenant.address.state).toBe('CA');
+        expect(response.body.data.tenant.address.zipCode).toBe('90001');
       });
     });
   });

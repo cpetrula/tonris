@@ -169,7 +169,29 @@ Tenant.prototype.transitionTo = async function(newStatus) {
  */
 Tenant.prototype.toSafeObject = function() {
   const tenantJson = this.toJSON();
-  // Remove any internal metadata if needed
+  
+  // Handle case where address might be stored as a JSON string instead of object
+  // This can happen with some database configurations or data migrations
+  if (tenantJson.address && typeof tenantJson.address === 'string') {
+    try {
+      tenantJson.address = JSON.parse(tenantJson.address);
+    } catch (error) {
+      // If parsing fails, leave it as is or set to null
+      console.warn(`Failed to parse address JSON for tenant ${this.id}:`, error.message);
+      tenantJson.address = null;
+    }
+  }
+  
+  // Handle case where metadata might be stored as a JSON string
+  if (tenantJson.metadata && typeof tenantJson.metadata === 'string') {
+    try {
+      tenantJson.metadata = JSON.parse(tenantJson.metadata);
+    } catch (error) {
+      console.warn(`Failed to parse metadata JSON for tenant ${this.id}:`, error.message);
+      tenantJson.metadata = null;
+    }
+  }
+  
   return tenantJson;
 };
 
