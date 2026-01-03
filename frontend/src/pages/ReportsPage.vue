@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
@@ -137,30 +137,42 @@ onMounted(async () => {
 // Watch for changes to period filter and refetch data
 watch(periodFilter, async () => {
   if (periodFilter.value !== 'custom') {
-    loading.value = true
-    try {
-      await fetchCallLogs()
-    } catch (err) {
-      console.error('Error refetching call logs:', err)
-    } finally {
-      loading.value = false
-    }
+    await refetchCallLogs()
   }
 })
 
 // Watch for changes to custom date range
 watch(dateRange, async () => {
   if (periodFilter.value === 'custom' && dateRange.value && dateRange.value.length === 2) {
-    loading.value = true
-    try {
-      await fetchCallLogs()
-    } catch (err) {
-      console.error('Error refetching call logs:', err)
-    } finally {
-      loading.value = false
-    }
+    await refetchCallLogs()
   }
 })
+
+// Helper function to refetch call logs with loading state
+async function refetchCallLogs() {
+  loading.value = true
+  try {
+    await fetchCallLogs()
+  } catch (err) {
+    console.error('Error refetching call logs:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+function parseDuration(log: any): number {
+  // Priority: 1. log.duration, 2. elevenLabsData.callDurationSecs, 3. default 0
+  if (log.duration) {
+    return typeof log.duration === 'string' ? parseInt(log.duration, 10) : log.duration
+  }
+  
+  if (log.elevenLabsData?.callDurationSecs) {
+    const secs = log.elevenLabsData.callDurationSecs
+    return typeof secs === 'string' ? parseInt(secs, 10) : secs
+  }
+  
+  return 0
+}
 
 async function fetchCallLogs() {
   try {
@@ -196,8 +208,8 @@ async function fetchCallLogs() {
         break
       case 'custom':
         if (dateRange.value && dateRange.value.length === 2) {
-          startDate = dateRange.value[0]
-          endDate = dateRange.value[1]
+          startDate = dateRange.value[0] || null
+          endDate = dateRange.value[1] || null
         }
         break
     }
@@ -220,7 +232,7 @@ async function fetchCallLogs() {
         phoneNumber: log.fromNumber || log.toNumber || 'Unknown',
         callerName: log.callerName || 'Unknown',
         date: new Date(log.createdAt),
-        duration: typeof log.duration === 'string' ? parseInt(log.duration, 10) : (log.duration || (log.elevenLabsData?.callDurationSecs ? (typeof log.elevenLabsData.callDurationSecs === 'string' ? parseInt(log.elevenLabsData.callDurationSecs, 10) : log.elevenLabsData.callDurationSecs) : 0)),
+        duration: parseDuration(log),
         outcome: mapCallStatus(log.status, log.elevenLabsData),
         notes: log.elevenLabsData?.transcriptSummary || log.notes || '',
         elevenLabsConversationId: log.elevenLabsConversationId,
