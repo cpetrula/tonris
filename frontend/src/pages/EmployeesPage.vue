@@ -9,6 +9,8 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
+import Select from 'primevue/select'
+import MultiSelect from 'primevue/multiselect'
 import api from '@/services/api'
 
 interface Employee {
@@ -17,7 +19,8 @@ interface Employee {
   lastName: string
   email: string
   phone: string
-  role: string
+  employeeType: string
+  serviceIds: string[]
   status: 'active' | 'inactive'
   schedule: {
     monday: string
@@ -30,8 +33,17 @@ interface Employee {
   }
 }
 
+interface Service {
+  id: string
+  name: string
+  category: string
+  price: number
+  duration: number
+}
+
 const loading = ref(false)
 const employees = ref<Employee[]>([])
+const services = ref<Service[]>([])
 
 const searchQuery = ref('')
 const showDialog = ref(false)
@@ -40,13 +52,22 @@ const showScheduleDialog = ref(false)
 const selectedEmployee = ref<Employee | null>(null)
 const error = ref('')
 
+// Employee type options - both full-time and part-time map to 'employee' in the database
+// The distinction between full-time and part-time can be managed through employee schedules
+const employeeTypeOptions = [
+  { label: 'Employee (Full-time)', value: 'employee' },
+  { label: 'Employee (Part-time)', value: 'employee' },
+  { label: 'Contractor', value: 'contractor' }
+]
+
 const emptyEmployee: Employee = {
   id: '',
   firstName: '',
   lastName: '',
   email: '',
   phone: '',
-  role: '',
+  employeeType: '',
+  serviceIds: [],
   status: 'active',
   schedule: {
     monday: '9:00 AM - 5:00 PM',
@@ -68,7 +89,7 @@ const filteredEmployees = computed(() => {
     emp.firstName.toLowerCase().includes(query) ||
     emp.lastName.toLowerCase().includes(query) ||
     emp.email.toLowerCase().includes(query) ||
-    emp.role.toLowerCase().includes(query)
+    emp.employeeType.toLowerCase().includes(query)
   )
 })
 
@@ -106,7 +127,8 @@ async function saveEmployee() {
         lastName: currentEmployee.value.lastName,
         email: currentEmployee.value.email,
         phone: currentEmployee.value.phone,
-        employeeType: currentEmployee.value.role,
+        employeeType: currentEmployee.value.employeeType,
+        serviceIds: currentEmployee.value.serviceIds,
         status: currentEmployee.value.status
       })
     } else {
@@ -116,7 +138,8 @@ async function saveEmployee() {
         lastName: currentEmployee.value.lastName,
         email: currentEmployee.value.email,
         phone: currentEmployee.value.phone,
-        employeeType: currentEmployee.value.role
+        employeeType: currentEmployee.value.employeeType,
+        serviceIds: currentEmployee.value.serviceIds
       })
     }
 
@@ -168,10 +191,10 @@ async function toggleStatus(employee: Employee) {
 onMounted(async () => {
   loading.value = true
   try {
-    await fetchEmployees()
+    await Promise.all([fetchEmployees(), fetchServices()])
   } catch (err) {
-    console.error('Error loading employees:', err)
-    error.value = 'Failed to load employees data'
+    console.error('Error loading data:', err)
+    error.value = 'Failed to load data'
   } finally {
     loading.value = false
   }
@@ -187,7 +210,8 @@ async function fetchEmployees() {
         lastName: emp.lastName || '',
         email: emp.email || '',
         phone: emp.phone || '',
-        role: emp.employeeType || '',
+        employeeType: emp.employeeType || '',
+        serviceIds: emp.serviceIds || [],
         status: emp.status || 'active',
         schedule: emp.schedule || {
           monday: 'Off',
@@ -203,6 +227,28 @@ async function fetchEmployees() {
   } catch (err) {
     console.error('Error fetching employees:', err)
   }
+}
+
+async function fetchServices() {
+  try {
+    const response = await api.get('/api/services')
+    if (response.data.success && response.data.data && response.data.data.services) {
+      services.value = response.data.data.services.map((svc: any) => ({
+        id: svc.id,
+        name: svc.name,
+        category: svc.category,
+        price: svc.price,
+        duration: svc.duration
+      }))
+    }
+  } catch (err) {
+    console.error('Error fetching services:', err)
+  }
+}
+
+function getEmployeeTypeLabel(value: string) {
+  const option = employeeTypeOptions.find(opt => opt.value === value)
+  return option ? option.label : value
 }
 </script>
 
@@ -272,10 +318,10 @@ async function fetchEmployees() {
 
           <Column field="phone" header="Phone" sortable />
 
-          <Column field="role" header="Role" sortable>
+          <Column field="employeeType" header="Type" sortable>
             <template #body="{ data }">
               <span class="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
-                {{ data.role }}
+                {{ getEmployeeTypeLabel(data.employeeType) }}
               </span>
             </template>
           </Column>
@@ -367,8 +413,28 @@ async function fetchEmployees() {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-white-700 mb-1">Role</label>
-          <InputText v-model="currentEmployee.role" class="w-full" placeholder="e.g., Stylist, Barber" />
+          <label class="block text-sm font-medium text-white-700 mb-1">Employee Type</label>
+          <Select 
+            v-model="currentEmployee.employeeType" 
+            :options="employeeTypeOptions" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select employee type"
+            class="w-full" 
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-white-700 mb-1">Services</label>
+          <MultiSelect 
+            v-model="currentEmployee.serviceIds" 
+            :options="services" 
+            optionLabel="name" 
+            optionValue="id"
+            placeholder="Select services"
+            class="w-full"
+            display="chip"
+          />
         </div>
       </div>
 
