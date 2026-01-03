@@ -185,6 +185,87 @@ const getWelcomeMessage = (tenant) => {
 };
 
 /**
+ * Handle outbound voice call webhook
+ * @param {Object} params - Twilio webhook parameters
+ * @returns {Promise<Object>} - Processing result with TwiML
+ */
+const handleOutboundCall = async (params) => {
+  const {
+    CallSid,
+    From,
+    To,
+    CallStatus,
+    Direction,
+  } = params;
+  
+  logger.info(`Outbound call webhook: ${CallSid} from ${From} to ${To}`);
+  
+  try {
+    // Find tenant by their phone number (From number for outbound calls)
+    const tenant = await findTenantByPhoneNumber(From);
+    
+    if (!tenant) {
+      logger.warn(`No tenant found for phone number: ${From}`);
+      return {
+        success: false,
+        twiml: twilioService.generateVoiceResponse(
+          'We\'re sorry, this number is not configured. Please contact support.'
+        ),
+      };
+    }
+    
+    // Check if call log already exists (to avoid duplicates)
+    let callLog = await CallLog.findOne({
+      where: { twilioCallSid: CallSid },
+    });
+    
+    if (!callLog) {
+      // Create call log entry for outbound call
+      callLog = await CallLog.create({
+        tenantId: tenant.id,
+        twilioCallSid: CallSid,
+        direction: CALL_DIRECTION.OUTBOUND,
+        status: CallStatus || CALL_STATUS.INITIATED,
+        fromNumber: From,
+        toNumber: To,
+        startedAt: new Date(),
+        metadata: {
+          direction: Direction,
+          originalParams: params,
+        },
+      });
+      
+      logger.info(`Outbound call log created: ${callLog.id} for tenant: ${tenant.id}`);
+    } else {
+      logger.info(`Outbound call log already exists: ${callLog.id}`);
+    }
+    
+    // Generate TwiML to connect the call (e.g., to ElevenLabs AI or a simple dial)
+    // For now, we'll use a simple message. This can be customized based on requirements.
+    const twiml = twilioService.generateVoiceResponse(
+      'Connecting your call, please wait.',
+      { hangup: false }
+    );
+    
+    return {
+      success: true,
+      callLogId: callLog.id,
+      tenantId: tenant.id,
+      twiml,
+    };
+  } catch (error) {
+    logger.error(`Error handling outbound call: ${error.message}`);
+    
+    return {
+      success: false,
+      twiml: twilioService.generateVoiceResponse(
+        'We\'re experiencing technical difficulties. Please try again later.'
+      ),
+    };
+  }
+};
+
+/**
  * Get call logs for a tenant
  * @param {string} tenantId - Tenant identifier
  * @param {Object} options - Query options
@@ -238,6 +319,7 @@ const getCallLogs = async (tenantId, options = {}) => {
 
 module.exports = {
   handleIncomingCall,
+  handleOutboundCall,
   handleCallStatus,
   findTenantByPhoneNumber,
   getCallLogs,
