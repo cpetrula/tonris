@@ -504,7 +504,7 @@ const register = async ({
   // Generate tokens
   const tokens = generateTokenPair(user);
 
-  logger.info(`New registration: ${email} with tenant: ${tenant.tenantId}`);
+  logger.info(`New registration: ${email} with tenant: ${tenant.id}`);
 
   return {
     user: user.toSafeObject(),

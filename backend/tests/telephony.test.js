@@ -126,7 +126,7 @@ describe('Telephony Module', () => {
     it('should handle incoming voice call and return TwiML', async () => {
       // Mock tenant lookup - findAll for matching phone number
       mockTenantModel.findAll.mockResolvedValue([{
-        tenantId: 'test-tenant',
+        id: 'test-tenant-uuid',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -184,7 +184,7 @@ describe('Telephony Module', () => {
     it('should handle incoming SMS and return TwiML', async () => {
       // Mock tenant lookup - findAll for matching phone number
       mockTenantModel.findAll.mockResolvedValue([{
-        tenantId: 'test-tenant',
+        id: 'test-tenant-uuid',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -210,7 +210,7 @@ describe('Telephony Module', () => {
 
     it('should handle CONFIRM command', async () => {
       mockTenantModel.findAll.mockResolvedValue([{
-        tenantId: 'test-tenant',
+        id: 'test-tenant-uuid',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -237,7 +237,7 @@ describe('Telephony Module', () => {
 
     it('should handle HELP command', async () => {
       mockTenantModel.findAll.mockResolvedValue([{
-        tenantId: 'test-tenant',
+        id: 'test-tenant-uuid',
         name: 'Test Salon',
         status: 'active',
         metadata: { twilioPhoneNumber: '+15551234567' },
@@ -350,7 +350,7 @@ describe('Telephony Module', () => {
 
     it('should send SMS successfully', async () => {
       mockTenantModel.findOne.mockResolvedValue({
-        tenantId: 'test-tenant',
+        id: 'test-tenant-uuid',
         name: 'Test Salon',
         metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},
@@ -411,7 +411,7 @@ describe('Telephony Module', () => {
 
     it('should send appointment reminder successfully', async () => {
       mockTenantModel.findOne.mockResolvedValue({
-        tenantId: 'test-tenant',
+        id: 'test-tenant-uuid',
         name: 'Test Salon',
         metadata: { twilioPhoneNumber: '+15551234567' },
         settings: {},

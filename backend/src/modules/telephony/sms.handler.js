@@ -36,7 +36,7 @@ const handleIncomingSms = async (params) => {
       };
     }
     
-    logger.info(`SMS received for tenant: ${tenant.tenantId} - MessageSid: ${MessageSid}, Length: ${Body.length} chars`);
+    logger.info(`SMS received for tenant: ${tenant.id} - MessageSid: ${MessageSid}, Length: ${Body.length} chars`);
     
     // Process the SMS based on content
     const response = await processIncomingSms({
@@ -51,7 +51,7 @@ const handleIncomingSms = async (params) => {
     
     return {
       success: true,
-      tenantId: tenant.tenantId,
+      tenantId: tenant.id,
       twiml: response.twiml,
       action: response.action,
     };
