@@ -258,6 +258,7 @@ Tenant.prototype.sanitizeSettings = async function() {
     this.setDataValue('settings', Tenant.generateDefaultSettings());
     this.changed('settings', true);
     await this.save();
+    await this.reload();
     return this;
   }
   
@@ -269,6 +270,7 @@ Tenant.prototype.sanitizeSettings = async function() {
     this.setDataValue('settings', Tenant.generateDefaultSettings());
     this.changed('settings', true);
     await this.save();
+    await this.reload();
     return this;
   }
   
@@ -294,6 +296,7 @@ Tenant.prototype.sanitizeSettings = async function() {
     this.setDataValue('settings', sanitizedSettings);
     this.changed('settings', true);
     await this.save();
+    await this.reload();
   }
   
   return this;
