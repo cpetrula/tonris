@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
@@ -48,6 +48,7 @@ const dateRange = ref<Date[] | null>(null)
 const periodFilter = ref('last30days')
 
 const periodOptions = [
+  { label: 'Today', value: 'today' },
   { label: 'Last 7 days', value: 'last7days' },
   { label: 'Last 30 days', value: 'last30days' },
   { label: 'Last 90 days', value: 'last90days' },
@@ -61,10 +62,7 @@ const overviewStats = ref({
   totalCalls: 0,
   avgCallDuration: 0, // seconds
   appointmentsBooked: 0,
-  conversionRate: 0,
-  missedCalls: 0,
-  peakHour: 'N/A',
-  aiEnrichedCalls: 0
+  conversionRate: 0
 })
 
 // Call logs - fetched from API
@@ -75,21 +73,6 @@ const appointmentStats = ref<AppointmentStat[]>([])
 
 // Top services - will be calculated
 const topServices = ref<{ name: string; count: number; revenue: number }[]>([])
-
-// Call outcome distribution
-const callOutcomes = computed(() => {
-  const outcomes = {
-    appointment_booked: 0,
-    inquiry: 0,
-    voicemail: 0,
-    transferred: 0,
-    missed: 0
-  }
-  callLogs.value.forEach(call => {
-    outcomes[call.outcome]++
-  })
-  return outcomes
-})
 
 function formatDuration(seconds: number): string {
   if (seconds === 0) return '-'
@@ -151,9 +134,84 @@ onMounted(async () => {
   }
 })
 
+// Watch for changes to period filter and refetch data
+watch(periodFilter, async () => {
+  if (periodFilter.value !== 'custom') {
+    loading.value = true
+    try {
+      await fetchCallLogs()
+    } catch (err) {
+      console.error('Error refetching call logs:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+})
+
+// Watch for changes to custom date range
+watch(dateRange, async () => {
+  if (periodFilter.value === 'custom' && dateRange.value && dateRange.value.length === 2) {
+    loading.value = true
+    try {
+      await fetchCallLogs()
+    } catch (err) {
+      console.error('Error refetching call logs:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+})
+
 async function fetchCallLogs() {
   try {
-    const response = await api.get('/api/telephony/call-logs')
+    // Build query parameters based on date filter
+    const params = new URLSearchParams()
+    
+    // Calculate date range based on periodFilter
+    let startDate: Date | null = null
+    let endDate: Date | null = null
+    
+    const now = new Date()
+    
+    switch (periodFilter.value) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+        break
+      case 'last7days':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'last30days':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
+      case 'last90days':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        break
+      case 'thisMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case 'lastMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+        break
+      case 'custom':
+        if (dateRange.value && dateRange.value.length === 2) {
+          startDate = dateRange.value[0]
+          endDate = dateRange.value[1]
+        }
+        break
+    }
+    
+    if (startDate) {
+      params.append('startDate', startDate.toISOString())
+    }
+    if (endDate) {
+      params.append('endDate', endDate.toISOString())
+    }
+    
+    params.append('includeElevenLabsData', 'true')
+    
+    const response = await api.get(`/api/telephony/call-logs?${params.toString()}`)
     if (response.data.success && response.data.data) {
       // The response now contains { logs: [], total: number, limit: number, offset: number }
       const logs = response.data.data.logs || []
@@ -164,7 +222,7 @@ async function fetchCallLogs() {
         date: new Date(log.createdAt),
         duration: typeof log.duration === 'string' ? parseInt(log.duration, 10) : (log.duration || (log.elevenLabsData?.callDurationSecs ? (typeof log.elevenLabsData.callDurationSecs === 'string' ? parseInt(log.elevenLabsData.callDurationSecs, 10) : log.elevenLabsData.callDurationSecs) : 0)),
         outcome: mapCallStatus(log.status, log.elevenLabsData),
-        notes: log.notes || log.elevenLabsData?.transcriptSummary || '',
+        notes: log.elevenLabsData?.transcriptSummary || log.notes || '',
         elevenLabsConversationId: log.elevenLabsConversationId,
         elevenLabsData: log.elevenLabsData
       }))
@@ -242,30 +300,6 @@ function calculateOverviewStats() {
     
     overviewStats.value.appointmentsBooked = logs.filter(log => log.outcome === 'appointment_booked').length
     overviewStats.value.conversionRate = parseFloat(((overviewStats.value.appointmentsBooked / logs.length) * 100).toFixed(1))
-    overviewStats.value.missedCalls = logs.filter(log => log.outcome === 'missed').length
-    
-    // Count AI-enriched calls
-    overviewStats.value.aiEnrichedCalls = logs.filter(log => log.elevenLabsData).length
-    
-    // Calculate peak hour
-    const hourCounts: Record<number, number> = {}
-    logs.forEach(log => {
-      const hour = new Date(log.date).getHours()
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1
-    })
-    
-    let peakHourNum = 0
-    let maxCount = 0
-    Object.entries(hourCounts).forEach(([hourStr, count]) => {
-      if (count > maxCount) {
-        maxCount = count
-        peakHourNum = parseInt(hourStr)
-      }
-    })
-    
-    const hour12 = peakHourNum > 12 ? peakHourNum - 12 : (peakHourNum === 0 ? 12 : peakHourNum)
-    const ampm = peakHourNum >= 12 ? 'PM' : 'AM'
-    overviewStats.value.peakHour = `${hour12}:00 ${ampm}`
   }
 }
 
@@ -359,7 +393,7 @@ function calculateTopServices(appointments: any[]) {
     </Card>
 
     <!-- Overview Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <Card class="shadow-sm">
         <template #content>
           <div class="text-center">
@@ -389,30 +423,6 @@ function calculateTopServices(appointments: any[]) {
           <div class="text-center">
             <p class="text-3xl font-bold text-blue-600">{{ overviewStats.conversionRate }}%</p>
             <p class="text-sm text-gray-500">Conversion Rate</p>
-          </div>
-        </template>
-      </Card>
-      <Card class="shadow-sm">
-        <template #content>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-red-600">{{ overviewStats.missedCalls }}</p>
-            <p class="text-sm text-gray-500">Missed Calls</p>
-          </div>
-        </template>
-      </Card>
-      <Card class="shadow-sm">
-        <template #content>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-orange-600">{{ overviewStats.peakHour }}</p>
-            <p class="text-sm text-gray-500">Peak Hour</p>
-          </div>
-        </template>
-      </Card>
-      <Card class="shadow-sm">
-        <template #content>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-purple-600">{{ overviewStats.aiEnrichedCalls }}</p>
-            <p class="text-sm text-gray-500">AI Enhanced</p>
           </div>
         </template>
       </Card>
@@ -446,53 +456,23 @@ function calculateTopServices(appointments: any[]) {
                 </template>
               </Column>
 
-              <Column field="phoneNumber" header="Phone" sortable />
-
-              <Column field="callerName" header="Caller" sortable>
+              <Column field="phoneNumber" header="Caller" sortable>
                 <template #body="{ data }">
-                  <div class="flex items-center gap-2">
-                    <span :class="data.callerName === 'Unknown' ? 'text-gray-400' : ''">
-                      {{ data.callerName }}
-                    </span>
-                    <span 
-                      v-if="data.elevenLabsData" 
-                      class="px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700"
-                      title="Enhanced with AI data"
-                    >
-                      AI
-                    </span>
-                  </div>
+                  <span>{{ data.phoneNumber }}</span>
                 </template>
               </Column>
 
               <Column field="duration" header="Duration" sortable>
                 <template #body="{ data }">
-                  <div class="flex flex-col">
-                    <span>{{ formatDuration(data.duration) }}</span>
-                    <span 
-                      v-if="data.elevenLabsData?.messageCount" 
-                      class="text-xs text-gray-400"
-                    >
-                      {{ data.elevenLabsData.messageCount }} messages
-                    </span>
-                  </div>
+                  <span>{{ formatDuration(data.duration) }}</span>
                 </template>
               </Column>
 
               <Column field="outcome" header="Outcome" sortable>
                 <template #body="{ data }">
-                  <div class="flex flex-col gap-1">
-                    <span :class="['px-2 py-1 rounded-full text-xs font-medium', getOutcomeColor(data.outcome)]">
-                      {{ getOutcomeLabel(data.outcome) }}
-                    </span>
-                    <span 
-                      v-if="data.elevenLabsData?.userSatisfactionRating" 
-                      class="text-xs text-gray-500"
-                      :title="`Customer rating: ${data.elevenLabsData.userSatisfactionRating}/5`"
-                    >
-                      ⭐ {{ data.elevenLabsData.userSatisfactionRating }}/5
-                    </span>
-                  </div>
+                  <span :class="['px-2 py-1 rounded-full text-xs font-medium', getOutcomeColor(data.outcome)]">
+                    {{ getOutcomeLabel(data.outcome) }}
+                  </span>
                 </template>
               </Column>
 
@@ -505,35 +485,6 @@ function calculateTopServices(appointments: any[]) {
                 </template>
               </Column>
             </DataTable>
-          </template>
-        </Card>
-
-        <!-- Call Outcome Distribution -->
-        <Card class="shadow-sm mt-6">
-          <template #title>Call Outcome Distribution</template>
-          <template #content>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div class="text-center p-4 bg-green-50 rounded-lg">
-                <p class="text-2xl font-bold text-green-600">{{ callOutcomes.appointment_booked }}</p>
-                <p class="text-sm text-gray-600">Appointments Booked</p>
-              </div>
-              <div class="text-center p-4 bg-blue-50 rounded-lg">
-                <p class="text-2xl font-bold text-blue-600">{{ callOutcomes.inquiry }}</p>
-                <p class="text-sm text-gray-600">Inquiries</p>
-              </div>
-              <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                <p class="text-2xl font-bold text-yellow-600">{{ callOutcomes.voicemail }}</p>
-                <p class="text-sm text-gray-600">Voicemails</p>
-              </div>
-              <div class="text-center p-4 bg-purple-50 rounded-lg">
-                <p class="text-2xl font-bold text-purple-600">{{ callOutcomes.transferred }}</p>
-                <p class="text-sm text-gray-600">Transferred</p>
-              </div>
-              <div class="text-center p-4 bg-red-50 rounded-lg">
-                <p class="text-2xl font-bold text-red-600">{{ callOutcomes.missed }}</p>
-                <p class="text-sm text-gray-600">Missed</p>
-              </div>
-            </div>
           </template>
         </Card>
       </TabPanel>
