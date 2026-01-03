@@ -233,10 +233,8 @@ const updateBusinessHours = async (id, businessHours) => {
   }
 
   // Update business hours in settings
+  // Note: updateSettings() already includes reload() after save
   await tenant.updateSettings({ businessHours });
-
-  // Reload tenant from database to ensure we return the persisted value
-  await tenant.reload();
 
   logger.info(`Business hours updated for tenant: ${id}`);
 

@@ -893,7 +893,6 @@ describe('Tenant Module', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(mockTenantInstance.updateSettings).toHaveBeenCalled();
-      expect(mockTenantInstance.reload).toHaveBeenCalled();
       expect(response.body.data.businessHours).toBeDefined();
     });
   });
