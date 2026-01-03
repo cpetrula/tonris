@@ -57,6 +57,9 @@ router.get('/business-hours', standardLimiter, authMiddleware, tenantController.
 // PUT /api/tenant/business-hours - Update business hours
 router.put('/business-hours', standardLimiter, authMiddleware, tenantController.updateBusinessHours);
 
+// POST /api/tenant/sanitize-settings - Sanitize and repair tenant settings
+router.post('/sanitize-settings', standardLimiter, authMiddleware, tenantController.sanitizeSettings);
+
 // POST /api/tenant/activate - Activate tenant
 router.post('/activate', standardLimiter, authMiddleware, tenantController.activateTenant);
 
