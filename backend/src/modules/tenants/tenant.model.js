@@ -187,7 +187,8 @@ Tenant.prototype.updateSettings = async function(newSettings) {
   }
   
   // Ensure we're working with a plain object by deep cloning
-  // This handles cases where the settings might be a Sequelize proxy or have circular references
+  // JSON.parse/stringify is used here because settings is already JSON-serializable
+  // and we need to detach from any Sequelize proxies or getters
   try {
     currentSettings = JSON.parse(JSON.stringify(currentSettings));
   } catch (error) {

@@ -338,8 +338,10 @@ const sanitizeSettings = async (req, res, next) => {
       });
     }
 
-    // Log before sanitization for debugging
-    logger.info(`Sanitizing settings for tenant ${tenantUUID}. Current settings: ${JSON.stringify(tenant.settings)}`);
+    // Log before sanitization for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug(`Sanitizing settings for tenant ${tenantUUID}`);
+    }
 
     // Sanitize settings
     await tenant.sanitizeSettings();
@@ -347,7 +349,7 @@ const sanitizeSettings = async (req, res, next) => {
     // Reload to get fresh data
     await tenant.reload();
 
-    logger.info(`Settings sanitized for tenant ${tenantUUID}. New settings: ${JSON.stringify(tenant.settings)}`);
+    logger.info(`Settings sanitized for tenant ${tenantUUID}`);
 
     res.status(200).json({
       success: true,
