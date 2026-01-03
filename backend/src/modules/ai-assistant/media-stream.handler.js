@@ -72,14 +72,13 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
           tenant_name: customParameters.tenant_name || customParameters.business_name || '',
           name: customParameters.tenant_name || customParameters.business_name || 'Our Business',
         };
-        if (customParameters.business_name) {
-          dynamicVariables.business_name = customParameters.business_name;
-        }
-        if (customParameters.caller_number) {
-          dynamicVariables.caller_number = customParameters.caller_number;
-        }
-        if (customParameters.call_sid) {
-          dynamicVariables.call_sid = customParameters.call_sid;
+        
+        // Include ALL custom parameters as dynamic variables so they're available to ElevenLabs
+        // This ensures fields like business_hours, ai_greeting, call_status, etc. are sent
+        for (const [key, value] of Object.entries(customParameters)) {
+          if (value !== undefined && value !== null && !dynamicVariables[key]) {
+            dynamicVariables[key] = value;
+          }
         }
         
         // Send initialization message to ElevenLabs to start the conversation
