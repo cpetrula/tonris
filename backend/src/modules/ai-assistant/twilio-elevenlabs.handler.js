@@ -108,8 +108,8 @@ const getAgentIdForTenant = async (tenant) => {
       }
     }
     
-    // Fallback to tenant-specific agent ID in settings/metadata for backward compatibility
-    const agentId = tenant.settings?.elevenLabsAgentId || tenant.metadata?.elevenLabsAgentId;
+    // Use tenant-specific agent ID from metadata
+    const agentId = tenant.metadata?.elevenLabsAgentId;
     
     if (agentId) {
       logger.info(`Using tenant-specific agent ID for tenant ${tenant.id}`);

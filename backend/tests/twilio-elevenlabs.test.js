@@ -487,7 +487,7 @@ describe('Twilio-ElevenLabs Handler Functions', () => {
 
       const agentId = await getAgentIdForTenant(tenant);
 
-      expect(agentId).toBe('settings-agent');
+      expect(agentId).toBe('metadata-agent');
     });
 
     it('should return null when no agent ID is configured', async () => {
