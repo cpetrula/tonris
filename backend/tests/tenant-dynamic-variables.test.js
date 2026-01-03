@@ -212,4 +212,115 @@ describe('Tenant Dynamic Variables Flow to ElevenLabs', () => {
     expect(twiml).toContain('custom_field');
     expect(twiml).toContain('custom value');
   });
+
+  it('should handle malformed JSON in tenant address gracefully', async () => {
+    // Mock tenant with malformed address JSON
+    const mockTenant = {
+      id: 'tenant-789',
+      name: 'Test Salon',
+      status: 'active',
+      planType: 'free',
+      twilioPhoneNumber: '+15556666666',
+      contactEmail: 'test@salon.com',
+      contactPhone: '+15555555555',
+      address: 'invalid json {',
+      metadata: {
+        elevenLabsAgentId: 'agent-999',
+      },
+      businessHours: {},
+    };
+
+    // Mock the Tenant.findAll to return our mock tenant
+    const { Tenant } = require('../src/modules/tenants/tenant.model');
+    Tenant.findAll = jest.fn().mockResolvedValue([mockTenant]);
+
+    // Mock BusinessType
+    const { BusinessType } = require('../src/modules/business-types/businessType.model');
+    BusinessType.findByPk = jest.fn().mockResolvedValue(null);
+
+    // Mock ElevenLabs service
+    const { getElevenLabsService } = require('../src/modules/ai-assistant/elevenlabs.service');
+    const mockService = {
+      isAvailable: jest.fn().mockResolvedValue(true),
+    };
+    getElevenLabsService.mockReturnValue(mockService);
+
+    // Call the handler - should not throw an error
+    const result = await handleTwilioToElevenLabs({
+      CallSid: 'CA789',
+      From: '+15558888888',
+      To: '+15556666666',
+      CallStatus: 'ringing',
+    });
+
+    // Should still succeed despite malformed address
+    expect(result.success).toBe(true);
+    expect(result.twiml).toBeDefined();
+  });
+
+  it('should handle malformed JSON in tenant metadata gracefully', async () => {
+    // Mock tenant with malformed metadata JSON
+    const mockTenant = {
+      id: 'tenant-999',
+      name: 'Test Salon',
+      status: 'active',
+      planType: 'free',
+      twilioPhoneNumber: '+15557777777',
+      contactEmail: 'test@salon.com',
+      contactPhone: '+15555555555',
+      address: null,
+      metadata: {
+        elevenLabsAgentId: 'agent-999', // Need agent ID for the handler to succeed
+        customField: 'test',
+      },
+      businessHours: {},
+    };
+
+    // Override metadata getter to return the malformed string when accessed later
+    // But keep it as an object initially so we can get the agent ID
+    let metadataAccessCount = 0;
+    Object.defineProperty(mockTenant, 'metadata', {
+      get: () => {
+        metadataAccessCount++;
+        // First access for agent ID, return valid object
+        // Second access for custom parameters, return malformed string
+        if (metadataAccessCount === 1) {
+          return {
+            elevenLabsAgentId: 'agent-999',
+            customField: 'test',
+          };
+        }
+        return 'invalid json {';
+      },
+      enumerable: true,
+      configurable: true,
+    });
+
+    // Mock the Tenant.findAll to return our mock tenant
+    const { Tenant } = require('../src/modules/tenants/tenant.model');
+    Tenant.findAll = jest.fn().mockResolvedValue([mockTenant]);
+
+    // Mock BusinessType
+    const { BusinessType } = require('../src/modules/business-types/businessType.model');
+    BusinessType.findByPk = jest.fn().mockResolvedValue(null);
+
+    // Mock ElevenLabs service
+    const { getElevenLabsService } = require('../src/modules/ai-assistant/elevenlabs.service');
+    const mockService = {
+      isAvailable: jest.fn().mockResolvedValue(true),
+    };
+    getElevenLabsService.mockReturnValue(mockService);
+
+    // Call the handler - should not throw an error
+    const result = await handleTwilioToElevenLabs({
+      CallSid: 'CA999',
+      From: '+15558888888',
+      To: '+15557777777',
+      CallStatus: 'ringing',
+    });
+
+    // Should still succeed despite malformed metadata on second access
+    expect(result.success).toBe(true);
+    expect(result.twiml).toBeDefined();
+  });
 });

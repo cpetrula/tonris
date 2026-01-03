@@ -262,37 +262,47 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     
     // Add address information if available
     if (tenant.address) {
-      // Flatten address into individual fields for easier use in ElevenLabs
-      const address = typeof tenant.address === 'string' ? JSON.parse(tenant.address) : tenant.address;
-      if (address) {
-        customParameters.address_street = address.street;
-        customParameters.address_city = address.city;
-        customParameters.address_state = address.state;
-        customParameters.address_zip = address.zipCode || address.zip;
-        customParameters.address_country = address.country;
-        // Also provide full address as JSON string for backward compatibility
-        customParameters.address = JSON.stringify(address);
+      try {
+        // Flatten address into individual fields for easier use in ElevenLabs
+        const address = typeof tenant.address === 'string' ? JSON.parse(tenant.address) : tenant.address;
+        if (address && typeof address === 'object') {
+          customParameters.address_street = address.street;
+          customParameters.address_city = address.city;
+          customParameters.address_state = address.state;
+          customParameters.address_zip = address.zipCode || address.zip;
+          customParameters.address_country = address.country;
+          // Also provide full address as JSON string for backward compatibility
+          customParameters.address = JSON.stringify(address);
+        }
+      } catch (error) {
+        logger.warn(`Failed to parse tenant address for tenant ${tenant.id}: ${error.message}`);
       }
     }
     
     // Include ALL metadata fields as dynamic variables
     // This ensures any custom fields added to tenant metadata are available to ElevenLabs
     if (tenant.metadata && typeof tenant.metadata === 'object') {
-      const metadata = typeof tenant.metadata === 'string' ? JSON.parse(tenant.metadata) : tenant.metadata;
-      
-      // Add each metadata field to customParameters
-      // Skip fields we've already explicitly set above to avoid conflicts
-      const reservedKeys = ['aiGreeting', 'aiTone', 'elevenLabsAgentId', 'twilioPhoneNumber'];
-      for (const [key, value] of Object.entries(metadata)) {
-        // Skip reserved keys and null/undefined values
-        if (!reservedKeys.includes(key) && value !== null && value !== undefined) {
-          // Convert objects to JSON strings for ElevenLabs
-          if (typeof value === 'object') {
-            customParameters[key] = JSON.stringify(value);
-          } else {
-            customParameters[key] = value;
+      try {
+        const metadata = typeof tenant.metadata === 'string' ? JSON.parse(tenant.metadata) : tenant.metadata;
+        
+        if (metadata && typeof metadata === 'object') {
+          // Add each metadata field to customParameters
+          // Skip fields we've already explicitly set above to avoid conflicts
+          const reservedKeys = ['aiGreeting', 'aiTone', 'elevenLabsAgentId', 'twilioPhoneNumber'];
+          for (const [key, value] of Object.entries(metadata)) {
+            // Skip reserved keys and null/undefined values
+            if (!reservedKeys.includes(key) && value !== null && value !== undefined) {
+              // Convert objects to JSON strings for ElevenLabs
+              if (typeof value === 'object') {
+                customParameters[key] = JSON.stringify(value);
+              } else {
+                customParameters[key] = value;
+              }
+            }
           }
         }
+      } catch (error) {
+        logger.warn(`Failed to parse tenant metadata for tenant ${tenant.id}: ${error.message}`);
       }
     }
     
