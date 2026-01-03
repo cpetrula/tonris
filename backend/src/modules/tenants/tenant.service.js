@@ -161,8 +161,17 @@ const getBusinessHours = async (id) => {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
   }
 
-  // Return business hours from settings, or default if not set
-  const businessHours = tenant.settings?.businessHours || Tenant.generateDefaultSettings().businessHours;
+  // Get business hours from settings
+  // If businessHours is explicitly set to undefined/null/missing, return defaults
+  // But if settings itself is not a valid object, we should fix it
+  let businessHours = tenant.settings?.businessHours;
+  
+  // Only return defaults if businessHours is not set at all (undefined or null)
+  // Don't return defaults if businessHours is an empty object {} - that would indicate
+  // the user explicitly cleared it or there's a save issue we need to surface
+  if (businessHours === undefined || businessHours === null) {
+    businessHours = Tenant.generateDefaultSettings().businessHours;
+  }
 
   return {
     id: tenant.id,

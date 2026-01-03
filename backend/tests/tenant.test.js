@@ -868,6 +868,9 @@ describe('Tenant Module', () => {
           this.settings = { ...this.settings, ...newSettings };
           return Promise.resolve(this);
         }),
+        reload: jest.fn().mockImplementation(function() {
+          return Promise.resolve(this);
+        }),
       };
       mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
 
