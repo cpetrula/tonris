@@ -68,10 +68,11 @@ const Tenant = sequelize.define('Tenant', {
     allowNull: false,
     field: 'plan_type',
   },
-  settings: {
+  businessHours: {
     type: DataTypes.JSON,
     allowNull: false,
     defaultValue: {},
+    field: 'business_hours',
   },
   contactEmail: {
     type: DataTypes.STRING(255),
@@ -173,41 +174,40 @@ Tenant.prototype.toSafeObject = function() {
 };
 
 /**
- * Update tenant settings (merge with existing)
- * @param {Object} newSettings - Settings to merge
+ * Update tenant business hours (merge with existing)
+ * @param {Object} newHours - Business hours to merge
  * @returns {Promise<Tenant>} - Updated tenant
  */
-Tenant.prototype.updateSettings = async function(newSettings) {
-  // Get the current settings as a plain object to avoid Sequelize getter issues
-  let currentSettings = this.getDataValue('settings');
+Tenant.prototype.updateBusinessHours = async function(newHours) {
+  // Get the current business_hours as a plain object to avoid Sequelize getter issues
+  let currentData = this.getDataValue('business_hours');
   
-  // Handle bad data scenarios - if settings is not a valid object, reset to empty
-  if (!currentSettings || typeof currentSettings !== 'object' || Array.isArray(currentSettings)) {
-    currentSettings = {};
+  // Handle bad data scenarios - if business_hours is not a valid object, reset to empty
+  if (!currentData || typeof currentData !== 'object' || Array.isArray(currentData)) {
+    currentData = {};
   }
   
   // Ensure we're working with a plain object by deep cloning
-  // JSON.parse/stringify is used here because settings is already JSON-serializable
+  // JSON.parse/stringify is used here because business_hours is already JSON-serializable
   // and we need to detach from any Sequelize proxies or getters
   try {
-    currentSettings = JSON.parse(JSON.stringify(currentSettings));
+    currentData = JSON.parse(JSON.stringify(currentData));
   } catch (error) {
     // If JSON serialization fails (e.g., circular references), start fresh
-    currentSettings = {};
+    currentData = {};
   }
   
-  // Create a new settings object by merging
-  const updatedSettings = {
-    ...currentSettings,
-    ...newSettings,
+  // Create a new data object by merging - newHours should be the businessHours object
+  const updatedData = {
+    businessHours: newHours,
   };
   
-  // Set the new settings value
-  this.setDataValue('settings', updatedSettings);
+  // Set the new business_hours value
+  this.setDataValue('business_hours', updatedData);
   
-  // Explicitly mark the settings field as changed for Sequelize
+  // Explicitly mark the business_hours field as changed for Sequelize
   // This is necessary because Sequelize doesn't always detect changes to JSON columns
-  this.changed('settings', true);
+  this.changed('business_hours', true);
   
   await this.save();
   
@@ -218,21 +218,25 @@ Tenant.prototype.updateSettings = async function(newSettings) {
 };
 
 /**
- * Generate default settings for a new tenant
- * @returns {Object} - Default settings
+ * Update tenant settings (deprecated - use updateBusinessHours instead)
+ * @param {Object} newSettings - Settings to merge
+ * @returns {Promise<Tenant>} - Updated tenant
+ * @deprecated Use updateBusinessHours instead
  */
-Tenant.generateDefaultSettings = function() {
+Tenant.prototype.updateSettings = async function(newSettings) {
+  // For backward compatibility, if businessHours is in newSettings, use it
+  if (newSettings.businessHours) {
+    return this.updateBusinessHours(newSettings.businessHours);
+  }
+  return this;
+};
+
+/**
+ * Generate default business hours for a new tenant
+ * @returns {Object} - Default business hours
+ */
+Tenant.generateDefaultBusinessHours = function() {
   return {
-    timezone: 'UTC',
-    language: 'en',
-    dateFormat: 'YYYY-MM-DD',
-    timeFormat: '24h',
-    currency: 'USD',
-    notifications: {
-      email: true,
-      sms: false,
-      push: true,
-    },
     businessHours: {
       monday: { open: '09:00', close: '17:00', enabled: true },
       tuesday: { open: '09:00', close: '17:00', enabled: true },
@@ -246,17 +250,26 @@ Tenant.generateDefaultSettings = function() {
 };
 
 /**
- * Sanitize and repair tenant settings
- * This method fixes corrupt or malformed settings data
- * @returns {Promise<Tenant>} - Tenant with sanitized settings
+ * Generate default settings (deprecated - use generateDefaultBusinessHours)
+ * @returns {Object} - Default settings
+ * @deprecated Use generateDefaultBusinessHours instead
  */
-Tenant.prototype.sanitizeSettings = async function() {
-  let currentSettings = this.getDataValue('settings');
+Tenant.generateDefaultSettings = function() {
+  return Tenant.generateDefaultBusinessHours();
+};
+
+/**
+ * Sanitize and repair tenant business hours
+ * This method fixes corrupt or malformed business hours data
+ * @returns {Promise<Tenant>} - Tenant with sanitized business hours
+ */
+Tenant.prototype.sanitizeBusinessHours = async function() {
+  let currentData = this.getDataValue('business_hours');
   
-  // If settings is completely invalid, reset to defaults
-  if (!currentSettings || typeof currentSettings !== 'object' || Array.isArray(currentSettings)) {
-    this.setDataValue('settings', Tenant.generateDefaultSettings());
-    this.changed('settings', true);
+  // If business_hours is completely invalid, reset to defaults
+  if (!currentData || typeof currentData !== 'object' || Array.isArray(currentData)) {
+    this.setDataValue('business_hours', Tenant.generateDefaultBusinessHours());
+    this.changed('business_hours', true);
     await this.save();
     await this.reload();
     return this;
@@ -264,42 +277,45 @@ Tenant.prototype.sanitizeSettings = async function() {
   
   // Try to parse and re-serialize to catch any hidden issues
   try {
-    currentSettings = JSON.parse(JSON.stringify(currentSettings));
+    currentData = JSON.parse(JSON.stringify(currentData));
   } catch (error) {
     // If serialization fails, reset to defaults
-    this.setDataValue('settings', Tenant.generateDefaultSettings());
-    this.changed('settings', true);
+    this.setDataValue('business_hours', Tenant.generateDefaultBusinessHours());
+    this.changed('business_hours', true);
     await this.save();
     await this.reload();
     return this;
   }
   
-  // Ensure required top-level settings exist
-  const defaultSettings = Tenant.generateDefaultSettings();
-  const sanitizedSettings = {
-    timezone: currentSettings.timezone || defaultSettings.timezone,
-    language: currentSettings.language || defaultSettings.language,
-    dateFormat: currentSettings.dateFormat || defaultSettings.dateFormat,
-    timeFormat: currentSettings.timeFormat || defaultSettings.timeFormat,
-    currency: currentSettings.currency || defaultSettings.currency,
-    notifications: currentSettings.notifications || defaultSettings.notifications,
-    businessHours: currentSettings.businessHours || defaultSettings.businessHours,
+  // Ensure businessHours key exists
+  const defaultData = Tenant.generateDefaultBusinessHours();
+  const sanitizedData = {
+    businessHours: currentData.businessHours || defaultData.businessHours,
   };
   
   // Validate and fix businessHours if it's malformed
-  if (typeof sanitizedSettings.businessHours !== 'object' || Array.isArray(sanitizedSettings.businessHours)) {
-    sanitizedSettings.businessHours = defaultSettings.businessHours;
+  if (typeof sanitizedData.businessHours !== 'object' || Array.isArray(sanitizedData.businessHours)) {
+    sanitizedData.businessHours = defaultData.businessHours;
   }
   
   // Only update if changes were made
-  if (JSON.stringify(currentSettings) !== JSON.stringify(sanitizedSettings)) {
-    this.setDataValue('settings', sanitizedSettings);
-    this.changed('settings', true);
+  if (JSON.stringify(currentData) !== JSON.stringify(sanitizedData)) {
+    this.setDataValue('business_hours', sanitizedData);
+    this.changed('business_hours', true);
     await this.save();
     await this.reload();
   }
   
   return this;
+};
+
+/**
+ * Sanitize and repair tenant settings (deprecated - use sanitizeBusinessHours)
+ * @returns {Promise<Tenant>} - Tenant with sanitized settings
+ * @deprecated Use sanitizeBusinessHours instead
+ */
+Tenant.prototype.sanitizeSettings = async function() {
+  return this.sanitizeBusinessHours();
 };
 
 module.exports = {

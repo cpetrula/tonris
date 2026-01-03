@@ -323,7 +323,7 @@ const getDashboardStats = async (req, res, next) => {
 
 /**
  * POST /api/tenant/sanitize-settings
- * Sanitize and repair tenant settings (useful for fixing corrupt data)
+ * Sanitize and repair tenant business hours (useful for fixing corrupt data)
  */
 const sanitizeSettings = async (req, res, next) => {
   try {
@@ -340,22 +340,22 @@ const sanitizeSettings = async (req, res, next) => {
 
     // Log before sanitization for debugging (only in development)
     if (process.env.NODE_ENV === 'development') {
-      logger.debug(`Sanitizing settings for tenant ${tenantUUID}`);
+      logger.debug(`Sanitizing business hours for tenant ${tenantUUID}`);
     }
 
-    // Sanitize settings
-    await tenant.sanitizeSettings();
+    // Sanitize business hours
+    await tenant.sanitizeBusinessHours();
 
     // Reload to get fresh data
     await tenant.reload();
 
-    logger.info(`Settings sanitized for tenant ${tenantUUID}`);
+    logger.info(`Business hours sanitized for tenant ${tenantUUID}`);
 
     res.status(200).json({
       success: true,
-      message: 'Settings sanitized successfully',
+      message: 'Business hours sanitized successfully',
       data: {
-        settings: tenant.settings,
+        businessHours: tenant.businessHours,
       },
     });
   } catch (error) {
