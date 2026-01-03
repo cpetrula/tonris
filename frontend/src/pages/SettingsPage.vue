@@ -103,7 +103,8 @@ const aiSettings = ref({
   greeting: 'Thank you for calling Sample Salon. How can I help you today?',
   appointmentReminders: true,
   reminderHours: 24,
-  followUpCalls: true
+  followUpCalls: true,
+  followUpText: true
 })
 
 // Notification preferences
