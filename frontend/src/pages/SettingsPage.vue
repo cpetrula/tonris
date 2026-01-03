@@ -159,6 +159,8 @@ async function saveBusinessProfile() {
         street: businessProfile.value.address,
         city: businessProfile.value.city,
         state: businessProfile.value.state,
+        // Send both 'zip' and 'zipCode' for backward compatibility
+        zip: businessProfile.value.zipCode,
         zipCode: businessProfile.value.zipCode
       },
       metadata: {
@@ -265,7 +267,8 @@ onMounted(async () => {
       businessProfile.value.address = tenant.address?.street || ''
       businessProfile.value.city = tenant.address?.city || ''
       businessProfile.value.state = tenant.address?.state || ''
-      businessProfile.value.zipCode = tenant.address?.zipCode || ''
+      // Handle both 'zip' and 'zipCode' for backward compatibility
+      businessProfile.value.zipCode = tenant.address?.zipCode || tenant.address?.zip || ''
       businessProfile.value.website = tenant.metadata?.website || ''
       businessProfile.value.description = tenant.metadata?.description || ''
     }

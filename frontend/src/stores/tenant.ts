@@ -16,6 +16,7 @@ export interface Tenant {
     city?: string
     state?: string
     zipCode?: string
+    zip?: string  // Support both 'zip' and 'zipCode' for backward compatibility
   }
   metadata?: {
     website?: string
