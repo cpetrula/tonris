@@ -243,12 +243,12 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       caller_number: From,
       call_status: CallStatus,
       // Use custom greeting if set, otherwise generate a default using business name
-      ai_greeting: tenant.settings?.aiGreeting || `Thanks for calling ${tenant.name || 'our business'}! How can I help you today?`,
+      ai_greeting: tenant.metadata?.aiGreeting || `Thanks for calling ${tenant.name || 'our business'}! How can I help you today?`,
     };
     
     // Add business hours if available
-    if (tenant.settings?.businessHours) {
-      customParameters.business_hours = JSON.stringify(tenant.settings.businessHours);
+    if (tenant.businessHours?.businessHours) {
+      customParameters.business_hours = JSON.stringify(tenant.businessHours.businessHours);
     }
     
     // Generate TwiML to connect to the application's media stream WebSocket
@@ -584,8 +584,8 @@ const handleConversationInitiation = async (params) => {
         
         if (tenant) {
           businessName = tenant.name || businessName;
-          businessHours = tenant.settings?.businessHours || getDefaultBusinessHours();
-          aiTone = tenant.settings?.aiTone;
+          businessHours = tenant.businessHours?.businessHours || getDefaultBusinessHours();
+          aiTone = tenant.metadata?.aiTone;
         }
       } catch (tenantError) {
         // Tenant not found is ok - we'll use defaults
