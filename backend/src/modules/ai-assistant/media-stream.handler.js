@@ -69,10 +69,9 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // ElevenLabs requires 'name' as a dynamic variable
         const dynamicVariables = {};
         
-        // Add core variables only if they have values
-        if (tenantId) {
-          dynamicVariables.tenant_id = tenantId;
-        }
+        // Always include tenant_id - it should always be present
+        // Use the value from customParameters if available, otherwise use the tenantId variable
+        dynamicVariables.tenant_id = customParameters.tenant_id || tenantId;
         
         const tenantName = customParameters.tenant_name || customParameters.business_name;
         if (tenantName) {
@@ -86,14 +85,19 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // Include ALL custom parameters as dynamic variables so they're available to ElevenLabs
         // This ensures fields like business_hours, ai_greeting, call_status, etc. are sent
         for (const [key, value] of Object.entries(customParameters)) {
-          // Only add if value is not empty and key doesn't already exist
-          if (value !== undefined && value !== null && value !== '' && !dynamicVariables.hasOwnProperty(key)) {
+          // Skip tenant_id and tenant_name as they're already handled above
+          // Only add if value is truthy and key doesn't already exist
+          if (value && !dynamicVariables.hasOwnProperty(key)) {
             dynamicVariables[key] = value;
           }
         }
         
         logger.info(`[MediaStream] Dynamic variables being sent: ${Object.keys(dynamicVariables).join(', ')}`);
-        logger.debug(`[MediaStream] Dynamic variables content: ${JSON.stringify(dynamicVariables)}`);
+        logger.info(`[MediaStream] Tenant ID: ${dynamicVariables.tenant_id}, Call SID: ${callSid}`);
+        // Note: debug logging may contain sensitive data - use only for development/troubleshooting
+        if (process.env.LOG_LEVEL === 'debug') {
+          logger.debug(`[MediaStream] Dynamic variables content: ${JSON.stringify(dynamicVariables)}`);
+        }
         
         // Send initialization message to ElevenLabs to start the conversation
         // This is required by ElevenLabs Conversational AI WebSocket protocol
