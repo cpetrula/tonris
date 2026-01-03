@@ -585,6 +585,100 @@ Guidelines:
 Start by greeting the caller and asking how you can help them today.
 ```
 
+## Call Logs and Reporting
+
+### How Call Logs Are Stored
+
+The system maintains comprehensive call logs for each tenant through a two-part process:
+
+1. **Initial Call Log Creation** (`call_logs` table):
+   - When an incoming call arrives, a record is immediately created in the `call_logs` table
+   - This happens in `call.handler.js` when the Twilio webhook is received
+   - The record includes: `tenantId`, `twilioCallSid`, `direction`, `status`, `fromNumber`, `toNumber`, `startedAt`
+
+2. **ElevenLabs Conversation ID Storage**:
+   - When the call connects to ElevenLabs, a conversation is initiated
+   - The ElevenLabs agent sends a `conversation_initiation_metadata` event with a unique `conversation_id`
+   - The `media-stream.handler.js` receives this event and saves the `conversation_id` to the call log's `metadata` field
+   - This creates a permanent link between the Twilio call and the ElevenLabs conversation
+
+3. **Call Status Updates**:
+   - Twilio sends status callbacks as the call progresses (completed, failed, etc.)
+   - The `call.handler.js` updates the call log with status, duration, and end time
+
+### Accessing Call Log Data
+
+Call logs can be retrieved via the `/api/telephony/call-logs` endpoint with ElevenLabs data enrichment:
+
+```javascript
+// Frontend example
+const response = await api.get('/api/telephony/call-logs?includeElevenLabsData=true');
+```
+
+The enrichment process works as follows:
+
+1. **Stored Conversation IDs (Primary Method)**:
+   - For call logs with `metadata.elevenLabsConversationId`, the system directly fetches conversation details
+   - This is fast and reliable since the conversation ID is stored
+
+2. **Time-Based Matching (Fallback)**:
+   - For older call logs without stored conversation IDs, the system fetches conversations by time range
+   - It attempts to match based on `twilioCallSid` or phone number + timestamp
+   - This is less reliable but provides coverage for historical data
+
+### Reports Page Data Flow
+
+The Reports page (`/frontend/src/pages/ReportsPage.vue`) displays:
+
+1. **Call Logs**: Retrieved from `call_logs` table, enriched with ElevenLabs conversation data
+2. **Overview Stats**: Calculated from call logs (total calls, average duration, appointments booked, conversion rate)
+3. **Appointment Analytics**: Retrieved from `appointments` table
+
+**Key Features**:
+- Filter by date range (today, last 7/30/90 days, custom range)
+- View call outcomes (appointment booked, inquiry, voicemail, transferred, missed)
+- See AI-generated summaries from ElevenLabs transcripts
+- Track appointment statistics and top services
+
+### Database Schema
+
+```sql
+CREATE TABLE call_logs (
+  id CHAR(36) PRIMARY KEY,
+  tenant_id CHAR(36) NOT NULL,
+  twilio_call_sid VARCHAR(64) UNIQUE NOT NULL,
+  direction ENUM('inbound', 'outbound'),
+  status ENUM('initiated', 'ringing', 'in-progress', 'completed', ...),
+  from_number VARCHAR(20),
+  to_number VARCHAR(20),
+  duration INT,  -- seconds
+  started_at DATETIME,
+  ended_at DATETIME,
+  metadata JSON,  -- Contains: { elevenLabsConversationId, elevenLabsAgentId, ... }
+  created_at DATETIME,
+  updated_at DATETIME
+);
+```
+
+### Accessing ElevenLabs Conversation Details
+
+To get detailed conversation data including transcript:
+
+```javascript
+// Get basic call log with ElevenLabs data
+GET /api/telephony/call-logs?includeElevenLabsData=true
+
+// Get detailed call log with full transcript
+GET /api/telephony/call-logs/:id
+```
+
+The detailed endpoint fetches:
+- Full conversation transcript
+- User satisfaction rating
+- End reason
+- Message count
+- Call duration from ElevenLabs
+
 ## Monitoring and Logging
 
 The integration logs important events:
@@ -592,6 +686,8 @@ The integration logs important events:
 ```
 2024-01-15 10:30:00 [INFO]: Twilio-ElevenLabs: Incoming call CA123 from +1555... to +1555...
 2024-01-15 10:30:01 [INFO]: Twilio-ElevenLabs: Connected call CA123 to ElevenLabs agent xyz for tenant abc
+2024-01-15 10:30:05 [INFO]: [MediaStream] Conversation initiated for call CA123, conversation_id: conv-xyz
+2024-01-15 10:30:06 [INFO]: [MediaStream] Saved conversation ID conv-xyz to call log log-abc
 2024-01-15 10:30:15 [INFO]: ElevenLabs tool call: get_services for tenant: abc
 ```
 
@@ -600,6 +696,7 @@ Monitor these logs to track:
 - Connection success rate
 - Tool usage patterns
 - Error rates
+- Conversation ID storage success rate
 
 ## Troubleshooting
 
