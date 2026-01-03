@@ -71,7 +71,7 @@ function formatPrice(price: number | string): string {
 }
 
 function openCreateDialog() {
-  currentService.value = { ...emptyService, id: crypto.randomUUID() }
+  currentService.value = { ...emptyService }
   editMode.value = false
   showDialog.value = true
   error.value = ''
@@ -84,35 +84,77 @@ function openEditDialog(service: Service) {
   error.value = ''
 }
 
-function saveService() {
+async function saveService() {
   if (!currentService.value.name || !currentService.value.price) {
     error.value = 'Please fill in all required fields'
     return
   }
 
-  if (editMode.value) {
-    const index = services.value.findIndex(s => s.id === currentService.value.id)
-    if (index !== -1) {
-      services.value[index] = { ...currentService.value }
+  loading.value = true
+  try {
+    if (editMode.value) {
+      // Update existing service
+      await api.patch(`/api/services/${currentService.value.id}`, {
+        name: currentService.value.name,
+        description: currentService.value.description,
+        duration: currentService.value.duration,
+        price: currentService.value.price,
+        category: currentService.value.category,
+        status: currentService.value.status
+      })
+    } else {
+      // Create new service
+      await api.post('/api/services', {
+        name: currentService.value.name,
+        description: currentService.value.description,
+        duration: currentService.value.duration,
+        price: currentService.value.price,
+        category: currentService.value.category
+      })
     }
-  } else {
-    services.value.push({ ...currentService.value })
-  }
 
-  showDialog.value = false
-  error.value = ''
+    // Refresh the services list
+    await fetchServices()
+    showDialog.value = false
+    error.value = ''
+  } catch (err: any) {
+    console.error('Error saving service:', err)
+    error.value = err.response?.data?.error || 'Failed to save service'
+  } finally {
+    loading.value = false
+  }
 }
 
-function deleteService(service: Service) {
+async function deleteService(service: Service) {
   if (confirm(`Are you sure you want to delete "${service.name}"?`)) {
-    services.value = services.value.filter(s => s.id !== service.id)
+    loading.value = true
+    try {
+      await api.delete(`/api/services/${service.id}`)
+      // Refresh the services list
+      await fetchServices()
+    } catch (err: any) {
+      console.error('Error deleting service:', err)
+      error.value = err.response?.data?.error || 'Failed to delete service'
+    } finally {
+      loading.value = false
+    }
   }
 }
 
-function toggleStatus(service: Service) {
-  const index = services.value.findIndex(s => s.id === service.id)
-  if (index !== -1) {
-    services.value[index]!.status = service.status === 'active' ? 'inactive' : 'active'
+async function toggleStatus(service: Service) {
+  loading.value = true
+  try {
+    const newStatus = service.status === 'active' ? 'inactive' : 'active'
+    await api.patch(`/api/services/${service.id}`, {
+      status: newStatus
+    })
+    // Refresh the services list
+    await fetchServices()
+  } catch (err: any) {
+    console.error('Error toggling service status:', err)
+    error.value = err.response?.data?.error || 'Failed to update service status'
+  } finally {
+    loading.value = false
   }
 }
 

@@ -73,7 +73,7 @@ const filteredEmployees = computed(() => {
 })
 
 function openCreateDialog() {
-  currentEmployee.value = { ...emptyEmployee, id: crypto.randomUUID() }
+  currentEmployee.value = { ...emptyEmployee }
   editMode.value = false
   showDialog.value = true
   error.value = ''
@@ -91,35 +91,77 @@ function openScheduleDialog(employee: Employee) {
   showScheduleDialog.value = true
 }
 
-function saveEmployee() {
+async function saveEmployee() {
   if (!currentEmployee.value.firstName || !currentEmployee.value.lastName || !currentEmployee.value.email) {
     error.value = 'Please fill in all required fields'
     return
   }
 
-  if (editMode.value) {
-    const index = employees.value.findIndex(e => e.id === currentEmployee.value.id)
-    if (index !== -1) {
-      employees.value[index] = { ...currentEmployee.value }
+  loading.value = true
+  try {
+    if (editMode.value) {
+      // Update existing employee
+      await api.patch(`/api/employees/${currentEmployee.value.id}`, {
+        firstName: currentEmployee.value.firstName,
+        lastName: currentEmployee.value.lastName,
+        email: currentEmployee.value.email,
+        phone: currentEmployee.value.phone,
+        employeeType: currentEmployee.value.role,
+        status: currentEmployee.value.status
+      })
+    } else {
+      // Create new employee
+      await api.post('/api/employees', {
+        firstName: currentEmployee.value.firstName,
+        lastName: currentEmployee.value.lastName,
+        email: currentEmployee.value.email,
+        phone: currentEmployee.value.phone,
+        employeeType: currentEmployee.value.role
+      })
     }
-  } else {
-    employees.value.push({ ...currentEmployee.value })
-  }
 
-  showDialog.value = false
-  error.value = ''
+    // Refresh the employees list
+    await fetchEmployees()
+    showDialog.value = false
+    error.value = ''
+  } catch (err: any) {
+    console.error('Error saving employee:', err)
+    error.value = err.response?.data?.error || 'Failed to save employee'
+  } finally {
+    loading.value = false
+  }
 }
 
-function deleteEmployee(employee: Employee) {
+async function deleteEmployee(employee: Employee) {
   if (confirm(`Are you sure you want to delete ${employee.firstName} ${employee.lastName}?`)) {
-    employees.value = employees.value.filter(e => e.id !== employee.id)
+    loading.value = true
+    try {
+      await api.delete(`/api/employees/${employee.id}`)
+      // Refresh the employees list
+      await fetchEmployees()
+    } catch (err: any) {
+      console.error('Error deleting employee:', err)
+      error.value = err.response?.data?.error || 'Failed to delete employee'
+    } finally {
+      loading.value = false
+    }
   }
 }
 
-function toggleStatus(employee: Employee) {
-  const index = employees.value.findIndex(e => e.id === employee.id)
-  if (index !== -1) {
-    employees.value[index]!.status = employee.status === 'active' ? 'inactive' : 'active'
+async function toggleStatus(employee: Employee) {
+  loading.value = true
+  try {
+    const newStatus = employee.status === 'active' ? 'inactive' : 'active'
+    await api.patch(`/api/employees/${employee.id}`, {
+      status: newStatus
+    })
+    // Refresh the employees list
+    await fetchEmployees()
+  } catch (err: any) {
+    console.error('Error toggling employee status:', err)
+    error.value = err.response?.data?.error || 'Failed to update employee status'
+  } finally {
+    loading.value = false
   }
 }
 
