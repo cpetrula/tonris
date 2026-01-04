@@ -1206,6 +1206,10 @@ const handleConversationEndWebhook = async (req, res, next) => {
         message: 'Event type not handled by this endpoint',
       });
     }
+
+    logger.info("trasnscripts",payloadData.transcript);
+    logger.info("analysis",payloadData.analysis);
+    logger.info("data",req.body.data)
     
     // Extract data from the nested structure
     // For post_call_transcription, data is nested in a 'data' field
