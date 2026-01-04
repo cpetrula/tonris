@@ -353,6 +353,8 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     customParameters.tenant_status = tenant.status;
     
     // Fetch and add voice information if tenant has a voice configured
+    // Note: This performs a separate query. For high-traffic scenarios, consider
+    // using a JOIN in the tenant query or implementing caching to optimize performance
     if (tenant.voiceId) {
       try {
         const voice = await ElevenLabsVoice.findByPk(tenant.voiceId);

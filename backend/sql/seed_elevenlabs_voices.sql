@@ -12,8 +12,8 @@ USE tonris_db;
 
 INSERT INTO elevenlabs_voices (id, label, elevenlabs_voice_id, description, createdAt, updatedAt)
 VALUES
-    (UUID(), 'Female', 'g6xIsTj2HwM6VR4iXFCw', '', NOW(), NOW()),
-    (UUID(), 'Male', 'PIGsltMj3gFMR34aFDI3', '', NOW(), NOW())
+    (UUID(), 'Female', 'g6xIsTj2HwM6VR4iXFCw', 'Professional female voice', NOW(), NOW()),
+    (UUID(), 'Male', 'PIGsltMj3gFMR34aFDI3', 'Professional male voice', NOW(), NOW())
 ON DUPLICATE KEY UPDATE
     label = VALUES(label),
     description = VALUES(description),

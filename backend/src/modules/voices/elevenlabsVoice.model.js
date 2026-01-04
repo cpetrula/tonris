@@ -38,6 +38,7 @@ const ElevenLabsVoice = sequelize.define('ElevenLabsVoice', {
 
 /**
  * Get voice data safe for API response
+ * All fields in this model are safe to expose to clients
  * @returns {Object} - Voice data
  */
 ElevenLabsVoice.prototype.toSafeObject = function() {

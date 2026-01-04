@@ -422,8 +422,13 @@ onMounted(async () => {
                   optionLabel="label"
                   optionValue="id"
                   placeholder="Select a voice"
+                  :loading="voiceStore.loading"
+                  :disabled="voiceStore.voices.length === 0"
                   class="w-full"
                 />
+                <p v-if="voiceStore.voices.length === 0 && !voiceStore.loading" class="text-sm text-red-500 mt-1">
+                  No voices available. Please contact support.
+                </p>
               </div>
 
               <div>
