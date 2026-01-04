@@ -4,7 +4,6 @@
  */
 const { ElevenLabsVoice } = require('./elevenlabsVoice.model');
 const { AppError } = require('../../middleware/errorHandler');
-const logger = require('../../utils/logger');
 
 /**
  * Get all voices
