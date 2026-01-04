@@ -1203,6 +1203,15 @@ const handleConversationEndWebhook = async (req, res, next) => {
       user_satisfaction_rating,
     } = req.body;
     
+    // Log the full payload for debugging
+    logger.info('ElevenLabs Conversation End payload:', {
+      type,
+      conversation_id,
+      hasMetadata: !!metadata,
+      metadataKeys: Object.keys(metadata),
+      bodyKeys: Object.keys(req.body)
+    });
+    
     // Validate webhook type - ElevenLabs sends either 'conversation_ended' or 'post_call_transcription'
     if (type && type !== 'conversation_ended' && type !== 'post_call_transcription') {
       logger.warn(`ElevenLabs Conversation End: Unexpected type ${type}`);
@@ -1216,7 +1225,10 @@ const handleConversationEndWebhook = async (req, res, next) => {
     const callSid = metadata.call_sid || metadata.callSid;
     
     if (!callSid) {
-      logger.warn(`ElevenLabs Conversation End: No call SID in metadata for conversation ${conversation_id}`);
+      logger.warn(`ElevenLabs Conversation End: No call SID in metadata for conversation ${conversation_id}`, {
+        metadata: JSON.stringify(metadata),
+        bodyKeys: Object.keys(req.body)
+      });
       // Still return success to avoid webhook retries, but log the issue
       return res.status(200).json({
         success: true,
