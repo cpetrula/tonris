@@ -733,6 +733,10 @@ const handleConversationInitiation = async (params) => {
           // Ensure TTS output also uses ulaw_8000 format
           output_format: 'ulaw_8000',
         },
+        asr: {
+          // Ensure ASR (speech recognition) expects ulaw input
+          input_format: 'ulaw_8000',
+        },
       },
     };
 
@@ -767,6 +771,12 @@ const handleConversationInitiation = async (params) => {
           agent: {
             agent_output_audio_format: 'ulaw_8000',
             user_input_audio_format: 'ulaw_8000',
+          },
+          tts: {
+            output_format: 'ulaw_8000',
+          },
+          asr: {
+            input_format: 'ulaw_8000',
           },
         },
       },
