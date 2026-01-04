@@ -488,10 +488,10 @@ function calculateTopServices(appointments: any[]) {
                 </template>
               </Column>
 
-              <Column field="notes" header="AI Summary" style="max-width: 300px">
+              <Column field="callSummary" header="AI Summary" style="max-width: 300px">
                 <template #body="{ data }">
-                  <div class="text-gray-500 text-sm">
-                    <span v-if="data.notes">{{ data.notes }}</span>
+                  <div class="text-white text-sm">
+                    <span v-if="data.callSummary">{{ data.callSummary }}</span>
                     <span v-else class="text-gray-400">-</span>
                   </div>
                 </template>
