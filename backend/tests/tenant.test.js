@@ -698,6 +698,34 @@ describe('Tenant Module', () => {
         expect(response.body.data.tenant.address.state).toBe('CA');
         expect(response.body.data.tenant.address.zipCode).toBe('90001');
       });
+
+      it('should update tenant with firstMessage successfully', async () => {
+        const mockTenantInstance = {
+          tenantId: 'test-tenant',
+          name: 'Test Salon',
+          contactEmail: 'test@example.com',
+          firstMessage: null,
+          update: jest.fn().mockResolvedValue(true),
+          toSafeObject: () => ({
+            tenantId: 'test-tenant',
+            name: 'Test Salon',
+            contactEmail: 'test@example.com',
+            firstMessage: 'Welcome to Test Salon! How can we help you?',
+          }),
+        };
+        mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+        const response = await request(app)
+          .patch('/api/tenant')
+          .set('Authorization', `Bearer ${validToken()}`)
+          .set('X-Tenant-ID', 'test-tenant')
+          .send({ firstMessage: 'Welcome to Test Salon! How can we help you?' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(mockTenantInstance.update).toHaveBeenCalled();
+        expect(response.body.data.tenant.firstMessage).toBe('Welcome to Test Salon! How can we help you?');
+      });
     });
   });
 
