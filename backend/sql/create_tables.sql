@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS tenants (
     trial_ends_at DATETIME NULL,
     onboarding_completed_at DATETIME NULL,
     twilio_phone_number VARCHAR(50) NULL,
+    first_message TEXT NULL,
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

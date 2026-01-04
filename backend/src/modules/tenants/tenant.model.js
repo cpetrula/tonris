@@ -132,6 +132,10 @@ const Tenant = sequelize.define('Tenant', {
       key: 'id',
     },
   },
+  firstMessage: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'first_message',
   voiceId: {
     type: DataTypes.UUID,
     allowNull: true,

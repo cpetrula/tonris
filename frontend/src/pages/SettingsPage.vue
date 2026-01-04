@@ -192,6 +192,8 @@ async function saveBusinessHours() {
 async function saveAISettings() {
   saving.value = true
   try {
+    // Save the greeting message to the backend
+    await tenantStore.updateTenant({ firstMessage: aiSettings.value.greeting })
     // Save voiceId to tenant
     await tenantStore.updateTenant({ voiceId: aiSettings.value.voiceId })
     toast.add({ severity: 'success', summary: 'Success', detail: 'AI settings saved', life: 3000 })
@@ -237,6 +239,14 @@ onMounted(async () => {
       businessProfile.value.website = tenant.metadata?.website || ''
       businessProfile.value.description = tenant.metadata?.description || ''
       
+      // Populate AI settings from tenant data
+      // If tenant has a custom first message, use it; otherwise use a default with business name
+      if (tenant.firstMessage) {
+        aiSettings.value.greeting = tenant.firstMessage
+      } else if (tenant.name) {
+        // Set a default greeting that matches the backend fallback
+        aiSettings.value.greeting = `Hi, thanks for calling ${tenant.name}! How can I help you today?`
+      }
       // Set voice ID
       aiSettings.value.voiceId = tenant.voiceId || ''
     }
