@@ -64,6 +64,11 @@ app.post('/api/webhooks/twilio/voice',
   telephonyController.handleVoiceWebhook
 );
 
+app.post('/api/webhooks/twilio/outbound-voice',
+  express.urlencoded({ extended: false }),
+  telephonyController.handleOutboundVoiceWebhook
+);
+
 app.post('/api/webhooks/twilio/sms',
   express.urlencoded({ extended: false }),
   telephonyController.handleSmsWebhook

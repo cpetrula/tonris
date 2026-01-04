@@ -349,7 +349,7 @@ const generateForwardToAiTwiml = ({ message, aiWebhookUrl }) => {
 
 /**
  * Generate TwiML for a simple voice response
- * @param {string} message - Message to speak
+ * @param {string} message - Message to speak (optional)
  * @param {Object} options - Voice options
  * @returns {string} - TwiML XML string
  */
@@ -357,10 +357,13 @@ const generateVoiceResponse = (message, options = {}) => {
   const VoiceResponse = Twilio.twiml.VoiceResponse;
   const response = new VoiceResponse();
   
-  response.say({
-    voice: options.voice || 'alice',
-    language: options.language || 'en-US',
-  }, message);
+  // Only add Say element if message is provided
+  if (message) {
+    response.say({
+      voice: options.voice || 'alice',
+      language: options.language || 'en-US',
+    }, message);
+  }
   
   if (options.hangup !== false) {
     response.hangup();
