@@ -726,6 +726,34 @@ describe('Tenant Module', () => {
         expect(mockTenantInstance.update).toHaveBeenCalled();
         expect(response.body.data.tenant.firstMessage).toBe('Welcome to Test Salon! How can we help you?');
       });
+
+      it('should update tenant with voiceId successfully', async () => {
+        const mockTenantInstance = {
+          tenantId: 'test-tenant',
+          name: 'Test Salon',
+          contactEmail: 'test@example.com',
+          voiceId: null,
+          update: jest.fn().mockResolvedValue(true),
+          toSafeObject: () => ({
+            tenantId: 'test-tenant',
+            name: 'Test Salon',
+            contactEmail: 'test@example.com',
+            voiceId: '550e8400-e29b-41d4-a716-446655440000',
+          }),
+        };
+        mockTenantModel.findOne.mockResolvedValue(mockTenantInstance);
+
+        const response = await request(app)
+          .patch('/api/tenant')
+          .set('Authorization', `Bearer ${validToken()}`)
+          .set('X-Tenant-ID', 'test-tenant')
+          .send({ voiceId: '550e8400-e29b-41d4-a716-446655440000' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(mockTenantInstance.update).toHaveBeenCalled();
+        expect(response.body.data.tenant.voiceId).toBe('550e8400-e29b-41d4-a716-446655440000');
+      });
     });
   });
 

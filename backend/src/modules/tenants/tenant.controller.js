@@ -214,7 +214,7 @@ const getTenant = async (req, res, next) => {
  */
 const updateTenant = async (req, res, next) => {
   try {
-    const { name, contactEmail, contactPhone, address, metadata, twilioPhoneNumber, firstMessage } = req.body;
+    const { name, contactEmail, contactPhone, address, metadata, twilioPhoneNumber, firstMessage, voiceId } = req.body;
 
     // Validate email format if provided
     if (contactEmail) {
@@ -247,6 +247,7 @@ const updateTenant = async (req, res, next) => {
       metadata,
       twilioPhoneNumber,
       firstMessage,
+      voiceId,
     });
 
     res.status(200).json({
