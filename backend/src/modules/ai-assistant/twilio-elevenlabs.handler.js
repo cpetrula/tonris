@@ -224,7 +224,12 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
         startedAt: new Date(),
         metadata: {
           direction: params.Direction,
-          originalParams: params,
+          callStatus: params.CallStatus,
+          accountSid: params.AccountSid,
+          apiVersion: params.ApiVersion,
+          // Store ElevenLabs-specific metadata
+          agentId: null, // Will be populated when conversation starts
+          elevenLabsConversationId: null, // Will be populated by media-stream.handler.js
         },
       });
       
@@ -254,6 +259,15 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
         success: false,
         twiml: generateErrorTwiml('Our AI assistant is not properly configured. Please contact support.'),
       };
+    }
+    
+    // Update call log with agent ID now that we have it
+    if (callLog.metadata) {
+      callLog.metadata = {
+        ...callLog.metadata,
+        agentId,
+      };
+      await callLog.save();
     }
     
     // Build the WebSocket URL for the application's media stream handler
