@@ -728,6 +728,7 @@ const handleConversationInitiation = async (params) => {
           agent_output_audio_format: 'ulaw_8000',
           user_input_audio_format: 'ulaw_8000',
           language: 'en',
+          output_format: 'ulaw_8000',
         },
         tts: {
           // Ensure TTS output also uses ulaw_8000 format
