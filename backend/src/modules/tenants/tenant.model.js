@@ -132,6 +132,11 @@ const Tenant = sequelize.define('Tenant', {
       key: 'id',
     },
   },
+  firstMessage: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'first_message',
+  },
 }, {
   tableName: 'tenants',
   timestamps: true,

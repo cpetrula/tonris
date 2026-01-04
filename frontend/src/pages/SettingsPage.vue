@@ -197,9 +197,8 @@ async function saveBusinessHours() {
 async function saveAISettings() {
   saving.value = true
   try {
-    // In a real app, save to API
-    // await api.patch(`/api/tenants/${tenantStore.tenantId}/ai-settings`, aiSettings.value)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Save the greeting message to the backend
+    await tenantStore.updateTenant({ firstMessage: aiSettings.value.greeting })
     toast.add({ severity: 'success', summary: 'Success', detail: 'AI settings saved', life: 3000 })
   } catch {
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings', life: 3000 })
@@ -242,6 +241,11 @@ onMounted(async () => {
       businessProfile.value.zipCode = tenant.address?.zipCode || tenant.address?.zip || ''
       businessProfile.value.website = tenant.metadata?.website || ''
       businessProfile.value.description = tenant.metadata?.description || ''
+      
+      // Populate AI settings from tenant data
+      if (tenant.firstMessage) {
+        aiSettings.value.greeting = tenant.firstMessage
+      }
     }
 
     // Fetch business hours using dedicated endpoint

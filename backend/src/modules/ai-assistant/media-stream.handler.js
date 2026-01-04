@@ -7,6 +7,7 @@ const { URL } = require('url');
 const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
 const { CallLog } = require('../telephony/callLog.model');
+const { Tenant } = require('../tenants/tenant.model');
 
 /**
  * Active stream connections map
@@ -53,6 +54,21 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         logger.error('[MediaStream] ElevenLabs service not available');
         twilioWs.close();
         return;
+      }
+
+      // Fetch tenant data to get custom first message
+      let tenant = null;
+      let customFirstMessage = null;
+      if (tenantId) {
+        try {
+          tenant = await Tenant.findOne({ where: { id: tenantId } });
+          if (tenant && tenant.firstMessage) {
+            customFirstMessage = tenant.firstMessage;
+            logger.info(`[MediaStream] Using custom first message for tenant ${tenantId}`);
+          }
+        } catch (error) {
+          logger.warn(`[MediaStream] Could not fetch tenant ${tenantId}: ${error.message}`);
+        }
       }
 
       // Get signed URL for ElevenLabs
@@ -119,19 +135,18 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // Without correct audio format configuration, ElevenLabs outputs audio in an incompatible 
         // format (typically pcm_16000 or mp3_44100), causing immediate disconnects or garbled audio
         // 
-        // NOTE: We also specify first_message as empty to let the agent use its configured greeting.
-        // If no greeting is configured in the ElevenLabs dashboard, the agent will wait for user input.
-        // The tts section ensures the agent uses the correct TTS output format.
         // Build agent config with audio format settings
-        // NOTE: first_message cannot be overridden via WebSocket - it must be
-        // configured in the ElevenLabs dashboard using {{business_name}} variable
+        // Use custom first message if available, otherwise use default greeting with tenant name
+        const defaultFirstMessage = `Hi, thanks for calling ${dynamicVariables.name}! How can I help you today?`;
+        const firstMessage = customFirstMessage || defaultFirstMessage;
+        
         const agentConfig = {
           language: 'en',
           // Critical: Set output format to ulaw_8000 for Twilio compatibility
           agent_output_audio_format: 'ulaw_8000',
           // Critical: Set input format to ulaw_8000 for Twilio audio
           user_input_audio_format: 'ulaw_8000',
-          first_message: 'Hi, thanks for calling '+tenantName+'!  How can I help you today? Chris is Here to Assist.', 
+          first_message: firstMessage, 
         };
 
         const initMessage = {
