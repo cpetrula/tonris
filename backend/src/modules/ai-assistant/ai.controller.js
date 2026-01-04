@@ -621,6 +621,7 @@ const getNextBusinessDay = () => {
  */
 const verifyElevenLabsSignature = (payload, signature, secret) => {
   if (!secret || !signature) {
+    logger.debug('Signature verification failed: missing secret or signature');
     return false;
   }
   
@@ -629,13 +630,22 @@ const verifyElevenLabsSignature = (payload, signature, secret) => {
     .update(payload)
     .digest('hex');
   
+  logger.debug('Signature verification:', {
+    providedSignature: signature.substring(0, 10) + '...',
+    expectedSignature: expectedSignature.substring(0, 10) + '...',
+    payloadLength: payload.length
+  });
+  
   // Use timing-safe comparison to prevent timing attacks
   try {
-    return crypto.timingSafeEqual(
+    const isValid = crypto.timingSafeEqual(
       Buffer.from(signature),
       Buffer.from(expectedSignature)
     );
-  } catch {
+    logger.debug('Signature verification result:', isValid);
+    return isValid;
+  } catch (error) {
+    logger.debug('Signature verification error:', error.message);
     return false;
   }
 };
@@ -1147,6 +1157,13 @@ const handleConversationEndWebhook = async (req, res, next) => {
     const signature = req.headers['x-elevenlabs-signature'];
     const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
     
+    logger.info('ElevenLabs Conversation End webhook received', {
+      hasSignature: !!signature,
+      hasSecret: !!webhookSecret,
+      hasRawBody: !!req.rawBody,
+      isProduction: env.isProduction()
+    });
+    
     if (env.isProduction() && webhookSecret) {
       // Require raw body for signature verification
       if (!req.rawBody) {
@@ -1155,9 +1172,15 @@ const handleConversationEndWebhook = async (req, res, next) => {
       }
       
       if (!verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
-        logger.warn('ElevenLabs Conversation End: Invalid signature');
+        logger.error('ElevenLabs Conversation End: Invalid signature', {
+          signatureProvided: signature?.substring(0, 10) + '...',
+          rawBodyLength: req.rawBody?.length,
+          secretLength: webhookSecret?.length
+        });
         throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
       }
+      
+      logger.info('ElevenLabs Conversation End: Signature verified successfully');
     } else if (env.isProduction() && !webhookSecret) {
       logger.warn('ElevenLabs Conversation End: Webhook secret not configured');
     }
