@@ -5,6 +5,7 @@
 const crypto = require('crypto');
 const { AppError } = require('../../middleware/errorHandler');
 const env = require('../../config/env');
+const db = require('../../config/db');
 const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
 const { getOpenAIService } = require('./openai.service');
@@ -1216,7 +1217,13 @@ const handleConversationEndWebhook = async (req, res, next) => {
     const agent_id = eventData.agent_id || eventData.agentId;
     const status = eventData.status;
     const call_successful = eventData.call_successful ?? eventData.callSuccessful;
-    const call_duration_secs = eventData.call_duration_secs || eventData.callDurationSecs || eventData.duration;
+    
+    // Call duration can be in metadata or at top level
+    const call_duration_secs = eventData.call_duration_secs 
+      || eventData.callDurationSecs 
+      || eventData.duration
+      || eventData.metadata?.call_duration_secs;
+    
     const end_reason = eventData.end_reason || eventData.endReason;
     
     // Transcript can be in different locations
@@ -1233,41 +1240,66 @@ const handleConversationEndWebhook = async (req, res, next) => {
     const end_timestamp = eventData.end_timestamp || eventData.ended_at || eventData.endTimestamp || eventData.endedAt;
     const user_satisfaction_rating = eventData.user_satisfaction_rating || eventData.userSatisfactionRating;
     
+    // Check conversation_initiation_client_data for call SID
+    const initiationData = eventData.conversation_initiation_client_data || {};
+    
     logger.info('Extracted call data:', {
       conversation_id,
       call_duration_secs,
       hasTranscript: !!transcript,
       hasTranscriptSummary: !!transcript_summary,
-      transcriptType: Array.isArray(transcript) ? 'array' : typeof transcript
+      transcriptType: Array.isArray(transcript) ? 'array' : typeof transcript,
+      hasInitiationData: !!eventData.conversation_initiation_client_data,
+      initiationDataKeys: Object.keys(initiationData)
     });
     
-    // Get call SID from metadata to find the call log
-    const callSid = metadata.call_sid || metadata.callSid;
+    // Get call SID from multiple possible locations
+    const callSid = metadata.call_sid 
+      || metadata.callSid 
+      || initiationData.call_sid 
+      || initiationData.callSid
+      || initiationData.twilioCallSid;
     
-    if (!callSid) {
-      logger.warn(`ElevenLabs Conversation End: No call SID in metadata for conversation ${conversation_id}`, {
-        metadata: JSON.stringify(metadata),
-        bodyKeys: Object.keys(req.body)
+    logger.info(`ElevenLabs Conversation End: Looking up call log`, {
+      conversation_id,
+      callSid,
+      hasCallSid: !!callSid
+    });
+    
+    // Find the call log by Twilio call SID or conversation ID
+    let callLog;
+    
+    if (callSid) {
+      callLog = await CallLog.findOne({
+        where: { twilioCallSid: callSid },
       });
-      // Still return success to avoid webhook retries, but log the issue
-      return res.status(200).json({
-        success: true,
-        message: 'No call SID found in metadata, cannot update call log',
-      });
+      logger.info(`Lookup by call SID ${callSid}:`, { found: !!callLog });
     }
     
-    logger.info(`ElevenLabs Conversation End: Processing conversation ${conversation_id} for call ${callSid}`);
-    
-    // Find the call log by Twilio call SID
-    const callLog = await CallLog.findOne({
-      where: { twilioCallSid: callSid },
-    });
+    // If not found by call SID, try to find by conversation ID in metadata
+    if (!callLog && conversation_id) {
+      callLog = await CallLog.findOne({
+        where: {
+          metadata: {
+            [db.Sequelize.Op.contains]: { elevenLabsConversationId: conversation_id }
+          }
+        }
+      });
+      logger.info(`Lookup by conversation ID ${conversation_id}:`, { found: !!callLog });
+    }
     
     if (!callLog) {
-      logger.warn(`ElevenLabs Conversation End: Call log not found for SID ${callSid}`);
+      logger.warn(`ElevenLabs Conversation End: Call log not found`, {
+        callSid,
+        conversation_id,
+        triedCallSid: !!callSid
+      });
       // Still return success to avoid webhook retries
       return res.status(200).json({
         success: true,
+        message: 'Call log not found, may have been deleted',
+      });
+    }
         message: 'Call log not found, may have been deleted',
       });
     }
