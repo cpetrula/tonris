@@ -11,6 +11,7 @@ export interface Tenant {
   twilioPhoneNumber?: string
   contactEmail?: string
   contactPhone?: string
+  voiceId?: string
   address?: {
     street?: string
     city?: string

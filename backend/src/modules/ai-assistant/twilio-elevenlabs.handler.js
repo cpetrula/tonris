@@ -9,6 +9,7 @@ const { getElevenLabsService } = require('./elevenlabs.service');
 const { Tenant } = require('../tenants/tenant.model');
 const { BusinessType } = require('../business-types/businessType.model');
 const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../telephony/callLog.model');
+const { ElevenLabsVoice } = require('../voices/elevenlabsVoice.model');
 
 // Lazy-loaded service references to avoid circular dependencies
 let _availabilityService = null;
@@ -350,6 +351,19 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     // Add tenant plan and status for potential use in agent logic
     customParameters.plan_type = tenant.planType;
     customParameters.tenant_status = tenant.status;
+    
+    // Fetch and add voice information if tenant has a voice configured
+    if (tenant.voiceId) {
+      try {
+        const voice = await ElevenLabsVoice.findByPk(tenant.voiceId);
+        if (voice) {
+          customParameters.elevenlabs_voice_id = voice.elevenlabsVoiceId;
+          logger.info(`Twilio-ElevenLabs: Using voice ${voice.label} (${voice.elevenlabsVoiceId}) for tenant ${tenant.id}`);
+        }
+      } catch (error) {
+        logger.warn(`Failed to fetch voice for tenant ${tenant.id}: ${error.message}`);
+      }
+    }
     
     // Generate TwiML to connect to the application's media stream WebSocket
     // The media stream handler will bridge to ElevenLabs

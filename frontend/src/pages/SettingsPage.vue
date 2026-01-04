@@ -12,10 +12,12 @@ import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
 import { useTenantStore } from '@/stores/tenant'
+import { useVoiceStore } from '@/stores/voice'
 
 const toast = useToast()
 const router = useRouter()
 const tenantStore = useTenantStore()
+const voiceStore = useVoiceStore()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -99,7 +101,7 @@ function convert12hTo24h(time: string): string {
 
 // AI Voice Settings
 const aiSettings = ref({
-  voiceType: 'female_professional',
+  voiceId: '' as string,
   greeting: 'Thank you for calling Sample Salon. How can I help you today?',
   appointmentReminders: true,
   reminderHours: 24,
@@ -116,13 +118,6 @@ const notifications = ref({
   smsCancellation: true,
   smsReminder: true
 })
-
-const voiceOptions = [
-  { label: 'Female Professional', value: 'female_professional' },
-  { label: 'Female Friendly', value: 'female_friendly' },
-  { label: 'Male Professional', value: 'male_professional' },
-  { label: 'Male Friendly', value: 'male_friendly' }
-]
 
 const timeSlots = [
   '6:00 AM', '6:30 AM', '7:00 AM', '7:30 AM', '8:00 AM', '8:30 AM',
@@ -197,9 +192,8 @@ async function saveBusinessHours() {
 async function saveAISettings() {
   saving.value = true
   try {
-    // In a real app, save to API
-    // await api.patch(`/api/tenants/${tenantStore.tenantId}/ai-settings`, aiSettings.value)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Save voiceId to tenant
+    await tenantStore.updateTenant({ voiceId: aiSettings.value.voiceId })
     toast.add({ severity: 'success', summary: 'Success', detail: 'AI settings saved', life: 3000 })
   } catch {
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings', life: 3000 })
@@ -242,6 +236,9 @@ onMounted(async () => {
       businessProfile.value.zipCode = tenant.address?.zipCode || tenant.address?.zip || ''
       businessProfile.value.website = tenant.metadata?.website || ''
       businessProfile.value.description = tenant.metadata?.description || ''
+      
+      // Set voice ID
+      aiSettings.value.voiceId = tenant.voiceId || ''
     }
 
     // Fetch business hours using dedicated endpoint
@@ -259,6 +256,9 @@ onMounted(async () => {
         }
       }
     }
+    
+    // Fetch voices
+    await voiceStore.fetchVoices()
   } catch (error) {
     console.error('Failed to load settings:', error)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load settings', life: 3000 })
@@ -417,10 +417,11 @@ onMounted(async () => {
               <div>
                 <label class="block text-sm font-medium  mb-1">Voice Type</label>
                 <Dropdown
-                  v-model="aiSettings.voiceType"
-                  :options="voiceOptions"
+                  v-model="aiSettings.voiceId"
+                  :options="voiceStore.voices"
                   optionLabel="label"
-                  optionValue="value"
+                  optionValue="id"
+                  placeholder="Select a voice"
                   class="w-full"
                 />
               </div>
