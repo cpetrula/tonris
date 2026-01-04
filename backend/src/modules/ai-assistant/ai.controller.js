@@ -1272,8 +1272,8 @@ const handleConversationEndWebhook = async (req, res, next) => {
       });
     }
     
-    // Update call log with ElevenLabs data
-    await callLog.updateFromElevenLabs({
+    // Prepare data for update
+    const updateData = {
       conversation_id,
       agent_id,
       status,
@@ -1282,11 +1282,32 @@ const handleConversationEndWebhook = async (req, res, next) => {
       end_reason,
       transcript_summary,
       transcript,
-      end_timestamp: end_timestamp || ended_at,
+      end_timestamp,
       user_satisfaction_rating,
+    };
+    
+    logger.info('Data being passed to updateFromElevenLabs:', {
+      conversation_id,
+      call_duration_secs,
+      transcript_summary_length: transcript_summary?.length || 0,
+      transcript_length: Array.isArray(transcript) ? transcript.length : (transcript?.length || 0),
+      transcript_type: Array.isArray(transcript) ? 'array' : typeof transcript,
+      hasTranscript: !!transcript,
+      hasTranscriptSummary: !!transcript_summary,
+      status,
+      call_successful
     });
     
-    logger.info(`ElevenLabs Conversation End: Updated call log ${callLog.id} with conversation data from ${conversation_id}`);
+    // Update call log with ElevenLabs data
+    await callLog.updateFromElevenLabs(updateData);
+    
+    logger.info(`ElevenLabs Conversation End: Updated call log ${callLog.id}`, {
+      duration: callLog.duration,
+      hasSummary: !!callLog.callSummary,
+      hasTranscription: !!callLog.transcription,
+      summaryLength: callLog.callSummary?.length || 0,
+      transcriptionLength: callLog.transcription?.length || 0
+    });
     
     res.status(200).json({
       success: true,
