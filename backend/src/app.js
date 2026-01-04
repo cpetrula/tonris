@@ -139,6 +139,21 @@ app.post('/api/webhooks/elevenlabs/appointments',
   aiController.handleElevenLabsCreateAppointmentWebhook
 );
 
+// ElevenLabs Conversation End webhook
+// Called by ElevenLabs when a conversation ends
+// Provides comprehensive data about the call including status, duration, transcript, and summary
+// Must receive raw body for signature verification
+app.post('/api/webhooks/elevenlabs/conversation-end',
+  webhookRateLimiter,
+  express.json({
+    verify: (req, _res, buf) => {
+      // Store raw body for signature verification
+      req.rawBody = buf.toString();
+    },
+  }),
+  aiController.handleConversationEndWebhook
+);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
