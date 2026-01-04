@@ -727,6 +727,7 @@ const handleConversationInitiation = async (params) => {
           // Audio format must be ulaw_8000 for Twilio compatibility
           agent_output_audio_format: 'ulaw_8000',
           user_input_audio_format: 'ulaw_8000',
+          first_message: 'Yo, yo, yo! CP is in the house, ready to rock your world. How can I assist you today?',
           language: 'en',
           output_format: 'ulaw_8000',
         },
