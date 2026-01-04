@@ -1187,8 +1187,31 @@ const handleConversationEndWebhook = async (req, res, next) => {
       logger.warn('ElevenLabs Conversation End: Webhook secret not configured');
     }
     
-    const {
+    const { type, event_timestamp, data: payloadData } = req.body;
+    
+    // Log the full payload for debugging
+    logger.info('ElevenLabs Conversation End payload:', {
       type,
+      event_timestamp,
+      hasData: !!payloadData,
+      dataKeys: payloadData ? Object.keys(payloadData) : [],
+      bodyKeys: Object.keys(req.body)
+    });
+    
+    // Validate webhook type - ElevenLabs sends either 'conversation_ended' or 'post_call_transcription'
+    if (type && type !== 'conversation_ended' && type !== 'post_call_transcription') {
+      logger.warn(`ElevenLabs Conversation End: Unexpected type ${type}`);
+      return res.status(200).json({
+        success: true,
+        message: 'Event type not handled by this endpoint',
+      });
+    }
+    
+    // Extract data from the nested structure
+    // For post_call_transcription, data is nested in a 'data' field
+    const eventData = payloadData || req.body;
+    
+    const {
       conversation_id,
       agent_id,
       status,
@@ -1201,25 +1224,7 @@ const handleConversationEndWebhook = async (req, res, next) => {
       end_timestamp,
       ended_at,
       user_satisfaction_rating,
-    } = req.body;
-    
-    // Log the full payload for debugging
-    logger.info('ElevenLabs Conversation End payload:', {
-      type,
-      conversation_id,
-      hasMetadata: !!metadata,
-      metadataKeys: Object.keys(metadata),
-      bodyKeys: Object.keys(req.body)
-    });
-    
-    // Validate webhook type - ElevenLabs sends either 'conversation_ended' or 'post_call_transcription'
-    if (type && type !== 'conversation_ended' && type !== 'post_call_transcription') {
-      logger.warn(`ElevenLabs Conversation End: Unexpected type ${type}`);
-      return res.status(200).json({
-        success: true,
-        message: 'Event type not handled by this endpoint',
-      });
-    }
+    } = eventData;
     
     // Get call SID from metadata to find the call log
     const callSid = metadata.call_sid || metadata.callSid;
