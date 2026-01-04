@@ -1300,9 +1300,6 @@ const handleConversationEndWebhook = async (req, res, next) => {
         message: 'Call log not found, may have been deleted',
       });
     }
-        message: 'Call log not found, may have been deleted',
-      });
-    }
     
     // Prepare data for update
     const updateData = {
