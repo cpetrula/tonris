@@ -1206,30 +1206,40 @@ const handleConversationEndWebhook = async (req, res, next) => {
         message: 'Event type not handled by this endpoint',
       });
     }
-
-    logger.info("trasnscripts",payloadData.transcript);
-    logger.info("call summary",payloadData.analysis.transcript_summary);
-    logger.info("call duration",payloadData.call_duration_secs);
-    logger.info("data",req.body.data)
     
     // Extract data from the nested structure
     // For post_call_transcription, data is nested in a 'data' field
     const eventData = payloadData || req.body;
     
-    const {
+    // Handle different payload structures
+    const conversation_id = eventData.conversation_id || eventData.conversationId;
+    const agent_id = eventData.agent_id || eventData.agentId;
+    const status = eventData.status;
+    const call_successful = eventData.call_successful ?? eventData.callSuccessful;
+    const call_duration_secs = eventData.call_duration_secs || eventData.callDurationSecs || eventData.duration;
+    const end_reason = eventData.end_reason || eventData.endReason;
+    
+    // Transcript can be in different locations
+    const transcript = eventData.transcript || eventData.transcription;
+    
+    // Summary can be nested in analysis object or at top level
+    const transcript_summary = eventData.analysis?.transcript_summary 
+      || eventData.transcript_summary 
+      || eventData.analysis?.transcriptSummary
+      || eventData.transcriptSummary
+      || eventData.summary;
+    
+    const metadata = eventData.metadata || {};
+    const end_timestamp = eventData.end_timestamp || eventData.ended_at || eventData.endTimestamp || eventData.endedAt;
+    const user_satisfaction_rating = eventData.user_satisfaction_rating || eventData.userSatisfactionRating;
+    
+    logger.info('Extracted call data:', {
       conversation_id,
-      agent_id,
-      status,
-      call_successful,
       call_duration_secs,
-      end_reason,
-      transcript_summary,
-      transcript,
-      metadata = {},
-      end_timestamp,
-      ended_at,
-      user_satisfaction_rating,
-    } = eventData;
+      hasTranscript: !!transcript,
+      hasTranscriptSummary: !!transcript_summary,
+      transcriptType: Array.isArray(transcript) ? 'array' : typeof transcript
+    });
     
     // Get call SID from metadata to find the call log
     const callSid = metadata.call_sid || metadata.callSid;
