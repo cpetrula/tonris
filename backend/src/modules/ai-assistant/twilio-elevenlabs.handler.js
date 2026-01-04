@@ -218,6 +218,8 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
         tenantId: tenant.id,
         twilioCallSid: CallSid,
         direction: CALL_DIRECTION.INBOUND,
+        // Note: Twilio's CallStatus values (queued, ringing, in-progress, etc.) 
+        // match our CALL_STATUS enum, so we can use them directly
         status: CallStatus || CALL_STATUS.INITIATED,
         fromNumber: From,
         toNumber: To,
@@ -262,13 +264,11 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     }
     
     // Update call log with agent ID now that we have it
-    if (callLog.metadata) {
-      callLog.metadata = {
-        ...callLog.metadata,
-        agentId,
-      };
-      await callLog.save();
-    }
+    callLog.metadata = {
+      ...callLog.metadata,
+      agentId,
+    };
+    await callLog.save();
     
     // Build the WebSocket URL for the application's media stream handler
     // The media stream handler will bridge between Twilio and ElevenLabs
