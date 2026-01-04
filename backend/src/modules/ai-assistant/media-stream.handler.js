@@ -198,18 +198,18 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // If we receive this, the audio format configuration was accepted
         {
           const conversationId = message.conversation_initiation_metadata_event?.conversation_id || 'unknown';
+          const metadata = message.conversation_initiation_metadata_event;
           logger.info(`[MediaStream] Conversation initiated for call ${callSid}, conversation_id: ${conversationId}`);
           
           // Log the accepted audio configuration if available
-          const metadata = message.conversation_initiation_metadata_event;
-          if (metadata && process.env.LOG_LEVEL === 'debug') {
+          if (process.env.LOG_LEVEL === 'debug' && metadata) {
             logger.debug(`[MediaStream] Conversation metadata: ${JSON.stringify(metadata)}`);
           }
           
           // Verify audio format if available in metadata
           if (metadata?.agent_output_audio_format) {
             if (metadata.agent_output_audio_format !== 'ulaw_8000') {
-              logger.error(`[MediaStream] WARNING: ElevenLabs using incorrect output format: ${metadata.agent_output_audio_format} (expected ulaw_8000). Audio may be garbled!`);
+              logger.warn(`[MediaStream] ElevenLabs using incorrect output format: ${metadata.agent_output_audio_format} (expected ulaw_8000). Audio may be garbled!`);
             } else {
               logger.info(`[MediaStream] Audio format verified: ${metadata.agent_output_audio_format}`);
             }
@@ -271,9 +271,11 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
           twilioWs.send(JSON.stringify(audioData));
           
           // Debug logging for audio format verification (only in debug mode)
-          if (process.env.LOG_LEVEL === 'debug' && Math.random() < 0.01) {
+          if (process.env.LOG_LEVEL === 'debug') {
             // Sample 1% of audio packets to avoid log spam
-            logger.debug(`[MediaStream] Forwarded audio to Twilio: streamSid=${streamSid}, payloadLength=${payload.length}`);
+            if (Math.random() < 0.01) {
+              logger.debug(`[MediaStream] Forwarded audio to Twilio: streamSid=${streamSid}, payloadLength=${payload.length}`);
+            }
           }
         } else if (!streamSid) {
           logger.warn(`[MediaStream] Received audio before stream started for call ${callSid}`);
@@ -376,9 +378,11 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
             elevenLabsWs.send(JSON.stringify(audioMessage));
             
             // Debug logging for audio format verification (only in debug mode)
-            if (process.env.LOG_LEVEL === 'debug' && Math.random() < 0.01) {
+            if (process.env.LOG_LEVEL === 'debug') {
               // Sample 1% of audio packets to avoid log spam
-              logger.debug(`[MediaStream] Forwarded audio to ElevenLabs: payloadLength=${data.media.payload.length}`);
+              if (Math.random() < 0.01) {
+                logger.debug(`[MediaStream] Forwarded audio to ElevenLabs: payloadLength=${data.media.payload.length}`);
+              }
             }
           } else if (!elevenLabsWs) {
             logger.error(`[MediaStream] Cannot forward audio: ElevenLabs WebSocket not initialized`);
