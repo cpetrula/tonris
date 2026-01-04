@@ -12,6 +12,7 @@ export interface Tenant {
   contactEmail?: string
   contactPhone?: string
   firstMessage?: string
+  voiceId?: string
   address?: {
     street?: string
     city?: string

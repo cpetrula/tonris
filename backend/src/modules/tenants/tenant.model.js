@@ -136,6 +136,14 @@ const Tenant = sequelize.define('Tenant', {
     type: DataTypes.TEXT,
     allowNull: true,
     field: 'first_message',
+  voiceId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'voice_id',
+    references: {
+      model: 'elevenlabs_voices',
+      key: 'id',
+    },
   },
 }, {
   tableName: 'tenants',

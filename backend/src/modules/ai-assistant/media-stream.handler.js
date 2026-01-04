@@ -157,6 +157,8 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
               // Ensure TTS output uses the correct format for Twilio (μ-law 8kHz)
               output_format: 'ulaw_8000',
               model_id: null, // Let ElevenLabs use default model
+              // Add voiceId if available in customParameters
+              ...(customParameters.elevenlabs_voice_id && { voice_id: customParameters.elevenlabs_voice_id }),
             },
             asr: {
               // Also ensure ASR (speech recognition) expects ulaw input
