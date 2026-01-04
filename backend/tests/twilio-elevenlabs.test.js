@@ -45,6 +45,13 @@ const mockEmployeeModel = {
   })),
 };
 
+const mockCallLogModel = {
+  findOne: jest.fn(),
+  findAll: jest.fn(),
+  findAndCountAll: jest.fn(),
+  create: jest.fn(),
+};
+
 // Mock models BEFORE requiring the app
 jest.mock('../src/modules/tenants/tenant.model', () => ({
   Tenant: mockTenantModel,
@@ -112,6 +119,24 @@ jest.mock('../src/modules/employees/employee.model', () => ({
 
 jest.mock('../src/modules/business-types/businessType.model', () => ({
   BusinessType: mockBusinessTypeModel,
+}));
+
+jest.mock('../src/modules/telephony/callLog.model', () => ({
+  CallLog: mockCallLogModel,
+  CALL_DIRECTION: {
+    INBOUND: 'inbound',
+    OUTBOUND: 'outbound',
+  },
+  CALL_STATUS: {
+    INITIATED: 'initiated',
+    RINGING: 'ringing',
+    IN_PROGRESS: 'in-progress',
+    COMPLETED: 'completed',
+    BUSY: 'busy',
+    NO_ANSWER: 'no-answer',
+    CANCELED: 'canceled',
+    FAILED: 'failed',
+  },
 }));
 
 jest.mock('../src/models', () => ({
@@ -223,6 +248,20 @@ describe('Twilio-ElevenLabs Integration', () => {
         signedUrl: 'wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent-123',
         agentId: 'agent-123',
       });
+      // Mock CallLog.findOne to return null (no existing call log)
+      mockCallLogModel.findOne.mockResolvedValue(null);
+      // Mock CallLog.create to return a new call log
+      mockCallLogModel.create.mockResolvedValue({
+        id: 'call-log-123',
+        tenantId: 'test-tenant',
+        twilioCallSid: 'CA123456789',
+        direction: 'inbound',
+        status: 'ringing',
+        fromNumber: '+15559876543',
+        toNumber: '+15551234567',
+        startedAt: new Date(),
+        metadata: {},
+      });
 
       const response = await request(app)
         .post('/api/webhooks/twilio/elevenlabs')
@@ -263,6 +302,13 @@ describe('Twilio-ElevenLabs Integration', () => {
         signedUrl: 'wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent-123',
         agentId: 'agent-123',
       });
+      // Mock CallLog methods
+      mockCallLogModel.findOne.mockResolvedValue(null);
+      mockCallLogModel.create.mockResolvedValue({
+        id: 'call-log-124',
+        tenantId: 'test-tenant',
+        twilioCallSid: 'CA123456789',
+      });
 
       const response = await request(app)
         .post('/api/webhooks/twilio/elevenlabs')
@@ -299,6 +345,13 @@ describe('Twilio-ElevenLabs Integration', () => {
       mockTenantModel.findAll.mockResolvedValue([mockTenantWithBusinessType]);
       mockBusinessTypeModel.findByPk.mockResolvedValue(mockBusinessType);
       mockElevenLabsService.isAvailable.mockResolvedValue(true);
+      // Mock CallLog methods
+      mockCallLogModel.findOne.mockResolvedValue(null);
+      mockCallLogModel.create.mockResolvedValue({
+        id: 'call-log-125',
+        tenantId: 'test-tenant',
+        twilioCallSid: 'CA123456789',
+      });
 
       const response = await request(app)
         .post('/api/webhooks/twilio/elevenlabs')

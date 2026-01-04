@@ -8,6 +8,7 @@ const logger = require('../../utils/logger');
 const { getElevenLabsService } = require('./elevenlabs.service');
 const { Tenant } = require('../tenants/tenant.model');
 const { BusinessType } = require('../business-types/businessType.model');
+const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../telephony/callLog.model');
 
 // Lazy-loaded service references to avoid circular dependencies
 let _availabilityService = null;
@@ -206,6 +207,39 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       };
     }
     
+    // Create call log entry for tracking
+    // Check if call log already exists to avoid duplicates (e.g., from retries)
+    let callLog = await CallLog.findOne({
+      where: { twilioCallSid: CallSid },
+    });
+    
+    if (!callLog) {
+      callLog = await CallLog.create({
+        tenantId: tenant.id,
+        twilioCallSid: CallSid,
+        direction: CALL_DIRECTION.INBOUND,
+        // Note: Twilio's CallStatus values (queued, ringing, in-progress, etc.) 
+        // match our CALL_STATUS enum, so we can use them directly
+        status: CallStatus || CALL_STATUS.INITIATED,
+        fromNumber: From,
+        toNumber: To,
+        startedAt: new Date(),
+        metadata: {
+          direction: params.Direction,
+          callStatus: params.CallStatus,
+          accountSid: params.AccountSid,
+          apiVersion: params.ApiVersion,
+          // Store ElevenLabs-specific metadata
+          agentId: null, // Will be populated when conversation starts
+          elevenLabsConversationId: null, // Will be populated by media-stream.handler.js
+        },
+      });
+      
+      logger.info(`Twilio-ElevenLabs: Call log created: ${callLog.id} for tenant: ${tenant.id}`);
+    } else {
+      logger.info(`Twilio-ElevenLabs: Call log already exists: ${callLog.id}`);
+    }
+    
     // Get ElevenLabs service and check configuration
     const elevenlabsService = getElevenLabsService();
     const isAvailable = await elevenlabsService.isAvailable();
@@ -228,6 +262,13 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
         twiml: generateErrorTwiml('Our AI assistant is not properly configured. Please contact support.'),
       };
     }
+    
+    // Update call log with agent ID now that we have it
+    callLog.metadata = {
+      ...callLog.metadata,
+      agentId,
+    };
+    await callLog.save();
     
     // Build the WebSocket URL for the application's media stream handler
     // The media stream handler will bridge between Twilio and ElevenLabs
@@ -327,6 +368,7 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       tenantId: tenant.id,
       agentId,
       callSid: CallSid,
+      callLogId: callLog.id,
       twiml,
     };
   } catch (error) {

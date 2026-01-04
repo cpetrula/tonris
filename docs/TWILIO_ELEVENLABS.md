@@ -191,8 +191,12 @@ Configure your Twilio phone number to use the ElevenLabs webhook:
    - **A CALL COMES IN**: Webhook
    - **URL**: `https://your-domain.com/api/webhooks/twilio/elevenlabs`
    - **HTTP Method**: POST
+   - **Status Callback URL** (Optional): `https://your-domain.com/api/webhooks/twilio/status`
+   - **Status Callback Events**: Select "Completed" and other events you want to track
 
 > **Note**: The standard voice webhook (`/api/webhooks/twilio/voice`) handles calls differently and does not automatically connect to ElevenLabs. Use the ElevenLabs-specific webhook endpoint for AI voice conversations.
+> 
+> **Status Callbacks**: While optional, configuring status callbacks allows the system to update call logs with final call duration, status, and end time when the call completes.
 
 ### 5. Tenant Configuration
 
@@ -593,8 +597,10 @@ The system maintains comprehensive call logs for each tenant through a two-part 
 
 1. **Initial Call Log Creation** (`call_logs` table):
    - When an incoming call arrives, a record is immediately created in the `call_logs` table
-   - This happens in `call.handler.js` when the Twilio webhook is received
-   - The record includes: `tenantId`, `twilioCallSid`, `direction`, `status`, `fromNumber`, `toNumber`, `startedAt`
+   - For calls using the ElevenLabs integration, this happens in `twilio-elevenlabs.handler.js` within the `/api/webhooks/twilio/elevenlabs` webhook handler
+   - For standard voice calls, this happens in `call.handler.js` when the `/api/webhooks/twilio/voice` webhook is received
+   - The record includes: `tenantId`, `twilioCallSid`, `direction`, `status`, `fromNumber`, `toNumber`, `startedAt`, and `metadata`
+   - The handler checks for existing call logs to prevent duplicates in case of webhook retries
 
 2. **ElevenLabs Conversation ID Storage**:
    - When the call connects to ElevenLabs, a conversation is initiated
