@@ -1208,7 +1208,8 @@ const handleConversationEndWebhook = async (req, res, next) => {
     }
 
     logger.info("trasnscripts",payloadData.transcript);
-    logger.info("analysis",payloadData.analysis);
+    logger.info("call summary",payloadData.analysis.transcript_summary);
+    logger.info("call duration",payloadData.call_duration_secs);
     logger.info("data",req.body.data)
     
     // Extract data from the nested structure
