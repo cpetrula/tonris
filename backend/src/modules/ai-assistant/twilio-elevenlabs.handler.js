@@ -722,7 +722,8 @@ const handleConversationInitiation = async (params) => {
       // Twilio Media Streams use 8-bit μ-law (mu-law) encoding at 8kHz sample rate
       // Without this configuration, ElevenLabs will output audio in a higher quality format
       // (e.g., pcm_16000 or mp3_44100) which Twilio cannot process, resulting in garbled audio
-      conversation_config_override: {
+      //conversation_config_override: {
+      overrides: {
         agent: {
           // Audio format must be ulaw_8000 for Twilio compatibility
           agent_output_audio_format: 'ulaw_8000',
@@ -748,9 +749,9 @@ const handleConversationInitiation = async (params) => {
 
     // Add custom prompt if tone is configured
     // Note: The prompt is added as a direct property on the agent object
-    if (aiTone) {
-      response.conversation_config_override.agent.prompt = `You are a ${aiTone} AI receptionist for ${businessName}. Help callers with booking appointments, checking availability, and answering questions about services and business hours.`;
-    }
+    //if (aiTone) {
+    //  response.conversation_config_override.agent.prompt = `You are a ${aiTone} AI receptionist for ${businessName}. Help callers with booking appointments, checking availability, and answering questions about services and business hours.`;
+    //}
 
     logger.info(`ElevenLabs Conversation Initiation response for tenant=${tenantId}: variables=${Object.keys(responseVariables).join(',')}, audioFormat=ulaw_8000`);
 
