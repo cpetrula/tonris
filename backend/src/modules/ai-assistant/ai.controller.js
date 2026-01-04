@@ -3,6 +3,7 @@
  * Handles HTTP requests for AI assistant endpoints
  */
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const { AppError } = require('../../middleware/errorHandler');
 const env = require('../../config/env');
 const db = require('../../config/db');
@@ -1281,7 +1282,7 @@ const handleConversationEndWebhook = async (req, res, next) => {
       callLog = await CallLog.findOne({
         where: {
           metadata: {
-            [db.Sequelize.Op.contains]: { elevenLabsConversationId: conversation_id }
+            [Op.contains]: { elevenLabsConversationId: conversation_id }
           }
         }
       });
