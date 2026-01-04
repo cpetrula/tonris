@@ -234,7 +234,7 @@ async function fetchCallLogs() {
         date: new Date(log.createdAt),
         duration: parseDuration(log),
         outcome: mapCallStatus(log.status, log.elevenLabsData),
-        notes: log.elevenLabsData?.transcriptSummary || log.notes || '',
+        callSummary: log.callSummary || '',
         elevenLabsConversationId: log.elevenLabsConversationId,
         elevenLabsData: log.elevenLabsData
       }))
