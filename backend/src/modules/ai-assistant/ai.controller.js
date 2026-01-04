@@ -1164,8 +1164,8 @@ const handleConversationEndWebhook = async (req, res, next) => {
       isProduction: env.isProduction()
     });
     
-    if (env.isProduction() && webhookSecret) {
-      // Require raw body for signature verification
+    if (env.isProduction() && webhookSecret && signature) {
+      // Verify signature if both secret and signature are present
       if (!req.rawBody) {
         logger.warn('ElevenLabs Conversation End: Missing raw body for signature verification');
         throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
@@ -1181,6 +1181,8 @@ const handleConversationEndWebhook = async (req, res, next) => {
       }
       
       logger.info('ElevenLabs Conversation End: Signature verified successfully');
+    } else if (env.isProduction() && webhookSecret && !signature) {
+      logger.warn('ElevenLabs Conversation End: Webhook secret configured but no signature provided by ElevenLabs');
     } else if (env.isProduction() && !webhookSecret) {
       logger.warn('ElevenLabs Conversation End: Webhook secret not configured');
     }
