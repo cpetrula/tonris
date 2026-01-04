@@ -15,6 +15,7 @@ const { appointmentService, CANCELLATION_REASONS } = require('../appointments');
 const { serviceService } = require('../services');
 const { tenantService } = require('../tenants');
 const { employeeService } = require('../employees');
+const { CallLog } = require('../telephony/callLog.model');
 
 /**
  * UUID validation regex
@@ -1098,6 +1099,152 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/webhooks/elevenlabs/conversation-end
+ * Handle ElevenLabs Conversation End webhook
+ * 
+ * This webhook is called by ElevenLabs when a conversation ends.
+ * It provides comprehensive data about the call including:
+ * - Call status
+ * - How the call ended (end_reason)
+ * - Call duration
+ * - Transcript summary
+ * - Full transcript
+ * 
+ * Headers (required in production when webhook secret is configured):
+ * - X-ElevenLabs-Signature: HMAC-SHA256 signature of the request body
+ * 
+ * Request body (from ElevenLabs):
+ * {
+ *   "type": "conversation_ended",
+ *   "conversation_id": "unique-conversation-id",
+ *   "agent_id": "elevenlabs-agent-id",
+ *   "status": "done" | "failed",
+ *   "call_successful": true | false,
+ *   "call_duration_secs": 123.45,
+ *   "end_reason": "user_hangup" | "agent_hangup" | "error" | "timeout",
+ *   "transcript_summary": "Summary of the conversation",
+ *   "transcript": [
+ *     { "role": "agent", "message": "Hello..." },
+ *     { "role": "user", "message": "Hi..." }
+ *   ],
+ *   "metadata": {
+ *     "call_sid": "CA12345...",
+ *     "caller_number": "+15551234567",
+ *     "tenant_id": "tenant-uuid"
+ *   }
+ * }
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "message": "Call log updated successfully"
+ * }
+ */
+const handleConversationEndWebhook = async (req, res, next) => {
+  try {
+    // Verify webhook signature in production
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+    
+    if (env.isProduction() && webhookSecret) {
+      // Require raw body for signature verification
+      if (!req.rawBody) {
+        logger.warn('ElevenLabs Conversation End: Missing raw body for signature verification');
+        throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
+      }
+      
+      if (!verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Conversation End: Invalid signature');
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    } else if (env.isProduction() && !webhookSecret) {
+      logger.warn('ElevenLabs Conversation End: Webhook secret not configured');
+    }
+    
+    const {
+      type,
+      conversation_id,
+      agent_id,
+      status,
+      call_successful,
+      call_duration_secs,
+      end_reason,
+      transcript_summary,
+      transcript,
+      metadata = {},
+      end_timestamp,
+      ended_at,
+      user_satisfaction_rating,
+    } = req.body;
+    
+    // Validate webhook type
+    if (type && type !== 'conversation_ended') {
+      logger.warn(`ElevenLabs Conversation End: Unexpected type ${type}`);
+      return res.status(200).json({
+        success: true,
+        message: 'Event type not handled by this endpoint',
+      });
+    }
+    
+    // Get call SID from metadata to find the call log
+    const callSid = metadata.call_sid || metadata.callSid;
+    
+    if (!callSid) {
+      logger.warn(`ElevenLabs Conversation End: No call SID in metadata for conversation ${conversation_id}`);
+      // Still return success to avoid webhook retries, but log the issue
+      return res.status(200).json({
+        success: true,
+        message: 'No call SID found in metadata, cannot update call log',
+      });
+    }
+    
+    logger.info(`ElevenLabs Conversation End: Processing conversation ${conversation_id} for call ${callSid}`);
+    
+    // Find the call log by Twilio call SID
+    const callLog = await CallLog.findOne({
+      where: { twilioCallSid: callSid },
+    });
+    
+    if (!callLog) {
+      logger.warn(`ElevenLabs Conversation End: Call log not found for SID ${callSid}`);
+      // Still return success to avoid webhook retries
+      return res.status(200).json({
+        success: true,
+        message: 'Call log not found, may have been deleted',
+      });
+    }
+    
+    // Update call log with ElevenLabs data
+    await callLog.updateFromElevenLabs({
+      conversation_id,
+      agent_id,
+      status,
+      call_successful,
+      call_duration_secs,
+      end_reason,
+      transcript_summary,
+      transcript,
+      end_timestamp: end_timestamp || ended_at,
+      user_satisfaction_rating,
+    });
+    
+    logger.info(`ElevenLabs Conversation End: Updated call log ${callLog.id} with conversation data from ${conversation_id}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Call log updated successfully',
+      data: {
+        callLogId: callLog.id,
+        conversationId: conversation_id,
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Conversation End webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -1111,5 +1258,6 @@ module.exports = {
   handleElevenLabsEmployeesWebhook,
   handleElevenLabsAppointmentsWebhook,
   handleElevenLabsCreateAppointmentWebhook,
+  handleConversationEndWebhook,
   getAIConfig,
 };
