@@ -354,6 +354,8 @@ const makeCall = async (req, res, next) => {
       to,
       from: fromNumber,
       url: twimlUrl || `${process.env.APP_BASE_URL}/api/webhooks/twilio/outbound-voice`,
+      // Status callback to track call progress (initiated, ringing, answered, completed)
+      // Handled by the existing handleStatusWebhook in telephony.controller.js
       statusCallback: `${process.env.APP_BASE_URL}/api/webhooks/twilio/status`,
     });
     
