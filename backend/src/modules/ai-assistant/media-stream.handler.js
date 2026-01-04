@@ -140,12 +140,20 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
             tts: {
               // Ensure TTS output uses the correct format for Twilio (μ-law 8kHz)
               output_format: 'ulaw_8000',
+              model_id: null, // Let ElevenLabs use default model
+            },
+            asr: {
+              // Also ensure ASR (speech recognition) expects ulaw input
+              input_format: 'ulaw_8000',
             },
           },
           dynamic_variables: dynamicVariables,
         };
         
         logger.info(`[MediaStream] Sending initialization with audio format: ulaw_8000`);
+        if (isDebugMode) {
+          logger.debug(`[MediaStream] Init message: ${JSON.stringify(initMessage, null, 2)}`);
+        }
         elevenLabsWs.send(JSON.stringify(initMessage));
         logger.info(`[MediaStream] Sent initialization message to ElevenLabs for call ${callSid}, tenant: ${tenantId}`);
       });
