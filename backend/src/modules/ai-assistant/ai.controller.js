@@ -1203,8 +1203,8 @@ const handleConversationEndWebhook = async (req, res, next) => {
       user_satisfaction_rating,
     } = req.body;
     
-    // Validate webhook type
-    if (type && type !== 'conversation_ended') {
+    // Validate webhook type - ElevenLabs sends either 'conversation_ended' or 'post_call_transcription'
+    if (type && type !== 'conversation_ended' && type !== 'post_call_transcription') {
       logger.warn(`ElevenLabs Conversation End: Unexpected type ${type}`);
       return res.status(200).json({
         success: true,
