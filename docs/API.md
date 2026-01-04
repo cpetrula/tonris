@@ -1436,6 +1436,9 @@ Handle ElevenLabs Conversation Initiation Client Data webhook. This webhook is c
     },
     "tts": {
       "output_format": "ulaw_8000"
+    },
+    "asr": {
+      "input_format": "ulaw_8000"
     }
   }
 }

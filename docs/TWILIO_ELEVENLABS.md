@@ -359,6 +359,9 @@ The webhook handler supports both `type` (ElevenLabs standard) and `event` (lega
     },
     "tts": {
       "output_format": "ulaw_8000"
+    },
+    "asr": {
+      "input_format": "ulaw_8000"
     }
   }
 }

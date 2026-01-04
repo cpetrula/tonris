@@ -809,6 +809,8 @@ describe('ElevenLabs Conversation Initiation Webhook', () => {
       expect(response.body.dynamic_variables.business_name).toBe('Test Salon');
       expect(response.body.conversation_config_override.agent.agent_output_audio_format).toBe('ulaw_8000');
       expect(response.body.conversation_config_override.agent.user_input_audio_format).toBe('ulaw_8000');
+      expect(response.body.conversation_config_override.tts.output_format).toBe('ulaw_8000');
+      expect(response.body.conversation_config_override.asr.input_format).toBe('ulaw_8000');
     });
 
     it('should return minimal configuration when tenant is not found', async () => {
@@ -942,6 +944,7 @@ describe('handleConversationInitiation Function', () => {
     expect(result.data.conversation_config_override.agent.agent_output_audio_format).toBe('ulaw_8000');
     expect(result.data.conversation_config_override.agent.user_input_audio_format).toBe('ulaw_8000');
     expect(result.data.conversation_config_override.tts.output_format).toBe('ulaw_8000');
+    expect(result.data.conversation_config_override.asr.input_format).toBe('ulaw_8000');
   });
 });
 
