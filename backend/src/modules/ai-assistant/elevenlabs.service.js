@@ -229,7 +229,7 @@ class ElevenLabsService extends AIProviderInterface {
       // Fallback to constructing URL directly if API call fails
       const encodedAgentId = encodeURIComponent(effectiveAgentId);
       return {
-        signedUrl: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${encodedAgentId}`,
+        signedUrl: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${encodedAgentId}&output_format=ulaw_8000`,
         agentId: effectiveAgentId,
         expiresIn: 3600,
       };
