@@ -40,6 +40,34 @@ const handleVoiceWebhook = async (req, res, next) => {
 };
 
 /**
+ * POST /api/webhooks/twilio/outbound-voice
+ * Handle outbound voice call webhook
+ */
+const handleOutboundVoiceWebhook = async (req, res, next) => {
+  try {
+    // Validate Twilio signature in production
+    if (process.env.NODE_ENV === 'production') {
+      const signature = req.headers['x-twilio-signature'];
+      const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+      
+      if (!twilioService.validateWebhookSignature(signature, url, req.body)) {
+        logger.warn('Invalid Twilio webhook signature for outbound voice');
+        return res.status(403).send('Invalid signature');
+      }
+    }
+    
+    const result = await callHandler.handleOutboundCall(req.body);
+    
+    // Return TwiML response
+    res.type('text/xml');
+    res.send(result.twiml);
+  } catch (error) {
+    logger.error(`Outbound voice webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
+/**
  * POST /api/webhooks/twilio/sms
  * Handle incoming SMS webhook
  */
@@ -326,6 +354,9 @@ const makeCall = async (req, res, next) => {
       to,
       from: fromNumber,
       url: twimlUrl || `${process.env.APP_BASE_URL}/api/webhooks/twilio/outbound-voice`,
+      // Status callback to track call progress (initiated, ringing, answered, completed)
+      // Handled by the existing handleStatusWebhook in telephony.controller.js
+      statusCallback: `${process.env.APP_BASE_URL}/api/webhooks/twilio/status`,
     });
     
     res.status(200).json({
@@ -435,6 +466,7 @@ const syncElevenLabs = async (req, res, next) => {
 
 module.exports = {
   handleVoiceWebhook,
+  handleOutboundVoiceWebhook,
   handleSmsWebhook,
   handleStatusWebhook,
   provisionNumber,
