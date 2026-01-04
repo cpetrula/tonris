@@ -1244,6 +1244,9 @@ const handleConversationEndWebhook = async (req, res, next) => {
     // Check conversation_initiation_client_data for call SID
     const initiationData = eventData.conversation_initiation_client_data || {};
     
+    // Extract dynamic_variables from initiation data (this is where we store call_sid)
+    const dynamicVariables = initiationData.dynamic_variables || {};
+    
     logger.info('Extracted call data:', {
       conversation_id,
       call_duration_secs,
@@ -1251,11 +1254,15 @@ const handleConversationEndWebhook = async (req, res, next) => {
       hasTranscriptSummary: !!transcript_summary,
       transcriptType: Array.isArray(transcript) ? 'array' : typeof transcript,
       hasInitiationData: !!eventData.conversation_initiation_client_data,
-      initiationDataKeys: Object.keys(initiationData)
+      initiationDataKeys: Object.keys(initiationData),
+      dynamicVariablesKeys: Object.keys(dynamicVariables)
     });
     
     // Get call SID from multiple possible locations
-    const callSid = metadata.call_sid 
+    // Priority: dynamic_variables (where we set it) > metadata > initiationData
+    const callSid = dynamicVariables.call_sid 
+      || dynamicVariables.callSid
+      || metadata.call_sid 
       || metadata.callSid 
       || initiationData.call_sid 
       || initiationData.callSid
