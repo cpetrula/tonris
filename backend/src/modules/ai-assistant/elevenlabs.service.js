@@ -263,6 +263,9 @@ class ElevenLabsService extends AIProviderInterface {
       
       // Append audio format query parameters to the signed URL for Twilio compatibility
       // This ensures ElevenLabs uses μ-law encoding at 8kHz which is required for Twilio
+      // Twilio Media Streams use 8-bit μ-law (mu-law) encoding at 8,000 Hz (8kHz) sample rate
+      // ElevenLabs defaults to higher quality formats like MP3 at 44.1kHz or PCM at 16k–44.1k
+      // Without these parameters, audio will be garbled when relayed through our API
       // Some ElevenLabs agent configurations may not respect the conversation_config_override
       // so we also add the format parameters to the URL as a fallback
       // Use URL class for safer parameter handling
@@ -270,6 +273,8 @@ class ElevenLabsService extends AIProviderInterface {
       url.searchParams.set('output_format', 'ulaw_8000');
       url.searchParams.set('input_format', 'ulaw_8000');
       const signedUrl = url.toString();
+      
+      logger.info(`Twilio signed URL generated with audio format parameters: output_format=ulaw_8000, input_format=ulaw_8000`);
       
       return {
         signedUrl,
