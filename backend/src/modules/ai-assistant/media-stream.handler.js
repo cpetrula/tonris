@@ -131,6 +131,7 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
           agent_output_audio_format: 'ulaw_8000',
           // Critical: Set input format to ulaw_8000 for Twilio audio
           user_input_audio_format: 'ulaw_8000',
+          first_message: 'Yo, yo, yo! CP is in da house. How can I help you today?', // Use configured greeting from ElevenLabs dashboard
         };
 
         const initMessage = {
