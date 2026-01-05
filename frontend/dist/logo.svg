@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <defs>
+    <!-- Main gradient for TR monogram (dark blue to purple to magenta) -->
+    <linearGradient id="trGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1e3a8a"/>
+      <stop offset="40%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#c026d3"/>
+    </linearGradient>
+    <!-- Accent gradient for the swoosh (cyan) -->
+    <linearGradient id="accentGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#06b6d4"/>
+      <stop offset="100%" style="stop-color:#00d4ff"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- TR Monogram Icon -->
+  <g transform="translate(8, 8)">
+    <!-- T left stem going down -->
+    <path d="M8 18 L8 52 C8 56 10 58 14 58 L18 58 C22 58 24 56 24 52 L24 28" fill="url(#trGradient)"/>
+    
+    <!-- T horizontal crossbar -->
+    <path d="M4 12 L4 22 L38 22 L38 12 C38 8 36 6 32 6 L10 6 C6 6 4 8 4 12" fill="url(#trGradient)"/>
+    
+    <!-- Cyan accent swoosh -->
+    <path d="M36 2 C44 2 48 6 48 12 L48 16 C44 10 40 8 36 8 C32 8 32 4 36 2" fill="url(#accentGradient)"/>
+    
+    <!-- R body -->
+    <path d="M28 28 L28 58 C28 62 30 64 34 64 L38 64 C42 64 44 62 44 58 L44 46 L56 62 C58 65 62 64 64 62 C66 60 66 56 64 54 L52 40 C58 38 62 34 62 26 C62 18 56 14 46 14 L34 14 C30 14 28 16 28 20 L28 28 Z M44 24 L48 24 C52 24 54 26 54 30 C54 34 52 36 48 36 L44 36 L44 24 Z" fill="url(#trGradient)"/>
+  </g>
+  
+  <!-- TONRIS Text -->
+  <text x="88" y="42" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="700" fill="#1e3a5f" letter-spacing="1">TONRIS</text>
+  
+  <!-- AI Assistant Subtitle -->
+  <text x="88" y="60" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="400" fill="#64748b" letter-spacing="0.5">AI Assistant</text>
+</svg>
