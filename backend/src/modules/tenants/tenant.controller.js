@@ -365,12 +365,63 @@ const sanitizeSettings = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/tenant/notifications
+ * Get notification preferences for the tenant
+ */
+const getNotificationSettings = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await tenantService.getNotificationSettings(tenantUUID);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/tenant/notifications
+ * Update notification preferences for the tenant
+ */
+const updateNotificationSettings = async (req, res, next) => {
+  try {
+    const { notificationSettings } = req.body;
+
+    if (!notificationSettings) {
+      return res.status(400).json({
+        success: false,
+        error: 'Notification settings object is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const result = await tenantService.updateNotificationSettings(
+      tenantUUID,
+      notificationSettings
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCurrentUserAndTenant,
   getTenantSettings,
   updateTenantSettings,
   getBusinessHours,
   updateBusinessHours,
+  getNotificationSettings,
+  updateNotificationSettings,
   sanitizeSettings,
   createTenant,
   getTenant,

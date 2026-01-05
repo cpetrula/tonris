@@ -146,6 +146,18 @@ const Tenant = sequelize.define('Tenant', {
       key: 'id',
     },
   },
+  notificationSettings: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    field: 'notification_settings',
+    defaultValue: {
+      emailNewAppointment: true,
+      emailCancellation: true,
+      emailDailyDigest: true,
+      smsReminderEnabled: true,
+      smsReminderHours: 24,
+    },
+  },
 }, {
   tableName: 'tenants',
   timestamps: true,
@@ -205,7 +217,17 @@ Tenant.prototype.toSafeObject = function() {
       tenantJson.metadata = null;
     }
   }
-  
+
+  // Handle case where notificationSettings might be stored as a JSON string
+  if (tenantJson.notificationSettings && typeof tenantJson.notificationSettings === 'string') {
+    try {
+      tenantJson.notificationSettings = JSON.parse(tenantJson.notificationSettings);
+    } catch (error) {
+      console.warn(`Failed to parse notificationSettings JSON for tenant ${this.id}:`, error.message);
+      tenantJson.notificationSettings = null;
+    }
+  }
+
   return tenantJson;
 };
 

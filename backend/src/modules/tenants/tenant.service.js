@@ -343,6 +343,97 @@ const tenantExists = async (id) => {
 };
 
 /**
+ * Get notification settings for a tenant
+ * @param {string} id - Tenant UUID
+ * @returns {Promise<Object>} - Notification settings
+ */
+const getNotificationSettings = async (id) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  // Get notification settings with defaults
+  const defaultSettings = {
+    emailNewAppointment: true,
+    emailCancellation: true,
+    emailDailyDigest: true,
+    smsReminderEnabled: true,
+    smsReminderHours: 24,
+  };
+
+  // Parse notification settings if it's a string (MySQL JSON column issue)
+  let notificationSettings = tenant.notificationSettings;
+  if (typeof notificationSettings === 'string') {
+    try {
+      notificationSettings = JSON.parse(notificationSettings);
+    } catch (error) {
+      logger.warn(`Failed to parse notificationSettings for tenant ${id}: ${error.message}`);
+      notificationSettings = null;
+    }
+  }
+
+  return {
+    id: tenant.id,
+    notificationSettings: notificationSettings || defaultSettings,
+  };
+};
+
+/**
+ * Update notification settings for a tenant
+ * @param {string} id - Tenant UUID
+ * @param {Object} notificationSettings - Notification settings to update
+ * @returns {Promise<Object>} - Updated notification settings
+ */
+const updateNotificationSettings = async (id, notificationSettings) => {
+  const tenant = await Tenant.findOne({ where: { id } });
+
+  if (!tenant) {
+    throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
+  }
+
+  // Validate notification settings structure
+  if (!notificationSettings || typeof notificationSettings !== 'object') {
+    throw new AppError('Notification settings must be an object', 400, 'INVALID_NOTIFICATION_SETTINGS');
+  }
+
+  // Validate allowed fields
+  const allowedFields = ['emailNewAppointment', 'emailCancellation', 'emailDailyDigest', 'smsReminderEnabled', 'smsReminderHours'];
+  const filteredSettings = {};
+
+  for (const key of allowedFields) {
+    if (notificationSettings[key] !== undefined) {
+      // Validate types
+      if (key === 'smsReminderHours') {
+        if (typeof notificationSettings[key] !== 'number' || notificationSettings[key] < 1 || notificationSettings[key] > 72) {
+          throw new AppError('smsReminderHours must be a number between 1 and 72', 400, 'INVALID_REMINDER_HOURS');
+        }
+      } else {
+        if (typeof notificationSettings[key] !== 'boolean') {
+          throw new AppError(`${key} must be a boolean`, 400, 'INVALID_SETTING_TYPE');
+        }
+      }
+      filteredSettings[key] = notificationSettings[key];
+    }
+  }
+
+  // Merge with existing settings
+  const currentSettings = tenant.notificationSettings || {};
+  const mergedSettings = { ...currentSettings, ...filteredSettings };
+
+  // Update tenant
+  await tenant.update({ notificationSettings: mergedSettings });
+
+  logger.info(`Notification settings updated for tenant: ${id}`);
+
+  return {
+    id: tenant.id,
+    notificationSettings: mergedSettings,
+  };
+};
+
+/**
  * Update tenant information
  * @param {string} id - Tenant UUID
  * @param {Object} updateData - Data to update
@@ -555,6 +646,8 @@ module.exports = {
   updateTenantSettings,
   getBusinessHours,
   updateBusinessHours,
+  getNotificationSettings,
+  updateNotificationSettings,
   updateTenantStatus,
   activateTenant,
   getCurrentUserAndTenant,
