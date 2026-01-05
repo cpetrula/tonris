@@ -108,7 +108,7 @@ const createEmployee = async (req, res, next) => {
  */
 const updateEmployee = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, phone, employeeType, status, hireDate, serviceIds, metadata } = req.body;
+    const { firstName, lastName, email, phone, employeeType, status, hireDate, serviceIds, metadata, schedule } = req.body;
 
     // Validate email format if provided
     if (email && !VALIDATION.EMAIL_REGEX.test(email)) {
@@ -130,6 +130,7 @@ const updateEmployee = async (req, res, next) => {
       hireDate,
       serviceIds,
       metadata,
+      schedule,
     });
 
     res.status(200).json({
