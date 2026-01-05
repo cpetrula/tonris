@@ -25,6 +25,7 @@ const {
   notFoundHandler,
   errorHandler,
 } = require('./middleware');
+const { initScheduler } = require('./modules/cron/scheduler');
 
 // Create Express application
 const app = express();
@@ -246,6 +247,9 @@ const startServer = () => {
     logger.info(`Environment: ${env.NODE_ENV}`);
     logger.info(`Health check: http://localhost:${env.PORT}/health`);
     logger.info(`WebSocket media stream: ws://localhost:${env.PORT}/media-stream`);
+
+    // Initialize cron scheduler
+    initScheduler();
   });
 
   // Graceful shutdown
