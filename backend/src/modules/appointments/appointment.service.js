@@ -7,9 +7,11 @@ const { Appointment, APPOINTMENT_STATUS, CANCELLATION_REASONS } = require('./app
 const { checkSlotAvailability } = require('./availability.service');
 const { Employee, EMPLOYEE_STATUS } = require('../employees/employee.model');
 const { Service } = require('../services/service.model');
+const { Tenant } = require('../tenants/tenant.model');
 const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
 const smsService = require('./sms.service');
+const { emailService } = require('../notifications');
 
 /**
  * Calculate total price and duration for an appointment
@@ -131,6 +133,12 @@ const createAppointment = async (appointmentData, tenantId) => {
   smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId)
     .catch(error => {
       logger.error(`Failed to send SMS for appointment ${appointment.id}: ${error.message}`);
+    });
+
+  // Send email notification to business owner asynchronously
+  sendNewAppointmentEmailNotification(appointment, employee, service, tenantId)
+    .catch(error => {
+      logger.error(`Failed to send email for appointment ${appointment.id}: ${error.message}`);
     });
 
   return appointment.toSafeObject();
@@ -386,6 +394,12 @@ const cancelAppointment = async (appointmentId, tenantId, reason, notes = null) 
 
   logger.info(`Appointment cancelled: ${appointmentId} for tenant: ${tenantId}, reason: ${reason}`);
 
+  // Send cancellation email notification asynchronously
+  sendCancellationEmailNotification(appointment, tenantId, reason)
+    .catch(error => {
+      logger.error(`Failed to send cancellation email for appointment ${appointmentId}: ${error.message}`);
+    });
+
   return appointment.toSafeObject();
 };
 
@@ -411,6 +425,147 @@ const deleteAppointment = async (appointmentId, tenantId) => {
   return { message: 'Appointment deleted successfully' };
 };
 
+/**
+ * Send email notification to business owner for new appointment
+ * @param {Object} appointment - Appointment object
+ * @param {Object} employee - Employee object
+ * @param {Object} service - Service object
+ * @param {string} tenantId - Tenant ID
+ */
+const sendNewAppointmentEmailNotification = async (appointment, employee, service, tenantId) => {
+  try {
+    // Fetch tenant with notification settings
+    const tenant = await Tenant.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      logger.warn(`Cannot send email notification: Tenant ${tenantId} not found`);
+      return;
+    }
+
+    // Check if email notification is enabled
+    let notificationSettings = tenant.notificationSettings;
+    if (typeof notificationSettings === 'string') {
+      try {
+        notificationSettings = JSON.parse(notificationSettings);
+      } catch (e) {
+        notificationSettings = {};
+      }
+    }
+
+    // Default to true if not set
+    const emailNewAppointment = notificationSettings?.emailNewAppointment !== false;
+
+    if (!emailNewAppointment) {
+      logger.debug(`Email notification for new appointments is disabled for tenant ${tenantId}`);
+      return;
+    }
+
+    // Get business owner email (contact email)
+    const toEmail = tenant.contactEmail;
+    if (!toEmail) {
+      logger.warn(`Cannot send email notification: No contact email for tenant ${tenantId}`);
+      return;
+    }
+
+    // Format date and time for email
+    const appointmentDate = new Date(appointment.startTime);
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions);
+    const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions);
+
+    // Send email
+    const result = await emailService.sendNewAppointmentEmail(toEmail, {
+      businessName: tenant.name,
+      customerName: appointment.customerName,
+      customerPhone: appointment.customerPhone,
+      serviceName: service.name,
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+      appointmentDate: formattedDate,
+      appointmentTime: formattedTime,
+      duration: appointment.totalDuration,
+    });
+
+    if (result.success) {
+      logger.info(`New appointment email sent to ${toEmail} for appointment ${appointment.id}`);
+    } else {
+      logger.warn(`Email notification not sent for appointment ${appointment.id}: ${result.reason || result.error}`);
+    }
+  } catch (error) {
+    logger.error(`Error sending new appointment email for tenant ${tenantId}: ${error.message}`);
+  }
+};
+
+/**
+ * Send email notification to business owner for appointment cancellation
+ * @param {Object} appointment - Appointment object
+ * @param {string} tenantId - Tenant ID
+ * @param {string} reason - Cancellation reason
+ */
+const sendCancellationEmailNotification = async (appointment, tenantId, reason) => {
+  try {
+    // Fetch tenant with notification settings
+    const tenant = await Tenant.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      logger.warn(`Cannot send cancellation email: Tenant ${tenantId} not found`);
+      return;
+    }
+
+    // Check if email notification is enabled
+    let notificationSettings = tenant.notificationSettings;
+    if (typeof notificationSettings === 'string') {
+      try {
+        notificationSettings = JSON.parse(notificationSettings);
+      } catch (e) {
+        notificationSettings = {};
+      }
+    }
+
+    // Default to true if not set
+    const emailCancellation = notificationSettings?.emailCancellation !== false;
+
+    if (!emailCancellation) {
+      logger.debug(`Email notification for cancellations is disabled for tenant ${tenantId}`);
+      return;
+    }
+
+    // Get business owner email (contact email)
+    const toEmail = tenant.contactEmail;
+    if (!toEmail) {
+      logger.warn(`Cannot send cancellation email: No contact email for tenant ${tenantId}`);
+      return;
+    }
+
+    // Get service name
+    const service = await Service.findOne({ where: { id: appointment.serviceId } });
+    const serviceName = service?.name || 'Unknown Service';
+
+    // Format date and time for email
+    const appointmentDate = new Date(appointment.startTime);
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions);
+    const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions);
+
+    // Send email
+    const result = await emailService.sendCancellationEmail(toEmail, {
+      businessName: tenant.name,
+      customerName: appointment.customerName,
+      serviceName,
+      appointmentDate: formattedDate,
+      appointmentTime: formattedTime,
+      cancellationReason: reason,
+    });
+
+    if (result.success) {
+      logger.info(`Cancellation email sent to ${toEmail} for appointment ${appointment.id}`);
+    } else {
+      logger.warn(`Cancellation email not sent for appointment ${appointment.id}: ${result.reason || result.error}`);
+    }
+  } catch (error) {
+    logger.error(`Error sending cancellation email for tenant ${tenantId}: ${error.message}`);
+  }
+};
+
 module.exports = {
   createAppointment,
   getAppointments,
@@ -419,6 +574,8 @@ module.exports = {
   cancelAppointment,
   deleteAppointment,
   calculateTotals,
+  sendNewAppointmentEmailNotification,
+  sendCancellationEmailNotification,
   APPOINTMENT_STATUS,
   CANCELLATION_REASONS,
 };
