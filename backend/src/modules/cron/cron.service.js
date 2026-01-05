@@ -8,6 +8,7 @@ const { Appointment, APPOINTMENT_STATUS } = require('../appointments/appointment
 const { Employee } = require('../employees/employee.model');
 const { Service } = require('../services/service.model');
 const { emailService } = require('../notifications');
+const smsService = require('../appointments/sms.service');
 const logger = require('../../utils/logger');
 
 /**
@@ -202,6 +203,130 @@ const sendDailyDigestEmails = async () => {
   return results;
 };
 
+/**
+ * Send SMS reminders for upcoming appointments
+ * @returns {Promise<Object>} - Results summary
+ */
+const sendAppointmentReminders = async () => {
+  const results = {
+    total: 0,
+    sent: 0,
+    skipped: 0,
+    failed: 0,
+    details: [],
+  };
+
+  try {
+    // Get all active tenants
+    const tenants = await Tenant.findAll({
+      where: { status: 'active' },
+    });
+
+    for (const tenant of tenants) {
+      try {
+        // Parse notification settings
+        let notificationSettings = tenant.notificationSettings;
+        if (typeof notificationSettings === 'string') {
+          try {
+            notificationSettings = JSON.parse(notificationSettings);
+          } catch (e) {
+            notificationSettings = {};
+          }
+        }
+
+        // Check if SMS reminders are enabled (default to true)
+        const smsReminderEnabled = notificationSettings?.smsReminderEnabled !== false;
+        const smsReminderHours = notificationSettings?.smsReminderHours || 24;
+
+        if (!smsReminderEnabled) {
+          continue; // Skip this tenant silently
+        }
+
+        // Calculate reminder window
+        // Find appointments that start between reminderHours and (reminderHours + 1) from now
+        // This way the cron job running every hour will catch appointments once
+        const now = new Date();
+        const windowStart = new Date(now.getTime() + smsReminderHours * 60 * 60 * 1000);
+        const windowEnd = new Date(now.getTime() + (smsReminderHours + 1) * 60 * 60 * 1000);
+
+        // Find appointments that need reminders
+        const appointments = await Appointment.findAll({
+          where: {
+            tenantId: tenant.id,
+            startTime: {
+              [Op.gte]: windowStart,
+              [Op.lt]: windowEnd,
+            },
+            status: {
+              [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED],
+            },
+            reminderSentAt: null, // Haven't sent reminder yet
+            customerPhone: {
+              [Op.not]: null,
+              [Op.ne]: '',
+            },
+          },
+          include: [
+            { model: Employee, as: 'employee', attributes: ['firstName', 'lastName'] },
+            { model: Service, as: 'service', attributes: ['name'] },
+          ],
+        });
+
+        results.total += appointments.length;
+
+        for (const appointment of appointments) {
+          try {
+            // Send SMS reminder
+            const smsResult = await smsService.sendAppointmentReminderSms(
+              appointment,
+              appointment.employee,
+              appointment.service,
+              tenant.name,
+              tenant.id
+            );
+
+            if (smsResult) {
+              // Mark reminder as sent
+              await appointment.update({ reminderSentAt: new Date() });
+              results.sent++;
+              results.details.push({
+                appointmentId: appointment.id,
+                tenantId: tenant.id,
+                status: 'sent',
+              });
+            } else {
+              results.skipped++;
+              results.details.push({
+                appointmentId: appointment.id,
+                tenantId: tenant.id,
+                status: 'skipped',
+                reason: 'SMS not sent (no phone, not opted in, or SMS not configured)',
+              });
+            }
+          } catch (error) {
+            results.failed++;
+            results.details.push({
+              appointmentId: appointment.id,
+              tenantId: tenant.id,
+              status: 'failed',
+              error: error.message,
+            });
+            logger.error(`Error sending reminder for appointment ${appointment.id}: ${error.message}`);
+          }
+        }
+      } catch (error) {
+        logger.error(`Error processing reminders for tenant ${tenant.id}: ${error.message}`);
+      }
+    }
+  } catch (error) {
+    logger.error(`Error in appointment reminders job: ${error.message}`);
+    throw error;
+  }
+
+  return results;
+};
+
 module.exports = {
   sendDailyDigestEmails,
+  sendAppointmentReminders,
 };

@@ -55,4 +55,10 @@ const verifyCronSecret = (req, res, next) => {
  */
 router.post('/daily-digest', cronLimiter, verifyCronSecret, cronController.triggerDailyDigest);
 
+/**
+ * POST /api/cron/appointment-reminders
+ * Trigger appointment reminder SMS job
+ */
+router.post('/appointment-reminders', cronLimiter, verifyCronSecret, cronController.triggerAppointmentReminders);
+
 module.exports = router;

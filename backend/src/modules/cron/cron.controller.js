@@ -28,6 +28,30 @@ const triggerDailyDigest = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/cron/appointment-reminders
+ * Trigger appointment reminder SMS job
+ */
+const triggerAppointmentReminders = async (req, res, next) => {
+  try {
+    logger.info('Appointment reminders cron job triggered');
+
+    const results = await cronService.sendAppointmentReminders();
+
+    logger.info(`Appointment reminders job completed: ${results.sent} sent, ${results.skipped} skipped, ${results.failed} failed`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Appointment reminders job completed',
+      data: results,
+    });
+  } catch (error) {
+    logger.error(`Appointment reminders job failed: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   triggerDailyDigest,
+  triggerAppointmentReminders,
 };

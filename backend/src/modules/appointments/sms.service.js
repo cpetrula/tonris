@@ -109,8 +109,87 @@ const sendAppointmentConfirmationSms = async (appointment, employee, service, te
   }
 };
 
+/**
+ * Format appointment reminder message
+ * @param {Object} appointment - Appointment data
+ * @param {Object} employee - Employee data
+ * @param {Object} service - Service data
+ * @param {string} businessName - Business name
+ * @returns {string} - Formatted reminder message
+ */
+const formatReminderMessage = (appointment, employee, service, businessName) => {
+  const appointmentDate = new Date(appointment.startTime);
+  const dateStr = appointmentDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
+  const timeStr = appointmentDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const employeeName = employee ? `${employee.firstName} ${employee.lastName}` : 'our team';
+  const serviceName = service ? service.name : 'your appointment';
+
+  return `Reminder from ${businessName}: Your ${serviceName} appointment with ${employeeName} is tomorrow at ${timeStr} on ${dateStr}. We look forward to seeing you!`;
+};
+
+/**
+ * Send appointment reminder SMS
+ * @param {Object} appointment - Appointment data
+ * @param {Object} employee - Employee data
+ * @param {Object} service - Service data
+ * @param {string} businessName - Business name
+ * @param {string} tenantId - Tenant ID
+ * @returns {Promise<Object|null>} - SMS send result or null if not sent
+ */
+const sendAppointmentReminderSms = async (appointment, employee, service, businessName, tenantId) => {
+  // Check if SMS is configured
+  if (!env.TWILIO_SMS_PHONE_NUMBER) {
+    logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
+    return null;
+  }
+
+  // Check if customer phone is provided
+  if (!appointment.customerPhone) {
+    logger.debug('No customer phone number provided, skipping reminder SMS');
+    return null;
+  }
+
+  // Check if user has opted in for SMS (only if email is provided)
+  if (appointment.customerEmail) {
+    const optedIn = await isUserOptedInForSms(appointment.customerEmail, tenantId);
+    if (!optedIn) {
+      logger.debug(`Customer ${appointment.customerEmail} has not opted in for SMS notifications`);
+      return null;
+    }
+  }
+
+  try {
+    // Format the reminder message
+    const messageBody = formatReminderMessage(appointment, employee, service, businessName);
+
+    // Send the SMS
+    const result = await twilioService.sendSms({
+      to: appointment.customerPhone,
+      from: env.TWILIO_SMS_PHONE_NUMBER,
+      body: messageBody,
+    });
+
+    logger.info(`Appointment reminder SMS sent to ${appointment.customerPhone} for appointment ${appointment.id}`);
+    return result;
+  } catch (error) {
+    logger.error(`Failed to send appointment reminder SMS: ${error.message}`);
+    return null;
+  }
+};
+
 module.exports = {
   sendAppointmentConfirmationSms,
+  sendAppointmentReminderSms,
   formatAppointmentSummary,
+  formatReminderMessage,
   isUserOptedInForSms,
 };

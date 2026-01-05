@@ -139,6 +139,12 @@ const Appointment = sequelize.define('Appointment', {
     type: DataTypes.JSON,
     allowNull: true,
   },
+  reminderSentAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'reminder_sent_at',
+    comment: 'When the SMS reminder was sent to the customer',
+  },
 }, {
   tableName: 'appointments',
   timestamps: true,
