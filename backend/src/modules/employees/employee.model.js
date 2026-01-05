@@ -111,19 +111,123 @@ const Employee = sequelize.define('Employee', {
 
 /**
  * Generate default schedule for an employee
+ * Uses blocks array format to support split shifts
  * @returns {Object} - Default schedule structure
  */
 Employee.generateDefaultSchedule = function() {
   return {
-    monday: { start: '09:00', end: '17:00', enabled: true },
-    tuesday: { start: '09:00', end: '17:00', enabled: true },
-    wednesday: { start: '09:00', end: '17:00', enabled: true },
-    thursday: { start: '09:00', end: '17:00', enabled: true },
-    friday: { start: '09:00', end: '17:00', enabled: true },
-    saturday: { start: '10:00', end: '14:00', enabled: false },
-    sunday: { start: '10:00', end: '14:00', enabled: false },
+    monday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+    tuesday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+    wednesday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+    thursday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+    friday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+    saturday: { enabled: false, blocks: [] },
+    sunday: { enabled: false, blocks: [] },
   };
 };
+
+/**
+ * Validate schedule format
+ * @param {Object} schedule - Schedule to validate
+ * @returns {Object} - { valid: boolean, error?: string }
+ */
+Employee.validateSchedule = function(schedule) {
+  const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+
+  for (const day of validDays) {
+    if (!schedule[day]) {
+      return { valid: false, error: `Missing schedule for ${day}` };
+    }
+
+    const daySchedule = schedule[day];
+
+    if (typeof daySchedule.enabled !== 'boolean') {
+      return { valid: false, error: `Invalid enabled flag for ${day}` };
+    }
+
+    if (!Array.isArray(daySchedule.blocks)) {
+      return { valid: false, error: `Blocks must be an array for ${day}` };
+    }
+
+    for (let i = 0; i < daySchedule.blocks.length; i++) {
+      const block = daySchedule.blocks[i];
+
+      if (!block.start || !block.end) {
+        return { valid: false, error: `Block ${i + 1} on ${day} must have start and end times` };
+      }
+
+      if (!timeRegex.test(block.start) || !timeRegex.test(block.end)) {
+        return { valid: false, error: `Invalid time format in block ${i + 1} on ${day}. Use HH:MM format (e.g., 09:00)` };
+      }
+
+      if (block.start >= block.end) {
+        return { valid: false, error: `Start time must be before end time in block ${i + 1} on ${day}` };
+      }
+    }
+  }
+
+  return { valid: true };
+};
+
+/**
+ * Check if employee is available at a specific day and time
+ * @param {string} day - Day of week (lowercase)
+ * @param {string} time - Time in HH:MM format
+ * @returns {boolean} - True if available
+ */
+Employee.prototype.isAvailableAt = function(day, time) {
+  const daySchedule = this.schedule[day.toLowerCase()];
+
+  if (!daySchedule || !daySchedule.enabled) {
+    return false;
+  }
+
+  for (const block of daySchedule.blocks) {
+    if (time >= block.start && time < block.end) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Get formatted schedule summary for display
+ * @returns {Object} - Schedule summary with formatted strings per day
+ */
+Employee.prototype.getScheduleSummary = function() {
+  const summary = {};
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+  for (const day of days) {
+    const daySchedule = this.schedule[day];
+
+    if (!daySchedule || !daySchedule.enabled || daySchedule.blocks.length === 0) {
+      summary[day] = 'Off';
+    } else {
+      const blockStrings = daySchedule.blocks.map(block => {
+        const startFormatted = formatTime12h(block.start);
+        const endFormatted = formatTime12h(block.end);
+        return `${startFormatted} - ${endFormatted}`;
+      });
+      summary[day] = blockStrings.join(', ');
+    }
+  }
+
+  return summary;
+};
+
+/**
+ * Helper to convert 24h time to 12h format
+ */
+function formatTime12h(time) {
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}
 
 /**
  * Get employee data safe for API response

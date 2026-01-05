@@ -11,13 +11,27 @@ import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
-import ToggleSwitch from 'primevue/toggleswitch'
+import Checkbox from 'primevue/checkbox'
 import api from '@/services/api'
 
-interface DaySchedule {
+interface TimeBlock {
   start: string
   end: string
+}
+
+interface DaySchedule {
   enabled: boolean
+  blocks: TimeBlock[]
+}
+
+interface Schedule {
+  monday: DaySchedule
+  tuesday: DaySchedule
+  wednesday: DaySchedule
+  thursday: DaySchedule
+  friday: DaySchedule
+  saturday: DaySchedule
+  sunday: DaySchedule
 }
 
 interface Employee {
@@ -29,15 +43,7 @@ interface Employee {
   employeeType: string
   serviceIds: string[]
   status: 'active' | 'inactive'
-  schedule: {
-    monday: DaySchedule
-    tuesday: DaySchedule
-    wednesday: DaySchedule
-    thursday: DaySchedule
-    friday: DaySchedule
-    saturday: DaySchedule
-    sunday: DaySchedule
-  }
+  schedule: Schedule
 }
 
 interface Service {
@@ -56,11 +62,8 @@ const searchQuery = ref('')
 const showDialog = ref(false)
 const editMode = ref(false)
 const showScheduleDialog = ref(false)
-const showEditScheduleDialog = ref(false)
 const selectedEmployee = ref<Employee | null>(null)
-const editingSchedule = ref<Employee['schedule'] | null>(null)
 const error = ref('')
-const scheduleError = ref('')
 
 // Employee type options - both full-time and part-time map to 'employee' in the database
 // The distinction between full-time and part-time can be managed through employee schedules
@@ -69,6 +72,56 @@ const employeeTypeOptions = [
   { label: 'Employee (Part-time)', value: 'employee' },
   { label: 'Contractor', value: 'contractor' }
 ]
+
+const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+type DayName = typeof days[number]
+
+// Time options for dropdown (12-hour format display, 24-hour value)
+const timeOptions = [
+  { label: '6:00 AM', value: '06:00' },
+  { label: '6:30 AM', value: '06:30' },
+  { label: '7:00 AM', value: '07:00' },
+  { label: '7:30 AM', value: '07:30' },
+  { label: '8:00 AM', value: '08:00' },
+  { label: '8:30 AM', value: '08:30' },
+  { label: '9:00 AM', value: '09:00' },
+  { label: '9:30 AM', value: '09:30' },
+  { label: '10:00 AM', value: '10:00' },
+  { label: '10:30 AM', value: '10:30' },
+  { label: '11:00 AM', value: '11:00' },
+  { label: '11:30 AM', value: '11:30' },
+  { label: '12:00 PM', value: '12:00' },
+  { label: '12:30 PM', value: '12:30' },
+  { label: '1:00 PM', value: '13:00' },
+  { label: '1:30 PM', value: '13:30' },
+  { label: '2:00 PM', value: '14:00' },
+  { label: '2:30 PM', value: '14:30' },
+  { label: '3:00 PM', value: '15:00' },
+  { label: '3:30 PM', value: '15:30' },
+  { label: '4:00 PM', value: '16:00' },
+  { label: '4:30 PM', value: '16:30' },
+  { label: '5:00 PM', value: '17:00' },
+  { label: '5:30 PM', value: '17:30' },
+  { label: '6:00 PM', value: '18:00' },
+  { label: '6:30 PM', value: '18:30' },
+  { label: '7:00 PM', value: '19:00' },
+  { label: '7:30 PM', value: '19:30' },
+  { label: '8:00 PM', value: '20:00' },
+  { label: '8:30 PM', value: '20:30' },
+  { label: '9:00 PM', value: '21:00' },
+  { label: '9:30 PM', value: '21:30' },
+  { label: '10:00 PM', value: '22:00' }
+]
+
+const defaultSchedule: Schedule = {
+  monday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+  tuesday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+  wednesday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+  thursday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+  friday: { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] },
+  saturday: { enabled: false, blocks: [] },
+  sunday: { enabled: false, blocks: [] }
+}
 
 const emptyEmployee: Employee = {
   id: '',
@@ -79,23 +132,19 @@ const emptyEmployee: Employee = {
   employeeType: '',
   serviceIds: [],
   status: 'active',
-  schedule: {
-    monday: { start: '09:00', end: '17:00', enabled: true },
-    tuesday: { start: '09:00', end: '17:00', enabled: true },
-    wednesday: { start: '09:00', end: '17:00', enabled: true },
-    thursday: { start: '09:00', end: '17:00', enabled: true },
-    friday: { start: '09:00', end: '17:00', enabled: true },
-    saturday: { start: '10:00', end: '14:00', enabled: false },
-    sunday: { start: '10:00', end: '14:00', enabled: false }
-  }
+  schedule: { ...defaultSchedule }
 }
+
+const showScheduleEditorDialog = ref(false)
+const scheduleEditorEmployee = ref<Employee | null>(null)
+const editingSchedule = ref<Schedule>({ ...defaultSchedule })
 
 const currentEmployee = ref<Employee>({ ...emptyEmployee })
 
 const filteredEmployees = computed(() => {
   if (!searchQuery.value) return employees.value
   const query = searchQuery.value.toLowerCase()
-  return employees.value.filter(emp => 
+  return employees.value.filter(emp =>
     emp.firstName.toLowerCase().includes(query) ||
     emp.lastName.toLowerCase().includes(query) ||
     emp.email.toLowerCase().includes(query) ||
@@ -122,42 +171,72 @@ function openScheduleDialog(employee: Employee) {
   showScheduleDialog.value = true
 }
 
-function openEditScheduleDialog(employee: Employee) {
-  selectedEmployee.value = employee
-  editingSchedule.value = JSON.parse(JSON.stringify(employee.schedule)) // Deep clone
+function openScheduleEditorDialog(employee: Employee) {
+  scheduleEditorEmployee.value = employee
+  // Deep clone the schedule
+  editingSchedule.value = JSON.parse(JSON.stringify(employee.schedule))
+  showScheduleEditorDialog.value = true
   showScheduleDialog.value = false
-  showEditScheduleDialog.value = true
-  scheduleError.value = ''
+}
+
+function addTimeBlock(day: DayName) {
+  editingSchedule.value[day].blocks.push({ start: '09:00', end: '17:00' })
+}
+
+function removeTimeBlock(day: DayName, index: number) {
+  editingSchedule.value[day].blocks.splice(index, 1)
+}
+
+function toggleDayEnabled(day: DayName) {
+  const daySchedule = editingSchedule.value[day]
+  daySchedule.enabled = !daySchedule.enabled
+  if (daySchedule.enabled && daySchedule.blocks.length === 0) {
+    daySchedule.blocks.push({ start: '09:00', end: '17:00' })
+  }
 }
 
 async function saveSchedule() {
-  if (!selectedEmployee.value || !editingSchedule.value) return
+  if (!scheduleEditorEmployee.value) return
 
   loading.value = true
-  scheduleError.value = ''
-  
   try {
-    await api.put(`/api/employees/${selectedEmployee.value.id}/schedule`, {
+    await api.patch(`/api/employees/${scheduleEditorEmployee.value.id}`, {
       schedule: editingSchedule.value
     })
-
-    // Refresh the employees list
     await fetchEmployees()
-    showEditScheduleDialog.value = false
-    editingSchedule.value = null
+    showScheduleEditorDialog.value = false
   } catch (err: any) {
     console.error('Error saving schedule:', err)
-    scheduleError.value = err.response?.data?.error || 'Failed to save schedule'
+    error.value = err.response?.data?.error || 'Failed to save schedule'
   } finally {
     loading.value = false
   }
 }
 
-function formatScheduleDisplay(daySchedule: DaySchedule): string {
-  if (!daySchedule.enabled) {
-    return 'Off'
+function formatTime12h(time: string): string {
+  const parts = time.split(':')
+  const hours = parts[0] || '00'
+  const minutes = parts[1] || '00'
+  const hour = parseInt(hours, 10)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${minutes} ${ampm}`
+}
+
+function getScheduleSummary(schedule: Schedule): Record<string, string> {
+  const summary: Record<string, string> = {}
+  for (const day of days) {
+    const daySchedule = schedule[day]
+    if (!daySchedule || !daySchedule.enabled || daySchedule.blocks.length === 0) {
+      summary[day] = 'Off'
+    } else {
+      const blockStrings = daySchedule.blocks.map(block =>
+        `${formatTime12h(block.start)} - ${formatTime12h(block.end)}`
+      )
+      summary[day] = blockStrings.join(', ')
+    }
   }
-  return `${daySchedule.start} - ${daySchedule.end}`
+  return summary
 }
 
 async function saveEmployee() {
@@ -248,6 +327,39 @@ onMounted(async () => {
   }
 })
 
+function normalizeSchedule(schedule: any): Schedule {
+  const normalized: Schedule = JSON.parse(JSON.stringify(defaultSchedule))
+  if (!schedule) return normalized
+
+  for (const day of days) {
+    if (schedule[day]) {
+      // Handle new blocks format
+      if (typeof schedule[day] === 'object' && 'blocks' in schedule[day]) {
+        normalized[day] = {
+          enabled: schedule[day].enabled ?? false,
+          blocks: Array.isArray(schedule[day].blocks) ? schedule[day].blocks : []
+        }
+      }
+      // Handle old format with just enabled, start, end (no blocks array)
+      else if (typeof schedule[day] === 'object' && 'enabled' in schedule[day] && 'start' in schedule[day]) {
+        normalized[day] = {
+          enabled: schedule[day].enabled ?? false,
+          blocks: schedule[day].enabled ? [{ start: schedule[day].start, end: schedule[day].end }] : []
+        }
+      }
+      // Handle legacy string format (e.g., "9:00 AM - 5:00 PM")
+      else if (typeof schedule[day] === 'string') {
+        if (schedule[day] === 'Off' || schedule[day] === '') {
+          normalized[day] = { enabled: false, blocks: [] }
+        } else {
+          normalized[day] = { enabled: true, blocks: [{ start: '09:00', end: '17:00' }] }
+        }
+      }
+    }
+  }
+  return normalized
+}
+
 async function fetchEmployees() {
   try {
     const response = await api.get('/api/employees')
@@ -261,15 +373,7 @@ async function fetchEmployees() {
         employeeType: emp.employeeType || '',
         serviceIds: emp.serviceIds || [],
         status: emp.status || 'active',
-        schedule: emp.schedule || {
-          monday: { start: '09:00', end: '17:00', enabled: false },
-          tuesday: { start: '09:00', end: '17:00', enabled: false },
-          wednesday: { start: '09:00', end: '17:00', enabled: false },
-          thursday: { start: '09:00', end: '17:00', enabled: false },
-          friday: { start: '09:00', end: '17:00', enabled: false },
-          saturday: { start: '10:00', end: '14:00', enabled: false },
-          sunday: { start: '10:00', end: '14:00', enabled: false }
-        }
+        schedule: normalizeSchedule(emp.schedule)
       }))
     }
   } catch (err) {
@@ -462,22 +566,22 @@ function getEmployeeTypeLabel(value: string) {
 
         <div>
           <label class="block text-sm font-medium text-white-700 mb-1">Employee Type</label>
-          <Select 
-            v-model="currentEmployee.employeeType" 
-            :options="employeeTypeOptions" 
-            optionLabel="label" 
+          <Select
+            v-model="currentEmployee.employeeType"
+            :options="employeeTypeOptions"
+            optionLabel="label"
             optionValue="value"
             placeholder="Select employee type"
-            class="w-full" 
+            class="w-full"
           />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-white-700 mb-1">Services</label>
-          <MultiSelect 
-            v-model="currentEmployee.serviceIds" 
-            :options="services" 
-            optionLabel="name" 
+          <MultiSelect
+            v-model="currentEmployee.serviceIds"
+            :options="services"
+            optionLabel="name"
             optionValue="id"
             placeholder="Select services"
             class="w-full"
@@ -492,7 +596,7 @@ function getEmployeeTypeLabel(value: string) {
       </template>
     </Dialog>
 
-    <!-- Schedule Dialog (View Only) -->
+    <!-- Schedule View Dialog -->
     <Dialog
       v-model:visible="showScheduleDialog"
       :header="`Schedule - ${selectedEmployee?.firstName} ${selectedEmployee?.lastName}`"
@@ -500,64 +604,97 @@ function getEmployeeTypeLabel(value: string) {
       :style="{ width: '500px' }"
     >
       <div v-if="selectedEmployee" class="space-y-3">
-        <div v-for="(daySchedule, day) in selectedEmployee.schedule" :key="day" class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+        <div v-for="day in days" :key="day" class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
           <span class="font-medium text-gray-700 capitalize">{{ day }}</span>
-          <span :class="!daySchedule.enabled ? 'text-gray-400' : 'text-gray-900'">
-            {{ formatScheduleDisplay(daySchedule) }}
+          <span :class="getScheduleSummary(selectedEmployee.schedule)[day] === 'Off' ? 'text-gray-400' : 'text-gray-900'">
+            {{ getScheduleSummary(selectedEmployee.schedule)[day] }}
           </span>
         </div>
       </div>
 
       <template #footer>
         <Button label="Close" text @click="showScheduleDialog = false" />
-        <Button label="Edit Schedule" icon="pi pi-pencil" @click="openEditScheduleDialog(selectedEmployee!)" />
+        <Button label="Edit Schedule" icon="pi pi-pencil" @click="openScheduleEditorDialog(selectedEmployee!)" />
       </template>
     </Dialog>
 
-    <!-- Edit Schedule Dialog -->
+    <!-- Schedule Editor Dialog -->
     <Dialog
-      v-model:visible="showEditScheduleDialog"
-      :header="`Edit Schedule - ${selectedEmployee?.firstName} ${selectedEmployee?.lastName}`"
+      v-model:visible="showScheduleEditorDialog"
+      :header="`Edit Schedule - ${scheduleEditorEmployee?.firstName} ${scheduleEditorEmployee?.lastName}`"
       :modal="true"
-      :style="{ width: '600px' }"
+      :style="{ width: '700px' }"
+      :closable="true"
     >
-      <Message v-if="scheduleError" severity="error" class="mb-4">{{ scheduleError }}</Message>
+      <Message v-if="error" severity="error" class="mb-4">{{ error }}</Message>
 
-      <div v-if="editingSchedule" class="space-y-4">
-        <div v-for="(daySchedule, day) in editingSchedule" :key="day" class="border rounded-lg p-4">
+      <div class="space-y-4">
+        <div v-for="day in days" :key="day" class="border rounded-lg p-4">
           <div class="flex items-center justify-between mb-3">
-            <label class="text-base font-semibold text-gray-700 capitalize">{{ day }}</label>
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-600">{{ daySchedule.enabled ? 'Working' : 'Off' }}</span>
-              <ToggleSwitch v-model="daySchedule.enabled" />
+            <div class="flex items-center gap-3">
+              <Checkbox
+                :modelValue="editingSchedule[day].enabled"
+                @update:modelValue="toggleDayEnabled(day)"
+                :binary="true"
+              />
+              <span class="font-medium text-gray-700 capitalize">{{ day }}</span>
             </div>
+            <Button
+              v-if="editingSchedule[day].enabled"
+              icon="pi pi-plus"
+              text
+              size="small"
+              severity="secondary"
+              label="Add Shift"
+              @click="addTimeBlock(day)"
+            />
           </div>
-          
-          <div v-if="daySchedule.enabled" class="grid grid-cols-2 gap-4">
-            <div>
-              <label :for="`${day}-start`" class="block text-sm font-medium text-gray-600 mb-1">Start Time</label>
-              <InputText 
-                :id="`${day}-start`"
-                v-model="daySchedule.start" 
-                type="time" 
-                class="w-full"
+
+          <div v-if="editingSchedule[day].enabled" class="space-y-2 ml-8">
+            <div
+              v-for="(block, index) in editingSchedule[day].blocks"
+              :key="index"
+              class="flex items-center gap-3"
+            >
+              <div class="flex items-center gap-2">
+                <Select
+                  v-model="block.start"
+                  :options="timeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Start"
+                  class="w-32"
+                />
+                <span class="text-gray-500">to</span>
+                <Select
+                  v-model="block.end"
+                  :options="timeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="End"
+                  class="w-32"
+                />
+              </div>
+              <Button
+                v-if="editingSchedule[day].blocks.length > 1"
+                icon="pi pi-trash"
+                text
+                size="small"
+                severity="danger"
+                @click="removeTimeBlock(day, index)"
               />
             </div>
-            <div>
-              <label :for="`${day}-end`" class="block text-sm font-medium text-gray-600 mb-1">End Time</label>
-              <InputText 
-                :id="`${day}-end`"
-                v-model="daySchedule.end" 
-                type="time" 
-                class="w-full"
-              />
-            </div>
+            <p v-if="editingSchedule[day].blocks.length === 0" class="text-gray-400 text-sm">
+              No shifts scheduled. Click "Add Shift" to add working hours.
+            </p>
           </div>
+
+          <p v-else class="text-gray-400 text-sm ml-8">Day off</p>
         </div>
       </div>
 
       <template #footer>
-        <Button label="Cancel" text severity="secondary" @click="showEditScheduleDialog = false" />
+        <Button label="Cancel" text severity="secondary" @click="showScheduleEditorDialog = false" />
         <Button label="Save Schedule" icon="pi pi-check" @click="saveSchedule" :loading="loading" />
       </template>
     </Dialog>

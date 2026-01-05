@@ -21,6 +21,14 @@ const createEmployee = async (employeeData, tenantId) => {
     throw new AppError('An employee with this email already exists', 400, 'EMPLOYEE_EXISTS');
   }
 
+  // Validate schedule if provided
+  if (schedule) {
+    const validation = Employee.validateSchedule(schedule);
+    if (!validation.valid) {
+      throw new AppError(validation.error, 400, 'INVALID_SCHEDULE');
+    }
+  }
+
   // Create employee with default schedule if not provided
   const employee = await Employee.create({
     tenantId,
@@ -106,12 +114,20 @@ const updateEmployee = async (employeeId, tenantId, updateData) => {
   }
 
   // Filter allowed update fields
-  const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'employeeType', 'status', 'hireDate', 'serviceIds', 'metadata'];
+  const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'employeeType', 'status', 'hireDate', 'serviceIds', 'metadata', 'schedule'];
   const filteredData = {};
-  
+
   for (const key of allowedFields) {
     if (updateData[key] !== undefined) {
       filteredData[key] = updateData[key];
+    }
+  }
+
+  // Validate schedule if being updated
+  if (filteredData.schedule) {
+    const validation = Employee.validateSchedule(filteredData.schedule);
+    if (!validation.valid) {
+      throw new AppError(validation.error, 400, 'INVALID_SCHEDULE');
     }
   }
 
@@ -181,9 +197,16 @@ const getEmployeeSchedule = async (employeeId, tenantId) => {
  */
 const updateEmployeeSchedule = async (employeeId, tenantId, schedule) => {
   const employee = await Employee.findOne({ where: { id: employeeId, tenantId } });
-  
+
   if (!employee) {
     throw new AppError('Employee not found', 404, 'EMPLOYEE_NOT_FOUND');
+  }
+
+  // Validate the new schedule
+  const mergedSchedule = { ...employee.schedule, ...schedule };
+  const validation = Employee.validateSchedule(mergedSchedule);
+  if (!validation.valid) {
+    throw new AppError(validation.error, 400, 'INVALID_SCHEDULE');
   }
 
   await employee.updateSchedule(schedule);

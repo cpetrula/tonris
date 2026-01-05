@@ -112,9 +112,10 @@ const checkSlotAvailability = async (employeeId, tenantId, startTime, endTime, e
 
 /**
  * Get employee working hours for a specific date
+ * Supports new blocks format: { enabled: boolean, blocks: [{ start, end }] }
  * @param {Object} employee - Employee object
  * @param {Date} date - Date to check
- * @returns {Object|null} - Working hours { start, end } or null if not working
+ * @returns {Array|null} - Array of working hour blocks [{ start, end }] or null if not working
  */
 const getEmployeeWorkingHours = (employee, date) => {
   if (!employee.schedule) {
@@ -128,14 +129,22 @@ const getEmployeeWorkingHours = (employee, date) => {
     return null;
   }
 
-  return {
-    start: schedule.start,
-    end: schedule.end,
-  };
+  // Handle new blocks format
+  if (Array.isArray(schedule.blocks) && schedule.blocks.length > 0) {
+    return schedule.blocks;
+  }
+
+  // Legacy format fallback (single start/end)
+  if (schedule.start && schedule.end) {
+    return [{ start: schedule.start, end: schedule.end }];
+  }
+
+  return null;
 };
 
 /**
  * Generate available time slots for an employee on a specific date
+ * Supports multiple time blocks per day (split shifts)
  * @param {string} employeeId - Employee ID
  * @param {string} tenantId - Tenant ID
  * @param {Date} date - Date to check
@@ -153,56 +162,62 @@ const getAvailableSlots = async (employeeId, tenantId, date, duration, slotInter
     throw new AppError('Employee not found or not active', 404, 'EMPLOYEE_NOT_FOUND');
   }
 
-  // Check if employee works on this day
-  const workingHours = getEmployeeWorkingHours(employee, date);
-  if (!workingHours) {
+  // Check if employee works on this day - now returns array of blocks
+  const workingBlocks = getEmployeeWorkingHours(employee, date);
+  if (!workingBlocks || workingBlocks.length === 0) {
     return []; // Employee doesn't work on this day
   }
 
   // Get existing appointments for this date
   const existingAppointments = await getEmployeeAppointmentsForDate(employeeId, tenantId, date);
 
-  // Generate potential slots
-  const slots = [];
-  const workStart = parseTimeToMinutes(workingHours.start);
-  const workEnd = parseTimeToMinutes(workingHours.end);
-
-  // Check if date is today and adjust start time if needed
+  // Check if date is today
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
-  let currentSlotStart = workStart;
+  const bufferMinutes = 15;
+  const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() + bufferMinutes : 0;
 
-  if (isToday) {
-    // Add a 15-minute buffer to prevent booking slots that may be in the past by submission time
-    const bufferMinutes = 15;
-    const currentMinutes = now.getHours() * 60 + now.getMinutes() + bufferMinutes;
-    // Round up to next slot interval
-    currentSlotStart = Math.max(workStart, Math.ceil(currentMinutes / slotInterval) * slotInterval);
-  }
+  // Generate slots for each working block
+  const slots = [];
 
-  while (currentSlotStart + duration <= workEnd) {
-    const slotStartDate = new Date(date);
-    slotStartDate.setHours(Math.floor(currentSlotStart / 60), currentSlotStart % 60, 0, 0);
-    
-    const slotEndDate = new Date(date);
-    slotEndDate.setHours(Math.floor((currentSlotStart + duration) / 60), (currentSlotStart + duration) % 60, 0, 0);
+  for (const block of workingBlocks) {
+    const workStart = parseTimeToMinutes(block.start);
+    const workEnd = parseTimeToMinutes(block.end);
 
-    // Check for conflicts with existing appointments
-    const hasConflict = existingAppointments.some(apt => 
-      doTimesOverlap(slotStartDate, slotEndDate, new Date(apt.startTime), new Date(apt.endTime))
-    );
-
-    if (!hasConflict) {
-      slots.push({
-        startTime: slotStartDate.toISOString(),
-        endTime: slotEndDate.toISOString(),
-        startTimeFormatted: `${String(Math.floor(currentSlotStart / 60)).padStart(2, '0')}:${String(currentSlotStart % 60).padStart(2, '0')}`,
-        endTimeFormatted: `${String(Math.floor((currentSlotStart + duration) / 60)).padStart(2, '0')}:${String((currentSlotStart + duration) % 60).padStart(2, '0')}`,
-      });
+    // Determine starting slot time
+    let currentSlotStart = workStart;
+    if (isToday) {
+      // Round up to next slot interval from current time
+      currentSlotStart = Math.max(workStart, Math.ceil(currentMinutes / slotInterval) * slotInterval);
     }
 
-    currentSlotStart += slotInterval;
+    while (currentSlotStart + duration <= workEnd) {
+      const slotStartDate = new Date(date);
+      slotStartDate.setHours(Math.floor(currentSlotStart / 60), currentSlotStart % 60, 0, 0);
+
+      const slotEndDate = new Date(date);
+      slotEndDate.setHours(Math.floor((currentSlotStart + duration) / 60), (currentSlotStart + duration) % 60, 0, 0);
+
+      // Check for conflicts with existing appointments
+      const hasConflict = existingAppointments.some(apt =>
+        doTimesOverlap(slotStartDate, slotEndDate, new Date(apt.startTime), new Date(apt.endTime))
+      );
+
+      if (!hasConflict) {
+        slots.push({
+          startTime: slotStartDate.toISOString(),
+          endTime: slotEndDate.toISOString(),
+          startTimeFormatted: `${String(Math.floor(currentSlotStart / 60)).padStart(2, '0')}:${String(currentSlotStart % 60).padStart(2, '0')}`,
+          endTimeFormatted: `${String(Math.floor((currentSlotStart + duration) / 60)).padStart(2, '0')}:${String((currentSlotStart + duration) % 60).padStart(2, '0')}`,
+        });
+      }
+
+      currentSlotStart += slotInterval;
+    }
   }
+
+  // Sort slots by start time (in case blocks aren't in order)
+  slots.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   return slots;
 };
