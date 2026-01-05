@@ -28,6 +28,14 @@ export interface Tenant {
   createdAt: string
 }
 
+export interface NotificationSettings {
+  emailNewAppointment: boolean
+  emailCancellation: boolean
+  emailDailyDigest: boolean
+  smsReminderEnabled: boolean
+  smsReminderHours: number
+}
+
 export interface TenantSettings {
   timezone: string
   language: string
@@ -56,6 +64,7 @@ export const useTenantStore = defineStore('tenant', () => {
   const currentTenant = ref<Tenant | null>(null)
   const tenants = ref<Tenant[]>([])
   const settings = ref<TenantSettings | null>(null)
+  const notificationSettings = ref<NotificationSettings | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -187,15 +196,49 @@ export const useTenantStore = defineStore('tenant', () => {
         '/api/tenant/business-hours',
         { businessHours }
       )
-      
+
       // Update settings with new business hours
       if (settings.value) {
         settings.value.businessHours = response.data.data.businessHours
       }
-      
+
       return true
     } catch (err: unknown) {
       error.value = handleApiError(err, 'Failed to update business hours')
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchNotificationSettings(): Promise<NotificationSettings | null> {
+    if (!currentTenant.value) return null
+
+    try {
+      const response = await api.get('/api/tenant/notifications')
+      notificationSettings.value = response.data.data.notificationSettings
+      return notificationSettings.value
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to fetch notification settings')
+      return null
+    }
+  }
+
+  async function updateNotificationSettings(newSettings: Partial<NotificationSettings>): Promise<boolean> {
+    if (!currentTenant.value) return false
+
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await api.patch(
+        '/api/tenant/notifications',
+        { notificationSettings: newSettings }
+      )
+      notificationSettings.value = response.data.data.notificationSettings
+      return true
+    } catch (err: unknown) {
+      error.value = handleApiError(err, 'Failed to update notification settings')
       return false
     } finally {
       loading.value = false
@@ -233,6 +276,7 @@ export const useTenantStore = defineStore('tenant', () => {
   function clearTenant(): void {
     currentTenant.value = null
     settings.value = null
+    notificationSettings.value = null
     tenants.value = []
   }
 
@@ -245,6 +289,7 @@ export const useTenantStore = defineStore('tenant', () => {
     currentTenant,
     tenants,
     settings,
+    notificationSettings,
     loading,
     error,
     // Getters
@@ -259,6 +304,8 @@ export const useTenantStore = defineStore('tenant', () => {
     updateSettings,
     fetchBusinessHours,
     updateBusinessHours,
+    fetchNotificationSettings,
+    updateNotificationSettings,
     updateTenant,
     clearTenant,
     clearError

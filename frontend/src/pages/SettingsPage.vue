@@ -109,14 +109,13 @@ const aiSettings = ref({
   followUpText: true
 })
 
-// Notification preferences
+// Notification preferences (matches backend NotificationSettings)
 const notifications = ref({
   emailNewAppointment: true,
   emailCancellation: true,
   emailDailyDigest: true,
-  smsNewAppointment: false,
-  smsCancellation: true,
-  smsReminder: true
+  smsReminderEnabled: true,
+  smsReminderHours: 24
 })
 
 const timeSlots = [
@@ -207,9 +206,7 @@ async function saveAISettings() {
 async function saveNotifications() {
   saving.value = true
   try {
-    // In a real app, save to API
-    // await api.patch(`/api/tenants/${tenantStore.tenantId}/notifications`, notifications.value)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await tenantStore.updateNotificationSettings(notifications.value)
     toast.add({ severity: 'success', summary: 'Success', detail: 'Notification preferences saved', life: 3000 })
   } catch {
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save preferences', life: 3000 })
@@ -269,6 +266,18 @@ onMounted(async () => {
     
     // Fetch voices
     await voiceStore.fetchVoices()
+
+    // Fetch notification settings
+    const notifSettings = await tenantStore.fetchNotificationSettings()
+    if (notifSettings) {
+      notifications.value = {
+        emailNewAppointment: notifSettings.emailNewAppointment ?? true,
+        emailCancellation: notifSettings.emailCancellation ?? true,
+        emailDailyDigest: notifSettings.emailDailyDigest ?? true,
+        smsReminderEnabled: notifSettings.smsReminderEnabled ?? true,
+        smsReminderHours: notifSettings.smsReminderHours ?? 24
+      }
+    }
   } catch (error) {
     console.error('Failed to load settings:', error)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load settings', life: 3000 })
@@ -466,40 +475,22 @@ onMounted(async () => {
           <template #content>
             <div class="space-y-6">
               <div>
-          
+                <h3 class="font-medium text-gray-900 mb-4">Email Notifications (Business Owner)</h3>
                 <div class="space-y-4">
-                   
                   <div class="flex items-center justify-between">
                     <div>
-                     
                       <p class="text-sm">Receive email when a new appointment is booked</p>
                     </div>
                     <InputSwitch v-model="notifications.emailNewAppointment" />
                   </div>
-                   <div class="flex items-center justify-between">
-                    <div>
-                    
-                      <p class="text-sm">Receive SMS when a new appointment is booked</p>
-                    </div>
-                    <InputSwitch v-model="notifications.smsNewAppointment" />
-                  </div>
                   <div class="flex items-center justify-between">
                     <div>
-                      
                       <p class="text-sm">Receive email when an appointment is cancelled</p>
                     </div>
                     <InputSwitch v-model="notifications.emailCancellation" />
                   </div>
-                   <div class="flex items-center justify-between">
-                    <div>
-                    
-                      <p class="text-sm">Receive SMS when an appointment is cancelled</p>
-                    </div>
-                    <InputSwitch v-model="notifications.smsCancellation" />
-                  </div>
                   <div class="flex items-center justify-between">
                     <div>
-                     
                       <p class="text-sm">Receive a daily summary email of activity</p>
                     </div>
                     <InputSwitch v-model="notifications.emailDailyDigest" />
@@ -507,37 +498,32 @@ onMounted(async () => {
                 </div>
               </div>
 
-              
-
               <div class="border-t border-gray-200 pt-6">
-                <h3 class="font-medium text-gray-900 mb-4">Automated Actions</h3>
-                
-                <div class="space-y-4">
-                  
-                    <div class="flex items-center justify-between">
-                    <div>
-                
-                      <p class="text-sm">Send SMS reminders to customers</p>
-                    </div>
-                    <InputSwitch v-model="notifications.smsReminder" />
-                  </div>
-                 
+                <h3 class="font-medium text-gray-900 mb-4">Customer Notifications</h3>
 
-                  <div v-if="aiSettings.appointmentReminders" class="ml-4 pl-4 border-l-2 border-gray-200">
-                    <label class="block text-sm font-medium  mb-1">Remind customers (hours before)</label>
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm">Send SMS reminders to customers before appointments</p>
+                    </div>
+                    <InputSwitch v-model="notifications.smsReminderEnabled" />
+                  </div>
+
+                  <div v-if="notifications.smsReminderEnabled" class="ml-4 pl-4 border-l-2 border-gray-200">
+                    <label class="block text-sm font-medium mb-1">Remind customers (hours before)</label>
                     <Dropdown
-                      v-model="aiSettings.reminderHours"
+                      v-model="notifications.smsReminderHours"
                       :options="[12, 24, 48]"
                       class="w-32"
                     />
                   </div>
 
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center justify-between opacity-50">
                     <div>
-            
                       <p class="text-sm">Text customers after appointments for feedback</p>
+                      <p class="text-xs text-gray-500">Coming soon</p>
                     </div>
-                    <InputSwitch v-model="aiSettings.followUpText" />
+                    <InputSwitch v-model="aiSettings.followUpText" disabled />
                   </div>
                 </div>
               </div>
