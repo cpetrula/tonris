@@ -15,6 +15,7 @@ const { aiRoutes } = require('../modules/ai-assistant');
 const { businessTypesRoutes } = require('../modules/business-types');
 const { adminRoutes } = require('../modules/admin');
 const { voiceRoutes } = require('../modules/voices');
+const { cronRoutes } = require('../modules/cron');
 
 module.exports = {
   healthRoutes,
@@ -31,4 +32,5 @@ module.exports = {
   businessTypesRoutes,
   adminRoutes,
   voiceRoutes,
+  cronRoutes,
 };
