@@ -535,16 +535,18 @@ function getEmployeeTypeLabel(value: string) {
           
           <div v-if="daySchedule.enabled" class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">Start Time</label>
+              <label :for="`${day}-start`" class="block text-sm font-medium text-gray-600 mb-1">Start Time</label>
               <InputText 
+                :id="`${day}-start`"
                 v-model="daySchedule.start" 
                 type="time" 
                 class="w-full"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">End Time</label>
+              <label :for="`${day}-end`" class="block text-sm font-medium text-gray-600 mb-1">End Time</label>
               <InputText 
+                :id="`${day}-end`"
                 v-model="daySchedule.end" 
                 type="time" 
                 class="w-full"
