@@ -11,7 +11,14 @@ import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
+import ToggleSwitch from 'primevue/toggleswitch'
 import api from '@/services/api'
+
+interface DaySchedule {
+  start: string
+  end: string
+  enabled: boolean
+}
 
 interface Employee {
   id: string
@@ -23,13 +30,13 @@ interface Employee {
   serviceIds: string[]
   status: 'active' | 'inactive'
   schedule: {
-    monday: string
-    tuesday: string
-    wednesday: string
-    thursday: string
-    friday: string
-    saturday: string
-    sunday: string
+    monday: DaySchedule
+    tuesday: DaySchedule
+    wednesday: DaySchedule
+    thursday: DaySchedule
+    friday: DaySchedule
+    saturday: DaySchedule
+    sunday: DaySchedule
   }
 }
 
@@ -49,8 +56,11 @@ const searchQuery = ref('')
 const showDialog = ref(false)
 const editMode = ref(false)
 const showScheduleDialog = ref(false)
+const showEditScheduleDialog = ref(false)
 const selectedEmployee = ref<Employee | null>(null)
+const editingSchedule = ref<Employee['schedule'] | null>(null)
 const error = ref('')
+const scheduleError = ref('')
 
 // Employee type options - both full-time and part-time map to 'employee' in the database
 // The distinction between full-time and part-time can be managed through employee schedules
@@ -70,13 +80,13 @@ const emptyEmployee: Employee = {
   serviceIds: [],
   status: 'active',
   schedule: {
-    monday: '9:00 AM - 5:00 PM',
-    tuesday: '9:00 AM - 5:00 PM',
-    wednesday: '9:00 AM - 5:00 PM',
-    thursday: '9:00 AM - 5:00 PM',
-    friday: '9:00 AM - 5:00 PM',
-    saturday: 'Off',
-    sunday: 'Off'
+    monday: { start: '09:00', end: '17:00', enabled: true },
+    tuesday: { start: '09:00', end: '17:00', enabled: true },
+    wednesday: { start: '09:00', end: '17:00', enabled: true },
+    thursday: { start: '09:00', end: '17:00', enabled: true },
+    friday: { start: '09:00', end: '17:00', enabled: true },
+    saturday: { start: '10:00', end: '14:00', enabled: false },
+    sunday: { start: '10:00', end: '14:00', enabled: false }
   }
 }
 
@@ -110,6 +120,44 @@ function openEditDialog(employee: Employee) {
 function openScheduleDialog(employee: Employee) {
   selectedEmployee.value = employee
   showScheduleDialog.value = true
+}
+
+function openEditScheduleDialog(employee: Employee) {
+  selectedEmployee.value = employee
+  editingSchedule.value = JSON.parse(JSON.stringify(employee.schedule)) // Deep clone
+  showScheduleDialog.value = false
+  showEditScheduleDialog.value = true
+  scheduleError.value = ''
+}
+
+async function saveSchedule() {
+  if (!selectedEmployee.value || !editingSchedule.value) return
+
+  loading.value = true
+  scheduleError.value = ''
+  
+  try {
+    await api.put(`/api/employees/${selectedEmployee.value.id}/schedule`, {
+      schedule: editingSchedule.value
+    })
+
+    // Refresh the employees list
+    await fetchEmployees()
+    showEditScheduleDialog.value = false
+    editingSchedule.value = null
+  } catch (err: any) {
+    console.error('Error saving schedule:', err)
+    scheduleError.value = err.response?.data?.error || 'Failed to save schedule'
+  } finally {
+    loading.value = false
+  }
+}
+
+function formatScheduleDisplay(daySchedule: DaySchedule): string {
+  if (!daySchedule.enabled) {
+    return 'Off'
+  }
+  return `${daySchedule.start} - ${daySchedule.end}`
 }
 
 async function saveEmployee() {
@@ -214,13 +262,13 @@ async function fetchEmployees() {
         serviceIds: emp.serviceIds || [],
         status: emp.status || 'active',
         schedule: emp.schedule || {
-          monday: 'Off',
-          tuesday: 'Off',
-          wednesday: 'Off',
-          thursday: 'Off',
-          friday: 'Off',
-          saturday: 'Off',
-          sunday: 'Off'
+          monday: { start: '09:00', end: '17:00', enabled: false },
+          tuesday: { start: '09:00', end: '17:00', enabled: false },
+          wednesday: { start: '09:00', end: '17:00', enabled: false },
+          thursday: { start: '09:00', end: '17:00', enabled: false },
+          friday: { start: '09:00', end: '17:00', enabled: false },
+          saturday: { start: '10:00', end: '14:00', enabled: false },
+          sunday: { start: '10:00', end: '14:00', enabled: false }
         }
       }))
     }
@@ -444,7 +492,7 @@ function getEmployeeTypeLabel(value: string) {
       </template>
     </Dialog>
 
-    <!-- Schedule Dialog -->
+    <!-- Schedule Dialog (View Only) -->
     <Dialog
       v-model:visible="showScheduleDialog"
       :header="`Schedule - ${selectedEmployee?.firstName} ${selectedEmployee?.lastName}`"
@@ -452,17 +500,63 @@ function getEmployeeTypeLabel(value: string) {
       :style="{ width: '500px' }"
     >
       <div v-if="selectedEmployee" class="space-y-3">
-        <div v-for="(_, day) in selectedEmployee.schedule" :key="day" class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+        <div v-for="(daySchedule, day) in selectedEmployee.schedule" :key="day" class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
           <span class="font-medium text-gray-700 capitalize">{{ day }}</span>
-          <span :class="selectedEmployee.schedule[day as keyof typeof selectedEmployee.schedule] === 'Off' ? 'text-gray-400' : 'text-gray-900'">
-            {{ selectedEmployee.schedule[day as keyof typeof selectedEmployee.schedule] }}
+          <span :class="!daySchedule.enabled ? 'text-gray-400' : 'text-gray-900'">
+            {{ formatScheduleDisplay(daySchedule) }}
           </span>
         </div>
       </div>
 
       <template #footer>
         <Button label="Close" text @click="showScheduleDialog = false" />
-        <Button label="Edit Schedule" icon="pi pi-pencil" @click="openEditDialog(selectedEmployee!)" />
+        <Button label="Edit Schedule" icon="pi pi-pencil" @click="openEditScheduleDialog(selectedEmployee!)" />
+      </template>
+    </Dialog>
+
+    <!-- Edit Schedule Dialog -->
+    <Dialog
+      v-model:visible="showEditScheduleDialog"
+      :header="`Edit Schedule - ${selectedEmployee?.firstName} ${selectedEmployee?.lastName}`"
+      :modal="true"
+      :style="{ width: '600px' }"
+    >
+      <Message v-if="scheduleError" severity="error" class="mb-4">{{ scheduleError }}</Message>
+
+      <div v-if="editingSchedule" class="space-y-4">
+        <div v-for="(daySchedule, day) in editingSchedule" :key="day" class="border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-base font-semibold text-gray-700 capitalize">{{ day }}</label>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">{{ daySchedule.enabled ? 'Working' : 'Off' }}</span>
+              <ToggleSwitch v-model="daySchedule.enabled" />
+            </div>
+          </div>
+          
+          <div v-if="daySchedule.enabled" class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">Start Time</label>
+              <InputText 
+                v-model="daySchedule.start" 
+                type="time" 
+                class="w-full"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">End Time</label>
+              <InputText 
+                v-model="daySchedule.end" 
+                type="time" 
+                class="w-full"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Cancel" text severity="secondary" @click="showEditScheduleDialog = false" />
+        <Button label="Save Schedule" icon="pi pi-check" @click="saveSchedule" :loading="loading" />
       </template>
     </Dialog>
   </div>
