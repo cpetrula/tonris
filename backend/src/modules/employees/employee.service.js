@@ -75,12 +75,6 @@ const getEmployees = async (tenantId, options = {}) => {
     order: [['firstName', 'ASC'], ['lastName', 'ASC']],
   });
 
-  // Debug: log first employee's schedule
-  if (employees.rows.length > 0) {
-    const firstEmp = employees.rows[0];
-    console.log('DEBUG - First employee schedule:', JSON.stringify(firstEmp.schedule));
-  }
-
   return {
     employees: employees.rows.map(emp => {
       const obj = emp.toSafeObject();
