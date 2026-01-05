@@ -57,7 +57,13 @@ const env = {
   
   // Admin Configuration
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '',
-  
+
+  // Resend Email Configuration
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+
+  // Cron Job Configuration
+  CRON_SECRET: process.env.CRON_SECRET || '',
+
   // Validation helper
   isProduction: () => env.NODE_ENV === 'production',
   isDevelopment: () => env.NODE_ENV === 'development',
