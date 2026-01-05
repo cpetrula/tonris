@@ -82,7 +82,18 @@ const getEmployees = async (tenantId, options = {}) => {
   }
 
   return {
-    employees: employees.rows.map(emp => emp.toSafeObject()),
+    employees: employees.rows.map(emp => {
+      const obj = emp.toSafeObject();
+      // Parse schedule if it's a string (MySQL JSON column issue)
+      if (typeof obj.schedule === 'string') {
+        try {
+          obj.schedule = JSON.parse(obj.schedule);
+        } catch (e) {
+          console.error('Failed to parse schedule:', e);
+        }
+      }
+      return obj;
+    }),
     total: employees.count,
     limit: parseInt(limit, 10),
     offset: parseInt(offset, 10),
@@ -97,12 +108,21 @@ const getEmployees = async (tenantId, options = {}) => {
  */
 const getEmployeeById = async (employeeId, tenantId) => {
   const employee = await Employee.findOne({ where: { id: employeeId, tenantId } });
-  
+
   if (!employee) {
     throw new AppError('Employee not found', 404, 'EMPLOYEE_NOT_FOUND');
   }
 
-  return employee.toSafeObject();
+  const obj = employee.toSafeObject();
+  // Parse schedule if it's a string (MySQL JSON column issue)
+  if (typeof obj.schedule === 'string') {
+    try {
+      obj.schedule = JSON.parse(obj.schedule);
+    } catch (e) {
+      console.error('Failed to parse schedule:', e);
+    }
+  }
+  return obj;
 };
 
 /**
@@ -151,7 +171,16 @@ const updateEmployee = async (employeeId, tenantId, updateData) => {
 
   logger.info(`Employee updated: ${employeeId} for tenant: ${tenantId}`);
 
-  return employee.toSafeObject();
+  const obj = employee.toSafeObject();
+  // Parse schedule if it's a string (MySQL JSON column issue)
+  if (typeof obj.schedule === 'string') {
+    try {
+      obj.schedule = JSON.parse(obj.schedule);
+    } catch (e) {
+      console.error('Failed to parse schedule:', e);
+    }
+  }
+  return obj;
 };
 
 /**
