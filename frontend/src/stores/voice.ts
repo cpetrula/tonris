@@ -45,6 +45,24 @@ export const useVoiceStore = defineStore('voice', () => {
     }
   }
 
+  async function testVoice(voiceId: string, text: string): Promise<Blob> {
+    try {
+      const response = await api.post(`/api/voices/${voiceId}/test`, 
+        { text },
+        { 
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      return response.data
+    } catch (err: unknown) {
+      const errorMessage = handleApiError(err, 'Failed to test voice')
+      throw new Error(errorMessage)
+    }
+  }
+
   function clearError(): void {
     error.value = null
   }
@@ -56,6 +74,7 @@ export const useVoiceStore = defineStore('voice', () => {
     error,
     // Actions
     fetchVoices,
+    testVoice,
     clearError
   }
 })
