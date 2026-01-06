@@ -148,11 +148,16 @@ const forgotPassword = async (email) => {
   // Send password reset email
   try {
     const resetUrl = `${env.FRONTEND_URL}/forgot-password?token=${resetToken}`;
-    await sendPasswordResetEmail(email, {
+    const emailResult = await sendPasswordResetEmail(email, {
       resetUrl,
       expiryHours: 1,
     });
-    logger.info(`Password reset email sent to: ${email}`);
+    
+    if (emailResult.success) {
+      logger.info(`Password reset email sent to: ${email}`);
+    } else {
+      logger.warn(`Password reset email failed for ${email}: ${emailResult.reason || emailResult.error || 'Unknown error'}`);
+    }
   } catch (error) {
     logger.error(`Failed to send password reset email to ${email}: ${error.message}`);
     // Don't throw error - continue and return success message for security

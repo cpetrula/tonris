@@ -256,6 +256,11 @@ const startServer = () => {
     logger.info(`Health check: http://localhost:${env.PORT}/health`);
     logger.info(`WebSocket media stream: ws://localhost:${env.PORT}/media-stream`);
 
+    // Check critical configuration
+    if (!env.RESEND_API_KEY) {
+      logger.warn('⚠️  RESEND_API_KEY not configured - email notifications (including password reset) will not be sent');
+    }
+
     // Initialize cron scheduler
     initScheduler();
   });

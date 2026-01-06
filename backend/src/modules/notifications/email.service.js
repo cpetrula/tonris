@@ -49,7 +49,7 @@ const sendEmail = async ({ to, subject, html, text, from = DEFAULT_FROM }) => {
   const client = getResendClient();
 
   if (!client) {
-    logger.info(`Email would be sent to ${to}: ${subject} (Resend not configured)`);
+    logger.warn(`Email NOT sent to ${to}: ${subject} (RESEND_API_KEY not configured)`);
     return { success: false, reason: 'RESEND_NOT_CONFIGURED' };
   }
 
