@@ -28,8 +28,7 @@ const getResendClient = () => {
 /**
  * Default from email address
  */
-// TODO: Change back to notifications@criton.ai once domain is verified in Resend
-const DEFAULT_FROM = 'CRITON.AI <onboarding@resend.dev>';
+const DEFAULT_FROM = 'CRITON.AI <notifications@criton.ai>';
 
 /**
  * Default password reset token expiry in hours
