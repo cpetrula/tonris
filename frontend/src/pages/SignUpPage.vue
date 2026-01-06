@@ -4,7 +4,7 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import InputMask from 'primevue/inputmask'
 import { RouterLink } from 'vue-router'
 import api from '@/services/api'
@@ -38,11 +38,11 @@ const confirmPassword = ref('')
 const phone = ref('')
 
 // Business types - will be populated from API
-interface DropdownOption {
+interface SelectOption {
   label: string
   value: string
 }
-const businessTypes = ref<Array<DropdownOption>>([])
+const businessTypes = ref<Array<SelectOption>>([])
 const loadingBusinessTypes = ref(false)
 
 const states = [
@@ -297,7 +297,7 @@ async function handleSubmit() {
             <label for="businessType" class="block text-sm font-medium text-gray-700 mb-1">
               Business Type *
             </label>
-            <Dropdown
+            <Select
               id="businessType"
               v-model="businessType"
               :options="businessTypes"
@@ -351,7 +351,7 @@ async function handleSubmit() {
               <label for="businessState" class="block text-sm font-medium text-gray-700 mb-1">
                 State
               </label>
-              <Dropdown
+              <Select
                 id="businessState"
                 v-model="businessState"
                 :options="states"

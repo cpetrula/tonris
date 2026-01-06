@@ -2,7 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Calendar from 'primevue/calendar'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -372,7 +372,7 @@ function calculateTopServices(appointments: any[]) {
         <p class="text-gray-600 mt-1">View call logs, statistics, and appointment analytics</p>
       </div>
       <div class="mt-4 sm:mt-0 flex gap-2">
-        <Dropdown
+        <Select
           v-model="periodFilter"
           :options="periodOptions"
           optionLabel="label"

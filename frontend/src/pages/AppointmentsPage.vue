@@ -5,7 +5,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import InputIcon from 'primevue/inputicon'
 import IconField from 'primevue/iconfield'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Calendar from 'primevue/calendar'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -486,7 +486,7 @@ async function fetchServices() {
                   />
                 </IconField>
               </div>
-              <Dropdown
+              <Select
                 v-model="statusFilter"
                 :options="statusOptions"
                 optionLabel="label"
@@ -630,7 +630,7 @@ async function fetchServices() {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-white-700 mb-1">Service *</label>
-            <Dropdown
+            <Select
               v-model="currentAppointment.service"
               :options="services"
               optionLabel="label"
@@ -641,7 +641,7 @@ async function fetchServices() {
           </div>
           <div>
             <label class="block text-sm font-medium text-white-700 mb-1">Employee *</label>
-            <Dropdown
+            <Select
               v-model="currentAppointment.employee"
               :options="employees"
               optionLabel="label"
@@ -659,7 +659,7 @@ async function fetchServices() {
           </div>
           <div>
             <label class="block text-sm font-medium text-white-700 mb-1">Time *</label>
-            <Dropdown
+            <Select
               v-model="currentAppointment.time"
               :options="timeSlots"
               placeholder="Select time"
@@ -670,7 +670,7 @@ async function fetchServices() {
 
         <div v-if="editMode">
           <label class="block text-sm font-medium text-white-700 mb-1">Status</label>
-          <Dropdown
+          <Select
             v-model="currentAppointment.status"
             :options="statusOptions.filter(s => s.value)"
             optionLabel="label"

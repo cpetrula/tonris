@@ -4,7 +4,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import InputSwitch from 'primevue/inputswitch'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
@@ -399,14 +399,14 @@ onMounted(async () => {
                 </div>
 
                 <div v-if="!hours.closed" class="flex items-center gap-2 flex-1">
-                  <Dropdown
+                  <Select
                     v-model="hours.open"
                     :options="timeSlots"
                     placeholder="Open"
                     class="w-32"
                   />
                   <span class="text-gray-500">to</span>
-                  <Dropdown
+                  <Select
                     v-model="hours.close"
                     :options="timeSlots"
                     placeholder="Close"
@@ -435,7 +435,7 @@ onMounted(async () => {
             <div class="space-y-6">
               <div>
                 <label class="block text-sm font-medium  mb-1">Voice Type</label>
-                <Dropdown
+                <Select
                   v-model="aiSettings.voiceId"
                   :options="voiceStore.voices"
                   optionLabel="label"
@@ -511,7 +511,7 @@ onMounted(async () => {
 
                   <div v-if="notifications.smsReminderEnabled" class="ml-4 pl-4 border-l-2 border-gray-200">
                     <label class="block text-sm font-medium mb-1">Remind customers (hours before)</label>
-                    <Dropdown
+                    <Select
                       v-model="notifications.smsReminderHours"
                       :options="[12, 24, 48]"
                       class="w-32"
