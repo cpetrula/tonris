@@ -119,6 +119,42 @@ backend/
 | RESEND_API_KEY           | Resend API key for email service   | -           |
 | FRONTEND_URL             | Frontend URL for password reset    | http://localhost:5173 |
 
+### Email Configuration (Resend)
+
+**⚠️ CRITICAL**: Email notifications, including password reset emails, require proper configuration.
+
+The application uses [Resend](https://resend.com) for sending emails. To enable email functionality:
+
+1. **Sign up for Resend**:
+   - Go to https://resend.com
+   - Create an account and verify your sending domain
+
+2. **Get API Key**:
+   - Create an API key in the Resend dashboard
+   - Set the `RESEND_API_KEY` environment variable
+
+3. **Configure Frontend URL**:
+   - Set `FRONTEND_URL` to your frontend application URL
+   - This is used in password reset email links
+
+**Required Environment Variables:**
+```bash
+RESEND_API_KEY=re_your_actual_api_key_here
+FRONTEND_URL=https://yourdomain.com
+```
+
+**What happens without configuration:**
+- Server logs a warning on startup: `⚠️ RESEND_API_KEY not configured`
+- Emails are NOT sent (password resets won't work)
+- Application continues to run normally
+
+**Testing email configuration:**
+1. Check server logs on startup for warnings
+2. Test forgot password flow
+3. Monitor logs for email send success/failure messages
+
+For detailed troubleshooting, see [FORGOT_PASSWORD_FIX.md](../FORGOT_PASSWORD_FIX.md).
+
 ### Twilio Configuration
 
 The application uses **two separate Twilio configurations**:
