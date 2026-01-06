@@ -239,7 +239,7 @@ const formatCancellationNotification = (appointment, service, businessName, reas
   const customerName = appointment.customerName || 'Customer';
   const reasonText = reason ? `\nReason: ${reason}` : '';
 
-  return `[${businessName}] Cancelled!\n${customerName} - ${serviceName}\n${dateStr} at ${timeStr}${reasonText}`;
+  return `[${businessName}] Appointment Cancelled!\n${customerName} - ${serviceName}\n${dateStr} at ${timeStr}${reasonText}`;
 };
 
 /**
