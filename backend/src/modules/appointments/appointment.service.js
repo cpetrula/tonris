@@ -340,6 +340,9 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
     appointment.notes = notes;
   }
 
+  // Track if this is a cancellation
+  const isCancellation = status === APPOINTMENT_STATUS.CANCELLED && appointment.status !== APPOINTMENT_STATUS.CANCELLED;
+
   if (status !== undefined) {
     appointment.status = status;
   }
@@ -359,6 +362,14 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
   await appointment.save();
 
   logger.info(`Appointment updated: ${appointmentId} for tenant: ${tenantId}`);
+
+  // Send cancellation notifications if status was changed to cancelled
+  if (isCancellation) {
+    sendCancellationNotifications(appointment, tenantId, 'Status changed to cancelled')
+      .catch(error => {
+        logger.error(`Failed to send cancellation notifications for appointment ${appointmentId}: ${error.message}`);
+      });
+  }
 
   return appointment.toSafeObject();
 };
@@ -624,6 +635,26 @@ const sendCancellationSmsNotification = async (appointment, tenantId, reason) =>
   } catch (error) {
     logger.error(`Error sending cancellation SMS for tenant ${tenantId}: ${error.message}`);
   }
+};
+
+/**
+ * Send all cancellation notifications (email + SMS)
+ * @param {Object} appointment - Appointment object
+ * @param {string} tenantId - Tenant ID
+ * @param {string} reason - Cancellation reason
+ */
+const sendCancellationNotifications = async (appointment, tenantId, reason) => {
+  // Send email notification
+  sendCancellationEmailNotification(appointment, tenantId, reason)
+    .catch(error => {
+      logger.error(`Failed to send cancellation email for appointment ${appointment.id}: ${error.message}`);
+    });
+
+  // Send SMS notification
+  sendCancellationSmsNotification(appointment, tenantId, reason)
+    .catch(error => {
+      logger.error(`Failed to send cancellation SMS for appointment ${appointment.id}: ${error.message}`);
+    });
 };
 
 module.exports = {
