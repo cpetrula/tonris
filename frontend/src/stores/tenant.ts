@@ -32,6 +32,8 @@ export interface NotificationSettings {
   emailNewAppointment: boolean
   emailCancellation: boolean
   emailDailyDigest: boolean
+  smsNewAppointment: boolean
+  smsCancellation: boolean
   smsReminderEnabled: boolean
   smsReminderHours: number
 }
