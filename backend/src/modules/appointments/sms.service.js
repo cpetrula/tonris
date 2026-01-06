@@ -343,6 +343,9 @@ const sendCancellationSmsNotification = async (appointment, service, tenant, rea
     // Format the message
     const messageBody = formatCancellationNotification(appointment, service, tenant.name, reason);
 
+    // Log the message body for debugging
+    logger.info(`Cancellation SMS message body: ${messageBody.substring(0, 50)}...`);
+
     // Send the SMS
     const result = await twilioService.sendSms({
       to: tenant.contactPhone,
