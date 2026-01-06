@@ -22,6 +22,7 @@ const voiceStore = useVoiceStore()
 const loading = ref(false)
 const saving = ref(false)
 const successMessage = ref('')
+const testingVoice = ref(false)
 
 // Business profile
 const businessProfile = ref({
@@ -212,6 +213,53 @@ async function saveNotifications() {
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save preferences', life: 3000 })
   } finally {
     saving.value = false
+  }
+}
+
+async function testGreetingMessage() {
+  if (!aiSettings.value.voiceId) {
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please select a voice first', life: 3000 })
+    return
+  }
+
+  if (!aiSettings.value.greeting || aiSettings.value.greeting.trim() === '') {
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please enter a greeting message', life: 3000 })
+    return
+  }
+
+  testingVoice.value = true
+  let audioUrl: string | null = null
+  
+  try {
+    const audioBlob = await voiceStore.testVoice(aiSettings.value.voiceId, aiSettings.value.greeting)
+    
+    // Create audio element and play
+    audioUrl = URL.createObjectURL(audioBlob)
+    const audio = new Audio(audioUrl)
+    
+    audio.onended = () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl)
+      }
+    }
+    
+    audio.onerror = () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl)
+      }
+      toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to play audio', life: 3000 })
+    }
+    
+    await audio.play()
+  } catch (error) {
+    console.error('Failed to test voice:', error)
+    // Clean up in case of error
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+    }
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to generate voice preview', life: 3000 })
+  } finally {
+    testingVoice.value = false
   }
 }
 
@@ -454,6 +502,18 @@ onMounted(async () => {
                 <label class="block text-sm font-medium  mb-1">Greeting Message</label>
                 <Textarea v-model="aiSettings.greeting" rows="2" class="w-full" />
                 <p class="text-sm mt-1">This message will be used to greet callers</p>
+                <div class="mt-2">
+                  <Button
+                    label="Test Voice"
+                    icon="pi pi-play"
+                    severity="secondary"
+                    outlined
+                    :loading="testingVoice"
+                    :disabled="!aiSettings.voiceId || !aiSettings.greeting"
+                    :aria-label="'Test how the greeting message sounds with the selected voice'"
+                    @click="testGreetingMessage"
+                  />
+                </div>
               </div>
 
               <div class="flex justify-end pt-4">

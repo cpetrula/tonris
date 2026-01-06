@@ -28,6 +28,19 @@ const standardLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const ttsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 TTS requests per window (more restrictive)
+  skip: () => isTestEnv,
+  message: {
+    success: false,
+    error: 'Too many TTS requests, please try again later',
+    code: 'RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * Protected routes - require authentication
  */
@@ -37,5 +50,8 @@ router.get('/', standardLimiter, authMiddleware, voiceController.getAllVoices);
 
 // GET /api/voices/:id - Get voice by ID
 router.get('/:id', standardLimiter, authMiddleware, voiceController.getVoiceById);
+
+// POST /api/voices/:id/test - Test voice with text-to-speech
+router.post('/:id/test', ttsLimiter, authMiddleware, voiceController.testVoice);
 
 module.exports = router;
