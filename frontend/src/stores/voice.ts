@@ -50,10 +50,7 @@ export const useVoiceStore = defineStore('voice', () => {
       const response = await api.post(`/api/voices/${voiceId}/test`, 
         { text },
         { 
-          responseType: 'blob',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          responseType: 'blob'
         }
       )
       return response.data
