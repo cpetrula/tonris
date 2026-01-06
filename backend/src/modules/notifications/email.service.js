@@ -31,6 +31,11 @@ const getResendClient = () => {
 const DEFAULT_FROM = 'CRITON.AI <notifications@criton.ai>';
 
 /**
+ * Default password reset token expiry in hours
+ */
+const DEFAULT_PASSWORD_RESET_EXPIRY_HOURS = 1;
+
+/**
  * Send an email using Resend
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email address
@@ -373,6 +378,86 @@ const sendDailyDigestEmail = async (toEmail, digestData) => {
 };
 
 /**
+ * Generate HTML for password reset email
+ * @param {Object} data - Reset data
+ * @param {string} data.resetUrl - Password reset URL
+ * @param {number} data.expiryHours - Hours until expiry (default 1)
+ * @returns {string} - HTML content
+ */
+const generatePasswordResetHtml = (data) => {
+  const expiryHours = data.expiryHours || DEFAULT_PASSWORD_RESET_EXPIRY_HOURS;
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 24px;">Reset Your Password</h1>
+  </div>
+
+  <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+    <p style="margin-top: 0;">Hi there,</p>
+    <p>We received a request to reset your password for your CRITON.AI account. If you didn't make this request, you can safely ignore this email.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${data.resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Reset Password</a>
+    </div>
+
+    <p style="color: #6b7280; font-size: 14px;">
+      This password reset link will expire in <strong>${expiryHours} hour${expiryHours > 1 ? 's' : ''}</strong> for security reasons.
+    </p>
+
+    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 12px; margin: 20px 0;">
+      <p style="margin: 0; color: #92400e; font-size: 14px;">
+        <strong>Security tip:</strong> If you didn't request this password reset, please secure your account immediately by changing your password.
+      </p>
+    </div>
+
+    <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+      If the button above doesn't work, copy and paste this link into your browser:
+    </p>
+    <p style="word-break: break-all; color: #667eea; font-size: 12px;">
+      ${data.resetUrl}
+    </p>
+
+    <p style="margin-top: 30px; margin-bottom: 0; color: #6b7280; font-size: 14px;">
+      This is an automated notification from CRITON.AI.
+    </p>
+  </div>
+
+  <div style="background: #f3f4f6; padding: 20px; border-radius: 0 0 10px 10px; text-align: center; color: #6b7280; font-size: 12px;">
+    <p style="margin: 0;">Powered by <a href="https://criton.ai" style="color: #667eea; text-decoration: none;">CRITON.AI</a></p>
+  </div>
+</body>
+</html>
+  `.trim();
+};
+
+/**
+ * Send password reset email to user
+ * @param {string} toEmail - User email
+ * @param {Object} resetData - Reset details
+ * @param {string} resetData.resetUrl - Password reset URL
+ * @param {number} resetData.expiryHours - Hours until expiry (default 1)
+ * @returns {Promise<Object>} - Send result
+ */
+const sendPasswordResetEmail = async (toEmail, resetData) => {
+  const html = generatePasswordResetHtml(resetData);
+  const subject = 'Reset Your CRITON.AI Password';
+
+  return sendEmail({
+    to: toEmail,
+    subject,
+    html,
+  });
+};
+
+/**
  * Check if email service is configured
  * @returns {boolean} - True if Resend is configured
  */
@@ -385,8 +470,10 @@ module.exports = {
   sendNewAppointmentEmail,
   sendCancellationEmail,
   sendDailyDigestEmail,
+  sendPasswordResetEmail,
   isEmailServiceConfigured,
   generateNewAppointmentHtml,
   generateCancellationHtml,
   generateDailyDigestHtml,
+  generatePasswordResetHtml,
 };

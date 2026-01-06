@@ -116,6 +116,8 @@ backend/
 | LOG_LEVEL                | Logging level                      | info        |
 | DEFAULT_TENANT_ID        | Default tenant identifier          | default     |
 | ADMIN_PASSWORD           | Admin API password protection      | -           |
+| RESEND_API_KEY           | Resend API key for email service   | -           |
+| FRONTEND_URL             | Frontend URL for password reset    | http://localhost:5173 |
 
 ### Twilio Configuration
 

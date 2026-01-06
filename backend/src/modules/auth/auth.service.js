@@ -8,6 +8,8 @@ const { generateTokenPair, verifyToken } = require('./jwt.utils');
 const twoFactorUtils = require('./2fa.utils');
 const logger = require('../../utils/logger');
 const { AppError } = require('../../middleware/errorHandler');
+const { sendPasswordResetEmail } = require('../notifications/email.service');
+const env = require('../../config/env');
 
 /**
  * Register a new user
@@ -143,8 +145,19 @@ const forgotPassword = async (email, tenantId) => {
 
   logger.info(`Password reset token generated for: ${email}`);
 
-  // In production, send email with reset link
-  // For now, return token (would not be exposed in production)
+  // Send password reset email
+  try {
+    const resetUrl = `${env.FRONTEND_URL}/forgot-password?token=${resetToken}`;
+    await sendPasswordResetEmail(email, {
+      resetUrl,
+      expiryHours: 1,
+    });
+    logger.info(`Password reset email sent to: ${email}`);
+  } catch (error) {
+    logger.error(`Failed to send password reset email to ${email}: ${error.message}`);
+    // Don't throw error - continue and return success message for security
+  }
+
   return {
     message: 'If the email exists, a password reset link will be sent',
     // Only include resetToken in development for testing
