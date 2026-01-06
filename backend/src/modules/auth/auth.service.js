@@ -119,11 +119,11 @@ const login = async ({ email, password, twoFactorCode }) => {
 /**
  * Initiate password reset
  * @param {string} email - User email
- * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Object>} - Reset token info
  */
-const forgotPassword = async (email, tenantId) => {
-  const user = await User.findOne({ where: { email, tenantId } });
+const forgotPassword = async (email) => {
+  // Find user by email (email is globally unique across all tenants)
+  const user = await User.findOne({ where: { email } });
   
   // Don't reveal if user exists or not
   if (!user) {
@@ -169,17 +169,16 @@ const forgotPassword = async (email, tenantId) => {
  * Reset password with token
  * @param {string} token - Reset token
  * @param {string} newPassword - New password
- * @param {string} tenantId - Tenant identifier
  * @returns {Promise<Object>} - Success message
  */
-const resetPassword = async (token, newPassword, tenantId) => {
+const resetPassword = async (token, newPassword) => {
   // Hash the token to compare with stored hash
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
+  // Find user by reset token (globally - email is unique across tenants)
   const user = await User.findOne({
     where: {
       passwordResetToken: hashedToken,
-      tenantId,
     },
   });
 
