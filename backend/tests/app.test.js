@@ -140,5 +140,14 @@ describe('CRITON.AI Backend', () => {
       expect(response.headers['x-content-type-options']).toBe('nosniff');
       expect(response.headers['x-frame-options']).toBe('SAMEORIGIN');
     });
+
+    it('should allow blob URLs for media in CSP', async () => {
+      const response = await request(app).get('/health');
+      
+      const csp = response.headers['content-security-policy'];
+      expect(csp).toBeDefined();
+      expect(csp).toContain('media-src');
+      expect(csp).toContain('blob:');
+    });
   });
 });
