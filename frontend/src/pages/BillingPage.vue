@@ -327,8 +327,8 @@ onMounted(async () => {
 
           <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <div>
-              <h3 class="text-2xl font-bold text-gray-900">Professional Plan</h3>
-              <p class="text-gray-500">
+              <h3 class="text-2xl font-bold text-white">Professional Plan</h3>
+              <p class="text-gray-400">
                 ${{ subscriptionPrice }}/month
               </p>
             </div>
@@ -343,27 +343,27 @@ onMounted(async () => {
           <div class="border-t border-gray-200 pt-4">
             <h4 class="font-medium text-gray-900 mb-3">Plan Features</h4>
             <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <li class="flex items-center text-gray-600">
+              <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>
                 Unlimited calls
               </li>
-              <li class="flex items-center text-gray-600">
+              <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>
                 24/7 AI answering
               </li>
-              <li class="flex items-center text-gray-600">
+              <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>
                 Appointment booking
               </li>
-              <li class="flex items-center text-gray-600">
+              <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>
                 Calendar integration
               </li>
-              <li class="flex items-center text-gray-600">
+              <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>
                 Email notifications
               </li>
-              <li class="flex items-center text-gray-600">
+              <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>
                 Basic analytics
               </li>
@@ -387,17 +387,17 @@ onMounted(async () => {
         <template #content>
           <div v-if="isTrialing" class="text-center py-4">
             <i class="pi pi-credit-card text-4xl text-gray-300 mb-3"></i>
-            <p class="text-sm text-gray-600 mb-4">
+            <p class="text-sm text-gray-300 mb-4">
               No payment method on file. Add one before your trial ends.
             </p>
           </div>
           <div v-else-if="hasActiveSubscription" class="text-center py-4">
             <i class="pi pi-credit-card text-4xl text-green-500 mb-3"></i>
-            <p class="text-sm text-gray-600 mb-4">
+            <p class="text-sm text-gray-300 mb-4">
               Payment method is on file and managed through Stripe.
             </p>
           </div>
-          <div v-else class="text-center py-4 text-gray-500">
+          <div v-else class="text-center py-4 text-gray-300">
             No payment method on file
           </div>
           <Button

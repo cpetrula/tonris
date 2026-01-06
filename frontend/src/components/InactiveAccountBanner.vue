@@ -77,9 +77,9 @@ function goToBilling() {
       class="shadow-md"
     >
       <div class="flex items-center justify-between w-full">
-        <div class="flex items-center gap-3">
+        <div class="flex gap-3">
           <i class="pi pi-info-circle text-2xl"></i>
-          <div>
+          <div class="ml-3">
             <p class="font-bold text-lg">
               {{ trialDaysRemaining }} Day{{ trialDaysRemaining > 1 ? 's' : '' }} Left in Your Free Trial
             </p>
@@ -93,6 +93,7 @@ function goToBilling() {
           icon="pi pi-credit-card"
           severity="warning"
           @click="goToBilling"
+          class="ml-3"
         />
       </div>
     </Message>
