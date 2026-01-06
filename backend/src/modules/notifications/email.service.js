@@ -31,6 +31,11 @@ const getResendClient = () => {
 const DEFAULT_FROM = 'CRITON.AI <notifications@criton.ai>';
 
 /**
+ * Default password reset token expiry in hours
+ */
+const DEFAULT_PASSWORD_RESET_EXPIRY_HOURS = 1;
+
+/**
  * Send an email using Resend
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email address
@@ -376,11 +381,11 @@ const sendDailyDigestEmail = async (toEmail, digestData) => {
  * Generate HTML for password reset email
  * @param {Object} data - Reset data
  * @param {string} data.resetUrl - Password reset URL
- * @param {string} data.expiryHours - Hours until expiry (default 1)
+ * @param {number} data.expiryHours - Hours until expiry (default 1)
  * @returns {string} - HTML content
  */
 const generatePasswordResetHtml = (data) => {
-  const expiryHours = data.expiryHours || 1;
+  const expiryHours = data.expiryHours || DEFAULT_PASSWORD_RESET_EXPIRY_HOURS;
   
   return `
 <!DOCTYPE html>
@@ -438,7 +443,7 @@ const generatePasswordResetHtml = (data) => {
  * @param {string} toEmail - User email
  * @param {Object} resetData - Reset details
  * @param {string} resetData.resetUrl - Password reset URL
- * @param {string} resetData.expiryHours - Hours until expiry (default 1)
+ * @param {number} resetData.expiryHours - Hours until expiry (default 1)
  * @returns {Promise<Object>} - Send result
  */
 const sendPasswordResetEmail = async (toEmail, resetData) => {
