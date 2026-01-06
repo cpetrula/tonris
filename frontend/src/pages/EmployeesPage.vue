@@ -606,7 +606,7 @@ function getEmployeeTypeLabel(value: string) {
       <div v-if="selectedEmployee" class="space-y-3">
         <div v-for="day in days" :key="day" class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
           <span class="font-medium capitalize">{{ day }}</span>
-          <span :class="getScheduleSummary(selectedEmployee.schedule)[day] === 'Off' ? 'text-gray-200' : 'text-white'">
+          <span :class="getScheduleSummary(selectedEmployee.schedule)[day] === 'Off' ? 'text-gray-400' : 'text-gray-800'">
             {{ getScheduleSummary(selectedEmployee.schedule)[day] }}
           </span>
         </div>
