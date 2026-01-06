@@ -38,6 +38,9 @@ const env = {
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
   APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
   
+  // Frontend Configuration
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+  
   // Twilio SMS Configuration
   TWILIO_SMS_ACCOUNT_SID: process.env.TWILIO_SMS_ACCOUNT_SID || '',
   TWILIO_SMS_AUTH_TOKEN: process.env.TWILIO_SMS_AUTH_TOKEN || '',

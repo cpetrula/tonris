@@ -63,6 +63,17 @@ jest.mock('../src/modules/tenants/tenant.model', () => ({
   },
 }));
 
+// Mock email service
+const mockSendPasswordResetEmail = jest.fn().mockResolvedValue({ success: true });
+jest.mock('../src/modules/notifications/email.service', () => ({
+  sendPasswordResetEmail: mockSendPasswordResetEmail,
+  sendEmail: jest.fn().mockResolvedValue({ success: true }),
+  sendNewAppointmentEmail: jest.fn().mockResolvedValue({ success: true }),
+  sendCancellationEmail: jest.fn().mockResolvedValue({ success: true }),
+  sendDailyDigestEmail: jest.fn().mockResolvedValue({ success: true }),
+  isEmailServiceConfigured: jest.fn().mockReturnValue(true),
+}));
+
 // Now require the app AFTER the mocks are in place
 const { app } = require('../src/app');
 const { User } = require('../src/models');
@@ -77,6 +88,8 @@ describe('Authentication Module', () => {
       id: 'tenant-uuid-123',
       tenantId: 'default',
     });
+    // Reset email mock
+    mockSendPasswordResetEmail.mockClear();
   });
 
   describe('JWT Utilities', () => {
@@ -417,6 +430,7 @@ describe('Authentication Module', () => {
           update: jest.fn().mockResolvedValue(true),
         };
         User.findOne.mockResolvedValue(mockUser);
+        mockSendPasswordResetEmail.mockResolvedValue({ success: true });
         
         const response = await request(app)
           .post('/api/auth/forgot-password')
@@ -424,6 +438,13 @@ describe('Authentication Module', () => {
         
         expect(response.status).toBe(200);
         expect(mockUser.update).toHaveBeenCalled();
+        expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(
+          'test@example.com',
+          expect.objectContaining({
+            resetUrl: expect.stringContaining('forgot-password?token='),
+            expiryHours: 1,
+          })
+        );
       });
     });
 
