@@ -106,8 +106,7 @@ const forgotPassword = async (req, res, next) => {
       });
     }
 
-    const tenantUUID = await getTenantUUID(req.tenantId);
-    const result = await authService.forgotPassword(email, tenantUUID);
+    const result = await authService.forgotPassword(email);
 
     res.status(200).json({
       success: true,
@@ -143,8 +142,7 @@ const resetPassword = async (req, res, next) => {
       });
     }
 
-    const tenantUUID = await getTenantUUID(req.tenantId);
-    const result = await authService.resetPassword(token, password, tenantUUID);
+    const result = await authService.resetPassword(token, password);
 
     res.status(200).json({
       success: true,
