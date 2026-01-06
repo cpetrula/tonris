@@ -129,7 +129,7 @@ const createAppointment = async (appointmentData, tenantId) => {
 
   logger.info(`New appointment created: ${appointment.id} for tenant: ${tenantId}`);
 
-  // Send SMS confirmation asynchronously (don't wait for it to complete)
+  // Send SMS confirmation to customer asynchronously (don't wait for it to complete)
   smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId)
     .catch(error => {
       logger.error(`Failed to send SMS for appointment ${appointment.id}: ${error.message}`);
@@ -139,6 +139,12 @@ const createAppointment = async (appointmentData, tenantId) => {
   sendNewAppointmentEmailNotification(appointment, employee, service, tenantId)
     .catch(error => {
       logger.error(`Failed to send email for appointment ${appointment.id}: ${error.message}`);
+    });
+
+  // Send SMS notification to business owner asynchronously
+  sendNewAppointmentSmsNotification(appointment, employee, service, tenantId)
+    .catch(error => {
+      logger.error(`Failed to send SMS notification for appointment ${appointment.id}: ${error.message}`);
     });
 
   return appointment.toSafeObject();
@@ -400,6 +406,12 @@ const cancelAppointment = async (appointmentId, tenantId, reason, notes = null) 
       logger.error(`Failed to send cancellation email for appointment ${appointmentId}: ${error.message}`);
     });
 
+  // Send cancellation SMS notification asynchronously
+  sendCancellationSmsNotification(appointment, tenantId, reason)
+    .catch(error => {
+      logger.error(`Failed to send cancellation SMS for appointment ${appointmentId}: ${error.message}`);
+    });
+
   return appointment.toSafeObject();
 };
 
@@ -563,6 +575,54 @@ const sendCancellationEmailNotification = async (appointment, tenantId, reason) 
     }
   } catch (error) {
     logger.error(`Error sending cancellation email for tenant ${tenantId}: ${error.message}`);
+  }
+};
+
+/**
+ * Send SMS notification to business owner for new appointment
+ * @param {Object} appointment - Appointment object
+ * @param {Object} employee - Employee object
+ * @param {Object} service - Service object
+ * @param {string} tenantId - Tenant ID
+ */
+const sendNewAppointmentSmsNotification = async (appointment, employee, service, tenantId) => {
+  try {
+    // Fetch tenant with notification settings
+    const tenant = await Tenant.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      logger.warn(`Cannot send SMS notification: Tenant ${tenantId} not found`);
+      return;
+    }
+
+    // Delegate to SMS service
+    await smsService.sendNewAppointmentSmsNotification(appointment, employee, service, tenant);
+  } catch (error) {
+    logger.error(`Error sending new appointment SMS for tenant ${tenantId}: ${error.message}`);
+  }
+};
+
+/**
+ * Send SMS notification to business owner for appointment cancellation
+ * @param {Object} appointment - Appointment object
+ * @param {string} tenantId - Tenant ID
+ * @param {string} reason - Cancellation reason
+ */
+const sendCancellationSmsNotification = async (appointment, tenantId, reason) => {
+  try {
+    // Fetch tenant with notification settings
+    const tenant = await Tenant.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      logger.warn(`Cannot send cancellation SMS: Tenant ${tenantId} not found`);
+      return;
+    }
+
+    // Get service name
+    const service = await Service.findOne({ where: { id: appointment.serviceId } });
+
+    // Delegate to SMS service
+    await smsService.sendCancellationSmsNotification(appointment, service, tenant, reason);
+  } catch (error) {
+    logger.error(`Error sending cancellation SMS for tenant ${tenantId}: ${error.message}`);
   }
 };
 

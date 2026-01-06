@@ -186,10 +186,186 @@ const sendAppointmentReminderSms = async (appointment, employee, service, busine
   }
 };
 
+/**
+ * Format new appointment notification for business owner
+ * @param {Object} appointment - Appointment data
+ * @param {Object} employee - Employee data
+ * @param {Object} service - Service data
+ * @param {string} businessName - Business name
+ * @returns {string} - Formatted SMS message
+ */
+const formatNewAppointmentNotification = (appointment, employee, service, businessName) => {
+  const appointmentDate = new Date(appointment.startTime);
+  const dateStr = appointmentDate.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  const timeStr = appointmentDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const employeeName = employee ? `${employee.firstName} ${employee.lastName}` : 'Staff';
+  const serviceName = service ? service.name : 'Service';
+  const customerName = appointment.customerName || 'Customer';
+
+  return `[${businessName}] New Booking!\n${customerName} - ${serviceName}\nWith: ${employeeName}\n${dateStr} at ${timeStr}`;
+};
+
+/**
+ * Format cancellation notification for business owner
+ * @param {Object} appointment - Appointment data
+ * @param {Object} service - Service data
+ * @param {string} businessName - Business name
+ * @param {string} reason - Cancellation reason
+ * @returns {string} - Formatted SMS message
+ */
+const formatCancellationNotification = (appointment, service, businessName, reason) => {
+  const appointmentDate = new Date(appointment.startTime);
+  const dateStr = appointmentDate.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  const timeStr = appointmentDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const serviceName = service ? service.name : 'Service';
+  const customerName = appointment.customerName || 'Customer';
+  const reasonText = reason ? `\nReason: ${reason}` : '';
+
+  return `[${businessName}] Cancelled!\n${customerName} - ${serviceName}\n${dateStr} at ${timeStr}${reasonText}`;
+};
+
+/**
+ * Send SMS notification to business owner for new appointment
+ * @param {Object} appointment - Appointment data
+ * @param {Object} employee - Employee data
+ * @param {Object} service - Service data
+ * @param {Object} tenant - Tenant data with contactPhone and notificationSettings
+ * @returns {Promise<Object|null>} - SMS send result or null if not sent
+ */
+const sendNewAppointmentSmsNotification = async (appointment, employee, service, tenant) => {
+  // Check if SMS is configured
+  if (!env.TWILIO_SMS_PHONE_NUMBER) {
+    logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
+    return null;
+  }
+
+  // Check if tenant has a contact phone
+  if (!tenant.contactPhone) {
+    logger.debug(`No contact phone for tenant ${tenant.id}, skipping SMS notification`);
+    return null;
+  }
+
+  // Check notification settings
+  let notificationSettings = tenant.notificationSettings;
+  if (typeof notificationSettings === 'string') {
+    try {
+      notificationSettings = JSON.parse(notificationSettings);
+    } catch (e) {
+      notificationSettings = {};
+    }
+  }
+
+  // Default to true if not set
+  const smsNewAppointment = notificationSettings?.smsNewAppointment !== false;
+
+  if (!smsNewAppointment) {
+    logger.debug(`SMS notification for new appointments is disabled for tenant ${tenant.id}`);
+    return null;
+  }
+
+  try {
+    // Format the message
+    const messageBody = formatNewAppointmentNotification(appointment, employee, service, tenant.name);
+
+    // Send the SMS
+    const result = await twilioService.sendSms({
+      to: tenant.contactPhone,
+      from: env.TWILIO_SMS_PHONE_NUMBER,
+      body: messageBody,
+    });
+
+    logger.info(`New appointment SMS notification sent to business owner ${tenant.contactPhone} for appointment ${appointment.id}`);
+    return result;
+  } catch (error) {
+    logger.error(`Failed to send new appointment SMS notification to business owner: ${error.message}`);
+    return null;
+  }
+};
+
+/**
+ * Send SMS notification to business owner for appointment cancellation
+ * @param {Object} appointment - Appointment data
+ * @param {Object} service - Service data
+ * @param {Object} tenant - Tenant data with contactPhone and notificationSettings
+ * @param {string} reason - Cancellation reason
+ * @returns {Promise<Object|null>} - SMS send result or null if not sent
+ */
+const sendCancellationSmsNotification = async (appointment, service, tenant, reason) => {
+  // Check if SMS is configured
+  if (!env.TWILIO_SMS_PHONE_NUMBER) {
+    logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
+    return null;
+  }
+
+  // Check if tenant has a contact phone
+  if (!tenant.contactPhone) {
+    logger.debug(`No contact phone for tenant ${tenant.id}, skipping SMS notification`);
+    return null;
+  }
+
+  // Check notification settings
+  let notificationSettings = tenant.notificationSettings;
+  if (typeof notificationSettings === 'string') {
+    try {
+      notificationSettings = JSON.parse(notificationSettings);
+    } catch (e) {
+      notificationSettings = {};
+    }
+  }
+
+  // Default to true if not set
+  const smsCancellation = notificationSettings?.smsCancellation !== false;
+
+  if (!smsCancellation) {
+    logger.debug(`SMS notification for cancellations is disabled for tenant ${tenant.id}`);
+    return null;
+  }
+
+  try {
+    // Format the message
+    const messageBody = formatCancellationNotification(appointment, service, tenant.name, reason);
+
+    // Send the SMS
+    const result = await twilioService.sendSms({
+      to: tenant.contactPhone,
+      from: env.TWILIO_SMS_PHONE_NUMBER,
+      body: messageBody,
+    });
+
+    logger.info(`Cancellation SMS notification sent to business owner ${tenant.contactPhone} for appointment ${appointment.id}`);
+    return result;
+  } catch (error) {
+    logger.error(`Failed to send cancellation SMS notification to business owner: ${error.message}`);
+    return null;
+  }
+};
+
 module.exports = {
   sendAppointmentConfirmationSms,
   sendAppointmentReminderSms,
+  sendNewAppointmentSmsNotification,
+  sendCancellationSmsNotification,
   formatAppointmentSummary,
   formatReminderMessage,
+  formatNewAppointmentNotification,
+  formatCancellationNotification,
   isUserOptedInForSms,
 };

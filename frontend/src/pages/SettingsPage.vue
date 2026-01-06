@@ -115,6 +115,8 @@ const notifications = ref({
   emailNewAppointment: true,
   emailCancellation: true,
   emailDailyDigest: true,
+  smsNewAppointment: true,
+  smsCancellation: true,
   smsReminderEnabled: true,
   smsReminderHours: 24
 })
@@ -322,6 +324,8 @@ onMounted(async () => {
         emailNewAppointment: notifSettings.emailNewAppointment ?? true,
         emailCancellation: notifSettings.emailCancellation ?? true,
         emailDailyDigest: notifSettings.emailDailyDigest ?? true,
+        smsNewAppointment: notifSettings.smsNewAppointment ?? true,
+        smsCancellation: notifSettings.smsCancellation ?? true,
         smsReminderEnabled: notifSettings.smsReminderEnabled ?? true,
         smsReminderHours: notifSettings.smsReminderHours ?? 24
       }
@@ -535,25 +539,57 @@ onMounted(async () => {
           <template #content>
             <div class="space-y-6">
               <div>
-                <h3 class="font-medium text-gray-900 mb-4">Email Notifications (Business Owner)</h3>
-                <div class="space-y-4">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="text-sm">Receive email when a new appointment is booked</p>
+                <h3 class="font-medium text-gray-900 mb-4">Business Owner Notifications</h3>
+                <p class="text-sm text-gray-500 mb-4">Choose how you want to be notified about new bookings and cancellations.</p>
+
+                <!-- New Appointment Notifications -->
+                <div class="mb-6">
+                  <h4 class="text-sm font-medium text-gray-700 mb-3">New Appointment</h4>
+                  <div class="space-y-3 ml-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm">Email notification</p>
+                      </div>
+                      <InputSwitch v-model="notifications.emailNewAppointment" />
                     </div>
-                    <InputSwitch v-model="notifications.emailNewAppointment" />
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm">SMS notification</p>
+                      </div>
+                      <InputSwitch v-model="notifications.smsNewAppointment" />
+                    </div>
                   </div>
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="text-sm">Receive email when an appointment is cancelled</p>
+                </div>
+
+                <!-- Cancellation Notifications -->
+                <div class="mb-6">
+                  <h4 class="text-sm font-medium text-gray-700 mb-3">Appointment Cancelled</h4>
+                  <div class="space-y-3 ml-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm">Email notification</p>
+                      </div>
+                      <InputSwitch v-model="notifications.emailCancellation" />
                     </div>
-                    <InputSwitch v-model="notifications.emailCancellation" />
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm">SMS notification</p>
+                      </div>
+                      <InputSwitch v-model="notifications.smsCancellation" />
+                    </div>
                   </div>
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="text-sm">Receive a daily summary email of activity</p>
+                </div>
+
+                <!-- Daily Digest -->
+                <div>
+                  <h4 class="text-sm font-medium text-gray-700 mb-3">Daily Summary</h4>
+                  <div class="space-y-3 ml-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm">Receive a daily summary email of activity</p>
+                      </div>
+                      <InputSwitch v-model="notifications.emailDailyDigest" />
                     </div>
-                    <InputSwitch v-model="notifications.emailDailyDigest" />
                   </div>
                 </div>
               </div>

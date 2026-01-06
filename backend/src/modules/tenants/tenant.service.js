@@ -399,7 +399,7 @@ const updateNotificationSettings = async (id, notificationSettings) => {
   }
 
   // Validate allowed fields
-  const allowedFields = ['emailNewAppointment', 'emailCancellation', 'emailDailyDigest', 'smsReminderEnabled', 'smsReminderHours'];
+  const allowedFields = ['emailNewAppointment', 'emailCancellation', 'emailDailyDigest', 'smsNewAppointment', 'smsCancellation', 'smsReminderEnabled', 'smsReminderHours'];
   const filteredSettings = {};
 
   for (const key of allowedFields) {

@@ -154,6 +154,8 @@ const Tenant = sequelize.define('Tenant', {
       emailNewAppointment: true,
       emailCancellation: true,
       emailDailyDigest: true,
+      smsNewAppointment: true,
+      smsCancellation: true,
       smsReminderEnabled: true,
       smsReminderHours: 24,
     },
