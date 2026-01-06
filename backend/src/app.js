@@ -31,7 +31,15 @@ const { initScheduler } = require('./modules/cron/scheduler');
 const app = express();
 
 // Security middleware
-app.use(helmet());
+// Configure helmet with custom CSP to allow blob URLs for media playback
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'media-src': ["'self'", 'blob:'],
+    },
+  },
+}));
 app.use(cors());
 
 // Rate limiter for webhooks (more lenient than user-facing endpoints)
