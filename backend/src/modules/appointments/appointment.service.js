@@ -504,10 +504,11 @@ const sendNewAppointmentEmailNotification = async (appointment, employee, servic
       return;
     }
 
-    // Format date and time for email
+    // Format date and time for email (use tenant timezone, default to PST)
+    const timezone = 'America/Los_Angeles';
     const appointmentDate = new Date(appointment.startTime);
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timezone };
+    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: timezone };
     const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions);
     const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions);
 
@@ -593,10 +594,11 @@ const sendCancellationEmailNotification = async (appointment, tenantId, reason) 
     const service = await Service.findOne({ where: { id: appointment.serviceId } });
     const serviceName = service?.name || 'Unknown Service';
 
-    // Format date and time for email
+    // Format date and time for email (use tenant timezone, default to PST)
+    const timezone = 'America/Los_Angeles';
     const appointmentDate = new Date(appointment.startTime);
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: timezone };
+    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: timezone };
     const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions);
     const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions);
 

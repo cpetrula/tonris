@@ -14,18 +14,20 @@ const logger = require('../../utils/logger');
  * @param {Object} service - Service data
  * @returns {string} - Formatted SMS message
  */
-const formatAppointmentSummary = (appointment, employee, service) => {
+const formatAppointmentSummary = (appointment, employee, service, timezone = 'America/Los_Angeles') => {
   const appointmentDate = new Date(appointment.startTime);
   const dateStr = appointmentDate.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: timezone,
   });
   const timeStr = appointmentDate.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: timezone,
   });
 
   const employeeName = employee ? `${employee.firstName} ${employee.lastName}` : 'our team';
@@ -117,17 +119,19 @@ const sendAppointmentConfirmationSms = async (appointment, employee, service, te
  * @param {string} businessName - Business name
  * @returns {string} - Formatted reminder message
  */
-const formatReminderMessage = (appointment, employee, service, businessName) => {
+const formatReminderMessage = (appointment, employee, service, businessName, timezone = 'America/Los_Angeles') => {
   const appointmentDate = new Date(appointment.startTime);
   const dateStr = appointmentDate.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
+    timeZone: timezone,
   });
   const timeStr = appointmentDate.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: timezone,
   });
 
   const employeeName = employee ? `${employee.firstName} ${employee.lastName}` : 'our team';
@@ -194,17 +198,19 @@ const sendAppointmentReminderSms = async (appointment, employee, service, busine
  * @param {string} businessName - Business name
  * @returns {string} - Formatted SMS message
  */
-const formatNewAppointmentNotification = (appointment, employee, service, businessName) => {
+const formatNewAppointmentNotification = (appointment, employee, service, businessName, timezone = 'America/Los_Angeles') => {
   const appointmentDate = new Date(appointment.startTime);
   const dateStr = appointmentDate.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
+    timeZone: timezone,
   });
   const timeStr = appointmentDate.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: timezone,
   });
 
   const employeeName = employee ? `${employee.firstName} ${employee.lastName}` : 'Staff';
@@ -222,17 +228,19 @@ const formatNewAppointmentNotification = (appointment, employee, service, busine
  * @param {string} reason - Cancellation reason
  * @returns {string} - Formatted SMS message
  */
-const formatCancellationNotification = (appointment, service, businessName, reason) => {
+const formatCancellationNotification = (appointment, service, businessName, reason, timezone = 'America/Los_Angeles') => {
   const appointmentDate = new Date(appointment.startTime);
   const dateStr = appointmentDate.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
+    timeZone: timezone,
   });
   const timeStr = appointmentDate.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: timezone,
   });
 
   const serviceName = service ? service.name : 'Service';
