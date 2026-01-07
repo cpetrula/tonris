@@ -754,17 +754,20 @@ const handleElevenLabsServicesWebhook = async (req, res, next) => {
     const signature = req.headers['x-elevenlabs-signature'];
     const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
     
-    if (env.isProduction() && webhookSecret) {
+    if (env.isProduction() && webhookSecret && signature) {
       // For GET requests, we need to verify using query string
       const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
-      
-      // Signature is required when webhook secret is configured in production
-      if (!signature || !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
-        logger.warn('ElevenLabs Services webhook: Invalid or missing signature');
+
+      // Verify signature if provided
+      if (!verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Services webhook: Invalid signature');
         throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
       }
+    } else if (env.isProduction() && webhookSecret && !signature) {
+      // Log warning but allow request - ElevenLabs data webhooks may not send signatures
+      logger.warn('ElevenLabs Services webhook: No signature provided (allowing request)');
     }
-    
+
     // Get tenant ID from query parameter only (explicit requirement)
     const tenantId = req.query.tenantId;
     
@@ -844,17 +847,20 @@ const handleElevenLabsEmployeesWebhook = async (req, res, next) => {
     const signature = req.headers['x-elevenlabs-signature'];
     const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
     
-    if (env.isProduction() && webhookSecret) {
+    if (env.isProduction() && webhookSecret && signature) {
       // For GET requests, we need to verify using query string
       const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
-      
-      // Signature is required when webhook secret is configured in production
-      if (!signature || !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
-        logger.warn('ElevenLabs Employees webhook: Invalid or missing signature');
+
+      // Verify signature if provided
+      if (!verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Employees webhook: Invalid signature');
         throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
       }
+    } else if (env.isProduction() && webhookSecret && !signature) {
+      // Log warning but allow request - ElevenLabs data webhooks may not send signatures
+      logger.warn('ElevenLabs Employees webhook: No signature provided (allowing request)');
     }
-    
+
     // Get tenant ID from query parameter only (explicit requirement)
     const tenantId = req.query.tenantId;
     
@@ -915,17 +921,20 @@ const handleElevenLabsAppointmentsWebhook = async (req, res, next) => {
     const signature = req.headers['x-elevenlabs-signature'];
     const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
     
-    if (env.isProduction() && webhookSecret) {
+    if (env.isProduction() && webhookSecret && signature) {
       // For GET requests, we need to verify using query string
       const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
-      
-      // Signature is required when webhook secret is configured in production
-      if (!signature || !verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
-        logger.warn('ElevenLabs Appointments webhook: Invalid or missing signature');
+
+      // Verify signature if provided
+      if (!verifyElevenLabsSignature(queryString, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Appointments webhook: Invalid signature');
         throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
       }
+    } else if (env.isProduction() && webhookSecret && !signature) {
+      // Log warning but allow request - ElevenLabs data webhooks may not send signatures
+      logger.warn('ElevenLabs Appointments webhook: No signature provided (allowing request)');
     }
-    
+
     // Get tenant ID from query parameter only (explicit requirement)
     const tenantId = req.query.tenantId;
     
