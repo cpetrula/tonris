@@ -665,15 +665,8 @@ function getServiceName(serviceId: string) {
             optionLabel="name"
             optionValue="id"
             placeholder="Select services"
-            class="w-full"
-            display="chip"
-          >
-            <template #chip="{ value }">
-              <div class="bg-violet-100 text-violet-800 rounded-full px-2 py-1 text-sm flex items-center gap-1">
-                {{ getServiceName(value) }}
-              </div>
-            </template>
-          </MultiSelect>
+            class="w-full services-multiselect"
+          />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -827,3 +820,17 @@ function getServiceName(serviceId: string) {
     </Dialog>
   </div>
 </template>
+
+<style scoped>
+/* Fix MultiSelect chip text visibility */
+.services-multiselect :deep(.p-multiselect-label) {
+  color: #374151;
+}
+.services-multiselect :deep(.p-chip) {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+.services-multiselect :deep(.p-chip-label) {
+  color: #5b21b6;
+}
+</style>
