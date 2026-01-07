@@ -212,7 +212,7 @@ async function fetchServices() {
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-violet-600">{{ services.length }}</p>
-            <p class="text-sm text-white">Total Services</p>
+            <p class="text-sm text-gray-600">Total Services</p>
           </div>
         </template>
       </Card>
@@ -220,7 +220,7 @@ async function fetchServices() {
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-green-600">{{ services.filter(s => s.status === 'active').length }}</p>
-            <p class="text-sm text-white">Active Services</p>
+            <p class="text-sm text-gray-600">Active Services</p>
           </div>
         </template>
       </Card>
@@ -228,7 +228,7 @@ async function fetchServices() {
         <template #content>
           <div class="text-center">
             <p class="text-3xl font-bold text-cyan-600">{{ categories.length }}</p>
-            <p class="text-sm text-white">Categories</p>
+            <p class="text-sm text-gray-600">Categories</p>
           </div>
         </template>
       </Card>
@@ -270,8 +270,8 @@ async function fetchServices() {
           <Column field="name" header="Service" sortable>
             <template #body="{ data }">
               <div>
-                <p class="font-medium text-white">{{ data.name }}</p>
-                <p class="text-sm text-white">{{ data.description }}</p>
+                <p class="font-medium text-gray-900">{{ data.name }}</p>
+                <p class="text-sm text-gray-500">{{ data.description }}</p>
               </div>
             </template>
           </Column>
@@ -286,8 +286,8 @@ async function fetchServices() {
 
           <Column field="duration" header="Duration" sortable>
             <template #body="{ data }">
-              <span class="text-white">
-                <i class="pi pi-clock mr-1 text-white"></i>
+              <span class="text-gray-600">
+                <i class="pi pi-clock mr-1 text-gray-400"></i>
                 {{ formatDuration(data.duration) }}
               </span>
             </template>
@@ -295,7 +295,7 @@ async function fetchServices() {
 
           <Column field="price" header="Price" sortable>
             <template #body="{ data }">
-              <span class="font-medium text-white">{{ formatPrice(data.price) }}</span>
+              <span class="font-medium text-gray-900">{{ formatPrice(data.price) }}</span>
             </template>
           </Column>
 
@@ -357,28 +357,28 @@ async function fetchServices() {
 
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-white mb-1">Service Name *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
           <InputText v-model="currentService.name" class="w-full" placeholder="e.g., Haircut" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-white mb-1">Description</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
           <Textarea v-model="currentService.description" class="w-full" rows="3" placeholder="Describe the service..." />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-white mb-1">Duration (minutes) *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes) *</label>
             <InputNumber v-model="currentService.duration" class="w-full" :min="5" :step="5" suffix=" min" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-white mb-1">Price *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Price *</label>
             <InputNumber v-model="currentService.price" class="w-full" mode="currency" currency="USD" locale="en-US" />
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-white mb-1">Category</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
           <InputText v-model="currentService.category" class="w-full" placeholder="e.g., Hair, Grooming, Spa" />
         </div>
       </div>
