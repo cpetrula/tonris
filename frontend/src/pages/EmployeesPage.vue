@@ -455,11 +455,6 @@ function getLocationName(locationId: string | null) {
   const location = locationStore.locations.find(loc => loc.id === locationId)
   return location ? location.name : 'Unknown'
 }
-
-function getServiceName(serviceId: string) {
-  const service = services.value.find(svc => svc.id === serviceId)
-  return service ? service.name : 'Unknown Service'
-}
 </script>
 
 <template>
