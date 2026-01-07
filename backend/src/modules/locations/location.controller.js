@@ -3,7 +3,7 @@
  * HTTP request handlers for location endpoints
  */
 const locationService = require('./location.service');
-const { successResponse, errorResponse } = require('../../utils/responseHelpers');
+const { getTenantUUID } = require('../../utils/tenant');
 
 /**
  * Create a new location
@@ -11,8 +11,13 @@ const { successResponse, errorResponse } = require('../../utils/responseHelpers'
  */
 const createLocation = async (req, res, next) => {
   try {
-    const location = await locationService.createLocation(req.body, req.tenantId);
-    return successResponse(res, { location }, 'Location created successfully', 201);
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const location = await locationService.createLocation(req.body, tenantUUID);
+    res.status(201).json({
+      success: true,
+      data: { location },
+      message: 'Location created successfully',
+    });
   } catch (error) {
     next(error);
   }
@@ -25,11 +30,15 @@ const createLocation = async (req, res, next) => {
 const getLocations = async (req, res, next) => {
   try {
     const { status, includeInactive } = req.query;
-    const locations = await locationService.getLocations(req.tenantId, {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const locations = await locationService.getLocations(tenantUUID, {
       status,
       includeInactive: includeInactive === 'true',
     });
-    return successResponse(res, { locations });
+    res.status(200).json({
+      success: true,
+      data: { locations },
+    });
   } catch (error) {
     next(error);
   }
@@ -41,8 +50,12 @@ const getLocations = async (req, res, next) => {
  */
 const getLocationById = async (req, res, next) => {
   try {
-    const location = await locationService.getLocationById(req.params.id, req.tenantId);
-    return successResponse(res, { location });
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const location = await locationService.getLocationById(req.params.id, tenantUUID);
+    res.status(200).json({
+      success: true,
+      data: { location },
+    });
   } catch (error) {
     next(error);
   }
@@ -54,8 +67,13 @@ const getLocationById = async (req, res, next) => {
  */
 const updateLocation = async (req, res, next) => {
   try {
-    const location = await locationService.updateLocation(req.params.id, req.tenantId, req.body);
-    return successResponse(res, { location }, 'Location updated successfully');
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const location = await locationService.updateLocation(req.params.id, tenantUUID, req.body);
+    res.status(200).json({
+      success: true,
+      data: { location },
+      message: 'Location updated successfully',
+    });
   } catch (error) {
     next(error);
   }
@@ -67,8 +85,12 @@ const updateLocation = async (req, res, next) => {
  */
 const deleteLocation = async (req, res, next) => {
   try {
-    await locationService.deleteLocation(req.params.id, req.tenantId);
-    return successResponse(res, null, 'Location deleted successfully');
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    await locationService.deleteLocation(req.params.id, tenantUUID);
+    res.status(200).json({
+      success: true,
+      message: 'Location deleted successfully',
+    });
   } catch (error) {
     next(error);
   }
@@ -80,8 +102,13 @@ const deleteLocation = async (req, res, next) => {
  */
 const setDefaultLocation = async (req, res, next) => {
   try {
-    const location = await locationService.setDefaultLocation(req.params.id, req.tenantId);
-    return successResponse(res, { location }, 'Location set as default');
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const location = await locationService.setDefaultLocation(req.params.id, tenantUUID);
+    res.status(200).json({
+      success: true,
+      data: { location },
+      message: 'Location set as default',
+    });
   } catch (error) {
     next(error);
   }
@@ -93,8 +120,12 @@ const setDefaultLocation = async (req, res, next) => {
  */
 const getDefaultLocation = async (req, res, next) => {
   try {
-    const location = await locationService.getDefaultLocation(req.tenantId);
-    return successResponse(res, { location });
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const location = await locationService.getDefaultLocation(tenantUUID);
+    res.status(200).json({
+      success: true,
+      data: { location },
+    });
   } catch (error) {
     next(error);
   }
