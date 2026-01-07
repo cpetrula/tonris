@@ -202,7 +202,9 @@ const updateAppointment = async (req, res, next) => {
         });
       }
 
-      if (startDateTime <= new Date()) {
+      // Only enforce future time validation for scheduled appointments
+      // Allow cancellations and no-shows for past appointments
+      if (startDateTime <= new Date() && status !== 'cancelled' && status !== 'no_show') {
         return res.status(400).json({
           success: false,
           error: 'Appointment time must be in the future',
