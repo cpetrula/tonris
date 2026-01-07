@@ -364,12 +364,12 @@ const getUserById = async (userId, tenantId) => {
  * @param {string} registrationData.businessZip - Business zip (optional)
  * @returns {Promise<Object>} - Created user and tokens
  */
-const register = async ({ 
-  email, 
-  password, 
-  firstName, 
-  lastName, 
-  businessTypeId, 
+const register = async ({
+  email,
+  password,
+  firstName,
+  lastName,
+  businessTypeId,
   contactPhone,
   businessName,
   businessPhone,
@@ -382,6 +382,8 @@ const register = async ({
   const twilioService = require('../telephony/twilio.service');
   const { getElevenLabsService } = require('../ai-assistant/elevenlabs.service');
   const { BusinessType } = require('../business-types/businessType.model');
+  const locationService = require('../locations/location.service');
+  const { USER_ROLES } = require('../../middleware/authorization');
   const env = require('../../config/env');
 
   // Check if user already exists (globally - email is unique)
@@ -515,11 +517,23 @@ const register = async ({
     logger.warn('Registration will continue without default services');
   }
 
+  // Create default location from tenant address
+  try {
+    await locationService.createDefaultLocationFromTenant(tenant);
+    logger.info(`Default location created for tenant ${tenant.id}`);
+  } catch (error) {
+    // Log the error but don't fail the registration
+    logger.error(`Failed to create default location for tenant ${tenant.id}: ${error.message}`);
+    logger.warn('Registration will continue without default location');
+  }
+
   // Create user associated with the new tenant
+  // First user for tenant is always superuser (immutable)
   const user = await User.create({
     email,
     password,
     tenantId: tenant.id,
+    role: USER_ROLES.SUPERUSER,
   });
 
   // Generate tokens

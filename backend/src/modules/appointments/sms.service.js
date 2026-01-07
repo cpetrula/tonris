@@ -361,11 +361,93 @@ const sendCancellationSmsNotification = async (appointment, service, tenant, rea
   }
 };
 
+/**
+ * Send new appointment SMS notification to a specific phone number
+ * @param {Object} appointment - Appointment data
+ * @param {Object} employee - Employee data
+ * @param {Object} service - Service data
+ * @param {string} businessName - Business name
+ * @param {string} toPhone - Phone number to send to
+ * @returns {Promise<Object|null>} - SMS send result or null if not sent
+ */
+const sendNewAppointmentSmsNotificationToPhone = async (appointment, employee, service, businessName, toPhone) => {
+  // Check if SMS is configured
+  if (!env.TWILIO_SMS_PHONE_NUMBER) {
+    logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
+    return null;
+  }
+
+  if (!toPhone) {
+    logger.debug('No phone number provided, skipping SMS');
+    return null;
+  }
+
+  try {
+    // Format the message
+    const messageBody = formatNewAppointmentNotification(appointment, employee, service, businessName);
+
+    // Send the SMS
+    const result = await twilioService.sendSms({
+      to: toPhone,
+      from: env.TWILIO_SMS_PHONE_NUMBER,
+      body: messageBody,
+    });
+
+    logger.info(`New appointment SMS notification sent to ${toPhone} for appointment ${appointment.id}`);
+    return result;
+  } catch (error) {
+    logger.error(`Failed to send new appointment SMS notification to ${toPhone}: ${error.message}`);
+    return null;
+  }
+};
+
+/**
+ * Send cancellation SMS notification to a specific phone number
+ * @param {Object} appointment - Appointment data
+ * @param {Object} service - Service data
+ * @param {string} businessName - Business name
+ * @param {string} reason - Cancellation reason
+ * @param {string} toPhone - Phone number to send to
+ * @returns {Promise<Object|null>} - SMS send result or null if not sent
+ */
+const sendCancellationSmsNotificationToPhone = async (appointment, service, businessName, reason, toPhone) => {
+  // Check if SMS is configured
+  if (!env.TWILIO_SMS_PHONE_NUMBER) {
+    logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
+    return null;
+  }
+
+  if (!toPhone) {
+    logger.debug('No phone number provided, skipping SMS');
+    return null;
+  }
+
+  try {
+    // Format the message
+    const messageBody = formatCancellationNotification(appointment, service, businessName, reason);
+
+    // Send the SMS
+    const result = await twilioService.sendSms({
+      to: toPhone,
+      from: env.TWILIO_SMS_PHONE_NUMBER,
+      body: messageBody,
+    });
+
+    logger.info(`Cancellation SMS notification sent to ${toPhone} for appointment ${appointment.id}`);
+    return result;
+  } catch (error) {
+    logger.error(`Failed to send cancellation SMS notification to ${toPhone}: ${error.message}`);
+    return null;
+  }
+};
+
 module.exports = {
   sendAppointmentConfirmationSms,
   sendAppointmentReminderSms,
   sendNewAppointmentSmsNotification,
   sendCancellationSmsNotification,
+  sendNewAppointmentSmsNotificationToPhone,
+  sendCancellationSmsNotificationToPhone,
   formatAppointmentSummary,
   formatReminderMessage,
   formatNewAppointmentNotification,

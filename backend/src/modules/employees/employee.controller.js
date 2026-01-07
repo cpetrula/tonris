@@ -61,7 +61,7 @@ const getEmployee = async (req, res, next) => {
  */
 const createEmployee = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, phone, employeeType, hireDate, schedule, serviceIds } = req.body;
+    const { firstName, lastName, email, phone, employeeType, hireDate, schedule, serviceIds, role, locationId, notificationPreferences } = req.body;
 
     // Validate required fields
     if (!firstName || !lastName || !email) {
@@ -91,6 +91,9 @@ const createEmployee = async (req, res, next) => {
       hireDate,
       schedule,
       serviceIds,
+      role,
+      locationId,
+      notificationPreferences,
     }, tenantUUID);
 
     res.status(201).json({
@@ -108,7 +111,7 @@ const createEmployee = async (req, res, next) => {
  */
 const updateEmployee = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, phone, employeeType, status, hireDate, serviceIds, metadata, schedule } = req.body;
+    const { firstName, lastName, email, phone, employeeType, status, hireDate, serviceIds, metadata, schedule, role, locationId, notificationPreferences } = req.body;
 
     // Validate email format if provided
     if (email && !VALIDATION.EMAIL_REGEX.test(email)) {
@@ -131,6 +134,9 @@ const updateEmployee = async (req, res, next) => {
       serviceIds,
       metadata,
       schedule,
+      role,
+      locationId,
+      notificationPreferences,
     });
 
     res.status(200).json({
@@ -206,6 +212,34 @@ const updateEmployeeSchedule = async (req, res, next) => {
   }
 };
 
+/**
+ * PATCH /api/employees/:id/notifications
+ * Update employee notification preferences (superuser only)
+ */
+const updateNotificationPreferences = async (req, res, next) => {
+  try {
+    const { receiveEmailNotifications, receiveSmsNotifications, notificationTypes } = req.body;
+
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const employee = await employeeService.updateEmployeeNotificationPreferences(
+      req.params.id,
+      tenantUUID,
+      {
+        receiveEmailNotifications,
+        receiveSmsNotifications,
+        notificationTypes,
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { employee },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getEmployees,
   getEmployee,
@@ -214,4 +248,5 @@ module.exports = {
   deleteEmployee,
   getEmployeeSchedule,
   updateEmployeeSchedule,
+  updateNotificationPreferences,
 };

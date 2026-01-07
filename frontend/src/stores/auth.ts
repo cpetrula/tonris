@@ -2,12 +2,14 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
 
+export type UserRole = 'superuser' | 'admin' | 'manager' | 'staff'
+
 export interface User {
   id: string
   email: string
   firstName: string
   lastName: string
-  role: string
+  role: UserRole
 }
 
 export interface LoginCredentials {
@@ -30,12 +32,36 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  // Role hierarchy for permission checks
+  const ROLE_HIERARCHY: Record<UserRole, number> = {
+    superuser: 4,
+    admin: 3,
+    manager: 2,
+    staff: 1
+  }
+
   // Getters
   const isAuthenticated = computed(() => !!token.value && !!user.value)
   const fullName = computed(() => {
     if (!user.value) return ''
     return `${user.value.firstName} ${user.value.lastName}`
   })
+  const userRole = computed<UserRole>(() => user.value?.role || 'superuser') // Default to superuser for backward compatibility
+  const isSuperuser = computed(() => userRole.value === 'superuser')
+  const isAdmin = computed(() => ['superuser', 'admin'].includes(userRole.value))
+  const isManager = computed(() => ['superuser', 'admin', 'manager'].includes(userRole.value))
+
+  // Check if user has at least the specified role level
+  function hasRole(minimumRole: UserRole): boolean {
+    const userLevel = ROLE_HIERARCHY[userRole.value] || 0
+    const requiredLevel = ROLE_HIERARCHY[minimumRole] || 0
+    return userLevel >= requiredLevel
+  }
+
+  // Check if user has any of the specified roles
+  function hasAnyRole(roles: UserRole[]): boolean {
+    return roles.includes(userRole.value)
+  }
 
   // Actions
   async function login(credentials: LoginCredentials): Promise<boolean> {
@@ -121,11 +147,17 @@ export const useAuthStore = defineStore('auth', () => {
     // Getters
     isAuthenticated,
     fullName,
+    userRole,
+    isSuperuser,
+    isAdmin,
+    isManager,
     // Actions
     login,
     register,
     logout,
     fetchUser,
-    clearError
+    clearError,
+    hasRole,
+    hasAnyRole
   }
 })

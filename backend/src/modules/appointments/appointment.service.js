@@ -12,6 +12,7 @@ const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
 const smsService = require('./sms.service');
 const { emailService } = require('../notifications');
+const employeeService = require('../employees/employee.service');
 
 /**
  * Calculate total price and duration for an appointment
@@ -464,7 +465,7 @@ const sendNewAppointmentEmailNotification = async (appointment, employee, servic
       return;
     }
 
-    // Check if email notification is enabled
+    // Check if email notification is enabled at tenant level
     let notificationSettings = tenant.notificationSettings;
     if (typeof notificationSettings === 'string') {
       try {
@@ -482,10 +483,24 @@ const sendNewAppointmentEmailNotification = async (appointment, employee, servic
       return;
     }
 
-    // Get business owner email (contact email)
-    const toEmail = tenant.contactEmail;
-    if (!toEmail) {
-      logger.warn(`Cannot send email notification: No contact email for tenant ${tenantId}`);
+    // Get employees with email notifications enabled for new appointments
+    const recipients = await employeeService.getNotificationRecipients(
+      tenantId,
+      appointment.locationId || null,
+      'new_appointment'
+    );
+
+    // Collect all email recipients
+    const emailRecipients = [...recipients.emails];
+
+    // Fallback to tenant contact email if no employees have notifications enabled
+    if (emailRecipients.length === 0 && tenant.contactEmail) {
+      emailRecipients.push(tenant.contactEmail);
+      logger.debug(`No employees with email notifications - falling back to tenant contact: ${tenant.contactEmail}`);
+    }
+
+    if (emailRecipients.length === 0) {
+      logger.warn(`No email recipients for new appointment notification for tenant ${tenantId}`);
       return;
     }
 
@@ -496,22 +511,24 @@ const sendNewAppointmentEmailNotification = async (appointment, employee, servic
     const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions);
     const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions);
 
-    // Send email
-    const result = await emailService.sendNewAppointmentEmail(toEmail, {
-      businessName: tenant.name,
-      customerName: appointment.customerName,
-      customerPhone: appointment.customerPhone,
-      serviceName: service.name,
-      employeeName: `${employee.firstName} ${employee.lastName}`,
-      appointmentDate: formattedDate,
-      appointmentTime: formattedTime,
-      duration: appointment.totalDuration,
-    });
+    // Send email to each recipient
+    for (const toEmail of emailRecipients) {
+      const result = await emailService.sendNewAppointmentEmail(toEmail, {
+        businessName: tenant.name,
+        customerName: appointment.customerName,
+        customerPhone: appointment.customerPhone,
+        serviceName: service.name,
+        employeeName: `${employee.firstName} ${employee.lastName}`,
+        appointmentDate: formattedDate,
+        appointmentTime: formattedTime,
+        duration: appointment.totalDuration,
+      });
 
-    if (result.success) {
-      logger.info(`New appointment email sent to ${toEmail} for appointment ${appointment.id}`);
-    } else {
-      logger.warn(`Email notification not sent for appointment ${appointment.id}: ${result.reason || result.error}`);
+      if (result.success) {
+        logger.info(`New appointment email sent to ${toEmail} for appointment ${appointment.id}`);
+      } else {
+        logger.warn(`Email notification not sent to ${toEmail} for appointment ${appointment.id}: ${result.reason || result.error}`);
+      }
     }
   } catch (error) {
     logger.error(`Error sending new appointment email for tenant ${tenantId}: ${error.message}`);
@@ -533,7 +550,7 @@ const sendCancellationEmailNotification = async (appointment, tenantId, reason) 
       return;
     }
 
-    // Check if email notification is enabled
+    // Check if email notification is enabled at tenant level
     let notificationSettings = tenant.notificationSettings;
     if (typeof notificationSettings === 'string') {
       try {
@@ -551,10 +568,24 @@ const sendCancellationEmailNotification = async (appointment, tenantId, reason) 
       return;
     }
 
-    // Get business owner email (contact email)
-    const toEmail = tenant.contactEmail;
-    if (!toEmail) {
-      logger.warn(`Cannot send cancellation email: No contact email for tenant ${tenantId}`);
+    // Get employees with email notifications enabled for cancellations
+    const recipients = await employeeService.getNotificationRecipients(
+      tenantId,
+      appointment.locationId || null,
+      'cancellation'
+    );
+
+    // Collect all email recipients
+    const emailRecipients = [...recipients.emails];
+
+    // Fallback to tenant contact email if no employees have notifications enabled
+    if (emailRecipients.length === 0 && tenant.contactEmail) {
+      emailRecipients.push(tenant.contactEmail);
+      logger.debug(`No employees with email notifications - falling back to tenant contact: ${tenant.contactEmail}`);
+    }
+
+    if (emailRecipients.length === 0) {
+      logger.warn(`No email recipients for cancellation notification for tenant ${tenantId}`);
       return;
     }
 
@@ -569,20 +600,22 @@ const sendCancellationEmailNotification = async (appointment, tenantId, reason) 
     const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions);
     const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions);
 
-    // Send email
-    const result = await emailService.sendCancellationEmail(toEmail, {
-      businessName: tenant.name,
-      customerName: appointment.customerName,
-      serviceName,
-      appointmentDate: formattedDate,
-      appointmentTime: formattedTime,
-      cancellationReason: reason,
-    });
+    // Send email to each recipient
+    for (const toEmail of emailRecipients) {
+      const result = await emailService.sendCancellationEmail(toEmail, {
+        businessName: tenant.name,
+        customerName: appointment.customerName,
+        serviceName,
+        appointmentDate: formattedDate,
+        appointmentTime: formattedTime,
+        cancellationReason: reason,
+      });
 
-    if (result.success) {
-      logger.info(`Cancellation email sent to ${toEmail} for appointment ${appointment.id}`);
-    } else {
-      logger.warn(`Cancellation email not sent for appointment ${appointment.id}: ${result.reason || result.error}`);
+      if (result.success) {
+        logger.info(`Cancellation email sent to ${toEmail} for appointment ${appointment.id}`);
+      } else {
+        logger.warn(`Cancellation email not sent to ${toEmail} for appointment ${appointment.id}: ${result.reason || result.error}`);
+      }
     }
   } catch (error) {
     logger.error(`Error sending cancellation email for tenant ${tenantId}: ${error.message}`);
@@ -605,8 +638,53 @@ const sendNewAppointmentSmsNotification = async (appointment, employee, service,
       return;
     }
 
-    // Delegate to SMS service
-    await smsService.sendNewAppointmentSmsNotification(appointment, employee, service, tenant);
+    // Check if SMS notification is enabled at tenant level
+    let notificationSettings = tenant.notificationSettings;
+    if (typeof notificationSettings === 'string') {
+      try {
+        notificationSettings = JSON.parse(notificationSettings);
+      } catch (e) {
+        notificationSettings = {};
+      }
+    }
+
+    const smsNewAppointment = notificationSettings?.smsNewAppointment !== false;
+    if (!smsNewAppointment) {
+      logger.debug(`SMS notification for new appointments is disabled for tenant ${tenantId}`);
+      return;
+    }
+
+    // Get employees with SMS notifications enabled for new appointments
+    const recipients = await employeeService.getNotificationRecipients(
+      tenantId,
+      appointment.locationId || null,
+      'new_appointment'
+    );
+
+    // Collect all phone recipients
+    const phoneRecipients = [...recipients.phones];
+
+    // Fallback to tenant contact phone if no employees have notifications enabled
+    if (phoneRecipients.length === 0 && tenant.contactPhone) {
+      phoneRecipients.push(tenant.contactPhone);
+      logger.debug(`No employees with SMS notifications - falling back to tenant contact: ${tenant.contactPhone}`);
+    }
+
+    if (phoneRecipients.length === 0) {
+      logger.warn(`No SMS recipients for new appointment notification for tenant ${tenantId}`);
+      return;
+    }
+
+    // Send SMS to each recipient using SMS service function for employees
+    for (const toPhone of phoneRecipients) {
+      await smsService.sendNewAppointmentSmsNotificationToPhone(
+        appointment,
+        employee,
+        service,
+        tenant.name,
+        toPhone
+      );
+    }
   } catch (error) {
     logger.error(`Error sending new appointment SMS for tenant ${tenantId}: ${error.message}`);
   }
@@ -627,11 +705,56 @@ const sendCancellationSmsNotification = async (appointment, tenantId, reason) =>
       return;
     }
 
+    // Check if SMS notification is enabled at tenant level
+    let notificationSettings = tenant.notificationSettings;
+    if (typeof notificationSettings === 'string') {
+      try {
+        notificationSettings = JSON.parse(notificationSettings);
+      } catch (e) {
+        notificationSettings = {};
+      }
+    }
+
+    const smsCancellation = notificationSettings?.smsCancellation !== false;
+    if (!smsCancellation) {
+      logger.debug(`SMS notification for cancellations is disabled for tenant ${tenantId}`);
+      return;
+    }
+
+    // Get employees with SMS notifications enabled for cancellations
+    const recipients = await employeeService.getNotificationRecipients(
+      tenantId,
+      appointment.locationId || null,
+      'cancellation'
+    );
+
+    // Collect all phone recipients
+    const phoneRecipients = [...recipients.phones];
+
+    // Fallback to tenant contact phone if no employees have notifications enabled
+    if (phoneRecipients.length === 0 && tenant.contactPhone) {
+      phoneRecipients.push(tenant.contactPhone);
+      logger.debug(`No employees with SMS notifications - falling back to tenant contact: ${tenant.contactPhone}`);
+    }
+
+    if (phoneRecipients.length === 0) {
+      logger.warn(`No SMS recipients for cancellation notification for tenant ${tenantId}`);
+      return;
+    }
+
     // Get service name
     const service = await Service.findOne({ where: { id: appointment.serviceId } });
 
-    // Delegate to SMS service
-    await smsService.sendCancellationSmsNotification(appointment, service, tenant, reason);
+    // Send SMS to each recipient
+    for (const toPhone of phoneRecipients) {
+      await smsService.sendCancellationSmsNotificationToPhone(
+        appointment,
+        service,
+        tenant.name,
+        reason,
+        toPhone
+      );
+    }
   } catch (error) {
     logger.error(`Error sending cancellation SMS for tenant ${tenantId}: ${error.message}`);
   }

@@ -6,6 +6,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const employeeController = require('./employee.controller');
 const { authMiddleware } = require('../auth/auth.middleware');
+const { requireSuperuser } = require('../../middleware/authorization');
 
 const router = express.Router();
 
@@ -52,5 +53,8 @@ router.get('/:id/schedule', standardLimiter, authMiddleware, employeeController.
 
 // PUT /api/employees/:id/schedule - Update employee schedule
 router.put('/:id/schedule', standardLimiter, authMiddleware, employeeController.updateEmployeeSchedule);
+
+// PATCH /api/employees/:id/notifications - Update employee notification preferences (superuser only)
+router.patch('/:id/notifications', standardLimiter, authMiddleware, requireSuperuser, employeeController.updateNotificationPreferences);
 
 module.exports = router;

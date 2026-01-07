@@ -11,6 +11,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 const bcrypt = require('bcrypt');
+const { USER_ROLES } = require('../middleware/authorization');
 
 /**
  * Check if a string is already a bcrypt hash
@@ -86,6 +87,20 @@ const User = sequelize.define('User', {
     defaultValue: true,
     field: 'sms_opt_in',
   },
+  role: {
+    type: DataTypes.ENUM(...Object.values(USER_ROLES)),
+    allowNull: true, // Null = treat as superuser for backward compatibility
+    defaultValue: null,
+  },
+  employeeId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'employee_id',
+    references: {
+      model: 'employees',
+      key: 'id',
+    },
+  },
 }, {
   tableName: 'users',
   timestamps: true,
@@ -126,7 +141,43 @@ User.prototype.toSafeObject = function() {
   delete userJson.twoFactorSecret;
   delete userJson.passwordResetToken;
   delete userJson.passwordResetExpires;
+  // Include effective role (default to superuser for null/original accounts)
+  userJson.effectiveRole = userJson.role || 'superuser';
   return userJson;
+};
+
+/**
+ * Check if user is superuser
+ * @returns {boolean} - True if superuser
+ */
+User.prototype.isSuperuser = function() {
+  return !this.role || this.role === 'superuser';
+};
+
+/**
+ * Check if user is admin or higher
+ * @returns {boolean} - True if admin or higher
+ */
+User.prototype.isAdmin = function() {
+  const role = this.role || 'superuser';
+  return ['superuser', 'admin'].includes(role);
+};
+
+/**
+ * Check if user is manager or higher
+ * @returns {boolean} - True if manager or higher
+ */
+User.prototype.isManager = function() {
+  const role = this.role || 'superuser';
+  return ['superuser', 'admin', 'manager'].includes(role);
+};
+
+/**
+ * Get the effective role (handles null as superuser)
+ * @returns {string} - Effective role
+ */
+User.prototype.getEffectiveRole = function() {
+  return this.role || 'superuser';
 };
 
 module.exports = User;

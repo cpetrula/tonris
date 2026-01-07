@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterView, RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTenantStore } from '@/stores/tenant'
@@ -36,15 +36,32 @@ const userMenuItems: MenuItem[] = [
   }
 ]
 
-const navigationItems = [
+// Navigation items with optional role requirements
+interface NavItem {
+  name: string
+  path: string
+  icon: string
+  requiresRole?: ('superuser' | 'admin' | 'manager' | 'staff')[]
+}
+
+const allNavigationItems: NavItem[] = [
   { name: 'Dashboard', path: '/app', icon: 'pi pi-home' },
   { name: 'Appointments', path: '/app/appointments', icon: 'pi pi-calendar' },
   { name: 'Employees', path: '/app/employees', icon: 'pi pi-users' },
   { name: 'Services', path: '/app/services', icon: 'pi pi-list' },
+  { name: 'Locations', path: '/app/locations', icon: 'pi pi-map-marker', requiresRole: ['superuser', 'admin'] },
   { name: 'Reports', path: '/app/reports', icon: 'pi pi-chart-line' },
   { name: 'Billing', path: '/app/billing', icon: 'pi pi-credit-card' },
   { name: 'Settings', path: '/app/settings', icon: 'pi pi-cog' }
 ]
+
+// Filter navigation items based on user role
+const navigationItems = computed(() => {
+  return allNavigationItems.filter(item => {
+    if (!item.requiresRole) return true
+    return authStore.hasAnyRole(item.requiresRole)
+  })
+})
 
 function toggleUserMenu(event: Event) {
   userMenu.value.toggle(event)

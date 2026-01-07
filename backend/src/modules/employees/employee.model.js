@@ -4,6 +4,7 @@
  */
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../config/db');
+const { EMPLOYEE_ROLES } = require('../../middleware/authorization');
 
 /**
  * Valid employee statuses
@@ -95,6 +96,39 @@ const Employee = sequelize.define('Employee', {
     type: DataTypes.JSON,
     allowNull: true,
   },
+  role: {
+    type: DataTypes.ENUM(...Object.values(EMPLOYEE_ROLES)),
+    defaultValue: EMPLOYEE_ROLES.STAFF,
+    allowNull: false,
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'user_id',
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+  },
+  locationId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'location_id',
+    references: {
+      model: 'locations',
+      key: 'id',
+    },
+  },
+  notificationPreferences: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    field: 'notification_preferences',
+    defaultValue: {
+      receiveEmailNotifications: false,
+      receiveSmsNotifications: false,
+      notificationTypes: ['new_appointment', 'cancellation'],
+    },
+  },
 }, {
   tableName: 'employees',
   timestamps: true,
@@ -104,6 +138,13 @@ const Employee = sequelize.define('Employee', {
     },
     {
       fields: ['tenant_id', 'email'],
+      unique: true,
+    },
+    {
+      fields: ['location_id'],
+    },
+    {
+      fields: ['user_id'],
       unique: true,
     },
   ],
@@ -270,8 +311,64 @@ Employee.prototype.linkServices = async function(serviceIds) {
   return this;
 };
 
+/**
+ * Check if employee has notifications enabled for a specific type
+ * @param {string} notificationType - Type of notification ('new_appointment', 'cancellation')
+ * @param {string} channel - Channel ('email' or 'sms')
+ * @returns {boolean} - True if notifications enabled
+ */
+Employee.prototype.hasNotificationsEnabled = function(notificationType, channel) {
+  const prefs = this.notificationPreferences || {};
+
+  // Check if channel is enabled
+  if (channel === 'email' && !prefs.receiveEmailNotifications) {
+    return false;
+  }
+  if (channel === 'sms' && !prefs.receiveSmsNotifications) {
+    return false;
+  }
+
+  // Check if notification type is in the list (default to all types if not specified)
+  const types = prefs.notificationTypes || ['new_appointment', 'cancellation'];
+  return types.includes(notificationType);
+};
+
+/**
+ * Check if employee has any notifications enabled
+ * @returns {boolean} - True if any notifications enabled
+ */
+Employee.prototype.hasAnyNotificationsEnabled = function() {
+  const prefs = this.notificationPreferences || {};
+  return prefs.receiveEmailNotifications || prefs.receiveSmsNotifications;
+};
+
+/**
+ * Check if employee is admin
+ * @returns {boolean} - True if admin
+ */
+Employee.prototype.isAdmin = function() {
+  return this.role === 'admin';
+};
+
+/**
+ * Check if employee is manager or higher
+ * @returns {boolean} - True if manager or admin
+ */
+Employee.prototype.isManagerOrHigher = function() {
+  return ['admin', 'manager'].includes(this.role);
+};
+
+/**
+ * Check if employee has a linked user account
+ * @returns {boolean} - True if has user account
+ */
+Employee.prototype.hasUserAccount = function() {
+  return !!this.userId;
+};
+
 module.exports = {
   Employee,
   EMPLOYEE_STATUS,
   EMPLOYEE_TYPES,
+  EMPLOYEE_ROLES,
 };

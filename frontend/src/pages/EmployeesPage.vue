@@ -12,7 +12,13 @@ import Message from 'primevue/message'
 import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
 import Checkbox from 'primevue/checkbox'
+import InputSwitch from 'primevue/inputswitch'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
+import { useLocationStore } from '@/stores/location'
+
+const authStore = useAuthStore()
+const locationStore = useLocationStore()
 
 interface TimeBlock {
   start: string
@@ -34,6 +40,12 @@ interface Schedule {
   sunday: DaySchedule
 }
 
+interface NotificationPreferences {
+  receiveEmailNotifications: boolean
+  receiveSmsNotifications: boolean
+  notificationTypes: string[]
+}
+
 interface Employee {
   id: string
   firstName: string
@@ -44,6 +56,9 @@ interface Employee {
   serviceIds: string[]
   status: 'active' | 'inactive'
   schedule: Schedule
+  role: 'admin' | 'manager' | 'staff'
+  locationId: string | null
+  notificationPreferences: NotificationPreferences
 }
 
 interface Service {
@@ -71,6 +86,13 @@ const employeeTypeOptions = [
   { label: 'Employee (Full-time)', value: 'employee' },
   { label: 'Employee (Part-time)', value: 'employee' },
   { label: 'Contractor', value: 'contractor' }
+]
+
+// Employee role options
+const roleOptions = [
+  { label: 'Staff', value: 'staff' },
+  { label: 'Manager', value: 'manager' },
+  { label: 'Admin', value: 'admin' }
 ]
 
 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
@@ -132,7 +154,14 @@ const emptyEmployee: Employee = {
   employeeType: '',
   serviceIds: [],
   status: 'active',
-  schedule: { ...defaultSchedule }
+  schedule: { ...defaultSchedule },
+  role: 'staff',
+  locationId: null,
+  notificationPreferences: {
+    receiveEmailNotifications: false,
+    receiveSmsNotifications: false,
+    notificationTypes: ['new_appointment', 'cancellation']
+  }
 }
 
 const showScheduleEditorDialog = ref(false)
@@ -256,7 +285,10 @@ async function saveEmployee() {
         phone: currentEmployee.value.phone,
         employeeType: currentEmployee.value.employeeType,
         serviceIds: currentEmployee.value.serviceIds,
-        status: currentEmployee.value.status
+        status: currentEmployee.value.status,
+        role: currentEmployee.value.role,
+        locationId: currentEmployee.value.locationId,
+        notificationPreferences: currentEmployee.value.notificationPreferences
       })
     } else {
       // Create new employee
@@ -266,7 +298,10 @@ async function saveEmployee() {
         email: currentEmployee.value.email,
         phone: currentEmployee.value.phone,
         employeeType: currentEmployee.value.employeeType,
-        serviceIds: currentEmployee.value.serviceIds
+        serviceIds: currentEmployee.value.serviceIds,
+        role: currentEmployee.value.role,
+        locationId: currentEmployee.value.locationId,
+        notificationPreferences: currentEmployee.value.notificationPreferences
       })
     }
 
@@ -318,7 +353,7 @@ async function toggleStatus(employee: Employee) {
 onMounted(async () => {
   loading.value = true
   try {
-    await Promise.all([fetchEmployees(), fetchServices()])
+    await Promise.all([fetchEmployees(), fetchServices(), locationStore.fetchLocations()])
   } catch (err) {
     console.error('Error loading data:', err)
     error.value = 'Failed to load data'
@@ -373,7 +408,14 @@ async function fetchEmployees() {
         employeeType: emp.employeeType || '',
         serviceIds: emp.serviceIds || [],
         status: emp.status || 'active',
-        schedule: normalizeSchedule(emp.schedule)
+        schedule: normalizeSchedule(emp.schedule),
+        role: emp.role || 'staff',
+        locationId: emp.locationId || null,
+        notificationPreferences: emp.notificationPreferences || {
+          receiveEmailNotifications: false,
+          receiveSmsNotifications: false,
+          notificationTypes: ['new_appointment', 'cancellation']
+        }
       }))
     }
   } catch (err) {
@@ -401,6 +443,17 @@ async function fetchServices() {
 function getEmployeeTypeLabel(value: string) {
   const option = employeeTypeOptions.find(opt => opt.value === value)
   return option ? option.label : value
+}
+
+function getRoleLabel(value: string) {
+  const option = roleOptions.find(opt => opt.value === value)
+  return option ? option.label : value
+}
+
+function getLocationName(locationId: string | null) {
+  if (!locationId) return 'All Locations'
+  const location = locationStore.locations.find(loc => loc.id === locationId)
+  return location ? location.name : 'Unknown'
 }
 </script>
 
@@ -474,6 +527,21 @@ function getEmployeeTypeLabel(value: string) {
             <template #body="{ data }">
               <span class="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-700">
                 {{ getEmployeeTypeLabel(data.employeeType) }}
+              </span>
+            </template>
+          </Column>
+
+          <Column field="role" header="Role" sortable>
+            <template #body="{ data }">
+              <span
+                :class="[
+                  'px-2 py-1 rounded-full text-xs font-medium',
+                  data.role === 'admin' ? 'bg-violet-100 text-violet-700' :
+                  data.role === 'manager' ? 'bg-blue-100 text-blue-700' :
+                  'bg-gray-100 text-gray-700'
+                ]"
+              >
+                {{ getRoleLabel(data.role) }}
               </span>
             </template>
           </Column>
@@ -587,6 +655,46 @@ function getEmployeeTypeLabel(value: string) {
             class="w-full"
             display="chip"
           />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-white-700 mb-1">Role</label>
+            <Select
+              v-model="currentEmployee.role"
+              :options="roleOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select role"
+              class="w-full"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-white-700 mb-1">Location</label>
+            <Select
+              v-model="currentEmployee.locationId"
+              :options="[{ id: null, name: 'All Locations' }, ...locationStore.activeLocations]"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="Select location"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <!-- Notification Preferences (Superuser only) -->
+        <div v-if="authStore.isSuperuser" class="border-t border-gray-200 pt-4 mt-4">
+          <h4 class="text-sm font-medium text-gray-700 mb-3">Notification Preferences</h4>
+          <div class="space-y-3 ml-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm">Receive Email Notifications</span>
+              <InputSwitch v-model="currentEmployee.notificationPreferences.receiveEmailNotifications" />
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm">Receive SMS Notifications</span>
+              <InputSwitch v-model="currentEmployee.notificationPreferences.receiveSmsNotifications" />
+            </div>
+          </div>
         </div>
       </div>
 

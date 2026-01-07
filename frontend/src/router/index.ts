@@ -23,6 +23,7 @@ const BillingPage = () => import('@/pages/BillingPage.vue')
 const ReportsPage = () => import('@/pages/ReportsPage.vue')
 const SettingsPage = () => import('@/pages/SettingsPage.vue')
 const PhoneForwardingPage = () => import('@/pages/PhoneForwardingPage.vue')
+const LocationsPage = () => import('@/pages/LocationsPage.vue')
 
 // Public Layout
 const PublicLayout = () => import('@/layouts/PublicLayout.vue')
@@ -134,6 +135,12 @@ const routes: RouteRecordRaw[] = [
         path: 'phone-forwarding',
         name: 'phone-forwarding',
         component: PhoneForwardingPage
+      },
+      {
+        path: 'locations',
+        name: 'locations',
+        component: LocationsPage,
+        meta: { requiresRole: ['superuser', 'admin'] }
       }
     ]
   },

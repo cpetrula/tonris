@@ -2,9 +2,10 @@
  * Employee Service
  * Handles all employee business logic
  */
-const { Employee, EMPLOYEE_STATUS, EMPLOYEE_TYPES } = require('./employee.model');
+const { Employee, EMPLOYEE_STATUS, EMPLOYEE_TYPES, EMPLOYEE_ROLES } = require('./employee.model');
 const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
+const { Op } = require('sequelize');
 
 /**
  * Create a new employee
@@ -13,7 +14,7 @@ const logger = require('../../utils/logger');
  * @returns {Promise<Object>} - Created employee
  */
 const createEmployee = async (employeeData, tenantId) => {
-  const { firstName, lastName, email, phone, employeeType, hireDate, schedule, serviceIds } = employeeData;
+  const { firstName, lastName, email, phone, employeeType, hireDate, schedule, serviceIds, role, locationId, notificationPreferences } = employeeData;
 
   // Check if employee with same email exists for this tenant
   const existingEmployee = await Employee.findOne({ where: { email, tenantId } });
@@ -41,6 +42,13 @@ const createEmployee = async (employeeData, tenantId) => {
     schedule: schedule || Employee.generateDefaultSchedule(),
     serviceIds: serviceIds || [],
     status: EMPLOYEE_STATUS.ACTIVE,
+    role: role || EMPLOYEE_ROLES.STAFF,
+    locationId: locationId || null,
+    notificationPreferences: notificationPreferences || {
+      receiveEmailNotifications: false,
+      receiveSmsNotifications: false,
+      notificationTypes: ['new_appointment', 'cancellation'],
+    },
   });
 
   logger.info(`New employee created: ${firstName} ${lastName} for tenant: ${tenantId}`);
@@ -134,7 +142,7 @@ const updateEmployee = async (employeeId, tenantId, updateData) => {
   }
 
   // Filter allowed update fields
-  const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'employeeType', 'status', 'hireDate', 'serviceIds', 'metadata', 'schedule'];
+  const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'employeeType', 'status', 'hireDate', 'serviceIds', 'metadata', 'schedule', 'role', 'locationId', 'notificationPreferences'];
   const filteredData = {};
 
   for (const key of allowedFields) {
@@ -270,6 +278,104 @@ const linkServicesToEmployee = async (employeeId, tenantId, serviceIds) => {
   return employee.toSafeObject();
 };
 
+/**
+ * Update employee notification preferences
+ * @param {string} employeeId - Employee ID
+ * @param {string} tenantId - Tenant identifier
+ * @param {Object} preferences - Notification preferences
+ * @returns {Promise<Object>} - Updated employee
+ */
+const updateEmployeeNotificationPreferences = async (employeeId, tenantId, preferences) => {
+  const employee = await Employee.findOne({ where: { id: employeeId, tenantId } });
+
+  if (!employee) {
+    throw new AppError('Employee not found', 404, 'EMPLOYEE_NOT_FOUND');
+  }
+
+  // Merge with existing preferences
+  const updatedPreferences = {
+    ...employee.notificationPreferences,
+    ...preferences,
+  };
+
+  await employee.update({ notificationPreferences: updatedPreferences });
+
+  logger.info(`Employee notification preferences updated: ${employeeId} for tenant: ${tenantId}`);
+
+  return employee.toSafeObject();
+};
+
+/**
+ * Get employees with notifications enabled for a specific event type
+ * @param {string} tenantId - Tenant ID
+ * @param {string} locationId - Location ID (optional, null = all locations)
+ * @param {string} notificationType - Type of notification ('new_appointment', 'cancellation')
+ * @returns {Promise<Object>} - { emails: string[], phones: string[] }
+ */
+const getNotificationRecipients = async (tenantId, locationId, notificationType) => {
+  const where = {
+    tenantId,
+    status: EMPLOYEE_STATUS.ACTIVE,
+  };
+
+  // If locationId is provided, filter by location
+  // If null, include employees without location (backward compatibility)
+  if (locationId) {
+    where[Op.or] = [
+      { locationId },
+      { locationId: null }, // Include employees not assigned to a specific location
+    ];
+  }
+
+  const employees = await Employee.findAll({ where });
+
+  const emails = [];
+  const phones = [];
+
+  for (const employee of employees) {
+    const prefs = employee.notificationPreferences || {};
+    const types = prefs.notificationTypes || ['new_appointment', 'cancellation'];
+
+    // Check if this notification type is enabled
+    if (!types.includes(notificationType)) {
+      continue;
+    }
+
+    // Collect emails
+    if (prefs.receiveEmailNotifications && employee.email) {
+      emails.push(employee.email);
+    }
+
+    // Collect phones
+    if (prefs.receiveSmsNotifications && employee.phone) {
+      phones.push(employee.phone);
+    }
+  }
+
+  return { emails, phones };
+};
+
+/**
+ * Get employees by location
+ * @param {string} tenantId - Tenant ID
+ * @param {string} locationId - Location ID
+ * @returns {Promise<Array>} - List of employees
+ */
+const getEmployeesByLocation = async (tenantId, locationId) => {
+  const where = { tenantId };
+
+  if (locationId) {
+    where.locationId = locationId;
+  }
+
+  const employees = await Employee.findAll({
+    where,
+    order: [['firstName', 'ASC'], ['lastName', 'ASC']],
+  });
+
+  return employees.map(emp => emp.toSafeObject());
+};
+
 module.exports = {
   createEmployee,
   getEmployees,
@@ -279,6 +385,10 @@ module.exports = {
   getEmployeeSchedule,
   updateEmployeeSchedule,
   linkServicesToEmployee,
+  updateEmployeeNotificationPreferences,
+  getNotificationRecipients,
+  getEmployeesByLocation,
   EMPLOYEE_STATUS,
   EMPLOYEE_TYPES,
+  EMPLOYEE_ROLES,
 };

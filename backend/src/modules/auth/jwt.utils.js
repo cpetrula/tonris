@@ -48,10 +48,12 @@ const verifyToken = (token) => {
  * @returns {Object} - Object containing access and refresh tokens
  */
 const generateTokenPair = (user) => {
+  // Include role in token payload (default to superuser for backward compatibility)
   const payload = {
     userId: user.id,
     email: user.email,
     tenantId: user.tenantId,
+    role: user.role || 'superuser', // Null role = superuser (original account creator)
   };
 
   return {
