@@ -8,7 +8,8 @@
     "build": "cd ../frontend && npm install && npm run build",
     "dev": "nodemon src/app.js",
     "test": "jest",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "migrate:roles-locations": "node src/scripts/add-roles-locations-migration.js"
   },
   "keywords": [
     "criton",
