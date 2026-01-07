@@ -406,7 +406,7 @@ async function fetchEmployees() {
         email: emp.email || '',
         phone: emp.phone || '',
         employeeType: emp.employeeType || '',
-        serviceIds: emp.serviceIds || [],
+        serviceIds: typeof emp.serviceIds === 'string' ? JSON.parse(emp.serviceIds || '[]') : (emp.serviceIds || []),
         status: emp.status || 'active',
         schedule: normalizeSchedule(emp.schedule),
         role: emp.role || 'staff',
