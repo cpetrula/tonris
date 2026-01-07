@@ -455,6 +455,11 @@ function getLocationName(locationId: string | null) {
   const location = locationStore.locations.find(loc => loc.id === locationId)
   return location ? location.name : 'Unknown'
 }
+
+function getServiceName(serviceId: string) {
+  const service = services.value.find(svc => svc.id === serviceId)
+  return service ? service.name : 'Unknown Service'
+}
 </script>
 
 <template>
@@ -500,7 +505,7 @@ function getLocationName(locationId: string | null) {
           class="p-datatable-sm"
         >
           <template #empty>
-            <div class="text-center py-8 text-white-500">
+            <div class="text-center py-8 text-gray-500">
               No employees found
             </div>
           </template>
@@ -514,8 +519,8 @@ function getLocationName(locationId: string | null) {
                   </span>
                 </div>
                 <div>
-                  <p class="font-medium text-white-900">{{ data.firstName }} {{ data.lastName }}</p>
-                  <p class="text-sm text-white-600">{{ data.email }}</p>
+                  <p class="font-medium text-gray-900">{{ data.firstName }} {{ data.lastName }}</p>
+                  <p class="text-sm text-gray-500">{{ data.email }}</p>
                 </div>
               </div>
             </template>
@@ -621,27 +626,27 @@ function getLocationName(locationId: string | null) {
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-white-700 mb-1">First Name *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
             <InputText v-model="currentEmployee.firstName" class="w-full" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-white-700 mb-1">Last Name *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
             <InputText v-model="currentEmployee.lastName" class="w-full" />
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-white-700 mb-1">Email *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
           <InputText v-model="currentEmployee.email" type="email" class="w-full" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-white-700 mb-1">Phone</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
           <InputText v-model="currentEmployee.phone" class="w-full" />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-white-700 mb-1">Employee Type</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Employee Type</label>
           <Select
             v-model="currentEmployee.employeeType"
             :options="employeeTypeOptions"
@@ -653,7 +658,7 @@ function getLocationName(locationId: string | null) {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-white-700 mb-1">Services</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Services</label>
           <MultiSelect
             v-model="currentEmployee.serviceIds"
             :options="services"
@@ -662,12 +667,18 @@ function getLocationName(locationId: string | null) {
             placeholder="Select services"
             class="w-full"
             display="chip"
-          />
+          >
+            <template #chip="{ value }">
+              <div class="bg-violet-100 text-violet-800 rounded-full px-2 py-1 text-sm flex items-center gap-1">
+                {{ getServiceName(value) }}
+              </div>
+            </template>
+          </MultiSelect>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-white-700 mb-1">Role</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
             <Select
               v-model="currentEmployee.role"
               :options="roleOptions"
@@ -678,7 +689,7 @@ function getLocationName(locationId: string | null) {
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-white-700 mb-1">Location</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
             <Select
               v-model="currentEmployee.locationId"
               :options="[{ id: null, name: 'All Locations' }, ...locationStore.activeLocations]"
