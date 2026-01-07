@@ -546,6 +546,14 @@ function getLocationName(locationId: string | null) {
             </template>
           </Column>
 
+          <Column field="locationId" header="Location">
+            <template #body="{ data }">
+              <span class="text-sm text-gray-600">
+                {{ getLocationName(data.locationId) }}
+              </span>
+            </template>
+          </Column>
+
           <Column field="status" header="Status" sortable>
             <template #body="{ data }">
               <span
