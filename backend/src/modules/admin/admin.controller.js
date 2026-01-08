@@ -26,6 +26,25 @@ const getClients = async (req, res, next) => {
   }
 };
 
+/**
+ * Get aggregate metrics across all tenants
+ * GET /api/admin/metrics
+ */
+const getMetrics = async (req, res, next) => {
+  try {
+    const metrics = await adminService.getAggregateMetrics();
+
+    res.status(200).json({
+      success: true,
+      data: metrics,
+    });
+  } catch (error) {
+    logger.error(`Error in getMetrics controller: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   getClients,
+  getMetrics,
 };

@@ -13,8 +13,18 @@ const router = useRouter()
 
 // State
 const loading = ref(false)
+const metricsLoading = ref(false)
 const error = ref('')
 const clients = ref<any[]>([])
+const expandedRows = ref<any[]>([])
+const metrics = ref<any>({
+  calls: { total: 0, totalMinutes: 0 },
+  appointments: { total: 0 },
+  employees: { total: 0 },
+  services: { total: 0 },
+  trials: { active: 0, avgDaysRemaining: 0 },
+  paidClients: 0
+})
 
 // Computed
 const totalClients = computed(() => clients.value.length)
@@ -27,15 +37,15 @@ const ADMIN_AUTH_KEY = 'admin_authenticated'
 onMounted(async () => {
   const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY)
   const storedPassword = sessionStorage.getItem(ADMIN_PASSWORD_KEY)
-  
+
   if (isAuth !== 'true' || !storedPassword) {
     // Not authenticated, redirect to login
     router.push('/criton-admin')
     return
   }
-  
-  // Load clients data
-  await loadClients()
+
+  // Load clients data and metrics in parallel
+  await Promise.all([loadClients(), loadMetrics()])
 })
 
 // Load clients data
@@ -74,9 +84,33 @@ function logout() {
   router.push('/criton-admin')
 }
 
+// Load aggregate metrics
+async function loadMetrics() {
+  metricsLoading.value = true
+
+  const storedPassword = sessionStorage.getItem(ADMIN_PASSWORD_KEY)
+
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL || ''}/api/admin/metrics`,
+      {
+        headers: {
+          'X-Admin-Password': storedPassword || ''
+        }
+      }
+    )
+
+    metrics.value = response.data.data
+  } catch (err: any) {
+    console.error('Failed to load metrics:', err.response?.data?.error || err.message)
+  } finally {
+    metricsLoading.value = false
+  }
+}
+
 // Refresh data
 async function refreshData() {
-  await loadClients()
+  await Promise.all([loadClients(), loadMetrics()])
 }
 
 // Format date
@@ -178,10 +212,17 @@ function goBack() {
 
       <!-- Client Dashboard -->
       <div class="space-y-6">
-        <!-- Stats Card -->
+        <!-- Summary Metrics Tiles -->
         <Card>
+          <template #title>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-chart-bar text-gray-600"></i>
+              <span>Platform Summary</span>
+            </div>
+          </template>
           <template #content>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <!-- Client Stats -->
               <div class="text-center p-4 bg-blue-50 rounded-lg">
                 <div class="text-3xl font-bold text-blue-600">{{ totalClients }}</div>
                 <div class="text-sm text-gray-600 mt-1">Total Clients</div>
@@ -192,17 +233,41 @@ function goBack() {
                 </div>
                 <div class="text-sm text-gray-600 mt-1">Active Clients</div>
               </div>
-              <div class="text-center p-4 bg-orange-50 rounded-lg">
-                <div class="text-3xl font-bold text-orange-600">
-                  {{ clients.filter(c => c.status === 'pending').length }}
-                </div>
-                <div class="text-sm text-gray-600 mt-1">Pending Clients</div>
-              </div>
               <div class="text-center p-4 bg-purple-50 rounded-lg">
-                <div class="text-3xl font-bold text-purple-600">
-                  {{ clients.filter(c => c.planType !== 'free').length }}
-                </div>
+                <div class="text-3xl font-bold text-purple-600">{{ metrics.paidClients }}</div>
                 <div class="text-sm text-gray-600 mt-1">Paid Plans</div>
+              </div>
+
+              <!-- Trial Stats -->
+              <div class="text-center p-4 bg-orange-50 rounded-lg">
+                <div class="text-3xl font-bold text-orange-600">{{ metrics.trials?.active || 0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">Active Trials</div>
+              </div>
+
+              <!-- Call Stats -->
+              <div class="text-center p-4 bg-indigo-50 rounded-lg">
+                <div class="text-3xl font-bold text-indigo-600">{{ metrics.calls?.total || 0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">Total Calls</div>
+              </div>
+              <div class="text-center p-4 bg-cyan-50 rounded-lg">
+                <div class="text-3xl font-bold text-cyan-600">{{ metrics.calls?.totalMinutes || 0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">Call Minutes</div>
+              </div>
+
+              <!-- Appointment Stats -->
+              <div class="text-center p-4 bg-teal-50 rounded-lg">
+                <div class="text-3xl font-bold text-teal-600">{{ metrics.appointments?.total || 0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">Appointments</div>
+              </div>
+
+              <!-- Employee/Service Stats -->
+              <div class="text-center p-4 bg-pink-50 rounded-lg">
+                <div class="text-3xl font-bold text-pink-600">{{ metrics.employees?.total || 0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">Employees</div>
+              </div>
+              <div class="text-center p-4 bg-amber-50 rounded-lg">
+                <div class="text-3xl font-bold text-amber-600">{{ metrics.services?.total || 0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">Services</div>
               </div>
             </div>
           </template>
@@ -223,14 +288,17 @@ function goBack() {
           </template>
           <template #content>
             <DataTable
+              v-model:expandedRows="expandedRows"
               :value="clients"
               :rows="10"
               :paginator="clients.length > 10"
               responsiveLayout="scroll"
               :loading="loading"
               stripedRows
+              dataKey="id"
               class="text-sm"
             >
+              <Column expander style="width: 3rem" />
               <Column field="name" header="Business Name" sortable>
                 <template #body="{ data }">
                   <div>
@@ -287,6 +355,125 @@ function goBack() {
                 <div class="text-center py-8 text-gray-500">
                   <i class="pi pi-users text-4xl mb-3"></i>
                   <p>No clients found</p>
+                </div>
+              </template>
+
+              <!-- Expandable Row Content -->
+              <template #expansion="{ data }">
+                <div class="p-4 bg-gray-50">
+                  <h4 class="text-lg font-semibold mb-4 text-gray-800">{{ data.name }} - Metrics</h4>
+
+                  <div v-if="data.metrics" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <!-- Call Metrics -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-phone text-indigo-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Calls</span>
+                      </div>
+                      <div class="text-2xl font-bold text-gray-800">{{ data.metrics.calls?.total || 0 }}</div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-clock text-cyan-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Call Minutes</span>
+                      </div>
+                      <div class="text-2xl font-bold text-gray-800">{{ data.metrics.calls?.totalMinutes || 0 }}</div>
+                    </div>
+
+                    <!-- Appointment Metrics -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-calendar text-teal-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Appointments</span>
+                      </div>
+                      <div class="text-2xl font-bold text-gray-800">{{ data.metrics.appointments?.total || 0 }}</div>
+                      <div class="text-xs text-gray-500 mt-1">
+                        {{ data.metrics.appointments?.upcoming || 0 }} upcoming
+                      </div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-check-circle text-green-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Completed</span>
+                      </div>
+                      <div class="text-2xl font-bold text-gray-800">{{ data.metrics.appointments?.completed || 0 }}</div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-times-circle text-red-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Cancelled</span>
+                      </div>
+                      <div class="text-2xl font-bold text-gray-800">{{ data.metrics.appointments?.cancelled || 0 }}</div>
+                    </div>
+
+                    <!-- Employee/Service Metrics -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-users text-pink-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Employees</span>
+                      </div>
+                      <div class="text-2xl font-bold text-gray-800">{{ data.metrics.employees || 0 }}</div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-list text-amber-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Services</span>
+                      </div>
+                      <div class="text-2xl font-bold text-gray-800">{{ data.metrics.services || 0 }}</div>
+                    </div>
+
+                    <!-- Phone & Trial Info -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-mobile text-blue-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Phone Number</span>
+                      </div>
+                      <div class="text-sm font-medium text-gray-800">
+                        {{ data.metrics.phoneNumber || 'Not assigned' }}
+                      </div>
+                    </div>
+
+                    <div v-if="data.metrics.trialDaysRemaining !== null" class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-hourglass text-orange-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Trial Days Left</span>
+                      </div>
+                      <div class="text-2xl font-bold" :class="data.metrics.trialDaysRemaining <= 3 ? 'text-red-600' : 'text-orange-600'">
+                        {{ data.metrics.trialDaysRemaining }}
+                      </div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-credit-card text-purple-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Plan</span>
+                      </div>
+                      <Tag
+                        :value="data.metrics.planType || data.planType || 'free'"
+                        :severity="getPlanSeverity(data.metrics.planType || data.planType || 'free')"
+                        class="uppercase text-xs"
+                      />
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg shadow-sm border">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-wallet text-green-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Stripe</span>
+                      </div>
+                      <div class="text-xs font-medium" :class="data.metrics.stripeCustomerId ? 'text-green-600' : 'text-gray-400'">
+                        {{ data.metrics.stripeCustomerId ? 'Connected' : 'Not connected' }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-else class="text-center py-4 text-gray-500">
+                    <i class="pi pi-info-circle mr-2"></i>
+                    No metrics available for this client
+                  </div>
                 </div>
               </template>
             </DataTable>
