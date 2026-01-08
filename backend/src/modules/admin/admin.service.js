@@ -63,10 +63,12 @@ const getMetricsForTenant = async (tenantId) => {
     // Get employee count
     let employeeCount = 0;
     try {
-      employeeCount = await Employee.count({ where: { tenantId } });
-      logger.info(`Employee count for ${tenantId}: ${employeeCount}`);
+      logger.info(`Querying employees for tenant: ${tenantId}`);
+      const employees = await Employee.findAll({ where: { tenantId }, attributes: ['id'] });
+      employeeCount = employees.length;
+      logger.info(`Employee count for ${tenantId}: ${employeeCount} (found ${employees.length} records)`);
     } catch (err) {
-      logger.error(`Error getting employee count for ${tenantId}: ${err.message}`);
+      logger.error(`Error getting employee count for ${tenantId}: ${err.message}`, { stack: err.stack });
     }
 
     // Get service count
@@ -140,10 +142,12 @@ const getAllClients = async () => {
     });
 
     logger.info(`Retrieved ${tenants.length} clients for admin view`);
+    tenants.forEach(t => logger.info(`Tenant: id=${t.id}, name=${t.name}`));
 
     // Get metrics for each tenant
     const clientsWithMetrics = await Promise.all(
       tenants.map(async (tenant) => {
+        logger.info(`Getting metrics for tenant: ${tenant.id} (${tenant.name})`);
         const metrics = await getMetricsForTenant(tenant.id);
 
         return {
