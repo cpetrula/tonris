@@ -33,4 +33,7 @@ const adminLimiter = rateLimit({
 // GET /api/admin/clients - Get all clients (tenants)
 router.get('/clients', adminLimiter, adminAuthMiddleware, adminController.getClients);
 
+// GET /api/admin/metrics - Get aggregate metrics across all tenants
+router.get('/metrics', adminLimiter, adminAuthMiddleware, adminController.getMetrics);
+
 module.exports = router;
