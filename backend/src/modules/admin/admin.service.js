@@ -96,8 +96,18 @@ const getMetricsForTenant = async (tenantId) => {
       stripeCustomerId: tenant?.stripeCustomerId || null,
     };
   } catch (error) {
-    logger.error(`Error fetching metrics for tenant ${tenantId}: ${error.message}`);
-    return null;
+    logger.error(`Error fetching metrics for tenant ${tenantId}: ${error.message}`, error.stack);
+    // Return empty metrics instead of null so UI can still display
+    return {
+      calls: { total: 0, totalMinutes: 0, avgDuration: 0 },
+      appointments: { total: 0, upcoming: 0, completed: 0, cancelled: 0, scheduled: 0 },
+      employees: 0,
+      services: 0,
+      phoneNumber: null,
+      trialDaysRemaining: null,
+      planType: null,
+      stripeCustomerId: null,
+    };
   }
 };
 

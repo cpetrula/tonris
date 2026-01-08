@@ -253,22 +253,6 @@ function goBack() {
                 <div class="text-3xl font-bold text-cyan-600">{{ metrics.calls?.totalMinutes || 0 }}</div>
                 <div class="text-sm text-gray-600 mt-1">Call Minutes</div>
               </div>
-
-              <!-- Appointment Stats -->
-              <div class="text-center p-4 bg-teal-50 rounded-lg">
-                <div class="text-3xl font-bold text-teal-600">{{ metrics.appointments?.total || 0 }}</div>
-                <div class="text-sm text-gray-600 mt-1">Appointments</div>
-              </div>
-
-              <!-- Employee/Service Stats -->
-              <div class="text-center p-4 bg-pink-50 rounded-lg">
-                <div class="text-3xl font-bold text-pink-600">{{ metrics.employees?.total || 0 }}</div>
-                <div class="text-sm text-gray-600 mt-1">Employees</div>
-              </div>
-              <div class="text-center p-4 bg-amber-50 rounded-lg">
-                <div class="text-3xl font-bold text-amber-600">{{ metrics.services?.total || 0 }}</div>
-                <div class="text-sm text-gray-600 mt-1">Services</div>
-              </div>
             </div>
           </template>
         </Card>
