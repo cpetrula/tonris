@@ -371,6 +371,171 @@ class ElevenLabsService extends AIProviderInterface {
   }
 
   /**
+   * Get agent details from ElevenLabs
+   * @param {string} agentId - Agent ID to fetch
+   * @returns {Promise<Object>} - Agent details including prompt, first message, voice settings
+   */
+  async getAgent(agentId) {
+    if (!await this.isAvailable()) {
+      throw new Error('ElevenLabs is not configured');
+    }
+
+    if (!this.client) {
+      throw new Error('ElevenLabs client is not initialized');
+    }
+
+    const effectiveAgentId = agentId || this.agentId;
+    if (!effectiveAgentId) {
+      throw new Error('Agent ID is required');
+    }
+
+    try {
+      logger.info(`Fetching ElevenLabs agent: ${effectiveAgentId}`);
+
+      const response = await this.client.conversationalAi.agents.get(effectiveAgentId);
+
+      return response;
+    } catch (error) {
+      logger.error(`Failed to get ElevenLabs agent: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * List all agents from ElevenLabs
+   * @param {Object} options - Query options
+   * @param {number} options.pageSize - Number of agents per page
+   * @param {string} options.cursor - Cursor for pagination
+   * @returns {Promise<Object>} - Agents list with pagination
+   */
+  async listAgents(options = {}) {
+    if (!await this.isAvailable()) {
+      throw new Error('ElevenLabs is not configured');
+    }
+
+    if (!this.client) {
+      throw new Error('ElevenLabs client is not initialized');
+    }
+
+    try {
+      const { pageSize = 30, cursor } = options;
+
+      logger.info(`Fetching ElevenLabs agents list`);
+
+      const response = await this.client.conversationalAi.agents.list({
+        ...(pageSize && { pageSize: Math.min(pageSize, 100) }),
+        ...(cursor && { cursor }),
+      });
+
+      return {
+        agents: response.agents || [],
+        hasMore: response.hasMore || false,
+        nextCursor: response.nextCursor || null,
+      };
+    } catch (error) {
+      logger.error(`Failed to list ElevenLabs agents: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Update agent configuration on ElevenLabs
+   * @param {string} agentId - Agent ID to update
+   * @param {Object} config - Configuration to update
+   * @param {string} config.systemPrompt - The system prompt/instructions for the agent
+   * @param {string} config.firstMessage - The greeting message when call starts
+   * @param {string} config.name - Agent name
+   * @param {string} config.voiceId - ElevenLabs voice ID
+   * @param {string} config.language - Agent language (e.g., 'en')
+   * @param {Object} config.llm - LLM settings (model, temperature, etc.)
+   * @returns {Promise<Object>} - Updated agent details
+   */
+  async updateAgent(agentId, config = {}) {
+    if (!await this.isAvailable()) {
+      throw new Error('ElevenLabs is not configured');
+    }
+
+    if (!this.client) {
+      throw new Error('ElevenLabs client is not initialized');
+    }
+
+    const effectiveAgentId = agentId || this.agentId;
+    if (!effectiveAgentId) {
+      throw new Error('Agent ID is required');
+    }
+
+    try {
+      logger.info(`Updating ElevenLabs agent: ${effectiveAgentId}`);
+
+      // Build the update payload based on ElevenLabs API structure
+      const updatePayload = {};
+
+      // Update name if provided
+      if (config.name) {
+        updatePayload.name = config.name;
+      }
+
+      // Build conversation_config if any conversation settings are provided
+      const conversationConfig = {};
+      const agentConfig = {};
+
+      // System prompt
+      if (config.systemPrompt) {
+        agentConfig.prompt = {
+          prompt: config.systemPrompt,
+        };
+      }
+
+      // First message (greeting)
+      if (config.firstMessage) {
+        agentConfig.first_message = config.firstMessage;
+      }
+
+      // Language
+      if (config.language) {
+        agentConfig.language = config.language;
+      }
+
+      // LLM settings
+      if (config.llm) {
+        agentConfig.llm = config.llm;
+      }
+
+      // Voice ID
+      if (config.voiceId) {
+        conversationConfig.tts = {
+          voice_id: config.voiceId,
+        };
+      }
+
+      // Add agent config to conversation config if any agent settings exist
+      if (Object.keys(agentConfig).length > 0) {
+        conversationConfig.agent = agentConfig;
+      }
+
+      // Add conversation_config to payload if any settings exist
+      if (Object.keys(conversationConfig).length > 0) {
+        updatePayload.conversation_config = conversationConfig;
+      }
+
+      if (Object.keys(updatePayload).length === 0) {
+        throw new Error('No configuration provided to update');
+      }
+
+      logger.info(`Update payload: ${JSON.stringify(updatePayload, null, 2)}`);
+
+      const response = await this.client.conversationalAi.agents.update(effectiveAgentId, updatePayload);
+
+      logger.info(`ElevenLabs agent ${effectiveAgentId} updated successfully`);
+
+      return response;
+    } catch (error) {
+      logger.error(`Failed to update ElevenLabs agent: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * List conversations from ElevenLabs
    * @param {Object} options - Query options
    * @param {string} options.agentId - Filter by agent ID

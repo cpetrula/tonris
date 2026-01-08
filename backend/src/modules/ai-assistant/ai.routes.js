@@ -63,6 +63,16 @@ router.post('/conversation', conversationLimiter, authMiddleware, aiController.p
 // GET /api/ai/config - Get AI configuration for tenant
 router.get('/config', standardLimiter, authMiddleware, aiController.getAIConfig);
 
+// ElevenLabs Agent Management routes
+// GET /api/ai/agents - List all ElevenLabs agents
+router.get('/agents', standardLimiter, authMiddleware, aiController.listAgents);
+
+// GET /api/ai/agents/:agentId - Get a specific agent's details
+router.get('/agents/:agentId', standardLimiter, authMiddleware, aiController.getAgent);
+
+// PATCH /api/ai/agents/:agentId - Update an agent's configuration
+router.patch('/agents/:agentId', standardLimiter, authMiddleware, aiController.updateAgent);
+
 // POST /api/ai/webhook/elevenlabs - Handle ElevenLabs webhooks (no auth required for webhooks)
 router.post('/webhook/elevenlabs', express.json(), aiController.handleElevenLabsWebhook);
 
