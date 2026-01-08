@@ -782,6 +782,57 @@ const sendCancellationNotifications = async (appointment, tenantId, reason) => {
     });
 };
 
+/**
+ * Get today's appointments for a customer by phone number
+ * Used for caller identification in voice AI
+ * @param {string} phoneNumber - Customer's phone number
+ * @param {string} tenantId - Tenant ID
+ * @returns {Promise<Array>} - Today's appointments with employee and service info
+ */
+const getTodayAppointmentsByPhone = async (phoneNumber, tenantId) => {
+  if (!phoneNumber || !tenantId) {
+    return [];
+  }
+
+  // Normalize phone number (remove formatting, keep digits and +)
+  const normalized = phoneNumber.replace(/[^0-9+]/g, '');
+
+  // Get today's date range
+  const today = new Date();
+  const startOfDay = new Date(today);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(today);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Query all of today's scheduled/confirmed appointments
+  const appointments = await Appointment.findAll({
+    where: {
+      tenantId,
+      startTime: {
+        [Op.gte]: startOfDay,
+        [Op.lte]: endOfDay,
+      },
+      status: {
+        [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED],
+      },
+    },
+    include: [
+      { model: Employee, as: 'employee', attributes: ['id', 'firstName', 'lastName'] },
+      { model: Service, as: 'service', attributes: ['id', 'name', 'duration'] },
+    ],
+    order: [['startTime', 'ASC']],
+  });
+
+  // Filter by phone number with flexible matching
+  return appointments.filter(apt => {
+    if (!apt.customerPhone) return false;
+    const aptNormalized = apt.customerPhone.replace(/[^0-9+]/g, '');
+    // Match exact or last 10 digits (handles +1 country code differences)
+    return aptNormalized === normalized ||
+           (aptNormalized.slice(-10) === normalized.slice(-10) && normalized.slice(-10).length === 10);
+  });
+};
+
 module.exports = {
   createAppointment,
   getAppointments,
@@ -792,6 +843,7 @@ module.exports = {
   calculateTotals,
   sendNewAppointmentEmailNotification,
   sendCancellationEmailNotification,
+  getTodayAppointmentsByPhone,
   APPOINTMENT_STATUS,
   CANCELLATION_REASONS,
 };

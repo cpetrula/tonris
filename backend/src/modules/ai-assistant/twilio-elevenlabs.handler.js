@@ -656,6 +656,21 @@ const formatBusinessHoursResponse = (hours) => {
 };
 
 /**
+ * Format time for speech output
+ * @param {Date|string} dateTime - Date/time to format
+ * @returns {string} - Formatted time (e.g., "2:00 PM")
+ */
+const formatTimeForSpeech = (dateTime) => {
+  const date = new Date(dateTime);
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  const minuteStr = minutes === 0 ? '' : `:${minutes.toString().padStart(2, '0')}`;
+  return `${hour12}${minuteStr} ${ampm}`;
+};
+
+/**
  * Handle ElevenLabs Conversation Initiation Client Data webhook
  * This webhook is called by ElevenLabs when a new Twilio phone call or SIP trunk call
  * conversation begins. It allows us to dynamically provide conversation configuration
@@ -687,8 +702,8 @@ const handleConversationInitiation = async (params) => {
 
   try {
     // Get lazy-loaded services
-    const { tenantService } = getServices();
-    
+    const { tenantService, appointmentService } = getServices();
+
     // Fetch tenant data if tenant ID is available
     let tenant = null;
     let businessName = dynamicVariables.business_name || 'Our Business';
@@ -698,7 +713,7 @@ const handleConversationInitiation = async (params) => {
     if (tenantId) {
       try {
         tenant = await tenantService.getTenantById(tenantId);
-        
+
         if (tenant) {
           businessName = tenant.name || businessName;
           businessHours = tenant.businessHours?.businessHours || getDefaultBusinessHours();
@@ -710,6 +725,29 @@ const handleConversationInitiation = async (params) => {
       }
     }
 
+    // Look up caller's appointments for today (for proactive identification)
+    let callerAppointmentsToday = [];
+    if (callerNumber && tenantId) {
+      try {
+        callerAppointmentsToday = await appointmentService.getTodayAppointmentsByPhone(
+          callerNumber,
+          tenantId
+        );
+        logger.info(`Caller appointment lookup: phone=${callerNumber}, found=${callerAppointmentsToday.length} appointments today`);
+      } catch (aptError) {
+        logger.warn(`Failed to lookup caller appointments: ${aptError.message}`);
+      }
+    }
+
+    // Format appointments for the agent
+    const formattedAppointments = callerAppointmentsToday.map(apt => ({
+      id: apt.id,
+      time: formatTimeForSpeech(apt.startTime),
+      serviceName: apt.service?.name || 'appointment',
+      employeeName: apt.employee ? apt.employee.firstName : null,
+      customerName: apt.customerName,
+    }));
+
     // Build dynamic variables for the conversation
     const responseVariables = {
       tenant_id: tenantId || '',
@@ -718,6 +756,11 @@ const handleConversationInitiation = async (params) => {
       caller_number: callerNumber || '',
       call_sid: callSid || '',
       conversation_id: conversationId,
+      // Caller's appointments for today (for proactive identification)
+      caller_appointments_today: JSON.stringify(formattedAppointments),
+      caller_has_appointment_today: formattedAppointments.length > 0 ? 'true' : 'false',
+      caller_appointment_count: String(formattedAppointments.length),
+      caller_name: formattedAppointments[0]?.customerName || '',
     };
 
     // Add business hours as a formatted string for agent context
