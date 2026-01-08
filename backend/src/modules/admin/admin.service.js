@@ -18,27 +18,50 @@ const logger = require('../../utils/logger');
  */
 const getMetricsForTenant = async (tenantId) => {
   try {
+    logger.info(`Fetching metrics for tenant: ${tenantId}`);
+
     // Get call metrics
-    const callStats = await CallLog.findOne({
-      where: { tenantId },
-      attributes: [
-        [fn('COUNT', col('id')), 'totalCalls'],
-        [fn('SUM', col('duration')), 'totalMinutes'],
-        [fn('AVG', col('duration')), 'avgDuration'],
-      ],
-      raw: true,
-    });
+    let callStats = null;
+    try {
+      callStats = await CallLog.findOne({
+        where: { tenantId },
+        attributes: [
+          [fn('COUNT', col('id')), 'totalCalls'],
+          [fn('SUM', col('duration')), 'totalMinutes'],
+          [fn('AVG', col('duration')), 'avgDuration'],
+        ],
+        raw: true,
+      });
+      logger.info(`Call stats for ${tenantId}: ${JSON.stringify(callStats)}`);
+    } catch (err) {
+      logger.error(`Error getting call stats for ${tenantId}: ${err.message}`);
+    }
 
     // Get appointment metrics
-    const appointmentStats = await Appointment.findAll({
-      where: { tenantId },
-      attributes: [
-        'status',
-        [fn('COUNT', col('id')), 'count'],
-      ],
-      group: ['status'],
-      raw: true,
-    });
+    let appointmentStats = [];
+    let upcomingAppointments = 0;
+    try {
+      appointmentStats = await Appointment.findAll({
+        where: { tenantId },
+        attributes: [
+          'status',
+          [fn('COUNT', col('id')), 'count'],
+        ],
+        group: ['status'],
+        raw: true,
+      });
+      logger.info(`Appointment stats for ${tenantId}: ${JSON.stringify(appointmentStats)}`);
+
+      upcomingAppointments = await Appointment.count({
+        where: {
+          tenantId,
+          startTime: { [Op.gt]: new Date() },
+          status: { [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED] },
+        },
+      });
+    } catch (err) {
+      logger.error(`Error getting appointment stats for ${tenantId}: ${err.message}`);
+    }
 
     const appointmentsByStatus = {};
     let totalAppointments = 0;
@@ -47,20 +70,23 @@ const getMetricsForTenant = async (tenantId) => {
       totalAppointments += parseInt(stat.count, 10);
     });
 
-    // Get upcoming appointments count
-    const upcomingAppointments = await Appointment.count({
-      where: {
-        tenantId,
-        startTime: { [Op.gt]: new Date() },
-        status: { [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED] },
-      },
-    });
-
     // Get employee count
-    const employeeCount = await Employee.count({ where: { tenantId } });
+    let employeeCount = 0;
+    try {
+      employeeCount = await Employee.count({ where: { tenantId } });
+      logger.info(`Employee count for ${tenantId}: ${employeeCount}`);
+    } catch (err) {
+      logger.error(`Error getting employee count for ${tenantId}: ${err.message}`);
+    }
 
     // Get service count
-    const serviceCount = await Service.count({ where: { tenantId } });
+    let serviceCount = 0;
+    try {
+      serviceCount = await Service.count({ where: { tenantId } });
+      logger.info(`Service count for ${tenantId}: ${serviceCount}`);
+    } catch (err) {
+      logger.error(`Error getting service count for ${tenantId}: ${err.message}`);
+    }
 
     // Get tenant details for phone number and trial info
     const tenant = await Tenant.findByPk(tenantId, {
