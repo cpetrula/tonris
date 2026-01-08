@@ -417,7 +417,7 @@ function goBack() {
                         <span class="text-xs text-gray-500 uppercase">Phone Number</span>
                       </div>
                       <div class="text-sm font-medium text-gray-800">
-                        {{ data.metrics.phoneNumber || 'Not assigned' }}
+                        {{ data.metrics.phoneNumber || data.phoneNumber || 'Not assigned' }}
                       </div>
                     </div>
 
