@@ -76,4 +76,8 @@ router.patch('/agents/:agentId', standardLimiter, authMiddleware, aiController.u
 // POST /api/ai/webhook/elevenlabs - Handle ElevenLabs webhooks (no auth required for webhooks)
 router.post('/webhook/elevenlabs', express.json(), aiController.handleElevenLabsWebhook);
 
+// POST /api/ai/webhook/elevenlabs/employee-schedule - Employee self-service schedule updates via voice
+// No auth required - authentication is via phone number matching
+router.post('/webhook/elevenlabs/employee-schedule', express.json(), aiController.handleEmployeeScheduleWebhook);
+
 module.exports = router;
