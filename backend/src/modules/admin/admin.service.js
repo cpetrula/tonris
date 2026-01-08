@@ -264,8 +264,50 @@ const getAggregateMetrics = async () => {
   }
 };
 
+/**
+ * Debug function to check tenant ID mappings
+ * @returns {Promise<Object>} - Debug info
+ */
+const getDebugInfo = async () => {
+  try {
+    // Get all tenant IDs
+    const tenants = await Tenant.findAll({
+      attributes: ['id', 'name'],
+      raw: true,
+    });
+
+    // For each tenant, check what IDs exist in related tables
+    const debugInfo = await Promise.all(
+      tenants.map(async (tenant) => {
+        const employeeCount = await Employee.count({ where: { tenantId: tenant.id } });
+        const serviceCount = await Service.count({ where: { tenantId: tenant.id } });
+        const appointmentCount = await Appointment.count({ where: { tenantId: tenant.id } });
+        const callCount = await CallLog.count({ where: { tenantId: tenant.id } });
+
+        // Also get sample IDs from each table to compare
+        const sampleEmployee = await Employee.findOne({ attributes: ['id', 'tenantId'], raw: true });
+        const sampleService = await Service.findOne({ attributes: ['id', 'tenantId'], raw: true });
+
+        return {
+          tenantId: tenant.id,
+          tenantName: tenant.name,
+          counts: { employeeCount, serviceCount, appointmentCount, callCount },
+          sampleEmployee,
+          sampleService,
+        };
+      })
+    );
+
+    return debugInfo;
+  } catch (error) {
+    logger.error(`Debug info error: ${error.message}`);
+    return { error: error.message };
+  }
+};
+
 module.exports = {
   getAllClients,
   getAggregateMetrics,
   getMetricsForTenant,
+  getDebugInfo,
 };

@@ -36,4 +36,7 @@ router.get('/clients', adminLimiter, adminAuthMiddleware, adminController.getCli
 // GET /api/admin/metrics - Get aggregate metrics across all tenants
 router.get('/metrics', adminLimiter, adminAuthMiddleware, adminController.getMetrics);
 
+// GET /api/admin/debug - Debug tenant ID mappings
+router.get('/debug', adminLimiter, adminAuthMiddleware, adminController.getDebug);
+
 module.exports = router;

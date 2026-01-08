@@ -44,7 +44,26 @@ const getMetrics = async (req, res, next) => {
   }
 };
 
+/**
+ * Get debug info about tenant ID mappings
+ * GET /api/admin/debug
+ */
+const getDebug = async (req, res, next) => {
+  try {
+    const debugInfo = await adminService.getDebugInfo();
+
+    res.status(200).json({
+      success: true,
+      data: debugInfo,
+    });
+  } catch (error) {
+    logger.error(`Error in getDebug controller: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   getClients,
   getMetrics,
+  getDebug,
 };
