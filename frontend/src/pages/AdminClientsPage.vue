@@ -443,15 +443,6 @@ function goBack() {
                       />
                     </div>
 
-                    <div class="bg-white p-3 rounded-lg shadow-sm border">
-                      <div class="flex items-center gap-2 mb-1">
-                        <i class="pi pi-wallet text-green-500"></i>
-                        <span class="text-xs text-gray-500 uppercase">Stripe</span>
-                      </div>
-                      <div class="text-xs font-medium" :class="data.metrics.stripeCustomerId ? 'text-green-600' : 'text-gray-400'">
-                        {{ data.metrics.stripeCustomerId ? 'Connected' : 'Not connected' }}
-                      </div>
-                    </div>
                   </div>
 
                   <div v-else class="text-center py-4 text-gray-500">

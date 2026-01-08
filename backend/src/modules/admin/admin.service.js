@@ -82,7 +82,7 @@ const getMetricsForTenant = async (tenantId) => {
 
     // Get tenant details for phone number and trial info
     const tenant = await Tenant.findByPk(tenantId, {
-      attributes: ['twilioPhoneNumber', 'trialEndsAt', 'planType', 'stripeCustomerId'],
+      attributes: ['twilioPhoneNumber', 'trialEndsAt', 'planType'],
     });
 
     // Calculate trial days remaining
@@ -111,7 +111,6 @@ const getMetricsForTenant = async (tenantId) => {
       phoneNumber: tenant?.twilioPhoneNumber || null,
       trialDaysRemaining,
       planType: tenant?.planType,
-      stripeCustomerId: tenant?.stripeCustomerId || null,
     };
   } catch (error) {
     logger.error(`Error fetching metrics for tenant ${tenantId}: ${error.message}`, error.stack);
@@ -124,7 +123,6 @@ const getMetricsForTenant = async (tenantId) => {
       phoneNumber: null,
       trialDaysRemaining: null,
       planType: null,
-      stripeCustomerId: null,
     };
   }
 };
