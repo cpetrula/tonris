@@ -956,7 +956,7 @@ const handleElevenLabsAppointmentsWebhook = async (req, res, next) => {
     }
     
     logger.info(`ElevenLabs Appointments webhook: Fetching appointments for tenant ${tenantId}`);
-    
+
     // Fetch appointments for the tenant
     const result = await appointmentService.getAppointments(tenantId, {
       status,
@@ -965,15 +965,80 @@ const handleElevenLabsAppointmentsWebhook = async (req, res, next) => {
       endDate,
       limit: 100,
     });
-    
+
+    // Get tenant timezone (default to PST)
+    const timezone = req.query.timezone || 'America/Los_Angeles';
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: timezone }); // YYYY-MM-DD
+
+    // Format appointments with timezone-aware, human-readable dates
+    // This helps the AI understand when appointments are relative to "today"
+    const formattedAppointments = result.appointments.map(apt => {
+      const startTime = new Date(apt.startTime);
+      const aptDateStr = startTime.toLocaleDateString('en-CA', { timeZone: timezone });
+
+      // Determine if today, tomorrow, or other
+      let dayLabel = '';
+      const todayDate = new Date(todayStr);
+      const aptDate = new Date(aptDateStr);
+      const dayDiff = Math.floor((aptDate - todayDate) / (1000 * 60 * 60 * 24));
+
+      if (dayDiff === 0) {
+        dayLabel = 'Today';
+      } else if (dayDiff === 1) {
+        dayLabel = 'Tomorrow';
+      } else if (dayDiff === -1) {
+        dayLabel = 'Yesterday';
+      } else {
+        dayLabel = startTime.toLocaleDateString('en-US', {
+          weekday: 'long',
+          timeZone: timezone
+        });
+      }
+
+      // Format time in 12-hour format
+      const timeFormatted = startTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: timezone,
+      });
+
+      // Format full date
+      const dateFormatted = startTime.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: timezone,
+      });
+
+      return {
+        ...apt,
+        // Add human-readable fields for the AI
+        dayLabel,
+        timeFormatted,
+        dateFormatted,
+        dateTimeFormatted: `${dayLabel}, ${dateFormatted} at ${timeFormatted}`,
+      };
+    });
+
     // Return appointments in the format expected by ElevenLabs
     res.status(200).json({
       success: true,
       data: {
-        appointments: result.appointments,
+        appointments: formattedAppointments,
         message: 'Here are the current appointments',
         total: result.total,
         tenantId,
+        currentDate: now.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          timeZone: timezone,
+        }),
+        timezone,
       },
     });
   } catch (error) {
