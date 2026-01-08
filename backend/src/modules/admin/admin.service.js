@@ -20,38 +20,34 @@ const getMetricsForTenant = async (tenantId) => {
   try {
     logger.info(`Fetching metrics for tenant: ${tenantId}`);
 
-    // Get call metrics
-    let callStats = null;
+    // Get call metrics using simpler count/sum methods
+    let totalCalls = 0;
+    let totalCallSeconds = 0;
     try {
-      callStats = await CallLog.findOne({
-        where: { tenantId },
-        attributes: [
-          [fn('COUNT', col('id')), 'totalCalls'],
-          [fn('SUM', col('duration')), 'totalMinutes'],
-          [fn('AVG', col('duration')), 'avgDuration'],
-        ],
-        raw: true,
-      });
-      logger.info(`Call stats for ${tenantId}: ${JSON.stringify(callStats)}`);
+      totalCalls = await CallLog.count({ where: { tenantId } });
+      totalCallSeconds = await CallLog.sum('duration', { where: { tenantId } }) || 0;
+      logger.info(`Call metrics for ${tenantId}: calls=${totalCalls}, seconds=${totalCallSeconds}`);
     } catch (err) {
       logger.error(`Error getting call stats for ${tenantId}: ${err.message}`);
     }
 
-    // Get appointment metrics
-    let appointmentStats = [];
+    // Get appointment counts by status
+    let totalAppointments = 0;
     let upcomingAppointments = 0;
+    let completedAppointments = 0;
+    let cancelledAppointments = 0;
+    let scheduledAppointments = 0;
     try {
-      appointmentStats = await Appointment.findAll({
-        where: { tenantId },
-        attributes: [
-          'status',
-          [fn('COUNT', col('id')), 'count'],
-        ],
-        group: ['status'],
-        raw: true,
+      totalAppointments = await Appointment.count({ where: { tenantId } });
+      completedAppointments = await Appointment.count({
+        where: { tenantId, status: APPOINTMENT_STATUS.COMPLETED }
       });
-      logger.info(`Appointment stats for ${tenantId}: ${JSON.stringify(appointmentStats)}`);
-
+      cancelledAppointments = await Appointment.count({
+        where: { tenantId, status: APPOINTMENT_STATUS.CANCELLED }
+      });
+      scheduledAppointments = await Appointment.count({
+        where: { tenantId, status: APPOINTMENT_STATUS.SCHEDULED }
+      });
       upcomingAppointments = await Appointment.count({
         where: {
           tenantId,
@@ -59,16 +55,10 @@ const getMetricsForTenant = async (tenantId) => {
           status: { [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED] },
         },
       });
+      logger.info(`Appointment metrics for ${tenantId}: total=${totalAppointments}, upcoming=${upcomingAppointments}`);
     } catch (err) {
       logger.error(`Error getting appointment stats for ${tenantId}: ${err.message}`);
     }
-
-    const appointmentsByStatus = {};
-    let totalAppointments = 0;
-    appointmentStats.forEach(stat => {
-      appointmentsByStatus[stat.status] = parseInt(stat.count, 10);
-      totalAppointments += parseInt(stat.count, 10);
-    });
 
     // Get employee count
     let employeeCount = 0;
@@ -103,16 +93,16 @@ const getMetricsForTenant = async (tenantId) => {
 
     return {
       calls: {
-        total: parseInt(callStats?.totalCalls || 0, 10),
-        totalMinutes: Math.round(parseFloat(callStats?.totalMinutes || 0) / 60), // Convert seconds to minutes
-        avgDuration: Math.round(parseFloat(callStats?.avgDuration || 0)), // In seconds
+        total: totalCalls,
+        totalMinutes: Math.round(totalCallSeconds / 60), // Convert seconds to minutes
+        avgDuration: totalCalls > 0 ? Math.round(totalCallSeconds / totalCalls) : 0, // In seconds
       },
       appointments: {
         total: totalAppointments,
         upcoming: upcomingAppointments,
-        completed: appointmentsByStatus[APPOINTMENT_STATUS.COMPLETED] || 0,
-        cancelled: appointmentsByStatus[APPOINTMENT_STATUS.CANCELLED] || 0,
-        scheduled: appointmentsByStatus[APPOINTMENT_STATUS.SCHEDULED] || 0,
+        completed: completedAppointments,
+        cancelled: cancelledAppointments,
+        scheduled: scheduledAppointments,
       },
       employees: employeeCount,
       services: serviceCount,
