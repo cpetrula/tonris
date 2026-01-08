@@ -85,18 +85,21 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
       elevenLabsWs = new WebSocket(signedUrl);
 
       // Handle ElevenLabs WebSocket open
+      // IMPORTANT: This handler must be synchronous and send the initialization message immediately
+      // ElevenLabs expects the conversation_initiation_client_data message right when the WebSocket opens
+      // Any async operations must be done BEFORE connecting (see prefetchedCallerData above)
       elevenLabsWs.on('open', () => {
         logger.info(`[MediaStream] Connected to ElevenLabs for call ${callSid}`);
-        
+
         // Build dynamic variables from custom parameters
         // Include tenant_id and tenant_name for webhook callbacks and query params
         // ElevenLabs requires 'name' as a dynamic variable
         const dynamicVariables = {};
-        
+
         // Always include tenant_id - it should always be present
         // Use the value from customParameters if available, otherwise use the tenantId variable
         dynamicVariables.tenant_id = customParameters.tenant_id || tenantId;
-        
+
         const tenantName = customParameters.tenant_name || customParameters.business_name;
         if (tenantName) {
           dynamicVariables.tenant_name = tenantName;
@@ -105,7 +108,7 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
           // Fallback name if no tenant/business name
           dynamicVariables.name = 'Our Business';
         }
-        
+
         // Include ALL custom parameters as dynamic variables so they're available to ElevenLabs
         // This ensures fields like business_hours, ai_greeting, call_status, etc. are sent
         // Note: tenant_id is handled above, tenant_name may be overridden if present in customParameters
@@ -116,7 +119,36 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
             dynamicVariables[key] = value;
           }
         }
-        
+
+        // Add current time in business timezone for the agent
+        // Default to America/Los_Angeles (PST) if no timezone set
+        const tenantTimezone = customParameters.timezone || 'America/Los_Angeles';
+        const now = new Date();
+        dynamicVariables.current_datetime = now.toLocaleString('en-US', {
+          timeZone: tenantTimezone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+        dynamicVariables.current_time = now.toLocaleTimeString('en-US', {
+          timeZone: tenantTimezone,
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+        dynamicVariables.current_date = now.toLocaleDateString('en-US', {
+          timeZone: tenantTimezone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        dynamicVariables.timezone = tenantTimezone;
+
         logger.info(`[MediaStream] Dynamic variables being sent: ${Object.keys(dynamicVariables).join(', ')}`);
         logger.info(`[MediaStream] Tenant ID: ${dynamicVariables.tenant_id}, Call SID: ${callSid}`);
         // Note: debug logging may contain sensitive data - use only for development/troubleshooting

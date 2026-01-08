@@ -104,8 +104,14 @@ const createAppointment = async (appointmentData, tenantId) => {
   );
 
   if (!availability.available) {
+    logger.warn(`Appointment slot unavailable: ${availability.reason}`, {
+      employeeId,
+      startTime: startDateTime.toISOString(),
+      endTime: endDateTime.toISOString(),
+      conflicts: availability.conflicts,
+    });
     throw new AppError(
-      'Time slot is not available. Employee already has an appointment during this time.',
+      `Time slot is not available. ${availability.reason}`,
       409,
       'TIME_SLOT_CONFLICT'
     );
@@ -320,8 +326,14 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
     );
 
     if (!availability.available) {
+      logger.warn(`Reschedule slot unavailable: ${availability.reason}`, {
+        employeeId: newEmployeeId,
+        startTime: newStartTime.toISOString(),
+        endTime: newEndTime.toISOString(),
+        conflicts: availability.conflicts,
+      });
       throw new AppError(
-        'Time slot is not available. Employee already has an appointment during this time.',
+        `Time slot is not available. ${availability.reason}`,
         409,
         'TIME_SLOT_CONFLICT'
       );
@@ -783,13 +795,29 @@ const sendCancellationNotifications = async (appointment, tenantId, reason) => {
 };
 
 /**
+ * Get timezone offset in milliseconds for a given timezone
+ * @param {string} timezone - IANA timezone string (e.g., 'America/Los_Angeles')
+ * @param {Date} date - Date to calculate offset for (accounts for DST)
+ * @returns {number} - Offset in milliseconds (positive = behind UTC)
+ */
+const getTimezoneOffsetMs = (timezone, date) => {
+  // Get the time in the target timezone
+  const tzTime = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+  // Get the time in UTC
+  const utcTime = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+  // Return the difference (positive means timezone is behind UTC)
+  return utcTime.getTime() - tzTime.getTime();
+};
+
+/**
  * Get today's appointments for a customer by phone number
  * Used for caller identification in voice AI
  * @param {string} phoneNumber - Customer's phone number
  * @param {string} tenantId - Tenant ID
+ * @param {string} timezone - Business timezone (default: America/Los_Angeles)
  * @returns {Promise<Array>} - Today's appointments with employee and service info
  */
-const getTodayAppointmentsByPhone = async (phoneNumber, tenantId) => {
+const getTodayAppointmentsByPhone = async (phoneNumber, tenantId, timezone = 'America/Los_Angeles') => {
   if (!phoneNumber || !tenantId) {
     return [];
   }
@@ -797,12 +825,26 @@ const getTodayAppointmentsByPhone = async (phoneNumber, tenantId) => {
   // Normalize phone number (remove formatting, keep digits and +)
   const normalized = phoneNumber.replace(/[^0-9+]/g, '');
 
-  // Get today's date range
-  const today = new Date();
-  const startOfDay = new Date(today);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(today);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Get today's date range in the business timezone
+  // This ensures appointments at 4pm PST are found when searching for "today" in PST
+  const now = new Date();
+
+  // Get today's date string in the target timezone (e.g., "2026-01-08")
+  const todayInTz = now.toLocaleDateString('en-CA', { timeZone: timezone }); // en-CA gives YYYY-MM-DD format
+
+  // Create start and end of day in the target timezone, then convert to UTC for query
+  // Parse the date parts and construct Date objects
+  const [year, month, day] = todayInTz.split('-').map(Number);
+
+  // Start of day in target timezone (e.g., midnight PST = 8am UTC)
+  const startOfDayLocal = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  // Adjust for timezone offset - PST is UTC-8, so midnight PST = 8am UTC
+  const tzOffsetMs = getTimezoneOffsetMs(timezone, startOfDayLocal);
+  const startOfDay = new Date(startOfDayLocal.getTime() + tzOffsetMs);
+
+  // End of day (23:59:59.999) in target timezone
+  const endOfDayLocal = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  const endOfDay = new Date(endOfDayLocal.getTime() + tzOffsetMs);
 
   // Query all of today's scheduled/confirmed appointments
   const appointments = await Appointment.findAll({

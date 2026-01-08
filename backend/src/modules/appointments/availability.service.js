@@ -9,13 +9,14 @@ const { Service } = require('../services/service.model');
 const { AppError } = require('../../middleware/errorHandler');
 
 /**
- * Get day of week name from date
+ * Get day of week name from date in a specific timezone
  * @param {Date} date - Date object
+ * @param {string} timezone - Timezone string (default: America/Los_Angeles)
  * @returns {string} - Day name (lowercase)
  */
-const getDayOfWeek = (date) => {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  return days[date.getDay()];
+const getDayOfWeek = (date, timezone = 'America/Los_Angeles') => {
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone });
+  return dayName.toLowerCase();
 };
 
 /**
@@ -26,6 +27,19 @@ const getDayOfWeek = (date) => {
 const parseTimeToMinutes = (timeStr) => {
   const [hours, minutes] = timeStr.split(':').map(Number);
   return hours * 60 + minutes;
+};
+
+/**
+ * Get hours and minutes in a specific timezone
+ * @param {Date} date - Date object
+ * @param {string} timezone - Timezone string (default: America/Los_Angeles)
+ * @returns {Object} - { hours, minutes }
+ */
+const getTimeInTimezone = (date, timezone = 'America/Los_Angeles') => {
+  const options = { hour: 'numeric', minute: 'numeric', hour12: false, timeZone: timezone };
+  const timeStr = date.toLocaleTimeString('en-US', options);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return { hours, minutes };
 };
 
 /**
@@ -72,14 +86,62 @@ const getEmployeeAppointmentsForDate = async (employeeId, tenantId, date) => {
 
 /**
  * Check if a specific time slot is available for an employee
+ * Validates both working hours AND conflicting appointments
  * @param {string} employeeId - Employee ID
  * @param {string} tenantId - Tenant ID
  * @param {Date} startTime - Proposed start time
  * @param {Date} endTime - Proposed end time
  * @param {string} excludeAppointmentId - Optional appointment ID to exclude (for rescheduling)
- * @returns {Promise<Object>} - Availability result { available, conflicts }
+ * @returns {Promise<Object>} - Availability result { available, reason, conflicts }
  */
 const checkSlotAvailability = async (employeeId, tenantId, startTime, endTime, excludeAppointmentId = null) => {
+  // First, get the employee to check their schedule
+  const employee = await Employee.findOne({
+    where: { id: employeeId, tenantId },
+  });
+
+  if (!employee) {
+    return {
+      available: false,
+      reason: 'Employee not found',
+      conflicts: [],
+    };
+  }
+
+  // Check if employee is working on this day
+  const workingHours = getEmployeeWorkingHours(employee, startTime);
+
+  if (!workingHours) {
+    return {
+      available: false,
+      reason: 'Employee is not working on this day',
+      conflicts: [],
+    };
+  }
+
+  // Verify the appointment time falls within at least one working block
+  // Use timezone-aware conversion since schedules are stored in local time (PST)
+  const startInTz = getTimeInTimezone(startTime);
+  const endInTz = getTimeInTimezone(endTime);
+  const appointmentStartMinutes = startInTz.hours * 60 + startInTz.minutes;
+  const appointmentEndMinutes = endInTz.hours * 60 + endInTz.minutes;
+
+  const withinWorkingHours = workingHours.some(block => {
+    const blockStart = parseTimeToMinutes(block.start);
+    const blockEnd = parseTimeToMinutes(block.end);
+    // Appointment must be fully contained within the working block
+    return appointmentStartMinutes >= blockStart && appointmentEndMinutes <= blockEnd;
+  });
+
+  if (!withinWorkingHours) {
+    return {
+      available: false,
+      reason: 'Appointment time is outside employee working hours',
+      conflicts: [],
+    };
+  }
+
+  // Check for conflicting appointments
   const whereClause = {
     tenantId,
     employeeId,
@@ -104,9 +166,18 @@ const checkSlotAvailability = async (employeeId, tenantId, startTime, endTime, e
     where: whereClause,
   });
 
+  if (conflictingAppointments.length > 0) {
+    return {
+      available: false,
+      reason: 'Time slot conflicts with existing appointment',
+      conflicts: conflictingAppointments.map(apt => apt.toSafeObject()),
+    };
+  }
+
   return {
-    available: conflictingAppointments.length === 0,
-    conflicts: conflictingAppointments.map(apt => apt.toSafeObject()),
+    available: true,
+    reason: null,
+    conflicts: [],
   };
 };
 
@@ -122,8 +193,18 @@ const getEmployeeWorkingHours = (employee, date) => {
     return null;
   }
 
+  // Handle schedule being stored as string (database column may be TEXT not JSONB)
+  let scheduleObj = employee.schedule;
+  if (typeof scheduleObj === 'string') {
+    try {
+      scheduleObj = JSON.parse(scheduleObj);
+    } catch (e) {
+      return null;
+    }
+  }
+
   const dayOfWeek = getDayOfWeek(date);
-  const schedule = employee.schedule[dayOfWeek];
+  const schedule = scheduleObj[dayOfWeek];
 
   if (!schedule || !schedule.enabled) {
     return null;
@@ -171,11 +252,15 @@ const getAvailableSlots = async (employeeId, tenantId, date, duration, slotInter
   // Get existing appointments for this date
   const existingAppointments = await getEmployeeAppointmentsForDate(employeeId, tenantId, date);
 
-  // Check if date is today
+  // Check if date is today (in PST timezone)
   const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
+  const timezone = 'America/Los_Angeles';
+  const dateInTz = date.toLocaleDateString('en-US', { timeZone: timezone });
+  const nowInTz = now.toLocaleDateString('en-US', { timeZone: timezone });
+  const isToday = dateInTz === nowInTz;
   const bufferMinutes = 15;
-  const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() + bufferMinutes : 0;
+  const nowTimeInTz = getTimeInTimezone(now, timezone);
+  const currentMinutes = isToday ? nowTimeInTz.hours * 60 + nowTimeInTz.minutes + bufferMinutes : 0;
 
   // Generate slots for each working block
   const slots = [];

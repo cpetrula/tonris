@@ -1494,7 +1494,21 @@ const updateAgent = async (req, res, next) => {
 const handleEmployeeScheduleWebhook = async (req, res, next) => {
   try {
     const { tenantId, action } = req.query;
-    const { callerPhone, employeeId, date, enabled, blocks } = req.body;
+    const { callerPhone, employeeId, date, enabled, blocks: blocksInput } = req.body;
+
+    // Parse blocks if it's a JSON string (ElevenLabs sends it as string)
+    let blocks = blocksInput;
+    if (typeof blocksInput === 'string' && blocksInput.trim()) {
+      try {
+        blocks = JSON.parse(blocksInput);
+      } catch (e) {
+        logger.warn(`Failed to parse blocks JSON string: ${blocksInput}`);
+        blocks = [];
+      }
+    }
+
+    // Log the parsed values for debugging
+    logger.info(`Employee schedule webhook: action=${action}, date=${date}, enabled=${enabled}, blocks=${JSON.stringify(blocks)}`);
 
     if (!tenantId) {
       throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
@@ -1583,15 +1597,28 @@ const handleEmployeeScheduleWebhook = async (req, res, next) => {
         }
 
         // Validate date is within current week
-        const targetDate = new Date(date);
+        // Handle special date keywords
+        let targetDate;
+        const dateLower = (date || '').toLowerCase().trim();
+        const today = new Date();
+
+        if (dateLower === 'today') {
+          targetDate = new Date(today);
+        } else if (dateLower === 'tomorrow') {
+          targetDate = new Date(today);
+          targetDate.setDate(targetDate.getDate() + 1);
+        } else {
+          targetDate = new Date(date);
+        }
+
         if (isNaN(targetDate.getTime())) {
+          logger.warn(`Invalid date format received: ${date}`);
           return res.status(400).json({
             success: false,
-            error: 'Invalid date format',
+            error: `Invalid date format: ${date}. Use YYYY-MM-DD, 'today', or 'tomorrow'.`,
           });
         }
 
-        const today = new Date();
         const dayOfWeek = today.getDay();
         const weekStart = new Date(today);
         weekStart.setDate(today.getDate() - dayOfWeek);
@@ -1612,14 +1639,31 @@ const handleEmployeeScheduleWebhook = async (req, res, next) => {
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = dayNames[targetDate.getDay()];
 
-        // Parse current schedule
+        // Parse current schedule - ensure it's a proper object with day keys
         let currentSchedule = employee.schedule;
-        if (typeof currentSchedule === 'string') {
+
+        // Handle string or String object (convert to primitive string first)
+        if (typeof currentSchedule === 'string' || currentSchedule instanceof String) {
           try {
-            currentSchedule = JSON.parse(currentSchedule);
+            currentSchedule = JSON.parse(String(currentSchedule));
           } catch (e) {
+            logger.warn(`Failed to parse employee ${employee.id} schedule as JSON, resetting`);
             currentSchedule = {};
           }
+        }
+
+        // Ensure currentSchedule is a proper object (not array-like with numeric keys)
+        if (!currentSchedule || typeof currentSchedule !== 'object' || Array.isArray(currentSchedule)) {
+          currentSchedule = {};
+        }
+
+        // Check for corrupted schedule (has numeric keys instead of day names)
+        const hasOnlyNumericKeys = Object.keys(currentSchedule).length > 0 &&
+          Object.keys(currentSchedule).every(k => !isNaN(parseInt(k)));
+
+        if (hasOnlyNumericKeys) {
+          logger.warn(`Employee ${employee.id} has corrupted schedule with numeric keys, resetting`);
+          currentSchedule = {};
         }
 
         // Build new schedule for that day
