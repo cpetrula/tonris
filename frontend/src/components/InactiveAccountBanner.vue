@@ -72,13 +72,13 @@ function goToBilling() {
     <!-- Trial Ending Soon Message -->
     <Message 
       v-else-if="subscription?.status === 'trialing' && trialDaysRemaining > 0" 
-      severity="warn" 
+      severity="info" 
       :closable="false"
       class="shadow-md"
     >
       <div class="flex items-center justify-between w-full">
         <div class="flex gap-3">
-          <i class="pi pi-info-circle text-2xl"></i>
+          <i class="pi pi-info-circle text-xl text-violet-600" style="font-size:1.5rem;"></i>
           <div class="ml-3">
             <p class="font-bold text-lg">
               {{ trialDaysRemaining }} Day{{ trialDaysRemaining > 1 ? 's' : '' }} Left in Your Free Trial
@@ -91,7 +91,7 @@ function goToBilling() {
         <Button
           label="Add Payment Method"
           icon="pi pi-credit-card"
-          severity="warning"
+          severity="help"
           @click="goToBilling"
           class="ml-3"
         />

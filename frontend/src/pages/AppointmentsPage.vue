@@ -11,8 +11,11 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
 import api from '@/services/api'
 
 interface Appointment {
@@ -403,9 +406,14 @@ async function fetchServices() {
       </Card>
     </div>
 
-    <TabView>
+    <Tabs value="0">
+      <TabList>
+        <Tab value="0">Calendar View</Tab>
+        <Tab value="1">List View</Tab>
+      </TabList>
+      <TabPanels>
       <!-- Calendar View Tab -->
-      <TabPanel value="0" header="Calendar View">
+      <TabPanel value="0">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Calendar -->
           <Card class="shadow-sm bg-white">
@@ -471,7 +479,7 @@ async function fetchServices() {
       </TabPanel>
 
       <!-- List View Tab -->
-      <TabPanel value="1" header="List View">
+      <TabPanel value="1">
         <!-- Filters -->
         <Card class="mb-6 shadow-sm bg-white">
           <template #content>
@@ -600,7 +608,8 @@ async function fetchServices() {
           </template>
         </Card>
       </TabPanel>
-    </TabView>
+      </TabPanels>
+    </Tabs>
 
     <!-- Create/Edit Dialog -->
     <Dialog

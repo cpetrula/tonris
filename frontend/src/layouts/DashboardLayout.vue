@@ -103,7 +103,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex bg-gray-100">
+  <div class="min-h-screen flex bg-gray-200">
     <!-- Sidebar - Mobile Overlay -->
     <div
       v-if="sidebarOpen"
