@@ -117,19 +117,23 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           const conversationId = log.metadata.elevenLabsConversationId;
           const conversation = await elevenlabsService.getConversationDetails(conversationId);
           
+          const transcriptSummary = conversation.analysis?.transcriptSummary || conversation.transcript_summary;
           return {
             ...log,
-            elevenLabsConversationId: conversation.conversation_id,
+            // Set callSummary at top level for frontend compatibility
+            callSummary: transcriptSummary || log.callSummary,
+            elevenLabsConversationId: conversation.conversationId || conversation.conversation_id,
             elevenLabsData: {
-              conversationId: conversation.conversation_id,
-              agentId: conversation.agent_id,
+              conversationId: conversation.conversationId || conversation.conversation_id,
+              agentId: conversation.agentId || conversation.agent_id,
               status: conversation.status,
-              callSuccessful: conversation.call_successful,
-              callDurationSecs: conversation.call_duration_secs,
-              messageCount: conversation.message_count,
-              transcriptSummary: conversation.transcript_summary,
-              userSatisfactionRating: conversation.user_satisfaction_rating,
-              endReason: conversation.end_reason,
+              // Analysis fields are nested under conversation.analysis
+              callSuccessful: conversation.analysis?.callSuccessful || conversation.call_successful,
+              callDurationSecs: conversation.metadata?.call_duration_secs || conversation.call_duration_secs,
+              messageCount: conversation.metadata?.message_count || conversation.message_count,
+              transcriptSummary: transcriptSummary,
+              userSatisfactionRating: conversation.analysis?.userSatisfactionRating || conversation.user_satisfaction_rating,
+              endReason: conversation.analysis?.endReason || conversation.end_reason,
               startTimeUnixSecs: conversation.metadata?.start_time_unix_secs,
             },
           };
@@ -217,19 +221,23 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           }
           
           if (elevenLabsData) {
+            const transcriptSummary = elevenLabsData.analysis?.transcriptSummary || elevenLabsData.transcript_summary;
             return {
               ...log,
-              elevenLabsConversationId: elevenLabsData.conversation_id,
+              // Set callSummary at top level for frontend compatibility
+              callSummary: transcriptSummary || log.callSummary,
+              elevenLabsConversationId: elevenLabsData.conversationId || elevenLabsData.conversation_id,
               elevenLabsData: {
-                conversationId: elevenLabsData.conversation_id,
-                agentId: elevenLabsData.agent_id,
+                conversationId: elevenLabsData.conversationId || elevenLabsData.conversation_id,
+                agentId: elevenLabsData.agentId || elevenLabsData.agent_id,
                 status: elevenLabsData.status,
-                callSuccessful: elevenLabsData.call_successful,
-                callDurationSecs: elevenLabsData.call_duration_secs,
-                messageCount: elevenLabsData.message_count,
-                transcriptSummary: elevenLabsData.transcript_summary,
-                userSatisfactionRating: elevenLabsData.user_satisfaction_rating,
-                endReason: elevenLabsData.end_reason,
+                // Analysis fields may be nested under elevenLabsData.analysis
+                callSuccessful: elevenLabsData.analysis?.callSuccessful || elevenLabsData.call_successful,
+                callDurationSecs: elevenLabsData.metadata?.call_duration_secs || elevenLabsData.call_duration_secs,
+                messageCount: elevenLabsData.metadata?.message_count || elevenLabsData.message_count,
+                transcriptSummary: transcriptSummary,
+                userSatisfactionRating: elevenLabsData.analysis?.userSatisfactionRating || elevenLabsData.user_satisfaction_rating,
+                endReason: elevenLabsData.analysis?.endReason || elevenLabsData.end_reason,
                 startTimeUnixSecs: elevenLabsData.metadata?.start_time_unix_secs,
               },
             };
