@@ -21,6 +21,37 @@
 
 ---
 
+## CRITICAL: Deployment Workflow
+
+**NEVER use `railway up` directly - it bypasses GitHub and can overwrite other people's work.**
+
+### Correct deployment process:
+```bash
+# 1. ALWAYS check for changes on main first
+git fetch origin
+git log origin/main --oneline -5
+
+# 2. If there are new commits on main, merge them
+git merge origin/main
+
+# 3. Push to GitHub - let Railway's GitHub integration deploy
+git push origin <branch>
+```
+
+### Why NOT `railway up`:
+- `railway up` deploys directly from local directory
+- It bypasses GitHub entirely
+- It will overwrite any changes others committed to main
+- Railway is configured to auto-deploy from GitHub - use that
+
+### If you absolutely must use `railway up`:
+1. First run `git fetch origin && git log origin/main --oneline -5`
+2. Confirm with user: "I see X commits on main. Should I merge before deploying?"
+3. Merge main into current branch
+4. Then deploy
+
+---
+
 ## Project Structure
 
 ```
@@ -47,6 +78,7 @@
 
 1. Deleted production data by running destructive SQL on wrong database
 2. Tried deploying to Vercel when project uses Railway
+3. Used `railway up` without checking main branch first - overwrote Chris's UI changes (Jan 2026)
 
 ---
 
