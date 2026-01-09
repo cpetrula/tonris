@@ -118,10 +118,12 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           const conversation = await elevenlabsService.getConversationDetails(conversationId);
           
           const transcriptSummary = conversation.analysis?.transcriptSummary || conversation.transcript_summary;
+          // Convert Sequelize model to plain object before spreading
+          const logData = log.toJSON ? log.toJSON() : log;
           return {
-            ...log,
+            ...logData,
             // Set callSummary at top level for frontend compatibility
-            callSummary: transcriptSummary || log.callSummary,
+            callSummary: transcriptSummary || logData.callSummary,
             elevenLabsConversationId: conversation.conversationId || conversation.conversation_id,
             elevenLabsData: {
               conversationId: conversation.conversationId || conversation.conversation_id,
@@ -139,11 +141,12 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           };
         } catch (error) {
           // Provide more specific error details for debugging
-          const errorType = error.response?.status === 404 ? 'not found' : 
-                          error.response?.status === 403 ? 'permission denied' : 
+          const errorType = error.response?.status === 404 ? 'not found' :
+                          error.response?.status === 403 ? 'permission denied' :
                           error.code === 'ENOTFOUND' ? 'network error' : 'unknown error';
           logger.warn(`Failed to fetch conversation ${log.metadata.elevenLabsConversationId} (${errorType}): ${error.message}`);
-          return log; // Return original log if fetch fails
+          // Convert to plain object before returning
+          return log.toJSON ? log.toJSON() : log;
         }
       })
     );
@@ -222,10 +225,12 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           
           if (elevenLabsData) {
             const transcriptSummary = elevenLabsData.analysis?.transcriptSummary || elevenLabsData.transcript_summary;
+            // Convert Sequelize model to plain object before spreading
+            const logData = log.toJSON ? log.toJSON() : log;
             return {
-              ...log,
+              ...logData,
               // Set callSummary at top level for frontend compatibility
-              callSummary: transcriptSummary || log.callSummary,
+              callSummary: transcriptSummary || logData.callSummary,
               elevenLabsConversationId: elevenLabsData.conversationId || elevenLabsData.conversation_id,
               elevenLabsData: {
                 conversationId: elevenLabsData.conversationId || elevenLabsData.conversation_id,
@@ -242,12 +247,13 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
               },
             };
           }
-          
-          return log;
+
+          // Convert to plain object before returning
+          return log.toJSON ? log.toJSON() : log;
         });
       }
     }
-    
+
     // Combine both sets of enriched logs
     const enrichedLogs = [...enrichedLogsWithIds, ...enrichedLogsWithoutIds];
     
