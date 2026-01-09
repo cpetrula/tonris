@@ -43,3 +43,8 @@ body {
 .p-inputtext {
   width: 100%;
 }
+
+.p-card {
+  background: white !important;
+  color:#1a2744 !important;
+}

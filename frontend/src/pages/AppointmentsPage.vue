@@ -11,8 +11,11 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
 import api from '@/services/api'
 
 interface Appointment {
@@ -37,7 +40,6 @@ const appointments = ref<Appointment[]>([])
 const searchQuery = ref('')
 const selectedDate = ref<Date | null>(null)
 const statusFilter = ref<string | null>(null)
-const dateRangeFilter = ref<'today' | 'next5' | 'month' | null>(null)
 const showDialog = ref(false)
 const editMode = ref(false)
 const error = ref('')
@@ -83,7 +85,7 @@ const filteredAppointments = computed(() => {
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(apt =>
+    filtered = filtered.filter(apt => 
       apt.customerName.toLowerCase().includes(query) ||
       apt.customerEmail.toLowerCase().includes(query) ||
       apt.service.toLowerCase().includes(query) ||
@@ -94,32 +96,6 @@ const filteredAppointments = computed(() => {
   if (selectedDate.value) {
     const dateStr = selectedDate.value.toDateString()
     filtered = filtered.filter(apt => new Date(apt.date).toDateString() === dateStr)
-  }
-
-  // Date range filter (for List View quick filters)
-  if (dateRangeFilter.value) {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    if (dateRangeFilter.value === 'today') {
-      const todayStr = today.toDateString()
-      filtered = filtered.filter(apt => new Date(apt.date).toDateString() === todayStr)
-    } else if (dateRangeFilter.value === 'next5') {
-      const endDate = new Date(today)
-      endDate.setDate(endDate.getDate() + 5)
-      filtered = filtered.filter(apt => {
-        const aptDate = new Date(apt.date)
-        aptDate.setHours(0, 0, 0, 0)
-        return aptDate >= today && aptDate < endDate
-      })
-    } else if (dateRangeFilter.value === 'month') {
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999)
-      filtered = filtered.filter(apt => {
-        const aptDate = new Date(apt.date)
-        return aptDate >= startOfMonth && aptDate <= endOfMonth
-      })
-    }
   }
 
   if (statusFilter.value) {
@@ -302,18 +278,6 @@ function clearFilters() {
   searchQuery.value = ''
   selectedDate.value = null
   statusFilter.value = null
-  dateRangeFilter.value = null
-}
-
-function setDateRangeFilter(filter: 'today' | 'next5' | 'month') {
-  // Toggle off if same filter clicked again
-  if (dateRangeFilter.value === filter) {
-    dateRangeFilter.value = null
-  } else {
-    dateRangeFilter.value = filter
-    // Clear the calendar date filter when using quick filters
-    selectedDate.value = null
-  }
 }
 
 onMounted(async () => {
@@ -442,65 +406,109 @@ async function fetchServices() {
       </Card>
     </div>
 
-    <TabView>
-      <!-- List View Tab (Default) -->
-      <TabPanel value="0" header="List View">
+    <Tabs value="0">
+      <TabList>
+        <Tab value="0">Calendar View</Tab>
+        <Tab value="1">List View</Tab>
+      </TabList>
+      <TabPanels>
+      <!-- Calendar View Tab -->
+      <TabPanel value="0">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Calendar -->
+          <Card class="shadow-sm bg-white">
+            <template #content>
+              <Calendar
+                v-model="selectedDate"
+                inline
+                class="w-full"
+                :manualInput="false"
+              />
+              <Button 
+                v-if="selectedDate" 
+                label="Clear Date" 
+                text 
+                size="small" 
+                class="mt-2 w-full text-emerald-600"
+                @click="selectedDate = null"
+              />
+            </template>
+          </Card>
+
+          <!-- Selected Day Appointments -->
+          <Card class="shadow-sm lg:col-span-2 bg-white">
+            <template #title>
+              <span class="text-gray-900">{{ selectedDate ? formatDate(selectedDate) : "Today's" }} Appointments</span>
+            </template>
+            <template #content>
+              <div class="space-y-3">
+                <div
+                  v-for="apt in (selectedDate ? filteredAppointments : todayAppointments)"
+                  :key="apt.id"
+                  class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div class="flex items-center space-x-4">
+                    <div class="text-center min-w-[60px]">
+                      <p class="text-lg font-bold text-violet-600">{{ apt.time }}</p>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900">{{ apt.customerName }}</p>
+                      <p class="text-sm text-gray-600">{{ apt.service }} with {{ apt.employee }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusColor(apt.status)]">
+                      {{ apt.status }}
+                    </span>
+                    <Button
+                      icon="pi pi-pencil"
+                      text
+                      size="small"
+                      severity="secondary"
+                      @click="openEditDialog(apt)"
+                    />
+                  </div>
+                </div>
+                <div v-if="(selectedDate ? filteredAppointments : todayAppointments).length === 0" class="text-center py-8 text-white-500">
+                  No appointments for this day
+                </div>
+              </div>
+            </template>
+          </Card>
+        </div>
+      </TabPanel>
+
+      <!-- List View Tab -->
+      <TabPanel value="1">
         <!-- Filters -->
         <Card class="mb-6 shadow-sm bg-white">
           <template #content>
-            <div class="flex flex-col gap-4">
-              <!-- Quick Date Filter Buttons -->
-              <div class="flex flex-wrap gap-2">
-                <Button
-                  label="Today"
-                  :outlined="dateRangeFilter !== 'today'"
-                  :severity="dateRangeFilter === 'today' ? 'primary' : 'secondary'"
-                  size="small"
-                  @click="setDateRangeFilter('today')"
-                />
-                <Button
-                  label="Next 5 Days"
-                  :outlined="dateRangeFilter !== 'next5'"
-                  :severity="dateRangeFilter === 'next5' ? 'primary' : 'secondary'"
-                  size="small"
-                  @click="setDateRangeFilter('next5')"
-                />
-                <Button
-                  label="This Month"
-                  :outlined="dateRangeFilter !== 'month'"
-                  :severity="dateRangeFilter === 'month' ? 'primary' : 'secondary'"
-                  size="small"
-                  @click="setDateRangeFilter('month')"
-                />
+            <div class="flex flex-col sm:flex-row gap-4">
+              <div class="flex-1">
+                <IconField>
+                  <InputIcon class="pi pi-search" />
+                  <InputText
+                    v-model="searchQuery"
+                    placeholder="Search appointments..."
+                    class="w-full"
+                  />
+                </IconField>
               </div>
-              <!-- Search and Status Filter -->
-              <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                  <IconField>
-                    <InputIcon class="pi pi-search" />
-                    <InputText
-                      v-model="searchQuery"
-                      placeholder="Search appointments..."
-                      class="w-full"
-                    />
-                  </IconField>
-                </div>
-                <Select
-                  v-model="statusFilter"
-                  :options="statusOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Filter by status"
-                  class="w-full sm:w-48"
-                />
-                <Button
-                  v-if="searchQuery || statusFilter || dateRangeFilter"
-                  label="Clear All"
-                  text
-                  severity="secondary"
-                  @click="clearFilters"
-                />
-              </div>
+              <Select
+                v-model="statusFilter"
+                :options="statusOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Filter by status"
+                class="w-full sm:w-48"
+              />
+              <Button
+                v-if="searchQuery || statusFilter"
+                label="Clear"
+                text
+                severity="secondary"
+                @click="clearFilters"
+              />
             </div>
           </template>
         </Card>
@@ -558,6 +566,24 @@ async function fetchServices() {
               <Column header="Edit" :exportable="false" style="min-width: 12rem">
                 <template #body="{ data }">
                   <div class="flex gap-1">
+                    <!-- <Button
+                      v-if="data.status === 'scheduled'"
+                      icon="pi pi-check"
+                      text
+                      size="small"
+                      severity="success"
+                      v-tooltip.top="'Confirm'"
+                      @click="updateStatus(data, 'confirmed')"
+                    /> -->
+                    <!-- <Button
+                      v-if="data.status === 'confirmed'"
+                      icon="pi pi-check-circle"
+                      text
+                      size="small"
+                      severity="success"
+                      v-tooltip.top="'Complete'"
+                      @click="updateStatus(data, 'completed')"
+                    /> -->
                     <Button
                       icon="pi pi-pencil"
                       text
@@ -566,6 +592,15 @@ async function fetchServices() {
                       v-tooltip.top="'Edit'"
                       @click="openEditDialog(data)"
                     />
+                    <!-- <Button
+                      v-if="data.status !== 'cancelled' && data.status !== 'completed'"
+                      icon="pi pi-times"
+                      text
+                      size="small"
+                      severity="danger"
+                      v-tooltip.top="'Cancel'"
+                      @click="cancelAppointment(data)"
+                    /> -->
                   </div>
                 </template>
               </Column>
@@ -573,73 +608,8 @@ async function fetchServices() {
           </template>
         </Card>
       </TabPanel>
-
-      <!-- Calendar View Tab -->
-      <TabPanel value="1" header="Calendar View">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Calendar -->
-          <Card class="shadow-sm bg-white">
-            <template #content>
-              <Calendar
-                v-model="selectedDate"
-                inline
-                class="w-full"
-                :manualInput="false"
-              />
-              <Button
-                v-if="selectedDate"
-                label="Clear Date"
-                text
-                size="small"
-                class="mt-2 w-full text-emerald-600"
-                @click="selectedDate = null"
-              />
-            </template>
-          </Card>
-
-          <!-- Selected Day Appointments -->
-          <Card class="shadow-sm lg:col-span-2 bg-white">
-            <template #title>
-              <span class="text-gray-900">{{ selectedDate ? formatDate(selectedDate) : "Today's" }} Appointments</span>
-            </template>
-            <template #content>
-              <div class="space-y-3">
-                <div
-                  v-for="apt in (selectedDate ? filteredAppointments : todayAppointments)"
-                  :key="apt.id"
-                  class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                >
-                  <div class="flex items-center space-x-4">
-                    <div class="text-center min-w-[60px]">
-                      <p class="text-lg font-bold text-violet-600">{{ apt.time }}</p>
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900">{{ apt.customerName }}</p>
-                      <p class="text-sm text-gray-600">{{ apt.service }} with {{ apt.employee }}</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusColor(apt.status)]">
-                      {{ apt.status }}
-                    </span>
-                    <Button
-                      icon="pi pi-pencil"
-                      text
-                      size="small"
-                      severity="secondary"
-                      @click="openEditDialog(apt)"
-                    />
-                  </div>
-                </div>
-                <div v-if="(selectedDate ? filteredAppointments : todayAppointments).length === 0" class="text-center py-8 text-white-500">
-                  No appointments for this day
-                </div>
-              </div>
-            </template>
-          </Card>
-        </div>
-      </TabPanel>
-    </TabView>
+      </TabPanels>
+    </Tabs>
 
     <!-- Create/Edit Dialog -->
     <Dialog
