@@ -117,7 +117,8 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           const conversationId = log.metadata.elevenLabsConversationId;
           const conversation = await elevenlabsService.getConversationDetails(conversationId);
           
-          const transcriptSummary = conversation.analysis?.transcriptSummary || conversation.transcript_summary;
+          // ElevenLabs uses snake_case: analysis.transcript_summary
+          const transcriptSummary = conversation.analysis?.transcript_summary || conversation.analysis?.transcriptSummary || conversation.transcript_summary;
           // Convert Sequelize model to plain object before spreading
           const logData = log.toJSON ? log.toJSON() : log;
           return {
@@ -224,7 +225,8 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           }
           
           if (elevenLabsData) {
-            const transcriptSummary = elevenLabsData.analysis?.transcriptSummary || elevenLabsData.transcript_summary;
+            // ElevenLabs uses snake_case: analysis.transcript_summary
+            const transcriptSummary = elevenLabsData.analysis?.transcript_summary || elevenLabsData.analysis?.transcriptSummary || elevenLabsData.transcript_summary;
             // Convert Sequelize model to plain object before spreading
             const logData = log.toJSON ? log.toJSON() : log;
             return {
