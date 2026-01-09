@@ -119,6 +119,10 @@ const enrichCallLogsWithElevenLabs = async (callLogs, tenantId) => {
           
           // ElevenLabs uses snake_case: analysis.transcript_summary
           const transcriptSummary = conversation.analysis?.transcript_summary || conversation.analysis?.transcriptSummary || conversation.transcript_summary;
+
+          // Debug logging
+          logger.info(`Enrichment for ${conversationId}: analysis=${!!conversation.analysis}, transcript_summary=${conversation.analysis?.transcript_summary?.substring(0,50)}, result=${transcriptSummary?.substring(0,50)}`);
+
           // Convert Sequelize model to plain object before spreading
           const logData = log.toJSON ? log.toJSON() : log;
           return {
