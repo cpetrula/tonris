@@ -1359,13 +1359,13 @@ const handleConversationEndWebhook = async (req, res, next) => {
     }
     
     // If not found by call SID, try to find by conversation ID in metadata
+    // Note: Using MySQL-compatible JSON_EXTRACT instead of PostgreSQL Op.contains
     if (!callLog && conversation_id) {
       callLog = await CallLog.findOne({
-        where: {
-          metadata: {
-            [Op.contains]: { elevenLabsConversationId: conversation_id }
-          }
-        }
+        where: db.sequelize.where(
+          db.sequelize.fn('JSON_EXTRACT', db.sequelize.col('metadata'), db.sequelize.literal("'$.elevenLabsConversationId'")),
+          conversation_id
+        )
       });
       logger.info(`Lookup by conversation ID ${conversation_id}:`, { found: !!callLog });
     }
