@@ -710,6 +710,8 @@ const handleConversationInitiation = async (params) => {
     let businessHours = null;
     let aiTone = null;
 
+    let tenantTimezone = 'America/Los_Angeles'; // Default to PST
+
     if (tenantId) {
       try {
         tenant = await tenantService.getTenantById(tenantId);
@@ -718,12 +720,39 @@ const handleConversationInitiation = async (params) => {
           businessName = tenant.name || businessName;
           businessHours = tenant.businessHours?.businessHours || getDefaultBusinessHours();
           aiTone = tenant.metadata?.aiTone;
+          tenantTimezone = tenant.settings?.timezone || tenant.timezone || 'America/Los_Angeles';
         }
       } catch (tenantError) {
         // Tenant not found is ok - we'll use defaults
         logger.warn(`ElevenLabs Conversation Initiation: Tenant not found (${tenantId}): ${tenantError.message}`);
       }
     }
+
+    // Get current time in tenant's timezone for the agent
+    const now = new Date();
+    const currentTimeLocal = now.toLocaleString('en-US', {
+      timeZone: tenantTimezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const currentDateLocal = now.toLocaleDateString('en-US', {
+      timeZone: tenantTimezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const currentTimeOnly = now.toLocaleTimeString('en-US', {
+      timeZone: tenantTimezone,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
 
     // Look up caller's appointments for today (for proactive identification)
     let callerAppointmentsToday = [];
@@ -756,6 +785,12 @@ const handleConversationInitiation = async (params) => {
       caller_number: callerNumber || '',
       call_sid: callSid || '',
       conversation_id: conversationId,
+      // Current time in business timezone (for schedule comparisons)
+      system__time_utc: currentTimeLocal, // Named for backward compat with prompt
+      current_time: currentTimeOnly,
+      current_date: currentDateLocal,
+      current_datetime: currentTimeLocal,
+      timezone: tenantTimezone,
       // Caller's appointments for today (for proactive identification)
       caller_appointments_today: JSON.stringify(formattedAppointments),
       caller_has_appointment_today: formattedAppointments.length > 0 ? 'true' : 'false',

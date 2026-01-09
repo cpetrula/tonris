@@ -1334,11 +1334,13 @@ const handleConversationEndWebhook = async (req, res, next) => {
     
     // Get call SID from multiple possible locations
     // Priority: dynamic_variables (where we set it) > metadata > initiationData
-    const callSid = dynamicVariables.call_sid 
+    // Note: ElevenLabs prefixes system variables with "system__"
+    const callSid = dynamicVariables['system__call_sid']
+      || dynamicVariables.call_sid
       || dynamicVariables.callSid
-      || metadata.call_sid 
-      || metadata.callSid 
-      || initiationData.call_sid 
+      || metadata.call_sid
+      || metadata.callSid
+      || initiationData.call_sid
       || initiationData.callSid
       || initiationData.twilioCallSid;
     
