@@ -22,7 +22,7 @@ const VALIDATION = {
  */
 const getAppointments = async (req, res, next) => {
   try {
-    const { status, employeeId, startDate, endDate, customerEmail, limit, offset } = req.query;
+    const { status, employeeId, startDate, endDate, customerEmail, customerPhone, limit, offset } = req.query;
     const tenantUUID = await getTenantUUID(req.tenantId);
 
     const result = await appointmentService.getAppointments(tenantUUID, {
@@ -31,6 +31,7 @@ const getAppointments = async (req, res, next) => {
       startDate,
       endDate,
       customerEmail,
+      customerPhone,
       limit,
       offset,
     });

@@ -164,6 +164,7 @@ const getAppointments = async (tenantId, options = {}) => {
     startDate,
     endDate,
     customerEmail,
+    customerPhone,
     limit = 100,
     offset = 0,
   } = options;
@@ -180,6 +181,19 @@ const getAppointments = async (tenantId, options = {}) => {
 
   if (customerEmail) {
     where.customerEmail = customerEmail;
+  }
+
+  if (customerPhone) {
+    // Normalize phone number for comparison (remove non-digits except leading +)
+    const normalizedPhone = customerPhone.replace(/[^\d+]/g, '');
+    where.customerPhone = {
+      [Op.or]: [
+        customerPhone,
+        normalizedPhone,
+        // Also match if stored without country code
+        normalizedPhone.replace(/^\+1/, ''),
+      ]
+    };
   }
 
   if (startDate || endDate) {
