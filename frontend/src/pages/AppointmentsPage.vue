@@ -40,6 +40,7 @@ const appointments = ref<Appointment[]>([])
 const searchQuery = ref('')
 const selectedDate = ref<Date | null>(null)
 const statusFilter = ref<string | null>(null)
+const dateRangeFilter = ref<'today' | 'next5days' | 'thisMonth' | null>(null)
 const showDialog = ref(false)
 const editMode = ref(false)
 const error = ref('')
@@ -85,7 +86,7 @@ const filteredAppointments = computed(() => {
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(apt => 
+    filtered = filtered.filter(apt =>
       apt.customerName.toLowerCase().includes(query) ||
       apt.customerEmail.toLowerCase().includes(query) ||
       apt.service.toLowerCase().includes(query) ||
@@ -96,6 +97,32 @@ const filteredAppointments = computed(() => {
   if (selectedDate.value) {
     const dateStr = selectedDate.value.toDateString()
     filtered = filtered.filter(apt => new Date(apt.date).toDateString() === dateStr)
+  }
+
+  // Apply date range filter
+  if (dateRangeFilter.value) {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    if (dateRangeFilter.value === 'today') {
+      const todayStr = today.toDateString()
+      filtered = filtered.filter(apt => new Date(apt.date).toDateString() === todayStr)
+    } else if (dateRangeFilter.value === 'next5days') {
+      const endDate = new Date(today)
+      endDate.setDate(endDate.getDate() + 5)
+      filtered = filtered.filter(apt => {
+        const aptDate = new Date(apt.date)
+        aptDate.setHours(0, 0, 0, 0)
+        return aptDate >= today && aptDate < endDate
+      })
+    } else if (dateRangeFilter.value === 'thisMonth') {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
+      filtered = filtered.filter(apt => {
+        const aptDate = new Date(apt.date)
+        return aptDate >= startOfMonth && aptDate <= endOfMonth
+      })
+    }
   }
 
   if (statusFilter.value) {
@@ -278,6 +305,18 @@ function clearFilters() {
   searchQuery.value = ''
   selectedDate.value = null
   statusFilter.value = null
+  dateRangeFilter.value = null
+}
+
+function setDateRangeFilter(filter: 'today' | 'next5days' | 'thisMonth') {
+  // Toggle off if clicking the same filter
+  if (dateRangeFilter.value === filter) {
+    dateRangeFilter.value = null
+  } else {
+    dateRangeFilter.value = filter
+    // Clear selectedDate when using quick filters
+    selectedDate.value = null
+  }
 }
 
 onMounted(async () => {
@@ -406,7 +445,7 @@ async function fetchServices() {
       </Card>
     </div>
 
-    <Tabs value="0">
+    <Tabs value="1">
       <TabList>
         <Tab value="0">Calendar View</Tab>
         <Tab value="1">List View</Tab>
@@ -480,6 +519,31 @@ async function fetchServices() {
 
       <!-- List View Tab -->
       <TabPanel value="1">
+        <!-- Quick Filters -->
+        <div class="flex gap-2 mb-4">
+          <Button
+            label="Today"
+            :severity="dateRangeFilter === 'today' ? 'primary' : 'secondary'"
+            :outlined="dateRangeFilter !== 'today'"
+            size="small"
+            @click="setDateRangeFilter('today')"
+          />
+          <Button
+            label="Next 5 Days"
+            :severity="dateRangeFilter === 'next5days' ? 'primary' : 'secondary'"
+            :outlined="dateRangeFilter !== 'next5days'"
+            size="small"
+            @click="setDateRangeFilter('next5days')"
+          />
+          <Button
+            label="This Month"
+            :severity="dateRangeFilter === 'thisMonth' ? 'primary' : 'secondary'"
+            :outlined="dateRangeFilter !== 'thisMonth'"
+            size="small"
+            @click="setDateRangeFilter('thisMonth')"
+          />
+        </div>
+
         <!-- Filters -->
         <Card class="mb-6 shadow-sm bg-white">
           <template #content>
@@ -503,7 +567,7 @@ async function fetchServices() {
                 class="w-full sm:w-48"
               />
               <Button
-                v-if="searchQuery || statusFilter"
+                v-if="searchQuery || statusFilter || dateRangeFilter"
                 label="Clear"
                 text
                 severity="secondary"
