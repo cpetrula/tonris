@@ -521,14 +521,33 @@ The integration supports the following tool calls from ElevenLabs:
 
 | Tool Name | Description | Parameters |
 |-----------|-------------|------------|
+| `get_appointments` | Look up appointments by caller's phone | `tenantId` (auto), `customerPhone` (auto from caller_number) |
 | `check_availability` / `get_availability` | Check available time slots | `date`, `serviceId` |
-| `book_appointment` / `create_appointment` | Create new appointment | `customerName`, `customerPhone`, `serviceId`, `startTime`, etc. |
-| `cancel_appointment` | Cancel existing appointment | `appointmentId`, `reason` |
+| `set_appointment` / `book_appointment` | Create new appointment | `customerName`, `customerPhone` (auto), `serviceId`, `startTime`, etc. |
+| `update_appointment` | Modify existing appointment | `id`, `startTime`, `employeeId`, etc. |
+| `cancel_appointment` | Cancel existing appointment | `id`, `reason` |
 | `get_services` / `list_services` | Get available services | `limit` |
-| `get_service_details` | Get specific service info | `serviceId` |
+| `get_employees` | Get employee schedules and specialties | `date`, `serviceId` |
 | `get_hours` / `get_business_hours` | Get business hours | none |
-| `get_tenant_info` | Get tenant information | none |
-| `find_appointment` | Find appointments by customer | `customerPhone`, `customerEmail` |
+| `identify_employee_caller` | Verify if caller is an employee | uses `caller_number` |
+| `get_employee_schedule` | Get employee's weekly schedule | `employeeId` |
+| `update_employee_schedule` | Update employee availability | `employeeId`, `date`, `blocks` |
+
+### Automatic Caller Phone Lookup
+
+The `get_appointments` and `set_appointment` tools are configured to automatically use the caller's phone number via the `caller_number` dynamic variable. This enables seamless appointment lookup and booking:
+
+**Example Flow - Modifying an Appointment:**
+1. Caller: "I need to change my appointment"
+2. AI calls `get_appointments` → automatically passes `customerPhone` from `caller_number`
+3. Backend returns only appointments matching that phone number
+4. AI identifies the appointment and uses `update_appointment` with the appointment ID
+
+**Example Flow - Booking with Automatic Phone:**
+1. Caller requests appointment and provides name
+2. AI calls `set_appointment` → `customerPhone` automatically set from `caller_number`
+3. No need to ask caller for their phone number (already from caller ID)
+4. SMS confirmation sent automatically to caller's number
 
 ## Local Development with ngrok
 
