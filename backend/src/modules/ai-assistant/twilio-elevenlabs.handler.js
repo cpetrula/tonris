@@ -44,6 +44,116 @@ const getServices = () => {
 };
 
 /**
+ * Format time from 24h to 12h for voice
+ * @param {string} time24 - Time in 24h format (e.g., "09:00")
+ * @returns {string} - Time in 12h format (e.g., "9am")
+ */
+const formatTimeForVoice = (time24) => {
+  if (!time24) return '';
+  const [hours, minutes] = time24.split(':').map(Number);
+  const period = hours >= 12 ? 'pm' : 'am';
+  const hours12 = hours % 12 || 12;
+  return minutes === 0 ? `${hours12}${period}` : `${hours12}:${minutes.toString().padStart(2, '0')}${period}`;
+};
+
+/**
+ * Format business hours for voice/AI consumption
+ * @param {Object} businessHours - Business hours object from tenant settings
+ * @returns {string} - Human-readable business hours string
+ */
+const formatBusinessHoursForVoice = (businessHours) => {
+  if (!businessHours) return 'Hours not set';
+
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  // Group consecutive days with same hours
+  const groups = [];
+  let currentGroup = null;
+
+  days.forEach((day, index) => {
+    const hours = businessHours[day];
+    const isEnabled = hours?.enabled === true;
+    const open = hours?.open || '09:00';
+    const close = hours?.close || '17:00';
+    const key = isEnabled ? `${open}-${close}` : 'closed';
+
+    if (currentGroup && currentGroup.key === key) {
+      currentGroup.endDay = dayNames[index];
+      currentGroup.endIndex = index;
+    } else {
+      if (currentGroup) groups.push(currentGroup);
+      currentGroup = {
+        startDay: dayNames[index],
+        endDay: dayNames[index],
+        startIndex: index,
+        endIndex: index,
+        key,
+        open,
+        close,
+        isEnabled,
+      };
+    }
+  });
+  if (currentGroup) groups.push(currentGroup);
+
+  // Format each group
+  const parts = groups.map((g) => {
+    const dayRange =
+      g.startDay === g.endDay ? g.startDay : `${g.startDay} through ${g.endDay}`;
+
+    if (!g.isEnabled) return `closed ${dayRange}`;
+
+    const openTime = formatTimeForVoice(g.open);
+    const closeTime = formatTimeForVoice(g.close);
+    return `${dayRange} ${openTime} to ${closeTime}`;
+  });
+
+  return parts.join(', ');
+};
+
+/**
+ * Get today's hours for voice
+ * @param {Object} businessHours - Business hours object from tenant settings
+ * @param {string} timezone - Timezone to use (default: America/Los_Angeles)
+ * @returns {string} - Today's hours string (e.g., "Today we're open 9am to 5pm")
+ */
+const getTodayHours = (businessHours, timezone = 'America/Los_Angeles') => {
+  if (!businessHours) return "Hours not set";
+
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const now = new Date();
+
+  // Get current day in the specified timezone
+  const dayName = now.toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone }).toLowerCase();
+  const todayHours = businessHours[dayName];
+
+  if (!todayHours || todayHours.enabled !== true) {
+    return "We're closed today";
+  }
+
+  const openTime = formatTimeForVoice(todayHours.open);
+  const closeTime = formatTimeForVoice(todayHours.close);
+  return `Today we're open ${openTime} to ${closeTime}`;
+};
+
+/**
+ * Format address for voice
+ * @param {Object} address - Address object
+ * @returns {string} - Human-readable address string
+ */
+const formatAddressForVoice = (address) => {
+  if (!address) return '';
+
+  const parts = [];
+  if (address.street) parts.push(address.street);
+  if (address.city) parts.push(address.city);
+  if (address.state) parts.push(address.state);
+
+  return parts.join(', ');
+};
+
+/**
  * Find tenant by phone number
  * @param {string} phoneNumber - Phone number to look up
  * @returns {Promise<Object|null>} - Tenant or null
@@ -297,11 +407,18 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       ai_tone: tenant.metadata?.aiTone,
     };
     
-    // Add business hours if available (as JSON string for ElevenLabs)
+    // Add business hours if available
     if (tenant.businessHours?.businessHours) {
-      customParameters.business_hours = JSON.stringify(tenant.businessHours.businessHours);
+      const businessHours = tenant.businessHours.businessHours;
+      // Raw JSON for backward compatibility
+      customParameters.business_hours = JSON.stringify(businessHours);
+      // Human-readable format for AI voice responses
+      customParameters.business_hours_voice = formatBusinessHoursForVoice(businessHours);
+      // Today's specific hours
+      const timezone = tenant.settings?.timezone || 'America/Los_Angeles';
+      customParameters.today_hours = getTodayHours(businessHours, timezone);
     }
-    
+
     // Add address information if available
     if (tenant.address) {
       try {
@@ -315,6 +432,8 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
           customParameters.address_country = address.country;
           // Also provide full address as JSON string for backward compatibility
           customParameters.address = JSON.stringify(address);
+          // Human-readable format for AI voice responses
+          customParameters.address_voice = formatAddressForVoice(address);
         }
       } catch (error) {
         logger.warn(`Failed to parse tenant address for tenant ${tenant.id}: ${error.message}`);
