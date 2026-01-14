@@ -210,17 +210,7 @@ const createAppointment = async (appointmentData, tenantId) => {
 
   logger.info(`New appointment created: ${appointment.id} for tenant: ${tenantId}`);
 
-  // Get tenant timezone for SMS formatting
-  const tenant = await Tenant.findOne({ where: { id: tenantId } });
-  let tenantSettings = tenant?.settings;
-  if (typeof tenantSettings === 'string') {
-    try {
-      tenantSettings = JSON.parse(tenantSettings);
-    } catch (e) {
-      tenantSettings = {};
-    }
-  }
-  const tenantTimezone = tenantSettings?.timezone || 'America/Los_Angeles';
+  // Use tenant and tenantTimezone already fetched above for SMS formatting
 
   // Send SMS confirmation to customer asynchronously (don't wait for it to complete)
   smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId, tenantTimezone)
