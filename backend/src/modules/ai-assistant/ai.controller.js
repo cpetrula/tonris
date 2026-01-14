@@ -1084,17 +1084,83 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
     if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
       throw new AppError('Invalid email format', 400, 'VALIDATION_ERROR');
     }
-    
-    // Validate startTime is valid and in the future
-    const appointmentStart = new Date(startTime);
+
+    // Get tenant to access timezone settings
+    const tenant = await tenantService.getTenantById(tenantId);
+    const tenantTimezone = tenant?.settings?.timezone || 'America/Los_Angeles';
+
+    // Parse startTime - if it doesn't have timezone info, assume tenant's timezone
+    let appointmentStart;
+    let adjustedStartTime = startTime;
+
+    // Check if startTime already has timezone info (contains Z, +, or -)
+    const hasTimezone = /[Zz]$|[+-]\d{2}:\d{2}$|[+-]\d{4}$/.test(startTime);
+
+    if (!hasTimezone) {
+      // startTime is naive (no timezone) - interpret in tenant's timezone
+      // Get the offset for the tenant's timezone at that time
+      try {
+        const naiveDate = new Date(startTime);
+        if (isNaN(naiveDate.getTime())) {
+          throw new AppError('Invalid startTime format', 400, 'VALIDATION_ERROR');
+        }
+
+        // Format the date in the tenant's timezone to get the correct UTC time
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: tenantTimezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        });
+
+        // Calculate timezone offset by comparing local interpretation vs UTC
+        // Create a date string that represents "this time in tenant timezone"
+        const parts = startTime.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+        if (parts) {
+          const [, year, month, day, hour, minute] = parts;
+          // Create date in UTC, then adjust for timezone
+          const utcDate = new Date(Date.UTC(
+            parseInt(year),
+            parseInt(month) - 1,
+            parseInt(day),
+            parseInt(hour),
+            parseInt(minute),
+            0
+          ));
+
+          // Get the offset for this timezone
+          const tzOffset = new Date(utcDate.toLocaleString('en-US', { timeZone: tenantTimezone })).getTime() -
+                          new Date(utcDate.toLocaleString('en-US', { timeZone: 'UTC' })).getTime();
+
+          // The actual UTC time = naive time interpreted as tenant timezone
+          // So we subtract the offset (if timezone is UTC-8, we add 8 hours to get UTC)
+          appointmentStart = new Date(utcDate.getTime() - tzOffset);
+          adjustedStartTime = appointmentStart.toISOString();
+
+          logger.info(`ElevenLabs Create Appointment: Converted time from ${startTime} (${tenantTimezone}) to ${adjustedStartTime} (UTC)`);
+        } else {
+          appointmentStart = naiveDate;
+        }
+      } catch (tzError) {
+        logger.warn(`ElevenLabs Create Appointment: Timezone conversion failed, using raw time: ${tzError.message}`);
+        appointmentStart = new Date(startTime);
+      }
+    } else {
+      appointmentStart = new Date(startTime);
+    }
+
     if (isNaN(appointmentStart.getTime())) {
       throw new AppError('Invalid startTime format', 400, 'VALIDATION_ERROR');
     }
-    
+
     if (appointmentStart <= new Date()) {
       throw new AppError('Appointment time must be in the future', 400, 'VALIDATION_ERROR');
     }
-    
+
     logger.info(`ElevenLabs Create Appointment webhook: Creating appointment for tenant ${tenantId}`);
     
     // Create appointment using the internal service
@@ -1104,7 +1170,7 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
       customerName,
       customerEmail,
       customerPhone,
-      startTime,
+      startTime: adjustedStartTime,
       addOns,
       notes: notes || 'Created via ElevenLabs AI',
     }, tenantId);
