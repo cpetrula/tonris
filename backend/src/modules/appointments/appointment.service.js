@@ -50,6 +50,81 @@ const calculateEndTime = (startTime, durationMinutes) => {
 };
 
 /**
+ * Parse a date/time string in the context of a specific timezone
+ * If the string already has timezone info (Z or offset), use it as-is
+ * Otherwise, interpret the time as being in the specified timezone
+ * @param {string} dateTimeStr - Date/time string to parse
+ * @param {string} timezone - Timezone to use if none specified (e.g., 'America/Los_Angeles')
+ * @returns {Date} - Date object in UTC
+ */
+const parseDateTimeInTimezone = (dateTimeStr, timezone = 'America/Los_Angeles') => {
+  if (!dateTimeStr) return null;
+
+  // If already has timezone info (ends with Z or has +/- offset), parse directly
+  if (/Z$|[+-]\d{2}:\d{2}$|[+-]\d{4}$/.test(dateTimeStr)) {
+    return new Date(dateTimeStr);
+  }
+
+  // Try to parse the date string to extract components
+  const parsed = new Date(dateTimeStr);
+  if (isNaN(parsed.getTime())) {
+    // If standard parsing fails, return null
+    logger.warn(`Failed to parse date string: ${dateTimeStr}`);
+    return null;
+  }
+
+  // Get the date/time components as they were intended (local interpretation)
+  // We need to treat the parsed date as if it's in the target timezone
+  const year = parsed.getFullYear();
+  const month = parsed.getMonth();
+  const day = parsed.getDate();
+  const hours = parsed.getHours();
+  const minutes = parsed.getMinutes();
+  const seconds = parsed.getSeconds();
+
+  // Create a date string in ISO format and append the timezone
+  // Then use Intl to figure out the offset for that timezone at that specific date/time
+  const tempDate = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
+
+  // Get the timezone offset for the target timezone at this date/time
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  // Calculate offset by comparing UTC time to local time in target timezone
+  const utcDate = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
+  const tzParts = formatter.formatToParts(utcDate);
+  const tzValues = {};
+  tzParts.forEach(part => { tzValues[part.type] = part.value; });
+
+  const tzDate = new Date(Date.UTC(
+    parseInt(tzValues.year),
+    parseInt(tzValues.month) - 1,
+    parseInt(tzValues.day),
+    parseInt(tzValues.hour),
+    parseInt(tzValues.minute),
+    parseInt(tzValues.second)
+  ));
+
+  // The offset is the difference between what we want (the local time) and UTC
+  const offsetMs = utcDate.getTime() - tzDate.getTime();
+
+  // Apply the offset to convert from "local timezone time" to UTC
+  const resultDate = new Date(utcDate.getTime() + offsetMs);
+
+  logger.info(`parseDateTimeInTimezone: "${dateTimeStr}" in ${timezone} => ${resultDate.toISOString()}`);
+
+  return resultDate;
+};
+
+/**
  * Create a new appointment
  * @param {Object} appointmentData - Appointment creation data
  * @param {string} tenantId - Tenant identifier
@@ -91,8 +166,13 @@ const createAppointment = async (appointmentData, tenantId) => {
   // Calculate totals
   const { totalPrice, totalDuration } = calculateTotals(service, addOns);
 
+  // Get tenant timezone for proper date parsing
+  const tenant = await Tenant.findByPk(tenantId);
+  const tenantTimezone = tenant?.settings?.timezone || 'America/Los_Angeles';
+
   // Calculate end time as Date object
-  const startDateTime = new Date(startTime);
+  // Parse in tenant's timezone to avoid UTC offset issues
+  const startDateTime = parseDateTimeInTimezone(startTime, tenantTimezone);
   const endDateTime = calculateEndTime(startDateTime, totalDuration);
 
   // Check for conflicts
@@ -302,7 +382,7 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
   // If rescheduling (changing time or employee), check for conflicts
   if (startTime || employeeId) {
     const newEmployeeId = employeeId || appointment.employeeId;
-    
+
     // Verify new employee if changed
     if (employeeId && employeeId !== appointment.employeeId) {
       const employee = await Employee.findOne({
@@ -311,15 +391,20 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
       if (!employee) {
         throw new AppError('Employee not found or not active', 404, 'EMPLOYEE_NOT_FOUND');
       }
-      
+
       // Verify employee can perform this service
       if (!employee.serviceIds || !employee.serviceIds.includes(appointment.serviceId)) {
         throw new AppError('Employee is not qualified for this service', 400, 'EMPLOYEE_NOT_QUALIFIED');
       }
     }
 
+    // Get tenant timezone for proper date parsing
+    const tenant = await Tenant.findByPk(tenantId);
+    const tenantTimezone = tenant?.settings?.timezone || 'America/Los_Angeles';
+
     // Get the start time (use existing if not provided)
-    const newStartTime = startTime ? new Date(startTime) : appointment.startTime;
+    // Parse in tenant's timezone to avoid UTC offset issues
+    const newStartTime = startTime ? parseDateTimeInTimezone(startTime, tenantTimezone) : appointment.startTime;
     let newDuration = appointment.totalDuration;
 
     // Recalculate duration if add-ons changed
