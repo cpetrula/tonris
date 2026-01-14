@@ -162,6 +162,11 @@ function getPlanSeverity(planType: string): 'success' | 'info' | 'warn' | 'dange
 function goBack() {
   router.push('/')
 }
+
+// Copy text to clipboard
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text)
+}
 </script>
 
 <template>
@@ -357,7 +362,7 @@ function goBack() {
                       <div class="flex items-center gap-2">
                         <code class="text-xs font-mono text-gray-700 bg-gray-100 px-2 py-1 rounded break-all">{{ data.id }}</code>
                         <button
-                          @click="navigator.clipboard.writeText(data.id)"
+                          @click="copyToClipboard(data.id)"
                           class="text-blue-500 hover:text-blue-700 p-1"
                           title="Copy to clipboard"
                         >
