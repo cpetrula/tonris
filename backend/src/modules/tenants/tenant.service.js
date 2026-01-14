@@ -230,9 +230,17 @@ const updateBusinessHours = async (id, businessHours) => {
   }
 
   // Update business hours
+  logger.debug(`updateBusinessHours: About to save for tenant ${id}. Input hours:`, {
+    saturday: businessHours.saturday,
+  });
+
   await tenant.updateBusinessHours(businessHours);
 
-  logger.info(`Business hours updated for tenant: ${id}`);
+  // Verify data was saved correctly
+  logger.info(`Business hours updated for tenant: ${id}. Saturday after save:`, {
+    saturday: tenant.businessHours?.businessHours?.saturday,
+    fullStructure: JSON.stringify(tenant.businessHours)?.substring(0, 300),
+  });
 
   return {
     id: tenant.id,

@@ -177,20 +177,25 @@ const findTenantByPhoneNumber = async (phoneNumber) => {
       if (tenant.twilioPhoneNumber) {
         const storedNormalized = tenant.twilioPhoneNumber.replace(/[^0-9+]/g, '');
         if (storedNormalized === normalizedNumber) {
+          // Reload tenant to ensure we have the freshest data from the database
+          // This is important for dynamic variables that may have been updated since the last call
+          await tenant.reload();
           return tenant;
         }
       }
     }
-    
+
     // Fallback: search in metadata/settings for backward compatibility
     for (const tenant of activeTenants) {
       const twilioPhone = tenant.metadata?.twilioPhoneNumber || tenant.settings?.twilioPhoneNumber;
-      
+
       if (twilioPhone && twilioPhone.replace(/[^0-9+]/g, '') === normalizedNumber) {
+        // Reload tenant to ensure we have the freshest data
+        await tenant.reload();
         return tenant;
       }
     }
-    
+
     return null;
   } catch (error) {
     logger.error(`Error finding tenant by phone number: ${error.message}`);
@@ -408,6 +413,15 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
     };
     
     // Add business hours if available
+    // Debug: Log the raw businessHours structure to diagnose data flow issues
+    logger.debug(`Twilio-ElevenLabs: tenant.businessHours raw value:`, {
+      tenantId: tenant.id,
+      businessHoursType: typeof tenant.businessHours,
+      hasBusinessHours: !!tenant.businessHours,
+      hasNestedBusinessHours: !!tenant.businessHours?.businessHours,
+      rawValue: JSON.stringify(tenant.businessHours)?.substring(0, 500),
+    });
+
     if (tenant.businessHours?.businessHours) {
       const businessHours = tenant.businessHours.businessHours;
       // Raw JSON for backward compatibility
@@ -417,6 +431,11 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       // Today's specific hours
       const timezone = tenant.settings?.timezone || 'America/Los_Angeles';
       customParameters.today_hours = getTodayHours(businessHours, timezone);
+
+      // Debug: Log the formatted hours being sent to ElevenLabs
+      logger.info(`Twilio-ElevenLabs: Sending business hours to agent - voice: "${customParameters.business_hours_voice}", today: "${customParameters.today_hours}"`);
+    } else {
+      logger.warn(`Twilio-ElevenLabs: No business hours found for tenant ${tenant.id}`);
     }
 
     // Add address information if available
@@ -486,6 +505,13 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       }
     }
     
+    // Debug: Log all custom parameters being sent to the stream
+    logger.info(`Twilio-ElevenLabs: Custom parameters for call ${CallSid}:`, {
+      business_hours_voice: customParameters.business_hours_voice,
+      today_hours: customParameters.today_hours,
+      paramCount: Object.keys(customParameters).length,
+    });
+
     // Generate TwiML to connect to the application's media stream WebSocket
     // The media stream handler will bridge to ElevenLabs
     const twiml = generateElevenLabsConnectTwiml({

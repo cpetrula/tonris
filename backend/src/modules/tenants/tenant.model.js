@@ -261,19 +261,23 @@ Tenant.prototype.updateBusinessHours = async function(newHours) {
   const updatedData = {
     businessHours: newHours,
   };
-  
+
+  console.log(`[Tenant.updateBusinessHours] Saving to DB for tenant ${this.id}:`, JSON.stringify(updatedData).substring(0, 500));
+
   // Set the new business_hours value
   this.setDataValue('business_hours', updatedData);
-  
+
   // Explicitly mark the business_hours field as changed for Sequelize
   // This is necessary because Sequelize doesn't always detect changes to JSON columns
   this.changed('business_hours', true);
-  
+
   await this.save();
-  
+
   // Reload from database to ensure the value was persisted correctly
   await this.reload();
-  
+
+  console.log(`[Tenant.updateBusinessHours] After reload for tenant ${this.id}:`, JSON.stringify(this.businessHours).substring(0, 500));
+
   return this;
 };
 

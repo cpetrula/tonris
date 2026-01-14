@@ -119,6 +119,8 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         
         logger.info(`[MediaStream] Dynamic variables being sent: ${Object.keys(dynamicVariables).join(', ')}`);
         logger.info(`[MediaStream] Tenant ID: ${dynamicVariables.tenant_id}, Call SID: ${callSid}`);
+        // Debug: Log specific business hours variables
+        logger.info(`[MediaStream] Business hours: voice="${dynamicVariables.business_hours_voice}", today="${dynamicVariables.today_hours}"`);
         // Note: debug logging may contain sensitive data - use only for development/troubleshooting
         if (isDebugMode) {
           logger.debug(`[MediaStream] Dynamic variables content: ${JSON.stringify(dynamicVariables)}`);
