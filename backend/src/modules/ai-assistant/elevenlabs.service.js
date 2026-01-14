@@ -503,9 +503,10 @@ class ElevenLabsService extends AIProviderInterface {
       }
 
       // Dynamic variable placeholders
+      // Note: ElevenLabs API uses camelCase for this field
       if (config.dynamicVariables && Object.keys(config.dynamicVariables).length > 0) {
-        agentConfig.dynamic_variables = {
-          dynamic_variable_placeholders: config.dynamicVariables,
+        agentConfig.dynamicVariables = {
+          dynamicVariablePlaceholders: config.dynamicVariables,
         };
       }
 
