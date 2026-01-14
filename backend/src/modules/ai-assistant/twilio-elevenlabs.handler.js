@@ -402,7 +402,21 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       // Call context
       caller_number: From,
       call_status: CallStatus,
-      
+
+      // Current date/time context for the AI
+      // Format: "Tuesday, January 14, 2025 at 2:30 PM"
+      current_datetime: new Date().toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: tenant.settings?.timezone || 'America/Los_Angeles',
+      }),
+      timezone: tenant.settings?.timezone || 'America/Los_Angeles',
+
       // Contact information
       contact_email: tenant.contactEmail,
       contact_phone: tenant.contactPhone,
