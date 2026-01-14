@@ -1015,17 +1015,20 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
     const signature = req.headers['x-elevenlabs-signature'];
     const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
     
-    if (env.isProduction() && webhookSecret) {
-      // Require raw body for signature verification
+    if (env.isProduction() && webhookSecret && signature) {
+      // Verify signature if provided
       if (!req.rawBody) {
         logger.warn('ElevenLabs Create Appointment: Missing raw body for signature verification');
         throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
       }
-      
-      if (!signature || !verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
-        logger.warn('ElevenLabs Create Appointment: Invalid or missing signature');
+
+      if (!verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
+        logger.warn('ElevenLabs Create Appointment: Invalid signature');
         throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
       }
+    } else if (env.isProduction() && webhookSecret && !signature) {
+      // Log warning but allow request - ElevenLabs tool calls don't send signatures
+      logger.warn('ElevenLabs Create Appointment: No signature provided (allowing request from tool call)');
     }
     
     // Get tenant ID from query parameter or request body
