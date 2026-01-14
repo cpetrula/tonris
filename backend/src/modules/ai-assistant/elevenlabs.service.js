@@ -448,6 +448,7 @@ class ElevenLabsService extends AIProviderInterface {
    * @param {string} config.voiceId - ElevenLabs voice ID
    * @param {string} config.language - Agent language (e.g., 'en')
    * @param {Object} config.llm - LLM settings (model, temperature, etc.)
+   * @param {Object} config.dynamicVariables - Dynamic variable placeholders to add/update
    * @returns {Promise<Object>} - Updated agent details
    */
   async updateAgent(agentId, config = {}) {
@@ -499,6 +500,13 @@ class ElevenLabsService extends AIProviderInterface {
       // LLM settings
       if (config.llm) {
         agentConfig.llm = config.llm;
+      }
+
+      // Dynamic variable placeholders
+      if (config.dynamicVariables && Object.keys(config.dynamicVariables).length > 0) {
+        agentConfig.dynamic_variables = {
+          dynamic_variable_placeholders: config.dynamicVariables,
+        };
       }
 
       // Voice ID
