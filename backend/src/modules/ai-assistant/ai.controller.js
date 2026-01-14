@@ -1439,6 +1439,123 @@ const handleConversationEndWebhook = async (req, res, next) => {
 };
 
 /**
+ * GET /api/webhooks/elevenlabs/agents
+ * List all ElevenLabs agents (no auth required - webhook endpoint)
+ */
+const handleListAgentsWebhook = async (req, res, next) => {
+  try {
+    const elevenlabsService = getElevenLabsService();
+
+    if (!await elevenlabsService.isAvailable()) {
+      throw new AppError('ElevenLabs is not configured', 503, 'SERVICE_UNAVAILABLE');
+    }
+
+    const { pageSize, cursor } = req.query;
+
+    const result = await elevenlabsService.listAgents({
+      pageSize: pageSize ? parseInt(pageSize, 10) : 30,
+      cursor,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    logger.error(`Error listing agents (webhook): ${error.message}`);
+    next(error);
+  }
+};
+
+/**
+ * GET /api/webhooks/elevenlabs/agents/:agentId
+ * Get a specific ElevenLabs agent's details (no auth required - webhook endpoint)
+ */
+const handleGetAgentWebhook = async (req, res, next) => {
+  try {
+    const elevenlabsService = getElevenLabsService();
+
+    if (!await elevenlabsService.isAvailable()) {
+      throw new AppError('ElevenLabs is not configured', 503, 'SERVICE_UNAVAILABLE');
+    }
+
+    const { agentId } = req.params;
+
+    if (!agentId) {
+      throw new AppError('Agent ID is required', 400, 'VALIDATION_ERROR');
+    }
+
+    const agent = await elevenlabsService.getAgent(agentId);
+
+    res.status(200).json({
+      success: true,
+      data: agent,
+    });
+  } catch (error) {
+    logger.error(`Error getting agent (webhook): ${error.message}`);
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/webhooks/elevenlabs/agents/:agentId
+ * Update an ElevenLabs agent's configuration (no auth required - webhook endpoint)
+ *
+ * Request body:
+ * {
+ *   "systemPrompt": "You are a helpful assistant...",
+ *   "firstMessage": "Hello! Thank you for calling...",
+ *   "name": "My Agent",
+ *   "voiceId": "voice-uuid",
+ *   "language": "en",
+ *   "llm": { "model": "gpt-4" },
+ *   "dynamicVariables": { "var1": "default1", "var2": "default2" }
+ * }
+ */
+const handleUpdateAgentWebhook = async (req, res, next) => {
+  try {
+    const elevenlabsService = getElevenLabsService();
+
+    if (!await elevenlabsService.isAvailable()) {
+      throw new AppError('ElevenLabs is not configured', 503, 'SERVICE_UNAVAILABLE');
+    }
+
+    const { agentId } = req.params;
+    const { systemPrompt, firstMessage, name, voiceId, language, llm, dynamicVariables } = req.body;
+
+    if (!agentId) {
+      throw new AppError('Agent ID is required', 400, 'VALIDATION_ERROR');
+    }
+
+    // At least one field must be provided
+    if (!systemPrompt && !firstMessage && !name && !voiceId && !language && !llm && !dynamicVariables) {
+      throw new AppError('At least one configuration field is required', 400, 'VALIDATION_ERROR');
+    }
+
+    const updatedAgent = await elevenlabsService.updateAgent(agentId, {
+      systemPrompt,
+      firstMessage,
+      name,
+      voiceId,
+      language,
+      llm,
+      dynamicVariables,
+    });
+
+    logger.info(`Agent ${agentId} updated successfully (webhook)`);
+
+    res.status(200).json({
+      success: true,
+      data: updatedAgent,
+      message: 'Agent updated successfully',
+    });
+  } catch (error) {
+    logger.error(`Error updating agent (webhook): ${error.message}`);
+    next(error);
+  }
+};
+
+/**
  * GET /api/ai/agents
  * List all ElevenLabs agents
  */
@@ -1571,4 +1688,8 @@ module.exports = {
   listAgents,
   getAgent,
   updateAgent,
+  // Webhook endpoints (no auth required)
+  handleListAgentsWebhook,
+  handleGetAgentWebhook,
+  handleUpdateAgentWebhook,
 };

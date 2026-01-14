@@ -163,6 +163,29 @@ app.post('/api/webhooks/elevenlabs/conversation-end',
   aiController.handleConversationEndWebhook
 );
 
+// ElevenLabs Agent Management webhooks
+// These endpoints allow managing ElevenLabs agents without requiring user authentication
+// Used for CLI tools and automation scripts
+
+// GET /api/webhooks/elevenlabs/agents - List all ElevenLabs agents
+app.get('/api/webhooks/elevenlabs/agents',
+  webhookRateLimiter,
+  aiController.handleListAgentsWebhook
+);
+
+// GET /api/webhooks/elevenlabs/agents/:agentId - Get specific agent details
+app.get('/api/webhooks/elevenlabs/agents/:agentId',
+  webhookRateLimiter,
+  aiController.handleGetAgentWebhook
+);
+
+// PATCH /api/webhooks/elevenlabs/agents/:agentId - Update agent configuration
+app.patch('/api/webhooks/elevenlabs/agents/:agentId',
+  webhookRateLimiter,
+  express.json(),
+  aiController.handleUpdateAgentWebhook
+);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
