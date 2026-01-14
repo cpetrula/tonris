@@ -224,6 +224,73 @@ Each tenant must be configured with:
 2. Optionally set `settings.elevenLabsAgentId` to override the business type's agent for special cases
 3. If neither is set, calls will fail with a "not properly configured" error
 
+### 6. Voice-Friendly Dynamic Variables
+
+The system automatically converts raw data into human-readable, voice-friendly formats that AI agents can speak naturally. These variables are passed at call start so the AI has immediate context without needing tool calls.
+
+#### Available Voice-Friendly Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `business_hours_voice` | Human-readable business hours | "Monday through Friday 9am to 5pm, closed Saturday through Sunday" |
+| `today_hours` | Today's specific hours | "Today we're open 9am to 5pm" or "We're closed today" |
+| `address_voice` | Speakable address format | "123 Main Street, San Francisco, CA" |
+| `business_hours` | Raw JSON (for edge cases) | `{"monday": {"open": "09:00", "close": "17:00"}}` |
+
+#### How It Works
+
+1. **Business Hours Formatting** (`formatBusinessHoursForVoice`):
+   - Groups consecutive days with the same hours (e.g., "Monday through Friday")
+   - Converts 24-hour time to spoken format (e.g., "9am", "5:30pm")
+   - Handles closed days, split shifts, and edge cases
+   - Returns "Hours not set" if no hours configured
+
+2. **Today's Hours** (`getTodayHours`):
+   - Determines the current day based on tenant's timezone
+   - Returns "Today we're open [time] to [time]" or "We're closed today"
+   - Automatically adjusts for timezone differences
+
+3. **Address Formatting** (`formatAddressForVoice`):
+   - Combines address components into a speakable format
+   - Omits empty fields gracefully
+   - Format: "Street, City, State"
+
+#### Example Usage in System Prompt
+
+These variables can be used directly in your ElevenLabs agent's system prompt:
+
+```
+# Business Context (You Know This Already)
+- Business: {{business_name}}
+- Hours: {{business_hours_voice}}
+- Today: {{today_hours}}
+- Location: {{address_voice}}
+
+When someone asks about hours, answer directly from the above!
+Use tools for: specific availability, services, pricing, appointments.
+```
+
+#### Benefits
+
+- **Immediate Context**: AI can answer "What are your hours?" instantly without tool calls
+- **Natural Speech**: Formatted for voice (says "9am" not "09:00")
+- **Timezone Aware**: "Today we're open..." reflects the business's actual timezone
+- **Universal**: Works for any business type (salon, plumber, dentist, etc.)
+
+#### ElevenLabs Configuration
+
+To use these variables, you must add them to the agent's `dynamic_variable_placeholders` in the ElevenLabs dashboard:
+
+1. Navigate to your ElevenLabs agent settings
+2. Under "Dynamic Variables" or similar section, add:
+   - `business_hours_voice` - Human-readable business hours
+   - `today_hours` - Today's specific hours
+   - `address_voice` - Speakable address format
+3. Update the system prompt to reference these variables using `{{variable_name}}` syntax
+4. Save the agent configuration
+
+**Note**: The backend automatically passes these variables at call start. The agent just needs to be configured to accept and use them.
+
 ## API Endpoints
 
 ### Twilio Webhook Endpoints
@@ -349,7 +416,10 @@ The webhook handler supports both `type` (ElevenLabs standard) and `event` (lega
     "caller_number": "+15551234567",
     "call_sid": "CA12345...",
     "conversation_id": "unique-conversation-id",
-    "business_hours_summary": "We're open Monday through Friday from 09:00 to 17:00."
+    "business_hours": "{...}",
+    "business_hours_voice": "Monday through Friday 9am to 5pm, closed Saturday through Sunday",
+    "today_hours": "Today we're open 9am to 5pm",
+    "address_voice": "123 Main Street, San Francisco, CA"
   },
   "conversation_config_override": {
     "agent": {
@@ -589,6 +659,16 @@ Here's a recommended system prompt for your ElevenLabs agent:
 ```
 You are a friendly and professional AI receptionist for {{business_name}}. Your role is to help customers with:
 
+# Business Context (You Know This Already)
+- Business: {{business_name}}
+- Hours: {{business_hours_voice}}
+- Today: {{today_hours}}
+- Location: {{address_voice}}
+
+When someone asks about hours or location, answer directly from the above - no need for tool calls!
+
+# Your Capabilities
+
 1. **Booking Appointments**: Help customers schedule appointments by:
    - Asking what service they need
    - Checking availability using the check_availability tool
@@ -597,11 +677,11 @@ You are a friendly and professional AI receptionist for {{business_name}}. Your 
 
 2. **Service Information**: Provide details about services, prices, and duration using the get_services tool.
 
-3. **Business Hours**: Share operating hours using the get_business_hours tool.
+3. **Business Hours**: You already know our hours from the context above! Answer immediately.
 
 4. **Appointment Management**: Help customers cancel or reschedule appointments.
 
-Guidelines:
+# Guidelines
 - Always be polite and professional
 - Confirm details before making bookings
 - If you can't help with something, offer to connect them with a human
