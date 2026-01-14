@@ -8,6 +8,7 @@ const { CallLog } = require('../telephony/callLog.model');
 const { Appointment, APPOINTMENT_STATUS } = require('../appointments/appointment.model');
 const { Employee } = require('../employees/employee.model');
 const { Service } = require('../services/service.model');
+const { BusinessType } = require('../business-types/businessType.model');
 const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
 
@@ -80,9 +81,9 @@ const getMetricsForTenant = async (tenantId) => {
       logger.error(`Error getting service count for ${tenantId}: ${err.message}`);
     }
 
-    // Get tenant details for phone number and trial info
+    // Get tenant details for phone number, trial info, and business type
     const tenant = await Tenant.findByPk(tenantId, {
-      attributes: ['twilioPhoneNumber', 'trialEndsAt', 'planType'],
+      attributes: ['twilioPhoneNumber', 'trialEndsAt', 'planType', 'businessTypeId'],
     });
 
     // Calculate trial days remaining
@@ -91,6 +92,19 @@ const getMetricsForTenant = async (tenantId) => {
       const now = new Date();
       const trialEnd = new Date(tenant.trialEndsAt);
       trialDaysRemaining = Math.max(0, Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)));
+    }
+
+    // Get agent ID from business type
+    let agentId = null;
+    if (tenant?.businessTypeId) {
+      try {
+        const businessType = await BusinessType.findByPk(tenant.businessTypeId, {
+          attributes: ['agentId'],
+        });
+        agentId = businessType?.agentId || null;
+      } catch (err) {
+        logger.error(`Error getting business type for ${tenantId}: ${err.message}`);
+      }
     }
 
     return {
@@ -111,6 +125,7 @@ const getMetricsForTenant = async (tenantId) => {
       phoneNumber: tenant?.twilioPhoneNumber || null,
       trialDaysRemaining,
       planType: tenant?.planType,
+      agentId,
     };
   } catch (error) {
     logger.error(`Error fetching metrics for tenant ${tenantId}: ${error.message}`, error.stack);
@@ -123,6 +138,7 @@ const getMetricsForTenant = async (tenantId) => {
       phoneNumber: null,
       trialDaysRemaining: null,
       planType: null,
+      agentId: null,
     };
   }
 };
