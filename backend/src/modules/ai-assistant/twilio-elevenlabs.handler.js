@@ -10,6 +10,8 @@ const { Tenant } = require('../tenants/tenant.model');
 const { BusinessType } = require('../business-types/businessType.model');
 const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../telephony/callLog.model');
 const { ElevenLabsVoice } = require('../voices/elevenlabsVoice.model');
+const { Appointment, APPOINTMENT_STATUS } = require('../appointments/appointment.model');
+const { Op } = require('sequelize');
 
 // Lazy-loaded service references to avoid circular dependencies
 let _availabilityService = null;
@@ -135,6 +137,86 @@ const getTodayHours = (businessHours, timezone = 'America/Los_Angeles') => {
   const openTime = formatTimeForVoice(todayHours.open);
   const closeTime = formatTimeForVoice(todayHours.close);
   return `Today we're open ${openTime} to ${closeTime}`;
+};
+
+/**
+ * Get caller's appointments for today
+ * Used to provide context to the AI about the caller's existing appointments
+ * @param {string} tenantId - Tenant ID
+ * @param {string} callerNumber - Caller's phone number
+ * @param {string} timezone - Timezone for determining "today"
+ * @returns {Promise<Object>} - Object with appointment info
+ */
+const getCallerAppointmentsToday = async (tenantId, callerNumber, timezone = 'America/Los_Angeles') => {
+  try {
+    if (!callerNumber) {
+      return { hasAppointment: false, appointments: [], callerName: '' };
+    }
+
+    // Normalize phone number for matching (remove all non-digit chars except +)
+    const normalizedCaller = callerNumber.replace(/[^0-9+]/g, '');
+
+    // Get today's date range in the tenant's timezone
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-US', { timeZone: timezone });
+    const todayStart = new Date(todayStr);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+
+    // Find appointments for this caller today
+    const appointments = await Appointment.findAll({
+      where: {
+        tenantId,
+        customerPhone: {
+          [Op.or]: [
+            normalizedCaller,
+            // Also try with common formats
+            callerNumber,
+            normalizedCaller.replace(/^\+1/, ''), // Without +1
+            normalizedCaller.replace(/^\+/, ''),  // Without +
+          ],
+        },
+        startTime: {
+          [Op.gte]: todayStart,
+          [Op.lt]: todayEnd,
+        },
+        status: {
+          [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED],
+        },
+      },
+      order: [['startTime', 'ASC']],
+      attributes: ['id', 'customerName', 'startTime', 'endTime', 'status'],
+    });
+
+    if (appointments.length === 0) {
+      return { hasAppointment: false, appointments: [], callerName: '' };
+    }
+
+    // Get the customer name from the first appointment
+    const callerName = appointments[0].customerName || '';
+
+    // Format appointments for AI context
+    const formattedAppointments = appointments.map(apt => ({
+      time: new Date(apt.startTime).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: timezone,
+      }),
+      status: apt.status,
+    }));
+
+    logger.info(`Found ${appointments.length} appointment(s) today for caller ${callerNumber} (tenant ${tenantId})`);
+
+    return {
+      hasAppointment: true,
+      appointments: formattedAppointments,
+      callerName,
+    };
+  } catch (error) {
+    logger.error(`Error fetching caller appointments: ${error.message}`);
+    return { hasAppointment: false, appointments: [], callerName: '' };
+  }
 };
 
 /**
@@ -425,7 +507,18 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       ai_greeting: tenant.metadata?.aiGreeting || `Thanks for calling ${tenant.name || 'our business'}! How can I help you today?`,
       ai_tone: tenant.metadata?.aiTone,
     };
-    
+
+    // Look up caller's appointments for today to provide context to the AI
+    const timezone = tenant.settings?.timezone || 'America/Los_Angeles';
+    const callerContext = await getCallerAppointmentsToday(tenant.id, From, timezone);
+
+    // Add caller appointment context to custom parameters
+    customParameters.caller_has_appointment_today = callerContext.hasAppointment ? 'true' : 'false';
+    customParameters.caller_name = callerContext.callerName || '';
+    customParameters.caller_appointments_today = JSON.stringify(callerContext.appointments);
+
+    logger.info(`Twilio-ElevenLabs: Caller context - hasAppointment: ${callerContext.hasAppointment}, name: "${callerContext.callerName}", appointments: ${callerContext.appointments.length}`);
+
     // Add business hours if available
     // Debug: Log the raw businessHours structure to diagnose data flow issues
     logger.debug(`Twilio-ElevenLabs: tenant.businessHours raw value:`, {
