@@ -279,17 +279,37 @@ Use tools for: specific availability, services, pricing, appointments.
 
 #### ElevenLabs Configuration
 
-To use these variables, you must add them to the agent's `dynamic_variable_placeholders` in the ElevenLabs dashboard:
+You can configure these variables via API (recommended) or the ElevenLabs dashboard.
 
+**Via API (No Authentication Required):**
+
+```bash
+# List all agents
+curl https://criton.ai/api/webhooks/elevenlabs/agents
+
+# Get agent details
+curl https://criton.ai/api/webhooks/elevenlabs/agents/{agentId}
+
+# Update agent with new dynamic variables and system prompt
+curl -X PATCH https://criton.ai/api/webhooks/elevenlabs/agents/{agentId} \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dynamicVariables": {
+      "business_name": "Default",
+      "business_hours_voice": "Please ask for hours",
+      "today_hours": "Please ask for today hours",
+      "address_voice": "Please ask for location"
+    },
+    "systemPrompt": "Your updated system prompt here..."
+  }'
+```
+
+**Via Dashboard:**
 1. Navigate to your ElevenLabs agent settings
-2. Under "Dynamic Variables" or similar section, add:
-   - `business_hours_voice` - Human-readable business hours
-   - `today_hours` - Today's specific hours
-   - `address_voice` - Speakable address format
-3. Update the system prompt to reference these variables using `{{variable_name}}` syntax
-4. Save the agent configuration
+2. Under "Dynamic Variables", add the placeholders
+3. Update the system prompt to reference them using `{{variable_name}}` syntax
 
-**Note**: The backend automatically passes these variables at call start. The agent just needs to be configured to accept and use them.
+**Note**: The backend automatically passes these variables at call start with actual business data. The placeholders just need to be configured in the agent. Default placeholder values are used only if no data is passed at runtime.
 
 ## API Endpoints
 
@@ -640,6 +660,70 @@ APP_BASE_URL=https://xxxxx.ngrok.io
 ```
 
 Configure Twilio to use the ngrok URL for webhooks.
+
+## Agent Management API
+
+These endpoints allow managing ElevenLabs agents without requiring user authentication. They use the server's `ELEVENLABS_API_KEY` to communicate with ElevenLabs.
+
+### GET `/api/webhooks/elevenlabs/agents`
+
+List all ElevenLabs agents in the configured account.
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "agents": [
+      {
+        "agentId": "agent_abc123",
+        "name": "Hair Salons",
+        "createdAtUnixSecs": 1764389531,
+        "lastCallTimeUnixSecs": 1768420824
+      }
+    ],
+    "hasMore": false
+  }
+}
+```
+
+### GET `/api/webhooks/elevenlabs/agents/:agentId`
+
+Get detailed configuration for a specific agent.
+
+**Response**: Returns full agent configuration including system prompt, dynamic variables, tools, etc.
+
+### PATCH `/api/webhooks/elevenlabs/agents/:agentId`
+
+Update an agent's configuration.
+
+**Request Body**:
+```json
+{
+  "systemPrompt": "Your new system prompt...",
+  "dynamicVariables": {
+    "business_name": "Default Name",
+    "business_hours_voice": "Please ask for hours",
+    "today_hours": "Please ask for today's hours",
+    "address_voice": "Please ask for location"
+  },
+  "firstMessage": "Hello! How can I help you?",
+  "name": "My Agent Name",
+  "voiceId": "voice-uuid",
+  "language": "en"
+}
+```
+
+**All fields are optional** - only provide the fields you want to update.
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": { /* Updated agent configuration */ },
+  "message": "Agent updated successfully"
+}
+```
 
 ## Error Handling
 
