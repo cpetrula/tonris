@@ -130,8 +130,20 @@ const createAppointment = async (appointmentData, tenantId) => {
 
   logger.info(`New appointment created: ${appointment.id} for tenant: ${tenantId}`);
 
+  // Get tenant timezone for SMS formatting
+  const tenant = await Tenant.findOne({ where: { id: tenantId } });
+  let tenantSettings = tenant?.settings;
+  if (typeof tenantSettings === 'string') {
+    try {
+      tenantSettings = JSON.parse(tenantSettings);
+    } catch (e) {
+      tenantSettings = {};
+    }
+  }
+  const tenantTimezone = tenantSettings?.timezone || 'America/Los_Angeles';
+
   // Send SMS confirmation to customer asynchronously (don't wait for it to complete)
-  smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId)
+  smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId, tenantTimezone)
     .catch(error => {
       logger.error(`Failed to send SMS for appointment ${appointment.id}: ${error.message}`);
     });
@@ -691,6 +703,17 @@ const sendNewAppointmentSmsNotification = async (appointment, employee, service,
       return;
     }
 
+    // Get tenant timezone for SMS formatting
+    let tenantSettings = tenant.settings;
+    if (typeof tenantSettings === 'string') {
+      try {
+        tenantSettings = JSON.parse(tenantSettings);
+      } catch (e) {
+        tenantSettings = {};
+      }
+    }
+    const tenantTimezone = tenantSettings?.timezone || 'America/Los_Angeles';
+
     // Send SMS to each recipient using SMS service function for employees
     for (const toPhone of phoneRecipients) {
       await smsService.sendNewAppointmentSmsNotificationToPhone(
@@ -698,7 +721,8 @@ const sendNewAppointmentSmsNotification = async (appointment, employee, service,
         employee,
         service,
         tenant.name,
-        toPhone
+        toPhone,
+        tenantTimezone
       );
     }
   } catch (error) {
@@ -761,6 +785,17 @@ const sendCancellationSmsNotification = async (appointment, tenantId, reason) =>
     // Get service name
     const service = await Service.findOne({ where: { id: appointment.serviceId } });
 
+    // Get tenant timezone for SMS formatting
+    let tenantSettings = tenant.settings;
+    if (typeof tenantSettings === 'string') {
+      try {
+        tenantSettings = JSON.parse(tenantSettings);
+      } catch (e) {
+        tenantSettings = {};
+      }
+    }
+    const tenantTimezone = tenantSettings?.timezone || 'America/Los_Angeles';
+
     // Send SMS to each recipient
     for (const toPhone of phoneRecipients) {
       await smsService.sendCancellationSmsNotificationToPhone(
@@ -768,7 +803,8 @@ const sendCancellationSmsNotification = async (appointment, tenantId, reason) =>
         service,
         tenant.name,
         reason,
-        toPhone
+        toPhone,
+        tenantTimezone
       );
     }
   } catch (error) {

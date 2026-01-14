@@ -67,9 +67,10 @@ const isUserOptedInForSms = async (customerEmail, tenantId) => {
  * @param {Object} employee - Employee data
  * @param {Object} service - Service data
  * @param {string} tenantId - Tenant ID
+ * @param {string} timezone - Timezone for formatting (defaults to America/Los_Angeles)
  * @returns {Promise<Object|null>} - SMS send result or null if not sent
  */
-const sendAppointmentConfirmationSms = async (appointment, employee, service, tenantId) => {
+const sendAppointmentConfirmationSms = async (appointment, employee, service, tenantId, timezone = 'America/Los_Angeles') => {
   // Check if SMS is configured
   if (!env.TWILIO_SMS_PHONE_NUMBER) {
     logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
@@ -92,8 +93,8 @@ const sendAppointmentConfirmationSms = async (appointment, employee, service, te
   }
 
   try {
-    // Format the message
-    const messageBody = formatAppointmentSummary(appointment, employee, service);
+    // Format the message with timezone
+    const messageBody = formatAppointmentSummary(appointment, employee, service, timezone);
 
     // Send the SMS
     const result = await twilioService.sendSms({
@@ -147,9 +148,10 @@ const formatReminderMessage = (appointment, employee, service, businessName, tim
  * @param {Object} service - Service data
  * @param {string} businessName - Business name
  * @param {string} tenantId - Tenant ID
+ * @param {string} timezone - Timezone for formatting (defaults to America/Los_Angeles)
  * @returns {Promise<Object|null>} - SMS send result or null if not sent
  */
-const sendAppointmentReminderSms = async (appointment, employee, service, businessName, tenantId) => {
+const sendAppointmentReminderSms = async (appointment, employee, service, businessName, tenantId, timezone = 'America/Los_Angeles') => {
   // Check if SMS is configured
   if (!env.TWILIO_SMS_PHONE_NUMBER) {
     logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
@@ -172,8 +174,8 @@ const sendAppointmentReminderSms = async (appointment, employee, service, busine
   }
 
   try {
-    // Format the reminder message
-    const messageBody = formatReminderMessage(appointment, employee, service, businessName);
+    // Format the reminder message with timezone
+    const messageBody = formatReminderMessage(appointment, employee, service, businessName, timezone);
 
     // Send the SMS
     const result = await twilioService.sendSms({
@@ -376,9 +378,10 @@ const sendCancellationSmsNotification = async (appointment, service, tenant, rea
  * @param {Object} service - Service data
  * @param {string} businessName - Business name
  * @param {string} toPhone - Phone number to send to
+ * @param {string} timezone - Timezone for formatting (defaults to America/Los_Angeles)
  * @returns {Promise<Object|null>} - SMS send result or null if not sent
  */
-const sendNewAppointmentSmsNotificationToPhone = async (appointment, employee, service, businessName, toPhone) => {
+const sendNewAppointmentSmsNotificationToPhone = async (appointment, employee, service, businessName, toPhone, timezone = 'America/Los_Angeles') => {
   // Check if SMS is configured
   if (!env.TWILIO_SMS_PHONE_NUMBER) {
     logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
@@ -391,8 +394,8 @@ const sendNewAppointmentSmsNotificationToPhone = async (appointment, employee, s
   }
 
   try {
-    // Format the message
-    const messageBody = formatNewAppointmentNotification(appointment, employee, service, businessName);
+    // Format the message with timezone
+    const messageBody = formatNewAppointmentNotification(appointment, employee, service, businessName, timezone);
 
     // Send the SMS
     const result = await twilioService.sendSms({
@@ -416,9 +419,10 @@ const sendNewAppointmentSmsNotificationToPhone = async (appointment, employee, s
  * @param {string} businessName - Business name
  * @param {string} reason - Cancellation reason
  * @param {string} toPhone - Phone number to send to
+ * @param {string} timezone - Timezone for formatting (defaults to America/Los_Angeles)
  * @returns {Promise<Object|null>} - SMS send result or null if not sent
  */
-const sendCancellationSmsNotificationToPhone = async (appointment, service, businessName, reason, toPhone) => {
+const sendCancellationSmsNotificationToPhone = async (appointment, service, businessName, reason, toPhone, timezone = 'America/Los_Angeles') => {
   // Check if SMS is configured
   if (!env.TWILIO_SMS_PHONE_NUMBER) {
     logger.warn('SMS not configured: TWILIO_SMS_PHONE_NUMBER is not set');
@@ -431,8 +435,8 @@ const sendCancellationSmsNotificationToPhone = async (appointment, service, busi
   }
 
   try {
-    // Format the message
-    const messageBody = formatCancellationNotification(appointment, service, businessName, reason);
+    // Format the message with timezone
+    const messageBody = formatCancellationNotification(appointment, service, businessName, reason, timezone);
 
     // Send the SMS
     const result = await twilioService.sendSms({
