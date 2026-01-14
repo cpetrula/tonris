@@ -533,11 +533,26 @@ class ElevenLabsService extends AIProviderInterface {
 
       logger.info(`Update payload: ${JSON.stringify(updatePayload, null, 2)}`);
 
-      const response = await this.client.conversationalAi.agents.update(effectiveAgentId, updatePayload);
+      // Use direct HTTP request instead of SDK to ensure proper payload handling
+      const fetch = require('node-fetch');
+      const response = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${effectiveAgentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': this.apiKey,
+        },
+        body: JSON.stringify(updatePayload),
+      });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
       logger.info(`ElevenLabs agent ${effectiveAgentId} updated successfully`);
 
-      return response;
+      return result;
     } catch (error) {
       logger.error(`Failed to update ElevenLabs agent: ${error.message}`);
       throw error;
