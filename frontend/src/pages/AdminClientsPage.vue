@@ -348,6 +348,24 @@ function goBack() {
                   <h4 class="text-lg font-semibold mb-4 text-gray-800">{{ data.name }} - Metrics</h4>
 
                   <div v-if="data.metrics" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <!-- Tenant ID -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border col-span-2">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-key text-gray-500"></i>
+                        <span class="text-xs text-gray-500 uppercase">Tenant ID</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <code class="text-xs font-mono text-gray-700 bg-gray-100 px-2 py-1 rounded break-all">{{ data.id }}</code>
+                        <button
+                          @click="navigator.clipboard.writeText(data.id)"
+                          class="text-blue-500 hover:text-blue-700 p-1"
+                          title="Copy to clipboard"
+                        >
+                          <i class="pi pi-copy text-sm"></i>
+                        </button>
+                      </div>
+                    </div>
+
                     <!-- Call Metrics -->
                     <div class="bg-white p-3 rounded-lg shadow-sm border">
                       <div class="flex items-center gap-2 mb-1">
