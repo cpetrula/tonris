@@ -1,6 +1,6 @@
 # CRITON.AI - Complete System Documentation & Operations Runbook
 
-**Last Updated:** January 14, 2026
+**Last Updated:** January 15, 2026
 **Current Agent ID:** `agent_7701kb6wza37ejrvpbh337kbretp`
 **Tenant (Test Salon):** `6b669acb-f51e-4be2-b290-af21e82ad8d5` (Tony's Hair Salon & Spa)
 
@@ -353,11 +353,31 @@ ElevenLabs API Key: sk_b88f7b9324391674252b948cc7f0d4a8f40352cbe4eaaa63
 ### Key Endpoints
 | Purpose | Endpoint |
 |---------|----------|
+| **Check caller** | `GET https://criton.ai/api/webhooks/elevenlabs/check-caller?tenantId={id}&callerPhone={phone}` |
 | Services lookup | `GET https://criton.ai/api/webhooks/elevenlabs/services?tenantId={id}` |
 | Employees lookup | `GET https://criton.ai/api/webhooks/elevenlabs/employees?tenantId={id}` |
 | Create appointment | `POST https://criton.ai/api/webhooks/elevenlabs/appointments?tenantId={id}` |
 | Get appointments | `GET https://criton.ai/api/webhooks/elevenlabs/appointments?tenantId={id}&customerPhone={phone}` |
 | Employee schedule | `POST https://criton.ai/api/ai/webhook/elevenlabs/employee-schedule?tenantId={id}&action={action}` |
+
+### check_caller Response Format
+```json
+{
+  "success": true,
+  "data": {
+    "isEmployee": true,
+    "employeeInfo": {
+      "id": "uuid",
+      "name": "Anthony Time",
+      "firstName": "Anthony",
+      "schedule": { "monday": {...}, ... }
+    },
+    "hasAppointment": false,
+    "appointments": [],
+    "callerName": "Anthony"
+  }
+}
+```
 
 ### Dynamic Variables Passed to Agent
 | Variable | Description | Example |
@@ -367,10 +387,10 @@ ElevenLabs API Key: sk_b88f7b9324391674252b948cc7f0d4a8f40352cbe4eaaa63
 | `today_hours` | Today's hours | "Today we're open 9am to 5pm" |
 | `address_voice` | Speakable address | "123 Main St, Los Angeles" |
 | `caller_number` | Caller's phone | "+18185316200" |
-| `caller_name` | Name if known | "Anthony" |
-| `caller_has_appointment_today` | "true" or "false" | "true" |
-| `caller_appointments_today` | JSON of today's appointments | "[{...}]" |
-| `current_datetime` | Current date/time | "2026-01-14T19:30:00" |
+| `current_datetime` | Current date/time | "2026-01-15T19:30:00" |
+| `tenant_id` | Tenant UUID | "6b669acb-f51e-4be2-b290-af21e82ad8d5" |
+
+**Note (Jan 15):** `caller_name`, `caller_has_appointment_today`, and `caller_appointments_today` are NO LONGER passed as dynamic variables. Caller identification now happens via the `check_caller` tool AFTER the greeting, which improves call pickup speed.
 
 ---
 
@@ -380,7 +400,7 @@ ElevenLabs API Key: sk_b88f7b9324391674252b948cc7f0d4a8f40352cbe4eaaa63
 
 **When you update the system prompt via API, ElevenLabs resets the tool_ids array!**
 
-This means tools get unlinked from the agent. After ANY prompt update, you MUST re-link all 9 tools.
+This means tools get unlinked from the agent. After ANY prompt update, you MUST re-link all 10 tools.
 
 #### Re-link Tools Script
 ```python
@@ -402,6 +422,7 @@ all_tool_ids = [
     "tool_1001kefnd0ykes583ct4dj0cmx7a",  # identify_employee_caller
     "tool_7701kefnd0ymf83tzph348b38qvm",  # get_employee_schedule
     "tool_5601kefnd0yneqmvwtd09fpqyh5h",  # update_employee_schedule
+    "tool_8801kf1tww95fr8ttaens9pqdern",  # check_caller (NEW - Jan 15)
 ]
 
 payload = {
@@ -418,17 +439,18 @@ response = requests.patch(url, headers=headers, json=payload)
 print(f"Status: {response.status_code}")
 ```
 
-### All 9 Tools
+### All 10 Tools
 
 | Tool Name | Tool ID | Purpose |
 |-----------|---------|---------|
+| **check_caller** | tool_8801kf1tww95fr8ttaens9pqdern | **NEW (Jan 15)** - Identify caller as client or employee |
 | update_appointment | tool_8701kby4d48begmtb6aqya38k4r7 | Modify existing appointment |
 | cancel_appointment | tool_9801kbvk6ec9fyw9g8bpbj4p1znc | Cancel appointment |
 | get_employees | tool_6601kbbttqw7ehzt6aaqbsfam1e9 | List employees & availability |
 | get_services | tool_7201kba1gc0dft2vt991avkxbgek | List services with IDs |
 | set_appointment | tool_1301kex2ffd9ezxraxnf6dkk0z83 | Create new appointment |
 | get_appointments | tool_8101kewdsvz4f2ts93kws5d28vc2 | Look up appointments by phone |
-| identify_employee_caller | tool_1001kefnd0ykes583ct4dj0cmx7a | Check if caller is employee |
+| identify_employee_caller | tool_1001kefnd0ykes583ct4dj0cmx7a | Check if caller is employee (legacy) |
 | get_employee_schedule | tool_7701kefnd0ymf83tzph348b38qvm | Get employee's weekly schedule |
 | update_employee_schedule | tool_5601kefnd0yneqmvwtd09fpqyh5h | Update employee availability |
 
@@ -587,6 +609,144 @@ After 2nd conv:  "2026-01-17T02:00:00Z" (6pm Pacific → UTC = 2am next day)
 - `ai.controller.js:1167` (webhook) - was pre-converting, now fixed ✓
 
 **Files Changed:** `backend/src/modules/ai-assistant/ai.controller.js`
+
+### Issue 11: AI Hallucinating Employee Names (January 15, 2026)
+
+**Symptom:** AI said "Susie and Tony are available" but these employees don't exist. Real employees are Anthony, Jake, Lisa, Sarah.
+
+**Root Cause:** AI never called `get_employees` tool - it fabricated employee names.
+
+**Fix Applied:** Added to system prompt:
+```
+**EMPLOYEE LOOKUP REQUIRED:**
+When checking stylist availability or mentioning who is available, you MUST:
+1. Call get_employees FIRST to get the actual list of stylists and their IDs
+2. ONLY mention stylist names that appear in the get_employees response
+3. Use the EXACT employee ID from get_employees when calling set_appointment
+
+DO NOT make up or guess stylist names - ALWAYS get them from get_employees first.
+NEVER say "I have X and Y available" without first calling get_employees to verify.
+```
+
+### Issue 12: AI Reading UTC Times Literally (January 15, 2026)
+
+**Symptom:** AI said "Your appointment is January 17 at 12 AM" when the actual appointment was January 16 at 4 PM Pacific.
+
+**Root Cause:** `get_appointments` endpoint returned UTC `startTime` field (e.g., `2026-01-17T00:00:00.000Z`). AI read "January 17 at 00:00" literally instead of converting to local time.
+
+**Fix Applied (Backend):** Added `startTimeLocal` and `endTimeLocal` fields to `get_appointments` response:
+```javascript
+// In ai.controller.js handleElevenLabsAppointmentsWebhook
+const appointmentsWithLocalTimes = result.appointments.map(apt => ({
+  ...aptObj,
+  startTimeLocal: startDate.toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: timezone,
+  }),  // e.g., "Friday, January 16 at 4:00 PM"
+  endTimeLocal: endDate.toLocaleString('en-US', { ... }),
+}));
+```
+
+**Fix Applied (System Prompt):**
+```
+**APPOINTMENT TIME FORMAT - CRITICAL:**
+When reading or confirming appointment times from get_appointments, ALWAYS use the `startTimeLocal` field.
+Example: "Friday, January 16 at 4:00 PM"
+
+DO NOT use the `startTime` field to speak times - it's in UTC format and will be WRONG.
+```
+
+**Files Changed:** `backend/src/modules/ai-assistant/ai.controller.js`
+
+### Issue 13: Caller Not Recognized - Only Checked Today's Appointments (January 15, 2026)
+
+**Symptom:** Caller "Mark" had an appointment for tomorrow (Friday), but AI didn't recognize them when they called on Thursday.
+
+**Root Cause:** `getCallerAppointmentsToday()` function only looked at TODAY's appointments, not upcoming ones.
+
+**Fix Applied:** Renamed and expanded function:
+- `getCallerAppointmentsToday` → `getCallerUpcomingAppointments`
+- Changed date range from +1 day to +7 days
+- Updated formatted output to include date (not just time)
+
+**Files Changed:** `backend/src/modules/ai-assistant/twilio-elevenlabs.handler.js`
+
+**Note:** This fix was later superseded by the `check_caller` tool refactor (see below).
+
+### Issue 14: Slow Call Pickup - Blocking Lookup Before Connect (January 15, 2026)
+
+**Symptom:** Slight delay before call connected because database lookup happened before TwiML response.
+
+**Root Cause:** The call flow was:
+```
+Phone rings → await getCallerUpcomingAppointments() → Return TwiML → Call connects
+```
+The blocking database lookup added latency.
+
+**Solution Implemented:** Complete refactor of caller identification:
+
+1. **Created new `check_caller` tool** (tool_8801kf1tww95fr8ttaens9pqdern)
+   - New endpoint: `GET /api/webhooks/elevenlabs/check-caller`
+   - Combines client appointment lookup AND employee identification in ONE call
+   - Returns: `{ isEmployee, employeeInfo, hasAppointment, appointments, callerName }`
+
+2. **Removed blocking lookup** from `handleTwilioToElevenLabs()`
+   - Call connects instantly with generic greeting
+   - AI calls `check_caller` tool after greeting while caller is responding
+
+3. **Updated system prompt** for new workflow:
+   - Always start with generic greeting
+   - Call `check_caller` immediately after greeting
+   - Use returned data to personalize responses
+
+**New Call Flow:**
+```
+Phone rings → Return TwiML immediately → Call connects → AI greets
+                                                            ↓
+                                        AI calls check_caller tool
+                                                            ↓
+                                        Caller speaks → AI has context ready
+```
+
+**Files Changed:**
+- `backend/src/modules/ai-assistant/ai.controller.js` - Added `handleCheckCallerWebhook`
+- `backend/src/modules/ai-assistant/twilio-elevenlabs.handler.js` - Removed blocking lookup
+- `backend/src/app.js` - Added route for check-caller endpoint
+- ElevenLabs Agent - Created check_caller tool, updated system prompt
+
+### Issue 15: check_caller Endpoint Crashing (January 15, 2026)
+
+**Symptom:** `check_caller` tool returned error: "Appointment is not defined"
+
+**Root Cause:** Missing model imports in `ai.controller.js`. The new `handleCheckCallerWebhook` function used `Appointment.findAll()` and included `Employee` and `Service` models, but these weren't imported.
+
+**Fix Applied:** Added missing imports:
+```javascript
+const { appointmentService, CANCELLATION_REASONS, Appointment, APPOINTMENT_STATUS } = require('../appointments');
+const { serviceService, Service } = require('../services');
+const { employeeService, Employee } = require('../employees');
+```
+
+**Files Changed:** `backend/src/modules/ai-assistant/ai.controller.js`
+
+### Issue 16: updateAppointment Business Hours Nesting Bug (January 15, 2026)
+
+**Symptom:** Rescheduling appointment to Friday failed with "Business is closed on Friday" even though Friday was open (9am-5pm).
+
+**Root Cause:** Inconsistent handling of nested `businessHours` structure:
+- `createAppointment()` used: `businessHours["businessHours"][dayOfWeekInTz]` ✓
+- `updateAppointment()` used: `businessHours[dayOfWeekInTz]` ✗
+
+The business hours are stored as `tenant.businessHours.businessHours.friday`, but `updateAppointment` was looking at `tenant.businessHours.friday` (which doesn't exist).
+
+**Fix Applied:** Added fallback in `updateAppointment()`:
+```javascript
+// Handle nested businessHours.businessHours structure
+const dayHours = businessHours["businessHours"]?.[dayOfWeekInTz] || businessHours[dayOfWeekInTz];
+```
+
+**Files Changed:** `backend/src/modules/appointments/appointment.service.js`
 
 ---
 
@@ -819,13 +979,40 @@ print(f"Status: {response.status_code}")
 4. `backend/src/modules/ai-assistant/twilio-elevenlabs.handler.js` - Caller appointment context, greeting speed optimization
 5. `frontend/src/pages/AppointmentsPage.vue` - Delete button, default status filter
 
-### Files Modified (January 15, 2026)
+### Files Modified (January 15, 2026) - Morning Session
 1. `backend/src/modules/ai-assistant/ai.controller.js` - Fixed double timezone conversion bug (Issue 10)
 2. `backend/src/modules/appointments/appointment.service.js` - Chris fixed nested businessHours.businessHours access
 3. `docs/AI_AGENT_OPERATIONS.md` - Added Issue 10 documentation
 4. Moved 11 obsolete fix docs to `mark4deletion/` folder
 5. Added `CurrentAgentSystemPrompt.md` with current ElevenLabs agent prompt
 6. **Disabled multi-location feature** (see below)
+
+### Files Modified (January 15, 2026) - Evening Session (Issues 11-16)
+1. `backend/src/modules/ai-assistant/ai.controller.js`
+   - Added `startTimeLocal` field to get_appointments response (Issue 12)
+   - Added `handleCheckCallerWebhook` endpoint (Issue 14)
+   - Added missing imports: Appointment, APPOINTMENT_STATUS, Employee, Service (Issue 15)
+   - Exported `handleCheckCallerWebhook`
+
+2. `backend/src/modules/ai-assistant/twilio-elevenlabs.handler.js`
+   - Renamed `getCallerAppointmentsToday` → `getCallerUpcomingAppointments` (Issue 13)
+   - Expanded date range from +1 day to +7 days (Issue 13)
+   - Removed blocking `await getCallerUpcomingAppointments()` from call flow (Issue 14)
+
+3. `backend/src/app.js`
+   - Added route: `GET /api/webhooks/elevenlabs/check-caller` (Issue 14)
+
+4. `backend/src/modules/appointments/appointment.service.js`
+   - Fixed nested businessHours access in `updateAppointment()` (Issue 16)
+
+5. **ElevenLabs Agent Changes:**
+   - Created new `check_caller` tool (tool_8801kf1tww95fr8ttaens9pqdern)
+   - Updated system prompt with EMPLOYEE LOOKUP REQUIRED rule (Issue 11)
+   - Updated system prompt with APPOINTMENT TIME FORMAT rule (Issue 12)
+   - Updated system prompt for new check_caller workflow (Issue 14)
+   - Re-linked all 10 tools
+
+6. `docs/AI_AGENT_OPERATIONS.md` - This update (Issues 11-16 documentation)
 
 ---
 
