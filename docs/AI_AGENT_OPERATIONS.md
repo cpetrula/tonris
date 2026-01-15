@@ -561,6 +561,33 @@ Call received → Return immediately → Greeting plays (near-instant)
 
 **Tradeoff:** AI no longer knows upfront if caller has an appointment today. It must call a tool to find out after the caller speaks. This is acceptable because most callers state their intent first anyway.
 
+### Issue 10: Appointment Time Stored 8 Hours Off (Double Timezone Conversion)
+
+**Symptom:** Booking appointment for 10am Pacific resulted in 6pm Pacific being stored.
+
+**Root Cause:** The time was being converted TWICE:
+1. `handleElevenLabsCreateAppointmentWebhook` in `ai.controller.js` converted "10:00 Pacific" → "18:00 UTC"
+2. `createAppointment` in `appointment.service.js` then called `parseDateTimeInTimezone()` which stripped the Z suffix and converted "18:00" as if it were Pacific time → "02:00 UTC next day"
+
+**The Math:**
+```
+Input:           "2026-01-16T10:00:00" (10am Pacific intended)
+After webhook:   "2026-01-16T18:00:00Z" (correct UTC)
+After strip Z:   "2026-01-16T18:00:00" (now treated as 6pm Pacific!)
+After 2nd conv:  "2026-01-17T02:00:00Z" (6pm Pacific → UTC = 2am next day)
+```
+
+**Fix Applied (January 15, 2026):** Removed timezone conversion from `handleElevenLabsCreateAppointmentWebhook` (ai.controller.js lines 1088-1154). Now passes original `startTime` string to `createAppointment`, which handles timezone conversion as the single source of truth.
+
+**Verification:** Checked all 5 callers of `createAppointment`:
+- `appointment.controller.js` - passes raw startTime ✓
+- `intent.handler.js` - passes raw startTime ✓
+- `ai.controller.js:186` - passes raw startTime ✓
+- `twilio-elevenlabs.handler.js` - passes raw startTime ✓
+- `ai.controller.js:1167` (webhook) - was pre-converting, now fixed ✓
+
+**Files Changed:** `backend/src/modules/ai-assistant/ai.controller.js`
+
 ---
 
 ## Diagnostic Commands
@@ -791,6 +818,13 @@ print(f"Status: {response.status_code}")
 3. `backend/src/modules/ai-assistant/ai.controller.js` - Employee schedule webhook handler, blocks string parsing fix
 4. `backend/src/modules/ai-assistant/twilio-elevenlabs.handler.js` - Caller appointment context, greeting speed optimization
 5. `frontend/src/pages/AppointmentsPage.vue` - Delete button, default status filter
+
+### Files Modified (January 15, 2026)
+1. `backend/src/modules/ai-assistant/ai.controller.js` - Fixed double timezone conversion bug (Issue 10)
+2. `backend/src/modules/appointments/appointment.service.js` - Chris fixed nested businessHours.businessHours access
+3. `docs/AI_AGENT_OPERATIONS.md` - Added Issue 10 documentation
+4. Moved 11 obsolete fix docs to `mark4deletion/` folder
+5. Added `CurrentAgentSystemPrompt.md` with current ElevenLabs agent prompt
 
 ---
 
