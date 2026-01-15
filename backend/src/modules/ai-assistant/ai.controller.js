@@ -1670,6 +1670,204 @@ const updateAgent = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/webhooks/elevenlabs/employee-schedule
+ * Handle ElevenLabs tool calls for employee self-service schedule management
+ *
+ * Allows employees to update their own schedule by phone.
+ * Authentication is based on matching caller phone number to employee phone.
+ */
+const handleEmployeeScheduleWebhook = async (req, res, next) => {
+  try {
+    const { tenantId, action } = req.query;
+    const { callerPhone, employeeId, date, enabled, blocks } = req.body;
+
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+
+    logger.info(`Employee schedule webhook: action=${action}, tenantId=${tenantId}`);
+
+    let result;
+
+    switch (action) {
+      case 'identify': {
+        // Find employee by phone number
+        const employee = await employeeService.findEmployeeByPhone(callerPhone, tenantId);
+
+        if (employee) {
+          // Parse schedule if needed
+          let schedule = employee.schedule;
+          if (typeof schedule === 'string') {
+            try {
+              schedule = JSON.parse(schedule);
+            } catch (e) {
+              logger.error('Failed to parse employee schedule:', e);
+            }
+          }
+
+          result = {
+            isEmployee: true,
+            employeeId: employee.id,
+            employeeName: `${employee.firstName} ${employee.lastName}`,
+            firstName: employee.firstName,
+            currentSchedule: schedule,
+          };
+        } else {
+          result = {
+            isEmployee: false,
+          };
+        }
+        break;
+      }
+
+      case 'get_schedule': {
+        // Get employee's current schedule
+        const employee = await employeeService.findEmployeeByPhone(callerPhone, tenantId);
+
+        if (!employee) {
+          return res.status(404).json({
+            success: false,
+            error: 'Employee not found',
+          });
+        }
+
+        // Parse schedule if needed
+        let schedule = employee.schedule;
+        if (typeof schedule === 'string') {
+          try {
+            schedule = JSON.parse(schedule);
+          } catch (e) {
+            logger.error('Failed to parse employee schedule:', e);
+          }
+        }
+
+        result = {
+          employeeId: employee.id,
+          employeeName: `${employee.firstName} ${employee.lastName}`,
+          schedule,
+        };
+        break;
+      }
+
+      case 'update_schedule': {
+        // Verify employee owns this schedule (phone match)
+        const employee = await employeeService.findEmployeeByPhone(callerPhone, tenantId);
+
+        if (!employee) {
+          return res.status(401).json({
+            success: false,
+            error: 'Unauthorized - phone number not recognized',
+          });
+        }
+
+        if (employeeId && employee.id !== employeeId) {
+          return res.status(401).json({
+            success: false,
+            error: 'Unauthorized - cannot modify another employee\'s schedule',
+          });
+        }
+
+        // Validate date is within current week
+        const targetDate = new Date(date);
+        if (isNaN(targetDate.getTime())) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid date format',
+          });
+        }
+
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - dayOfWeek);
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+
+        if (targetDate < weekStart || targetDate > weekEnd) {
+          return res.status(400).json({
+            success: false,
+            error: 'Can only update schedule for the current week',
+          });
+        }
+
+        // Get day name from date
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayName = dayNames[targetDate.getDay()];
+
+        // Parse current schedule
+        let currentSchedule = employee.schedule;
+        if (typeof currentSchedule === 'string') {
+          try {
+            currentSchedule = JSON.parse(currentSchedule);
+          } catch (e) {
+            currentSchedule = {};
+          }
+        }
+
+        // Build new schedule for that day
+        const newDaySchedule = {
+          enabled: enabled !== false,
+          blocks: blocks || [],
+        };
+
+        // Validate blocks format
+        if (newDaySchedule.blocks && newDaySchedule.blocks.length > 0) {
+          for (const block of newDaySchedule.blocks) {
+            if (!block.start || !block.end) {
+              return res.status(400).json({
+                success: false,
+                error: 'Each block must have start and end times',
+              });
+            }
+            // Validate time format (HH:MM)
+            const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+            if (!timeRegex.test(block.start) || !timeRegex.test(block.end)) {
+              return res.status(400).json({
+                success: false,
+                error: 'Time must be in HH:MM format',
+              });
+            }
+          }
+        }
+
+        // Update employee schedule
+        const updatedSchedule = { ...currentSchedule, [dayName]: newDaySchedule };
+
+        await employee.update({ schedule: updatedSchedule });
+
+        logger.info(`Employee ${employee.id} updated their ${dayName} schedule via voice`);
+
+        result = {
+          message: `Schedule updated for ${dayName}`,
+          updatedDay: dayName,
+          date: date,
+          newSchedule: newDaySchedule,
+          employeeName: `${employee.firstName} ${employee.lastName}`,
+        };
+        break;
+      }
+
+      default:
+        return res.status(400).json({
+          success: false,
+          error: `Invalid action: ${action}`,
+        });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    logger.error(`Employee schedule webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -1684,6 +1882,7 @@ module.exports = {
   handleElevenLabsAppointmentsWebhook,
   handleElevenLabsCreateAppointmentWebhook,
   handleConversationEndWebhook,
+  handleEmployeeScheduleWebhook,
   getAIConfig,
   listAgents,
   getAgent,

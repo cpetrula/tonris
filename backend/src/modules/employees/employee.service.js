@@ -376,6 +376,52 @@ const getEmployeesByLocation = async (tenantId, locationId) => {
   return employees.map(emp => emp.toSafeObject());
 };
 
+/**
+ * Find employee by phone number for a tenant
+ * Used for voice self-service authentication
+ * @param {string} phoneNumber - Caller's phone number
+ * @param {string} tenantId - Tenant ID
+ * @returns {Promise<Employee|null>} - Employee if found, null otherwise
+ */
+const findEmployeeByPhone = async (phoneNumber, tenantId) => {
+  if (!phoneNumber || !tenantId) {
+    return null;
+  }
+
+  // Normalize phone number (remove formatting, keep only digits and +)
+  const normalized = phoneNumber.replace(/[^0-9+]/g, '');
+
+  const employees = await Employee.findAll({
+    where: {
+      tenantId,
+      status: EMPLOYEE_STATUS.ACTIVE,
+    },
+  });
+
+  // Check each employee's phone with flexible matching
+  for (const employee of employees) {
+    if (employee.phone) {
+      const empNormalized = employee.phone.replace(/[^0-9+]/g, '');
+
+      // Exact match
+      if (empNormalized === normalized) {
+        logger.info(`Employee found by exact phone match: ${employee.id}`);
+        return employee;
+      }
+
+      // Match last 10 digits (handles +1 country code differences)
+      if (empNormalized.slice(-10) === normalized.slice(-10) &&
+          normalized.slice(-10).length === 10) {
+        logger.info(`Employee found by last-10-digits phone match: ${employee.id}`);
+        return employee;
+      }
+    }
+  }
+
+  logger.info(`No employee found for phone: ${phoneNumber} in tenant: ${tenantId}`);
+  return null;
+};
+
 module.exports = {
   createEmployee,
   getEmployees,
@@ -388,6 +434,7 @@ module.exports = {
   updateEmployeeNotificationPreferences,
   getNotificationRecipients,
   getEmployeesByLocation,
+  findEmployeeByPhone,
   EMPLOYEE_STATUS,
   EMPLOYEE_TYPES,
   EMPLOYEE_ROLES,
