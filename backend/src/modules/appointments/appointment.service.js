@@ -51,22 +51,22 @@ const calculateEndTime = (startTime, durationMinutes) => {
 
 /**
  * Parse a date/time string in the context of a specific timezone
- * If the string already has timezone info (Z or offset), use it as-is
- * Otherwise, interpret the time as being in the specified timezone
+ * ALWAYS interprets the time value as being in the specified timezone,
+ * even if the string has a Z suffix (because ElevenLabs AI often incorrectly
+ * appends Z when it means local time).
  * @param {string} dateTimeStr - Date/time string to parse
- * @param {string} timezone - Timezone to use if none specified (e.g., 'America/Los_Angeles')
+ * @param {string} timezone - Timezone to interpret the time in (e.g., 'America/Los_Angeles')
  * @returns {Date} - Date object in UTC
  */
 const parseDateTimeInTimezone = (dateTimeStr, timezone = 'America/Los_Angeles') => {
   if (!dateTimeStr) return null;
 
-  // If already has timezone info (ends with Z or has +/- offset), parse directly
-  if (/Z$|[+-]\d{2}:\d{2}$|[+-]\d{4}$/.test(dateTimeStr)) {
-    return new Date(dateTimeStr);
-  }
+  // Strip timezone indicators (Z, +00:00, etc.) because ElevenLabs AI
+  // incorrectly adds Z when it means local time (e.g., "16:00Z" when it means 4pm PST)
+  const strippedDateTimeStr = dateTimeStr.replace(/[Zz]$|[+-]\d{2}:\d{2}$|[+-]\d{4}$/, '');
 
-  // Try to parse the date string to extract components
-  const parsed = new Date(dateTimeStr);
+  // Try to parse the stripped date string to extract components
+  const parsed = new Date(strippedDateTimeStr);
   if (isNaN(parsed.getTime())) {
     // If standard parsing fails, return null
     logger.warn(`Failed to parse date string: ${dateTimeStr}`);
