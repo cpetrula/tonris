@@ -140,14 +140,15 @@ const getTodayHours = (businessHours, timezone = 'America/Los_Angeles') => {
 };
 
 /**
- * Get caller's appointments for today
+ * Get caller's upcoming appointments (next 7 days)
  * Used to provide context to the AI about the caller's existing appointments
+ * so the AI can greet returning callers by name and mention their appointment
  * @param {string} tenantId - Tenant ID
  * @param {string} callerNumber - Caller's phone number
- * @param {string} timezone - Timezone for determining "today"
- * @returns {Promise<Object>} - Object with appointment info
+ * @param {string} timezone - Timezone for date calculations
+ * @returns {Promise<Object>} - Object with { hasAppointment, appointments, callerName }
  */
-const getCallerAppointmentsToday = async (tenantId, callerNumber, timezone = 'America/Los_Angeles') => {
+const getCallerUpcomingAppointments = async (tenantId, callerNumber, timezone = 'America/Los_Angeles') => {
   try {
     if (!callerNumber) {
       return { hasAppointment: false, appointments: [], callerName: '' };
@@ -156,14 +157,14 @@ const getCallerAppointmentsToday = async (tenantId, callerNumber, timezone = 'Am
     // Normalize phone number for matching (remove all non-digit chars except +)
     const normalizedCaller = callerNumber.replace(/[^0-9+]/g, '');
 
-    // Get today's date range in the tenant's timezone
+    // Get date range for next 7 days in the tenant's timezone
     const now = new Date();
     const todayStr = now.toLocaleDateString('en-US', { timeZone: timezone });
-    const todayStart = new Date(todayStr);
-    const todayEnd = new Date(todayStart);
-    todayEnd.setDate(todayEnd.getDate() + 1);
+    const rangeStart = new Date(todayStr);
+    const rangeEnd = new Date(rangeStart);
+    rangeEnd.setDate(rangeEnd.getDate() + 7);  // Look 7 days ahead
 
-    // Find appointments for this caller today
+    // Find upcoming appointments for this caller (next 7 days)
     const appointments = await Appointment.findAll({
       where: {
         tenantId,
@@ -177,8 +178,8 @@ const getCallerAppointmentsToday = async (tenantId, callerNumber, timezone = 'Am
           ],
         },
         startTime: {
-          [Op.gte]: todayStart,
-          [Op.lt]: todayEnd,
+          [Op.gte]: rangeStart,
+          [Op.lt]: rangeEnd,
         },
         status: {
           [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED],
@@ -195,9 +196,12 @@ const getCallerAppointmentsToday = async (tenantId, callerNumber, timezone = 'Am
     // Get the customer name from the first appointment
     const callerName = appointments[0].customerName || '';
 
-    // Format appointments for AI context
+    // Format appointments for AI context - include date since appointments may span multiple days
     const formattedAppointments = appointments.map(apt => ({
-      time: new Date(apt.startTime).toLocaleTimeString('en-US', {
+      dateTime: new Date(apt.startTime).toLocaleString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
@@ -206,7 +210,7 @@ const getCallerAppointmentsToday = async (tenantId, callerNumber, timezone = 'Am
       status: apt.status,
     }));
 
-    logger.info(`Found ${appointments.length} appointment(s) today for caller ${callerNumber} (tenant ${tenantId})`);
+    logger.info(`Found ${appointments.length} upcoming appointment(s) for caller ${callerNumber} (tenant ${tenantId})`);
 
     return {
       hasAppointment: true,
@@ -508,9 +512,9 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       ai_tone: tenant.metadata?.aiTone,
     };
 
-    // Look up caller's appointments for today to provide context to the AI
+    // Look up caller's upcoming appointments (next 7 days) to provide context to the AI
     const timezone = tenant.settings?.timezone || 'America/Los_Angeles';
-    const callerContext = await getCallerAppointmentsToday(tenant.id, From, timezone);
+    const callerContext = await getCallerUpcomingAppointments(tenant.id, From, timezone);
 
     // Add caller appointment context to custom parameters
     customParameters.caller_has_appointment_today = callerContext.hasAppointment ? 'true' : 'false';
