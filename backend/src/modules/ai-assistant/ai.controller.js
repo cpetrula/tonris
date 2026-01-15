@@ -965,12 +965,47 @@ const handleElevenLabsAppointmentsWebhook = async (req, res, next) => {
       endDate,
       limit: 100,
     });
-    
+
+    // Fetch tenant to get timezone for human-readable time conversion
+    const tenant = await tenantService.getTenantById(tenantId);
+    const timezone = tenant?.settings?.timezone || 'America/Los_Angeles';
+
+    // Transform appointments to add human-readable local times
+    // This helps the AI speak appointment times correctly instead of reading UTC literally
+    const appointmentsWithLocalTimes = result.appointments.map(apt => {
+      const aptObj = apt.toJSON ? apt.toJSON() : apt;
+      const startDate = new Date(aptObj.startTime);
+      const endDate = new Date(aptObj.endTime);
+
+      return {
+        ...aptObj,
+        // Human-readable local time for AI to speak
+        startTimeLocal: startDate.toLocaleString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: timezone,
+        }),
+        endTimeLocal: endDate.toLocaleString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: timezone,
+        }),
+      };
+    });
+
     // Return appointments in the format expected by ElevenLabs
     res.status(200).json({
       success: true,
       data: {
-        appointments: result.appointments,
+        appointments: appointmentsWithLocalTimes,
         message: 'Here are the current appointments',
         total: result.total,
         tenantId,
