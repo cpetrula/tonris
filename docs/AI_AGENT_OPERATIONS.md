@@ -520,6 +520,47 @@ When a caller wants to CHANGE or RESCHEDULE an appointment:
 DO NOT: Ask for phone, confirm multiple times, re-read details repeatedly
 ```
 
+### Issue 8: Employee Schedule Update Failing
+
+**Root Cause:** ElevenLabs sends nested JSON arrays as strings. The `blocks` parameter arrived as:
+```
+"[{\"start\":\"12:00\",\"end\":\"17:00\"}]"  ← STRING (wrong)
+```
+Instead of:
+```
+[{"start":"12:00","end":"17:00"}]  ← ARRAY (expected)
+```
+
+**Fix Applied (Backend):** Added JSON parsing in `ai.controller.js` `handleEmployeeScheduleWebhook`:
+```javascript
+// Parse blocks if it's a string (ElevenLabs sometimes sends nested JSON as strings)
+let parsedBlocks = blocks;
+if (typeof blocks === 'string') {
+  parsedBlocks = JSON.parse(blocks);
+}
+```
+
+### Issue 9: Slow Initial Greeting (Delay Before AI Speaks)
+
+**Root Cause:** The conversation initiation webhook was making a database query to fetch tenant data BEFORE the greeting could play. This added 500ms-1.5s of delay.
+
+**Fix Applied (Backend):** Optimized `handleConversationInitiation` in `twilio-elevenlabs.handler.js`:
+- Removed all database queries from the initialization flow
+- Return immediately with minimal variables (tenant_id, caller_number, business_name)
+- Context like caller appointments and business hours are now fetched via tools AFTER the caller states their intent
+
+**Before:**
+```
+Call received → DB query → Build variables → Return → Greeting plays (~1-2s delay)
+```
+
+**After:**
+```
+Call received → Return immediately → Greeting plays (near-instant)
+```
+
+**Tradeoff:** AI no longer knows upfront if caller has an appointment today. It must call a tool to find out after the caller speaks. This is acceptable because most callers state their intent first anyway.
+
 ---
 
 ## Diagnostic Commands
@@ -747,8 +788,8 @@ print(f"Status: {response.status_code}")
 ### Files Modified (January 14, 2026)
 1. `backend/src/modules/appointments/appointment.service.js` - Timezone fix, business hours validation
 2. `backend/src/modules/ai-assistant/ai.routes.js` - Employee schedule webhook route
-3. `backend/src/modules/ai-assistant/ai.controller.js` - Employee schedule webhook handler
-4. `backend/src/modules/ai-assistant/twilio-elevenlabs.handler.js` - Caller appointment context
+3. `backend/src/modules/ai-assistant/ai.controller.js` - Employee schedule webhook handler, blocks string parsing fix
+4. `backend/src/modules/ai-assistant/twilio-elevenlabs.handler.js` - Caller appointment context, greeting speed optimization
 5. `frontend/src/pages/AppointmentsPage.vue` - Delete button, default status filter
 
 ---

@@ -930,129 +930,54 @@ const handleConversationInitiation = async (params) => {
     dynamic_variables: dynamicVariables = {},
   } = params;
 
-  // Extract tenant ID from dynamic variables (set during Twilio connection)
+  // Extract variables from Twilio connection (no DB queries needed)
   const tenantId = dynamicVariables.tenant_id;
   const callerNumber = dynamicVariables.caller_number;
   const callSid = dynamicVariables.call_sid;
+  const businessName = dynamicVariables.business_name || 'Our Business';
 
   logger.info(`ElevenLabs Conversation Initiation: conversation=${conversationId}, agent=${agentId}, tenant=${tenantId}`);
 
-  try {
-    // Get lazy-loaded services
-    const { tenantService } = getServices();
-    
-    // Fetch tenant data if tenant ID is available
-    let tenant = null;
-    let businessName = dynamicVariables.business_name || 'Our Business';
-    let businessHours = null;
-    let aiTone = null;
+  // OPTIMIZATION: Return immediately without DB queries for faster greeting
+  // Context like caller appointments and business hours will be fetched via tools
+  // when the AI needs them (after the caller states their intent)
 
-    if (tenantId) {
-      try {
-        tenant = await tenantService.getTenantById(tenantId);
-        
-        if (tenant) {
-          businessName = tenant.name || businessName;
-          businessHours = tenant.businessHours?.businessHours || getDefaultBusinessHours();
-          aiTone = tenant.metadata?.aiTone;
-        }
-      } catch (tenantError) {
-        // Tenant not found is ok - we'll use defaults
-        logger.warn(`ElevenLabs Conversation Initiation: Tenant not found (${tenantId}): ${tenantError.message}`);
-      }
-    }
+  // Build minimal dynamic variables - just what's needed for tool calls
+  const responseVariables = {
+    tenant_id: tenantId || '',
+    tenant_name: businessName,
+    business_name: businessName,
+    caller_number: callerNumber || '',
+    call_sid: callSid || '',
+    conversation_id: conversationId,
+  };
 
-    // Build dynamic variables for the conversation
-    const responseVariables = {
-      tenant_id: tenantId || '',
-      tenant_name: businessName,
-      business_name: businessName,
-      caller_number: callerNumber || '',
-      call_sid: callSid || '',
-      conversation_id: conversationId,
-    };
-
-    // Add business hours as a formatted string for agent context
-    if (businessHours) {
-      responseVariables.business_hours_summary = formatBusinessHoursResponse(businessHours);
-    }
-
-    // Build the response with conversation configuration overrides
-    // NOTE: first_message cannot be overridden via this webhook or WebSocket connection.
-    // It must be configured in the ElevenLabs agent dashboard, where you can use
-    // dynamic variables like {{business_name}} in the greeting message.
-    const response = {
-      // Dynamic variables that will be available to the agent during the conversation
-      dynamic_variables: responseVariables,
-      
-      // Conversation configuration overrides
-      // CRITICAL: Audio format must be set to ulaw_8000 for Twilio compatibility
-      // Twilio Media Streams use 8-bit μ-law (mu-law) encoding at 8kHz sample rate
-      // Without this configuration, ElevenLabs will output audio in a higher quality format
-      // (e.g., pcm_16000 or mp3_44100) which Twilio cannot process, resulting in garbled audio
-      //conversation_config_override: {
-      overrides: {
-        agent: {
-          // Audio format must be ulaw_8000 for Twilio compatibility
-          agent_output_audio_format: 'ulaw_8000',
-          user_input_audio_format: 'ulaw_8000',
-          first_message: 'Yo, yo, yo! CP is in the house, ready to rock your world. How can I assist you today?',
-          language: 'en',
-          output_format: 'ulaw_8000',
-        },
-        tts: {
-          // Ensure TTS output also uses ulaw_8000 format
-          output_format: 'ulaw_8000',
-        },
-        asr: {
-          // Ensure ASR (speech recognition) expects ulaw input
-          input_format: 'ulaw_8000',
-        },
+  // Build response with audio format overrides for Twilio compatibility
+  // CRITICAL: Audio format must be ulaw_8000 for Twilio Media Streams
+  const response = {
+    dynamic_variables: responseVariables,
+    overrides: {
+      agent: {
+        agent_output_audio_format: 'ulaw_8000',
+        user_input_audio_format: 'ulaw_8000',
+        language: 'en',
+        output_format: 'ulaw_8000',
       },
-    };
-
-    // NOTE: Greeting and first_message cannot be overridden at runtime.
-    // The greeting must be configured in the ElevenLabs agent dashboard.
-    // Dynamic variables like business_name are available for use in the dashboard configuration.
-
-    // Add custom prompt if tone is configured
-    // Note: The prompt is added as a direct property on the agent object
-    //if (aiTone) {
-    //  response.conversation_config_override.agent.prompt = `You are a ${aiTone} AI receptionist for ${businessName}. Help callers with booking appointments, checking availability, and answering questions about services and business hours.`;
-    //}
-
-    logger.info(`ElevenLabs Conversation Initiation response for tenant=${tenantId}: variables=${Object.keys(responseVariables).join(',')}, audioFormat=ulaw_8000`);
-
-    return {
-      success: true,
-      data: response,
-    };
-  } catch (error) {
-    logger.error(`ElevenLabs Conversation Initiation error: ${error.message}`);
-    
-    // Return a minimal response even on error to avoid breaking the conversation
-    return {
-      success: true,
-      data: {
-        dynamic_variables: {
-          tenant_id: tenantId || '',
-          business_name: dynamicVariables.business_name || 'Our Business',
-        },
-        conversation_config_override: {
-          agent: {
-            agent_output_audio_format: 'ulaw_8000',
-            user_input_audio_format: 'ulaw_8000',
-          },
-          tts: {
-            output_format: 'ulaw_8000',
-          },
-          asr: {
-            input_format: 'ulaw_8000',
-          },
-        },
+      tts: {
+        output_format: 'ulaw_8000',
       },
-    };
-  }
+      asr: {
+        input_format: 'ulaw_8000',
+      },
+    },
+  };
+
+  logger.info(`ElevenLabs Conversation Initiation response for tenant=${tenantId}: variables=${Object.keys(responseVariables).join(',')}, audioFormat=ulaw_8000`);
+
+  return {
+    success: true,
+    data: response,
+  };
 };
 
 module.exports = {
