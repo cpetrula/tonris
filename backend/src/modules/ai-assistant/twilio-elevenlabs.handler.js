@@ -701,6 +701,15 @@ const handleElevenLabsToolCall = async (toolData, tenantId) => {
       
       case 'book_appointment':
       case 'create_appointment': {
+        // Add diagnostic logging to debug business hours validation
+        const tenant = await tenantService.getTenantById(tenantId);
+        logger.info(`Booking appointment for tenant ${tenantId}`, {
+          requestedStartTime: parameters.startTime,
+          customerName: parameters.customerName,
+          businessHours: tenant.businessHours?.businessHours || tenant.settings?.businessHours,
+          settingsTimezone: tenant.settings?.timezone,
+        });
+        
         const appointment = await appointmentService.createAppointment(parameters, tenantId);
         return { 
           success: true, 
