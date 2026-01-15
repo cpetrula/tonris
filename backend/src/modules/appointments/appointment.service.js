@@ -169,6 +169,7 @@ const createAppointment = async (appointmentData, tenantId) => {
   // Get tenant timezone for proper date parsing
   const tenant = await Tenant.findByPk(tenantId);
   const tenantTimezone = tenant?.settings?.timezone || 'America/Los_Angeles';
+  logger.debug(`Tenant timezone for tenant ${tenantId}: ${tenantTimezone}`);
 
   // Calculate end time as Date object
   // Parse in tenant's timezone to avoid UTC offset issues
@@ -177,14 +178,20 @@ const createAppointment = async (appointmentData, tenantId) => {
 
   // Validate business is open on the requested day
   const businessHours = tenant?.settings?.businessHours || tenant?.businessHours;
+  //log business hours for debugging
+  logger.debug(`Business hours for tenant ${tenantId}: ${JSON.stringify(businessHours)}`);
   if (businessHours) {
     // Get the day of week in tenant's timezone
     const dayOfWeekInTz = new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
       timeZone: tenantTimezone,
     }).format(startDateTime).toLowerCase();
+    //log day of week for debugging
+    logger.debug(`Appointment start time day of week in ${tenantTimezone}: ${dayOfWeekInTz}`);
 
     const dayHours = businessHours[dayOfWeekInTz];
+    //log day hours for debugging
+    logger.debug(`Business hours for ${dayOfWeekInTz}: ${JSON.stringify(dayHours)}`);
 
     // Check if business is closed on this day
     if (!dayHours || dayHours.enabled === false) {
