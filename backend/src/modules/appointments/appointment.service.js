@@ -175,6 +175,28 @@ const createAppointment = async (appointmentData, tenantId) => {
   const startDateTime = parseDateTimeInTimezone(startTime, tenantTimezone);
   const endDateTime = calculateEndTime(startDateTime, totalDuration);
 
+  // Validate business is open on the requested day
+  const businessHours = tenant?.settings?.businessHours || tenant?.businessHours;
+  if (businessHours) {
+    // Get the day of week in tenant's timezone
+    const dayOfWeekInTz = new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      timeZone: tenantTimezone,
+    }).format(startDateTime).toLowerCase();
+
+    const dayHours = businessHours[dayOfWeekInTz];
+
+    // Check if business is closed on this day
+    if (!dayHours || dayHours.enabled === false) {
+      const dayName = dayOfWeekInTz.charAt(0).toUpperCase() + dayOfWeekInTz.slice(1);
+      throw new AppError(
+        `Cannot book appointment: Business is closed on ${dayName}`,
+        400,
+        'BUSINESS_CLOSED'
+      );
+    }
+  }
+
   // Check for conflicts
   const availability = await checkSlotAvailability(
     employeeId,
@@ -410,7 +432,29 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
 
     // Calculate end time as Date object
     const newEndTime = calculateEndTime(newStartTime, newDuration);
-    
+
+    // Validate business is open on the requested day (only if time is changing)
+    if (startTime) {
+      const businessHours = tenant?.settings?.businessHours || tenant?.businessHours;
+      if (businessHours) {
+        const dayOfWeekInTz = new Intl.DateTimeFormat('en-US', {
+          weekday: 'long',
+          timeZone: tenantTimezone,
+        }).format(newStartTime).toLowerCase();
+
+        const dayHours = businessHours[dayOfWeekInTz];
+
+        if (!dayHours || dayHours.enabled === false) {
+          const dayName = dayOfWeekInTz.charAt(0).toUpperCase() + dayOfWeekInTz.slice(1);
+          throw new AppError(
+            `Cannot reschedule appointment: Business is closed on ${dayName}`,
+            400,
+            'BUSINESS_CLOSED'
+          );
+        }
+      }
+    }
+
     // Check availability
     const availability = await checkSlotAvailability(
       newEmployeeId,
