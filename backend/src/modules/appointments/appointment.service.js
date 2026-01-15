@@ -169,7 +169,7 @@ const createAppointment = async (appointmentData, tenantId) => {
   // Get tenant timezone for proper date parsing
   const tenant = await Tenant.findByPk(tenantId);
   const tenantTimezone = tenant?.settings?.timezone || 'America/Los_Angeles';
-  console.log(`Tenant timezone for tenant ${tenantId}: ${tenantTimezone}`);
+  console.log(`CDP-Tenant timezone for tenant ${tenantId}: ${tenantTimezone}`);
 
   // Calculate end time as Date object
   // Parse in tenant's timezone to avoid UTC offset issues
@@ -179,7 +179,7 @@ const createAppointment = async (appointmentData, tenantId) => {
   // Validate business is open on the requested day
   const businessHours = tenant?.settings?.businessHours || tenant?.businessHours;
   //log business hours for debugging
-  console.log(`Business hours for tenant ${tenantId}: ${JSON.stringify(businessHours)}`);
+  console.log(`CDP-Business hours for tenant ${tenantId}: ${JSON.stringify(businessHours)}`);
   if (businessHours) {
     // Get the day of week in tenant's timezone
     const dayOfWeekInTz = new Intl.DateTimeFormat('en-US', {
@@ -187,11 +187,16 @@ const createAppointment = async (appointmentData, tenantId) => {
       timeZone: tenantTimezone,
     }).format(startDateTime).toLowerCase();
     //log day of week for debugging
-    console.log(`Appointment start time day of week in ${tenantTimezone}: ${dayOfWeekInTz}`);
+    console.log(`CDP-Appointment start time day of week in ${tenantTimezone}: ${dayOfWeekInTz}`);
+
+    console.log('CDP-typeof businessHours:', typeof businessHours);
+    console.log(`CDP-Business hours for that day: ${JSON.stringify(businessHours[dayOfWeekInTz])}`);
 
     const dayHours = businessHours[dayOfWeekInTz];
+    console.log('CDP-dayHours:', dayHours);
+    console.log('CDP-typeof dayHours:', typeof dayHours);
     //log day hours for debugging
-    console.log(`Business hours for ${dayOfWeekInTz}: ${JSON.stringify(dayHours)}`);
+    console.log(`CDP-Business hours for ${dayOfWeekInTz}: ${JSON.stringify(dayHours)}`);
 
     // Check if business is closed on this day
     if (!dayHours || dayHours.enabled === false) {
