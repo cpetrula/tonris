@@ -1768,6 +1768,21 @@ const handleEmployeeScheduleWebhook = async (req, res, next) => {
           });
         }
 
+        // Parse blocks if it's a string (ElevenLabs sometimes sends nested JSON as strings)
+        let parsedBlocks = blocks;
+        if (typeof blocks === 'string') {
+          try {
+            parsedBlocks = JSON.parse(blocks);
+            logger.info('Parsed blocks from string:', parsedBlocks);
+          } catch (e) {
+            logger.error('Failed to parse blocks string:', blocks, e);
+            return res.status(400).json({
+              success: false,
+              error: 'Invalid blocks format - must be valid JSON array',
+            });
+          }
+        }
+
         // Validate date is within current week
         const targetDate = new Date(date);
         if (isNaN(targetDate.getTime())) {
@@ -1811,7 +1826,7 @@ const handleEmployeeScheduleWebhook = async (req, res, next) => {
         // Build new schedule for that day
         const newDaySchedule = {
           enabled: enabled !== false,
-          blocks: blocks || [],
+          blocks: parsedBlocks || [],
         };
 
         // Validate blocks format
