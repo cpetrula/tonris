@@ -49,7 +49,8 @@ const allNavigationItems: NavItem[] = [
   { name: 'Appointments', path: '/app/appointments', icon: 'pi pi-calendar' },
   { name: 'Employees', path: '/app/employees', icon: 'pi pi-users' },
   { name: 'Services', path: '/app/services', icon: 'pi pi-list' },
-  { name: 'Locations', path: '/app/locations', icon: 'pi pi-map-marker', requiresRole: ['superuser', 'admin'] },
+  // DISABLED: Multi-location feature hidden until business hours per location is implemented
+  // { name: 'Locations', path: '/app/locations', icon: 'pi pi-map-marker', requiresRole: ['superuser', 'admin'] },
   { name: 'Reports', path: '/app/reports', icon: 'pi pi-chart-line' },
   { name: 'Billing', path: '/app/billing', icon: 'pi pi-credit-card' },
   { name: 'Settings', path: '/app/settings', icon: 'pi pi-cog' }

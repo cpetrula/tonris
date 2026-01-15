@@ -825,6 +825,28 @@ print(f"Status: {response.status_code}")
 3. `docs/AI_AGENT_OPERATIONS.md` - Added Issue 10 documentation
 4. Moved 11 obsolete fix docs to `mark4deletion/` folder
 5. Added `CurrentAgentSystemPrompt.md` with current ElevenLabs agent prompt
+6. **Disabled multi-location feature** (see below)
+
+---
+
+## Temporarily Disabled Features
+
+### Multi-Location Feature (Disabled January 15, 2026)
+
+**Reason:** Business hours per location functionality not yet implemented. Feature hidden until after convention.
+
+**What was disabled (UI only - backend unchanged):**
+
+| File | Change |
+|------|--------|
+| `frontend/src/layouts/DashboardLayout.vue:52` | Commented out "Locations" sidebar menu item |
+| `frontend/src/pages/EmployeesPage.vue:549-557` | Commented out Location column in employee table |
+| `frontend/src/pages/EmployeesPage.vue:681-693` | Commented out Location dropdown in employee form |
+| `frontend/src/router/index.ts:26-27, 140-146` | Commented out LocationsPage import and route |
+
+**To re-enable:** Uncomment the lines in the files above. Search for "DISABLED: Multi-location feature" to find all locations.
+
+**Backend status:** Fully functional - `/api/locations` endpoints still work, `locations` table intact, employee `locationId` field still exists (optional, nullable).
 
 ---
 

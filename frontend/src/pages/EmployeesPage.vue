@@ -450,11 +450,12 @@ function getRoleLabel(value: string) {
   return option ? option.label : value
 }
 
-function getLocationName(locationId: string | null) {
-  if (!locationId) return 'All Locations'
-  const location = locationStore.locations.find(loc => loc.id === locationId)
-  return location ? location.name : 'Unknown'
-}
+// DISABLED: Multi-location feature hidden until business hours per location is implemented
+// function getLocationName(locationId: string | null) {
+//   if (!locationId) return 'All Locations'
+//   const location = locationStore.locations.find(loc => loc.id === locationId)
+//   return location ? location.name : 'Unknown'
+// }
 </script>
 
 <template>
@@ -546,6 +547,7 @@ function getLocationName(locationId: string | null) {
             </template>
           </Column>
 
+          <!-- DISABLED: Multi-location feature hidden until business hours per location is implemented
           <Column field="locationId" header="Location">
             <template #body="{ data }">
               <span class="text-sm text-gray-600">
@@ -553,6 +555,7 @@ function getLocationName(locationId: string | null) {
               </span>
             </template>
           </Column>
+          -->
 
           <Column field="status" header="Status" sortable>
             <template #body="{ data }">
@@ -676,6 +679,7 @@ function getLocationName(locationId: string | null) {
               class="w-full"
             />
           </div>
+          <!-- DISABLED: Multi-location feature hidden until business hours per location is implemented
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
             <Select
@@ -687,6 +691,7 @@ function getLocationName(locationId: string | null) {
               class="w-full"
             />
           </div>
+          -->
         </div>
 
         <!-- Notification Preferences (Superuser only) -->
