@@ -190,9 +190,9 @@ const createAppointment = async (appointmentData, tenantId) => {
     console.log(`CDP-Appointment start time day of week in ${tenantTimezone}: ${dayOfWeekInTz}`);
 
     console.log('CDP-typeof businessHours:', typeof businessHours);
-    console.log(`CDP-Business hours for that day: ${JSON.stringify(businessHours[dayOfWeekInTz])}`);
+    console.log(`CDP-Business hours for that day: ${JSON.stringify(businessHours["businessHours"][dayOfWeekInTz])}`);
 
-    const dayHours = businessHours[dayOfWeekInTz];
+    const dayHours = businessHours["businessHours"][dayOfWeekInTz];
     console.log('CDP-dayHours:', dayHours);
     console.log('CDP-typeof dayHours:', typeof dayHours);
     //log day hours for debugging
