@@ -391,6 +391,30 @@ async function fetchServices() {
     console.error('Error fetching services:', err)
   }
 }
+
+async function deleteAppointment() {
+  if (!currentAppointment.value.id) return
+
+  const confirmed = window.confirm('Are you sure you want to permanently delete this appointment? This action cannot be undone.')
+  if (!confirmed) return
+
+  try {
+    loading.value = true
+    error.value = ''
+
+    const response = await api.delete(`/api/appointments/${currentAppointment.value.id}`)
+
+    if (response.data.success) {
+      await fetchAppointments()
+      showDialog.value = false
+    }
+  } catch (err: any) {
+    console.error('Error deleting appointment:', err)
+    error.value = err.response?.data?.error || 'Failed to delete appointment'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -759,8 +783,21 @@ async function fetchServices() {
       </div>
 
       <template #footer>
-        <Button label="Cancel" text severity="secondary" @click="showDialog = false" />
-        <Button :label="editMode ? 'Update' : 'Book'" @click="saveAppointment" />
+        <div class="flex justify-between w-full">
+          <div>
+            <Button
+              v-if="editMode"
+              label="Delete"
+              severity="danger"
+              outlined
+              @click="deleteAppointment"
+            />
+          </div>
+          <div class="flex gap-2">
+            <Button label="Cancel" text severity="secondary" @click="showDialog = false" />
+            <Button :label="editMode ? 'Update' : 'Book'" @click="saveAppointment" />
+          </div>
+        </div>
       </template>
     </Dialog>
   </div>
