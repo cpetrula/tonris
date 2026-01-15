@@ -39,7 +39,7 @@ const appointments = ref<Appointment[]>([])
 
 const searchQuery = ref('')
 const selectedDate = ref<Date | null>(null)
-const statusFilter = ref<string | null>(null)
+const statusFilter = ref<string | null>('scheduled')
 const dateRangeFilter = ref<'today' | 'next5days' | 'thisMonth' | null>(null)
 const showDialog = ref(false)
 const editMode = ref(false)
