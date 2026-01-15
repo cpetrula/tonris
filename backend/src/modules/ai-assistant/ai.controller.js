@@ -898,6 +898,139 @@ const handleElevenLabsEmployeesWebhook = async (req, res, next) => {
 };
 
 /**
+ * GET /api/webhooks/elevenlabs/check-caller
+ * Check if caller is a known client (with appointments) or employee
+ *
+ * This endpoint is called by the AI after greeting to identify the caller.
+ * It combines both client appointment lookup and employee identification
+ * into a single call for efficiency.
+ *
+ * Query Parameters:
+ * - tenantId: The tenant identifier (required)
+ * - callerPhone: The caller's phone number (required)
+ */
+const handleCheckCallerWebhook = async (req, res, next) => {
+  try {
+    const { tenantId, callerPhone } = req.query;
+
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+
+    if (!callerPhone) {
+      throw new AppError('Caller phone is required', 400, 'VALIDATION_ERROR');
+    }
+
+    if (!isValidUUID(tenantId)) {
+      throw new AppError('Invalid tenant ID format', 400, 'VALIDATION_ERROR');
+    }
+
+    logger.info(`Check caller webhook: tenantId=${tenantId}, phone=${callerPhone}`);
+
+    // Get tenant for timezone
+    const tenant = await tenantService.getTenantById(tenantId);
+    const timezone = tenant?.settings?.timezone || 'America/Los_Angeles';
+
+    // Initialize result
+    const result = {
+      isEmployee: false,
+      employeeInfo: null,
+      hasAppointment: false,
+      appointments: [],
+      callerName: '',
+    };
+
+    // Check if caller is an employee
+    const employee = await employeeService.findEmployeeByPhone(callerPhone, tenantId);
+    if (employee) {
+      let schedule = employee.schedule;
+      if (typeof schedule === 'string') {
+        try {
+          schedule = JSON.parse(schedule);
+        } catch (e) {
+          logger.error('Failed to parse employee schedule:', e);
+        }
+      }
+
+      result.isEmployee = true;
+      result.employeeInfo = {
+        id: employee.id,
+        name: `${employee.firstName} ${employee.lastName}`,
+        firstName: employee.firstName,
+        schedule,
+      };
+      result.callerName = employee.firstName;
+    }
+
+    // Check for upcoming appointments (next 7 days)
+    const normalizedPhone = callerPhone.replace(/[^0-9+]/g, '');
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-US', { timeZone: timezone });
+    const rangeStart = new Date(todayStr);
+    const rangeEnd = new Date(rangeStart);
+    rangeEnd.setDate(rangeEnd.getDate() + 7);
+
+    const appointments = await Appointment.findAll({
+      where: {
+        tenantId,
+        customerPhone: {
+          [Op.or]: [
+            normalizedPhone,
+            callerPhone,
+            normalizedPhone.replace(/^\+1/, ''),
+            normalizedPhone.replace(/^\+/, ''),
+          ],
+        },
+        startTime: {
+          [Op.gte]: rangeStart,
+          [Op.lt]: rangeEnd,
+        },
+        status: {
+          [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED],
+        },
+      },
+      include: [
+        { model: Employee, as: 'employee', attributes: ['firstName', 'lastName'] },
+        { model: Service, as: 'service', attributes: ['name'] },
+      ],
+      order: [['startTime', 'ASC']],
+    });
+
+    if (appointments.length > 0) {
+      result.hasAppointment = true;
+      result.callerName = result.callerName || appointments[0].customerName || '';
+
+      result.appointments = appointments.map(apt => ({
+        id: apt.id,
+        dateTime: new Date(apt.startTime).toLocaleString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: timezone,
+        }),
+        service: apt.service?.name || 'Service',
+        stylist: apt.employee ? `${apt.employee.firstName} ${apt.employee.lastName}` : 'Staff',
+        customerName: apt.customerName,
+        status: apt.status,
+      }));
+    }
+
+    logger.info(`Check caller result: isEmployee=${result.isEmployee}, hasAppointment=${result.hasAppointment}, name=${result.callerName}`);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    logger.error(`Check caller webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
+/**
  * GET /api/webhooks/elevenlabs/appointments
  * Handle ElevenLabs Client Data webhook to fetch appointments for a tenant
  * 
@@ -1864,6 +1997,7 @@ module.exports = {
   handleConversationInitiationWebhook,
   handleElevenLabsServicesWebhook,
   handleElevenLabsEmployeesWebhook,
+  handleCheckCallerWebhook,
   handleElevenLabsAppointmentsWebhook,
   handleElevenLabsCreateAppointmentWebhook,
   handleConversationEndWebhook,

@@ -125,6 +125,14 @@ app.get('/api/webhooks/elevenlabs/employees',
   aiController.handleElevenLabsEmployeesWebhook
 );
 
+// ElevenLabs check-caller webhook
+// Called by AI after greeting to identify caller (client or employee)
+// Combines appointment lookup and employee identification in one call
+app.get('/api/webhooks/elevenlabs/check-caller',
+  webhookRateLimiter,
+  aiController.handleCheckCallerWebhook
+);
+
 // ElevenLabs Client Data webhook for appointments
 // Called by ElevenLabs to fetch appointments for a tenant
 // This endpoint does not require Bearer token authentication

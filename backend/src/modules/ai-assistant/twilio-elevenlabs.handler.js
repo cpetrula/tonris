@@ -512,16 +512,8 @@ const handleTwilioToElevenLabs = async (params, hostUrl = null) => {
       ai_tone: tenant.metadata?.aiTone,
     };
 
-    // Look up caller's upcoming appointments (next 7 days) to provide context to the AI
-    const timezone = tenant.settings?.timezone || 'America/Los_Angeles';
-    const callerContext = await getCallerUpcomingAppointments(tenant.id, From, timezone);
-
-    // Add caller appointment context to custom parameters
-    customParameters.caller_has_appointment_today = callerContext.hasAppointment ? 'true' : 'false';
-    customParameters.caller_name = callerContext.callerName || '';
-    customParameters.caller_appointments_today = JSON.stringify(callerContext.appointments);
-
-    logger.info(`Twilio-ElevenLabs: Caller context - hasAppointment: ${callerContext.hasAppointment}, name: "${callerContext.callerName}", appointments: ${callerContext.appointments.length}`);
+    // NOTE: Caller identification is now handled by AI calling check_caller tool after greeting
+    // This eliminates blocking lookup before call connects, improving call pickup speed
 
     // Add business hours if available
     // Debug: Log the raw businessHours structure to diagnose data flow issues
