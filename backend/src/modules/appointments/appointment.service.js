@@ -454,7 +454,8 @@ const updateAppointment = async (appointmentId, tenantId, updateData) => {
           timeZone: tenantTimezone,
         }).format(newStartTime).toLowerCase();
 
-        const dayHours = businessHours[dayOfWeekInTz];
+        // Handle nested businessHours.businessHours structure
+        const dayHours = businessHours["businessHours"]?.[dayOfWeekInTz] || businessHours[dayOfWeekInTz];
 
         if (!dayHours || dayHours.enabled === false) {
           const dayName = dayOfWeekInTz.charAt(0).toUpperCase() + dayOfWeekInTz.slice(1);

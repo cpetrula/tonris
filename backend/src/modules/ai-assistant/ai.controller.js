@@ -13,10 +13,10 @@ const { getOpenAIService } = require('./openai.service');
 const { handleIntent } = require('./intent.handler');
 const { handleTwilioToElevenLabs, handleElevenLabsToolCall: handleToolCall, handleConversationInitiation } = require('./twilio-elevenlabs.handler');
 const { availabilityService } = require('../appointments');
-const { appointmentService, CANCELLATION_REASONS } = require('../appointments');
-const { serviceService } = require('../services');
+const { appointmentService, CANCELLATION_REASONS, Appointment, APPOINTMENT_STATUS } = require('../appointments');
+const { serviceService, Service } = require('../services');
 const { tenantService } = require('../tenants');
-const { employeeService } = require('../employees');
+const { employeeService, Employee } = require('../employees');
 const { CallLog } = require('../telephony/callLog.model');
 
 /**
