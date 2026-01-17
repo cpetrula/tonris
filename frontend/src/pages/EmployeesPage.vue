@@ -59,6 +59,8 @@ interface Employee {
   role: 'admin' | 'manager' | 'staff'
   locationId: string | null
   notificationPreferences: NotificationPreferences
+  userId: string | null
+  loginEnabled: boolean
 }
 
 interface Service {
@@ -161,12 +163,17 @@ const emptyEmployee: Employee = {
     receiveEmailNotifications: false,
     receiveSmsNotifications: false,
     notificationTypes: ['new_appointment', 'cancellation']
-  }
+  },
+  userId: null,
+  loginEnabled: false
 }
 
 const showScheduleEditorDialog = ref(false)
 const scheduleEditorEmployee = ref<Employee | null>(null)
 const editingSchedule = ref<Schedule>({ ...defaultSchedule })
+const showEnableLoginDialog = ref(false)
+const employeeToEnableLogin = ref<Employee | null>(null)
+const enablingLogin = ref(false)
 
 const currentEmployee = ref<Employee>({ ...emptyEmployee })
 
@@ -347,6 +354,47 @@ async function toggleStatus(employee: Employee) {
     error.value = err.response?.data?.error || 'Failed to update employee status'
   } finally {
     loading.value = false
+  }
+}
+
+function openEnableLoginDialog(employee: Employee) {
+  employeeToEnableLogin.value = employee
+  showEnableLoginDialog.value = true
+}
+
+async function confirmEnableLogin() {
+  if (!employeeToEnableLogin.value) return
+  
+  enablingLogin.value = true
+  try {
+    // First, create/link user account if needed
+    if (!employeeToEnableLogin.value.userId) {
+      // Create user account linked to this employee
+      const userResponse = await api.post('/api/users', {
+        email: employeeToEnableLogin.value.email,
+        role: employeeToEnableLogin.value.role || 'staff',
+        loginEnabled: true,
+        employeeId: employeeToEnableLogin.value.id
+      })
+      
+      // Update employee with the new userId
+      await api.patch(`/api/employees/${employeeToEnableLogin.value.id}`, {
+        userId: userResponse.data.data.id
+      })
+    } else {
+      // User account exists, just enable login
+      await api.post(`/api/users/${employeeToEnableLogin.value.userId}/enable-login`)
+    }
+    
+    // Refresh the employees list
+    await fetchEmployees()
+    showEnableLoginDialog.value = false
+    employeeToEnableLogin.value = null
+  } catch (err: any) {
+    console.error('Error enabling login:', err)
+    error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to enable login'
+  } finally {
+    enablingLogin.value = false
   }
 }
 
@@ -570,9 +618,31 @@ function getRoleLabel(value: string) {
             </template>
           </Column>
 
-          <Column header="Actions" :exportable="false" style="min-width: 12rem">
+          <Column field="loginEnabled" header="Login" sortable v-if="authStore.isAdmin">
+            <template #body="{ data }">
+              <span
+                :class="[
+                  'px-2 py-1 rounded-full text-xs font-medium',
+                  data.loginEnabled ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                ]"
+              >
+                {{ data.loginEnabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </template>
+          </Column>
+
+          <Column header="Actions" :exportable="false" style="min-width: 14rem">
             <template #body="{ data }">
               <div class="flex gap-2">
+                <Button
+                  v-if="authStore.isAdmin && !data.loginEnabled"
+                  icon="pi pi-key"
+                  text
+                  size="small"
+                  severity="info"
+                  v-tooltip.top="'Enable Login'"
+                  @click="openEnableLoginDialog(data)"
+                />
                 <Button
                   icon="pi pi-calendar"
                   text
@@ -816,6 +886,49 @@ function getRoleLabel(value: string) {
       <template #footer>
         <Button label="Cancel" text severity="secondary" @click="showScheduleEditorDialog = false" />
         <Button label="Save Schedule" icon="pi pi-check" @click="saveSchedule" :loading="loading" />
+      </template>
+    </Dialog>
+
+    <!-- Enable Login Confirmation Dialog -->
+    <Dialog
+      v-model:visible="showEnableLoginDialog"
+      header="Enable Login Access"
+      :modal="true"
+      :style="{ width: '500px' }"
+    >
+      <div class="space-y-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-info-circle text-blue-500 text-xl mt-1"></i>
+          <div>
+            <p class="text-gray-700 mb-3">
+              You are about to enable login access for <strong>{{ employeeToEnableLogin?.firstName }} {{ employeeToEnableLogin?.lastName }}</strong>.
+            </p>
+            <p class="text-gray-600 text-sm mb-2">
+              This will:
+            </p>
+            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
+              <li>Generate a temporary password</li>
+              <li>Send an email to <strong>{{ employeeToEnableLogin?.email }}</strong> with login instructions</li>
+              <li>Require the employee to reset their password on first login</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button 
+          label="Cancel" 
+          text 
+          severity="secondary" 
+          @click="showEnableLoginDialog = false" 
+          :disabled="enablingLogin"
+        />
+        <Button 
+          label="Enable Login" 
+          icon="pi pi-key"
+          @click="confirmEnableLogin" 
+          :loading="enablingLogin"
+        />
       </template>
     </Dialog>
   </div>
