@@ -62,6 +62,9 @@ router.post('/forgot-password', authLimiter, authController.forgotPassword);
 // POST /api/auth/reset-password - Reset password with token
 router.post('/reset-password', authLimiter, authController.resetPassword);
 
+// POST /api/auth/reset-password-first-login - Reset password on first login
+router.post('/reset-password-first-login', authLimiter, authController.resetPasswordFirstLogin);
+
 // POST /api/auth/refresh - Refresh access token
 router.post('/refresh', authLimiter, authController.refreshToken);
 

@@ -369,12 +369,50 @@ const register = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/auth/reset-password-first-login
+ * Reset password after first login with temporary password
+ */
+const resetPasswordFirstLogin = async (req, res, next) => {
+  try {
+    const { userId, oldPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!userId || !oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID, old password, and new password are required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters long',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    const result = await authService.resetPasswordFirstLogin(userId, oldPassword, newPassword);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   signup,
   login,
   register,
   forgotPassword,
   resetPassword,
+  resetPasswordFirstLogin,
   setup2FA,
   verify2FA,
   disable2FA,

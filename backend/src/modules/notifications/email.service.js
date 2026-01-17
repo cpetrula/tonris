@@ -458,6 +458,103 @@ const sendPasswordResetEmail = async (toEmail, resetData) => {
 };
 
 /**
+ * Generate HTML for temporary password email
+ * @param {Object} data - Temporary password data
+ * @param {string} data.tempPassword - Temporary password
+ * @param {string} data.loginUrl - Login URL
+ * @param {string} data.businessName - Business/tenant name
+ * @returns {string} - HTML content
+ */
+const generateTemporaryPasswordHtml = (data) => {
+  const loginUrl = data.loginUrl || process.env.FRONTEND_URL || 'https://app.criton.ai/login';
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your CRITON.AI Account Access</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 24px;">Your Account Has Been Activated</h1>
+  </div>
+
+  <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+    <p style="margin-top: 0;">Hi there,</p>
+    <p>An administrator has enabled login access for your account${data.businessName ? ` at <strong>${data.businessName}</strong>` : ''}. You can now log in to CRITON.AI to manage your account.</p>
+
+    <div style="background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px; padding: 16px; margin: 24px 0;">
+      <p style="margin: 0 0 8px 0; color: #1e40af; font-weight: 600;">Your Temporary Password:</p>
+      <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 18px; color: #1e3a8a; font-weight: bold; letter-spacing: 1px;">
+        ${data.tempPassword}
+      </p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${loginUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Log In Now</a>
+    </div>
+
+    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 12px; margin: 20px 0;">
+      <p style="margin: 0 0 8px 0; color: #92400e; font-weight: 600; font-size: 14px;">
+        Important: First Login Steps
+      </p>
+      <ol style="margin: 8px 0 0 0; padding-left: 20px; color: #92400e; font-size: 14px;">
+        <li>Click the "Log In Now" button above or visit the login page</li>
+        <li>Enter your email address and the temporary password provided</li>
+        <li>You will be prompted to create a new, secure password</li>
+        <li>Choose a strong password that you haven't used before</li>
+      </ol>
+    </div>
+
+    <div style="background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 4px; padding: 12px; margin: 20px 0;">
+      <p style="margin: 0; color: #991b1b; font-size: 14px;">
+        <strong>Security reminder:</strong> For your security, you must reset your temporary password on first login. Keep your password secure and never share it with anyone.
+      </p>
+    </div>
+
+    <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+      If the button above doesn't work, copy and paste this link into your browser:
+    </p>
+    <p style="word-break: break-all; color: #667eea; font-size: 12px;">
+      ${loginUrl}
+    </p>
+
+    <p style="margin-top: 30px; margin-bottom: 0; color: #6b7280; font-size: 14px;">
+      If you didn't expect this email, please contact your administrator.
+    </p>
+  </div>
+
+  <div style="background: #f3f4f6; padding: 20px; border-radius: 0 0 10px 10px; text-align: center; color: #6b7280; font-size: 12px;">
+    <p style="margin: 0;">Powered by <a href="https://criton.ai" style="color: #667eea; text-decoration: none;">CRITON.AI</a></p>
+  </div>
+</body>
+</html>
+  `.trim();
+};
+
+/**
+ * Send temporary password email to user
+ * @param {string} toEmail - User email
+ * @param {Object} tempPasswordData - Temporary password details
+ * @param {string} tempPasswordData.tempPassword - Temporary password
+ * @param {string} tempPasswordData.loginUrl - Login URL
+ * @param {string} tempPasswordData.businessName - Business/tenant name
+ * @returns {Promise<Object>} - Send result
+ */
+const sendTemporaryPasswordEmail = async (toEmail, tempPasswordData) => {
+  const html = generateTemporaryPasswordHtml(tempPasswordData);
+  const subject = 'Your CRITON.AI Account Access';
+
+  return sendEmail({
+    to: toEmail,
+    subject,
+    html,
+  });
+};
+
+/**
  * Check if email service is configured
  * @returns {boolean} - True if Resend is configured
  */
@@ -471,6 +568,7 @@ module.exports = {
   sendCancellationEmail,
   sendDailyDigestEmail,
   sendPasswordResetEmail,
+  sendTemporaryPasswordEmail,
   isEmailServiceConfigured,
   generateNewAppointmentHtml,
   generateCancellationHtml,

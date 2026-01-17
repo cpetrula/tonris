@@ -82,6 +82,21 @@ const User = sequelize.define('User', {
     defaultValue: true,
     field: 'is_active',
   },
+  loginEnabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'login_enabled',
+  },
+  mustResetPassword: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'must_reset_password',
+  },
+  tempPasswordCreatedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'temp_password_created_at',
+  },
   smsOptIn: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
@@ -178,6 +193,25 @@ User.prototype.isManager = function() {
  */
 User.prototype.getEffectiveRole = function() {
   return this.role || 'superuser';
+};
+
+/**
+ * Generate a temporary password for the user
+ * @returns {Promise<string>} - The generated temporary password (plain text)
+ */
+User.prototype.generateTemporaryPassword = async function() {
+  const crypto = require('crypto');
+  // Generate a secure random password (12 characters: alphanumeric + special chars)
+  const tempPassword = crypto.randomBytes(12).toString('base64').slice(0, 12);
+  
+  // Set the password (will be hashed by beforeUpdate hook)
+  this.password = tempPassword;
+  this.mustResetPassword = true;
+  this.tempPasswordCreatedAt = new Date();
+  
+  await this.save();
+  
+  return tempPassword;
 };
 
 module.exports = User;
