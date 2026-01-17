@@ -3,11 +3,31 @@
  * Routes for managing users (not authentication)
  */
 const express = require('express');
-const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const userController = require('./user.controller');
-const { authMiddleware } = require('../../middleware/auth');
+const { authMiddleware } = require('../auth/auth.middleware');
 const { requireAdmin } = require('../../middleware/authorization');
-const { standardLimiter } = require('../../middleware/rateLimiter');
+
+const router = express.Router();
+
+/**
+ * Rate limiting configuration
+ * Skip rate limiting in test environment
+ */
+const isTestEnv = process.env.NODE_ENV === 'test';
+
+const standardLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  skip: () => isTestEnv,
+  message: {
+    success: false,
+    error: 'Too many requests, please try again later',
+    code: 'RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // All routes require authentication and admin role (Owner/Admin)
 
