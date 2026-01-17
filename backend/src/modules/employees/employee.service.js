@@ -3,6 +3,7 @@
  * Handles all employee business logic
  */
 const { Employee, EMPLOYEE_STATUS, EMPLOYEE_TYPES, EMPLOYEE_ROLES } = require('./employee.model');
+const { User } = require('../../models');
 const { AppError } = require('../../middleware/errorHandler');
 const logger = require('../../utils/logger');
 const { Op } = require('sequelize');
@@ -81,6 +82,12 @@ const getEmployees = async (tenantId, options = {}) => {
     limit: parseInt(limit, 10),
     offset: parseInt(offset, 10),
     order: [['firstName', 'ASC'], ['lastName', 'ASC']],
+    include: [{
+      model: User,
+      as: 'user',
+      attributes: ['id', 'loginEnabled'],
+      required: false
+    }]
   });
 
   return {
@@ -93,6 +100,12 @@ const getEmployees = async (tenantId, options = {}) => {
         } catch (e) {
           console.error('Failed to parse schedule:', e);
         }
+      }
+      // Add loginEnabled from associated user
+      if (emp.user) {
+        obj.loginEnabled = emp.user.loginEnabled || false;
+      } else {
+        obj.loginEnabled = false;
       }
       return obj;
     }),

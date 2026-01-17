@@ -463,7 +463,9 @@ async function fetchEmployees() {
           receiveEmailNotifications: false,
           receiveSmsNotifications: false,
           notificationTypes: ['new_appointment', 'cancellation']
-        }
+        },
+        userId: emp.userId || null,
+        loginEnabled: emp.loginEnabled || false
       }))
     }
   } catch (err) {
