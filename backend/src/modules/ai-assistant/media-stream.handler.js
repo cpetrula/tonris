@@ -16,9 +16,6 @@ const { Tenant } = require('../tenants/tenant.model');
  */
 const activeStreams = new Map();
 
-// Debug counters for audio forwarding diagnostics
-const debugCounters = new Map();
-
 /**
  * Debug mode flag - evaluated once at module load for performance
  */
@@ -90,12 +87,6 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
       // Handle ElevenLabs WebSocket open
       elevenLabsWs.on('open', () => {
         logger.info(`[MediaStream] Connected to ElevenLabs for call ${callSid}`);
-
-        // DEBUG: Record when ElevenLabs connection opened
-        const counter = debugCounters.get(callSid) || { received: 0, forwarded: 0, skipped: 0, firstMediaTime: null, elevenLabsOpenTime: null };
-        counter.elevenLabsOpenTime = Date.now();
-        debugCounters.set(callSid, counter);
-        logger.info(`[MediaStream] DEBUG: ElevenLabs WebSocket OPEN for call ${callSid}, media events received so far: ${counter.received}, skipped so far: ${counter.skipped}`);
         
         // Build dynamic variables from custom parameters
         // Include tenant_id and tenant_name for webhook callbacks and query params
@@ -403,61 +394,34 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
 
         case 'media':
           // Forward audio from Twilio to ElevenLabs
-          // DEBUG: Track media events for diagnostics
-          {
-            const counter = debugCounters.get(callSid) || { received: 0, forwarded: 0, skipped: 0, firstMediaTime: null, elevenLabsOpenTime: null };
-            counter.received++;
-
-            // Log first media event timing
-            if (counter.received === 1) {
-              counter.firstMediaTime = Date.now();
-              logger.info(`[MediaStream] DEBUG: First media event received for call ${callSid}, elevenLabsWs exists: ${!!elevenLabsWs}, readyState: ${elevenLabsWs ? elevenLabsWs.readyState : 'N/A'} (0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)`);
-            }
-
-            // Log every 100th packet to avoid log spam
-            if (counter.received % 100 === 0) {
-              logger.info(`[MediaStream] DEBUG: Media stats for call ${callSid}: received=${counter.received}, forwarded=${counter.forwarded}, skipped=${counter.skipped}, elevenLabsWs readyState=${elevenLabsWs ? elevenLabsWs.readyState : 'null'}`);
-            }
-
+          // Twilio sends μ-law encoded audio at 8kHz as Base64
+          // ElevenLabs expects it in the format: { "user_audio_chunk": "BASE64_DATA" }
+          if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
             // Verify we have a valid payload
             if (!data.media?.payload) {
               logger.error(`[MediaStream] Invalid media event from Twilio: missing payload`);
               break;
             }
-
-            if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
-              const audioMessage = {
-                user_audio_chunk: data.media.payload,
-              };
-              elevenLabsWs.send(JSON.stringify(audioMessage));
-              counter.forwarded++;
-            } else {
-              counter.skipped++;
-              // Log first few skipped packets to understand the issue
-              if (counter.skipped <= 5) {
-                logger.warn(`[MediaStream] DEBUG: Skipping media packet #${counter.received} for call ${callSid}: elevenLabsWs=${elevenLabsWs ? 'exists' : 'null'}, readyState=${elevenLabsWs ? elevenLabsWs.readyState : 'N/A'}`);
-              }
+            
+            const audioMessage = {
+              user_audio_chunk: data.media.payload,
+            };
+            elevenLabsWs.send(JSON.stringify(audioMessage));
+            
+            // Debug logging for audio format verification (only in debug mode)
+            if (isDebugMode && Math.random() < 0.01) {
+              // Sample 1% of audio packets to avoid log spam
+              logger.debug(`[MediaStream] Forwarded audio to ElevenLabs: payloadLength=${data.media.payload.length}`);
             }
-
-            debugCounters.set(callSid, counter);
+          } else if (!elevenLabsWs) {
+            logger.error(`[MediaStream] Cannot forward audio: ElevenLabs WebSocket not initialized`);
+          } else if (elevenLabsWs.readyState !== WebSocket.OPEN) {
+            logger.warn(`[MediaStream] Cannot forward audio: ElevenLabs WebSocket not open (state: ${elevenLabsWs.readyState})`);
           }
           break;
 
         case 'stop':
           logger.info(`[MediaStream] Stream stopped: ${streamSid}`);
-
-          // DEBUG: Log final stats
-          {
-            const counter = debugCounters.get(callSid);
-            if (counter) {
-              logger.info(`[MediaStream] DEBUG: FINAL STATS for call ${callSid}: received=${counter.received}, forwarded=${counter.forwarded}, skipped=${counter.skipped}`);
-              if (counter.skipped > 0 && counter.forwarded === 0) {
-                logger.error(`[MediaStream] DEBUG: ALL AUDIO SKIPPED for call ${callSid}! This explains why ElevenLabs didn't hear the user.`);
-              }
-              debugCounters.delete(callSid);
-            }
-          }
-
           // Clean up ElevenLabs connection
           if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
             elevenLabsWs.close();
