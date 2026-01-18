@@ -147,17 +147,13 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         // format (typically pcm_16000 or mp3_44100), causing immediate disconnects or garbled audio
         // 
         // Build agent config with audio format settings
-        // Use custom first message if available, otherwise use default greeting with tenant name
-        const defaultFirstMessage = `Hi, thanks for calling ${dynamicVariables.name}! How can I help you today?`;
-        const firstMessage = customFirstMessage || defaultFirstMessage;
-        
+        // NOTE: first_message is NOT set here - agent uses its configured greeting from ElevenLabs dashboard
         const agentConfig = {
           language: 'en',
           // Critical: Set output format to ulaw_8000 for Twilio compatibility
           agent_output_audio_format: 'ulaw_8000',
           // Critical: Set input format to ulaw_8000 for Twilio audio
           user_input_audio_format: 'ulaw_8000',
-          first_message: firstMessage, 
         };
 
         const initMessage = {
