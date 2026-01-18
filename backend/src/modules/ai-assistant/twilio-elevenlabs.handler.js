@@ -313,12 +313,18 @@ const getAgentIdForTenant = async (tenant) => {
     
     // Use tenant-specific agent ID from metadata
     const agentId = tenant.metadata?.elevenLabsAgentId;
-    
+
     if (agentId) {
       logger.info(`Using tenant-specific agent ID for tenant ${tenant.id}`);
       return agentId;
     }
-    
+
+    // Fallback to environment variable
+    if (env.ELEVENLABS_AGENT_ID) {
+      logger.info(`Using default agent ID from env for tenant ${tenant.id}`);
+      return env.ELEVENLABS_AGENT_ID;
+    }
+
     logger.warn(`No agent ID found for tenant ${tenant.id}`);
     return null;
   } catch (error) {
