@@ -8,7 +8,7 @@ const { generateTokenPair, verifyToken } = require('./jwt.utils');
 const twoFactorUtils = require('./2fa.utils');
 const logger = require('../../utils/logger');
 const { AppError } = require('../../middleware/errorHandler');
-const { sendPasswordResetEmail } = require('../notifications/email.service');
+const { sendPasswordResetEmail, sendTemporaryPasswordEmail } = require('../notifications/email.service');
 const env = require('../../config/env');
 
 /**
@@ -66,10 +66,24 @@ const login = async ({ email, password, twoFactorCode }) => {
       throw new AppError('Account is deactivated', 403, 'ACCOUNT_DEACTIVATED');
     }
 
+    // Check if login is enabled
+    if (!user.loginEnabled) {
+      throw new AppError('Login is not enabled for this account. Please contact your administrator.', 403, 'LOGIN_NOT_ENABLED');
+    }
+
     // Verify password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+    }
+
+    // Check if password reset is required
+    if (user.mustResetPassword) {
+      return {
+        mustResetPassword: true,
+        userId: user.id,
+        message: 'Password reset required. Please set a new password.',
+      };
     }
 
     // Check 2FA if enabled
@@ -534,6 +548,7 @@ const register = async ({
     password,
     tenantId: tenant.id,
     role: USER_ROLES.SUPERUSER,
+    loginEnabled: true, // Original account creator has login enabled by default
   });
 
   // Generate tokens
@@ -548,12 +563,52 @@ const register = async ({
   };
 };
 
+/**
+ * Reset password for first-time login (required after temp password)
+ * @param {string} userId - User ID
+ * @param {string} oldPassword - Temporary password
+ * @param {string} newPassword - New password
+ * @returns {Promise<Object>} - Success message and tokens
+ */
+const resetPasswordFirstLogin = async (userId, oldPassword, newPassword) => {
+  const user = await User.findByPk(userId);
+  
+  if (!user) {
+    throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+  }
+
+  // Verify old password matches
+  const isPasswordValid = await user.comparePassword(oldPassword);
+  if (!isPasswordValid) {
+    throw new AppError('Invalid current password', 401, 'INVALID_PASSWORD');
+  }
+
+  // Update password and clear must_reset_password flag
+  await user.update({
+    password: newPassword,
+    mustResetPassword: false,
+    tempPasswordCreatedAt: null,
+  });
+
+  // Generate tokens for automatic login after password reset
+  const tokens = generateTokenPair(user);
+
+  logger.info(`First-time password reset completed for user: ${user.email}`);
+
+  return {
+    message: 'Password reset successful',
+    user: user.toSafeObject(),
+    tokens,
+  };
+};
+
 module.exports = {
   signup,
   login,
   register,
   forgotPassword,
   resetPassword,
+  resetPasswordFirstLogin,
   setup2FA,
   verify2FA,
   disable2FA,

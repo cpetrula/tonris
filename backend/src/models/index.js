@@ -20,6 +20,17 @@ if (typeof Appointment.setupAssociations === 'function' && Employee && Service) 
   Appointment.setupAssociations({ Employee, Service });
 }
 
+// Set up Employee <-> User association
+Employee.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+User.hasOne(Employee, {
+  foreignKey: 'userId',
+  as: 'employee'
+});
+
 module.exports = {
   User,
   Tenant,
