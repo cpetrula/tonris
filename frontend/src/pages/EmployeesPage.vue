@@ -429,8 +429,8 @@ async function confirmResendPassword() {
 }
 
 function isPasswordPending(employee: Employee): boolean {
-  return employee.loginEnabled && 
-         employee.mustResetPassword === true && 
+  return !!employee.loginEnabled && 
+         !!employee.mustResetPassword && 
          !!employee.tempPasswordCreatedAt
 }
 
@@ -518,8 +518,8 @@ async function fetchEmployees() {
           notificationTypes: ['new_appointment', 'cancellation']
         },
         userId: emp.userId || null,
-        loginEnabled: emp.loginEnabled || false,
-        mustResetPassword: emp.mustResetPassword || false,
+        loginEnabled: !!emp.loginEnabled,
+        mustResetPassword: !!emp.mustResetPassword,
         tempPasswordCreatedAt: emp.tempPasswordCreatedAt || null
       }))
     }
