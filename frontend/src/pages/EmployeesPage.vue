@@ -61,6 +61,8 @@ interface Employee {
   notificationPreferences: NotificationPreferences
   userId: string | null
   loginEnabled: boolean
+  mustResetPassword?: boolean
+  tempPasswordCreatedAt?: string | null
 }
 
 interface Service {
@@ -174,6 +176,9 @@ const editingSchedule = ref<Schedule>({ ...defaultSchedule })
 const showEnableLoginDialog = ref(false)
 const employeeToEnableLogin = ref<Employee | null>(null)
 const enablingLogin = ref(false)
+const showResendPasswordDialog = ref(false)
+const employeeToResendPassword = ref<Employee | null>(null)
+const resendingPassword = ref(false)
 
 const currentEmployee = ref<Employee>({ ...emptyEmployee })
 
@@ -398,6 +403,54 @@ async function confirmEnableLogin() {
   }
 }
 
+function openResendPasswordDialog(employee: Employee) {
+  employeeToResendPassword.value = employee
+  showResendPasswordDialog.value = true
+}
+
+async function confirmResendPassword() {
+  if (!employeeToResendPassword.value || !employeeToResendPassword.value.userId) return
+  
+  resendingPassword.value = true
+  error.value = ''
+  try {
+    await api.post(`/api/users/${employeeToResendPassword.value.userId}/resend-temp-password`)
+    
+    // Refresh the employees list
+    await fetchEmployees()
+    showResendPasswordDialog.value = false
+    employeeToResendPassword.value = null
+  } catch (err: any) {
+    console.error('Error resending password:', err)
+    error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to resend temporary password'
+  } finally {
+    resendingPassword.value = false
+  }
+}
+
+function isPasswordPending(employee: Employee): boolean {
+  return employee.loginEnabled && 
+         employee.mustResetPassword === true && 
+         !!employee.tempPasswordCreatedAt
+}
+
+function formatPasswordSentDate(dateString: string | null | undefined): string {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+  
+  return date.toLocaleDateString()
+}
+
 onMounted(async () => {
   loading.value = true
   try {
@@ -465,7 +518,9 @@ async function fetchEmployees() {
           notificationTypes: ['new_appointment', 'cancellation']
         },
         userId: emp.userId || null,
-        loginEnabled: emp.loginEnabled || false
+        loginEnabled: emp.loginEnabled || false,
+        mustResetPassword: emp.mustResetPassword || false,
+        tempPasswordCreatedAt: emp.tempPasswordCreatedAt || null
       }))
     }
   } catch (err) {
@@ -622,14 +677,21 @@ function getRoleLabel(value: string) {
 
           <Column field="loginEnabled" header="Login" sortable v-if="authStore.isAdmin">
             <template #body="{ data }">
-              <span
-                :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  data.loginEnabled ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                ]"
-              >
-                {{ data.loginEnabled ? 'Enabled' : 'Disabled' }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span
+                  :class="[
+                    'px-2 py-1 rounded-full text-xs font-medium',
+                    isPasswordPending(data) 
+                      ? 'bg-amber-100 text-amber-700' 
+                      : data.loginEnabled 
+                        ? 'bg-blue-100 text-blue-700' 
+                        : 'bg-gray-100 text-gray-600'
+                  ]"
+                  :v-tooltip.top="isPasswordPending(data) ? `Temp password sent ${formatPasswordSentDate(data.tempPasswordCreatedAt)}` : ''"
+                >
+                  {{ isPasswordPending(data) ? 'Pending' : data.loginEnabled ? 'Enabled' : 'Disabled' }}
+                </span>
+              </div>
             </template>
           </Column>
 
@@ -644,6 +706,15 @@ function getRoleLabel(value: string) {
                   severity="info"
                   v-tooltip.top="'Enable Login'"
                   @click="openEnableLoginDialog(data)"
+                />
+                <Button
+                  v-if="authStore.isAdmin && isPasswordPending(data)"
+                  icon="pi pi-refresh"
+                  text
+                  size="small"
+                  severity="warning"
+                  v-tooltip.top="'Resend Temp Password'"
+                  @click="openResendPasswordDialog(data)"
                 />
                 <Button
                   icon="pi pi-calendar"
@@ -930,6 +1001,50 @@ function getRoleLabel(value: string) {
           icon="pi pi-key"
           @click="confirmEnableLogin" 
           :loading="enablingLogin"
+        />
+      </template>
+    </Dialog>
+
+    <!-- Resend Temp Password Confirmation Dialog -->
+    <Dialog
+      v-model:visible="showResendPasswordDialog"
+      header="Resend Temporary Password"
+      :modal="true"
+      :style="{ width: '500px' }"
+    >
+      <div class="space-y-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-exclamation-triangle text-amber-500 text-xl mt-1"></i>
+          <div>
+            <p class="text-gray-700 mb-3">
+              You are about to regenerate and resend the temporary password for <strong>{{ employeeToResendPassword?.firstName }} {{ employeeToResendPassword?.lastName }}</strong>.
+            </p>
+            <p class="text-gray-600 text-sm mb-2">
+              This will:
+            </p>
+            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
+              <li>Generate a new temporary password (the old one will no longer work)</li>
+              <li>Send a new email to <strong>{{ employeeToResendPassword?.email }}</strong> with the updated credentials</li>
+              <li>Reset the temporary password timestamp</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button 
+          label="Cancel" 
+          text 
+          severity="secondary" 
+          @click="showResendPasswordDialog = false" 
+          :disabled="resendingPassword"
+        />
+        <Button 
+          label="Resend Password" 
+          icon="pi pi-refresh"
+          severity="warning"
+          @click="confirmResendPassword" 
+          :loading="resendingPassword"
         />
       </template>
     </Dialog>

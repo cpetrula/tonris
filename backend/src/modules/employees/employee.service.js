@@ -85,7 +85,7 @@ const getEmployees = async (tenantId, options = {}) => {
     include: [{
       model: User,
       as: 'user',
-      attributes: ['id', 'loginEnabled'],
+      attributes: ['id', 'loginEnabled', 'mustResetPassword', 'tempPasswordCreatedAt'],
       required: false
     }]
   });
@@ -101,11 +101,15 @@ const getEmployees = async (tenantId, options = {}) => {
           console.error('Failed to parse schedule:', e);
         }
       }
-      // Add loginEnabled from associated user
+      // Add login-related fields from associated user
       if (emp.user) {
         obj.loginEnabled = emp.user.loginEnabled || false;
+        obj.mustResetPassword = emp.user.mustResetPassword || false;
+        obj.tempPasswordCreatedAt = emp.user.tempPasswordCreatedAt || null;
       } else {
         obj.loginEnabled = false;
+        obj.mustResetPassword = false;
+        obj.tempPasswordCreatedAt = null;
       }
       return obj;
     }),
