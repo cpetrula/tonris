@@ -103,8 +103,8 @@ const getEmployees = async (tenantId, options = {}) => {
       }
       // Add login-related fields from associated user
       if (emp.user) {
-        obj.loginEnabled = emp.user.loginEnabled || false;
-        obj.mustResetPassword = emp.user.mustResetPassword || false;
+        obj.loginEnabled = Boolean(emp.user.loginEnabled);
+        obj.mustResetPassword = Boolean(emp.user.mustResetPassword);
         obj.tempPasswordCreatedAt = emp.user.tempPasswordCreatedAt || null;
       } else {
         obj.loginEnabled = false;
