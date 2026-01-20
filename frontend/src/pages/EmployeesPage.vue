@@ -687,7 +687,7 @@ function getRoleLabel(value: string) {
                         ? 'bg-blue-100 text-blue-700' 
                         : 'bg-gray-100 text-gray-600'
                   ]"
-                  :v-tooltip.top="isPasswordPending(data) ? `Temp password sent ${formatPasswordSentDate(data.tempPasswordCreatedAt)}` : ''"
+                  v-tooltip.top="isPasswordPending(data) ? `Temp password sent ${formatPasswordSentDate(data.tempPasswordCreatedAt)}` : ''"
                 >
                   {{ isPasswordPending(data) ? 'Pending' : data.loginEnabled ? 'Enabled' : 'Disabled' }}
                 </span>
