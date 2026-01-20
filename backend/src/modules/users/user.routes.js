@@ -46,4 +46,7 @@ router.patch('/:id', standardLimiter, authMiddleware, requireAdmin(), userContro
 // POST /api/users/:id/enable-login - Enable login for user
 router.post('/:id/enable-login', standardLimiter, authMiddleware, requireAdmin(), userController.enableLogin);
 
+// POST /api/users/:id/resend-temp-password - Resend temporary password
+router.post('/:id/resend-temp-password', standardLimiter, authMiddleware, requireAdmin(), userController.resendTempPassword);
+
 module.exports = router;

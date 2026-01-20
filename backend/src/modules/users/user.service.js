@@ -208,10 +208,59 @@ const getUserById = async (userId, tenantId) => {
   return user.toSafeObject();
 };
 
+/**
+ * Resend temporary password email for a user
+ * @param {string} userId - User ID
+ * @param {string} tenantId - Tenant ID (for authorization)
+ * @returns {Promise<Object>} - Success message
+ */
+const resendTemporaryPassword = async (userId, tenantId) => {
+  // Find user and verify it belongs to the tenant
+  const user = await User.findOne({ where: { id: userId, tenantId } });
+  
+  if (!user) {
+    throw new AppError('User not found', 404, 'USER_NOT_FOUND');
+  }
+
+  // Check if login is enabled
+  if (!user.loginEnabled) {
+    throw new AppError('Login is not enabled for this user', 400, 'LOGIN_NOT_ENABLED');
+  }
+
+  // Generate new temporary password
+  const tempPassword = await user.generateTemporaryPassword();
+
+  // Get tenant name for email
+  const tenant = await Tenant.findByPk(tenantId);
+  const businessName = tenant ? tenant.name : null;
+
+  // Send email with temporary password
+  try {
+    const loginUrl = env.FRONTEND_URL ? `${env.FRONTEND_URL}/login` : null;
+    await sendTemporaryPasswordEmail(user.email, {
+      tempPassword,
+      loginUrl,
+      businessName,
+    });
+    
+    logger.info(`Temporary password resent for user ${user.email}`);
+  } catch (emailError) {
+    // Log error but don't fail the operation
+    logger.error(`Failed to send temporary password email to ${user.email}: ${emailError.message}`);
+    throw new AppError('Failed to send email. Please try again or contact support.', 500, 'EMAIL_SEND_FAILED');
+  }
+
+  return {
+    message: 'Temporary password has been regenerated and sent to the user\'s email.',
+    tempPasswordCreatedAt: user.tempPasswordCreatedAt,
+  };
+};
+
 module.exports = {
   enableUserLogin,
   createUserWithLogin,
   updateUser,
   getUsersByTenant,
   getUserById,
+  resendTemporaryPassword,
 };

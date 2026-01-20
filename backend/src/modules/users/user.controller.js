@@ -123,10 +123,34 @@ const enableLogin = async (req, res, next) => {
   }
 };
 
+/**
+ * Resend temporary password for a user
+ * POST /api/users/:id/resend-temp-password
+ */
+const resendTempPassword = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    const result = await userService.resendTemporaryPassword(id, tenantId);
+
+    res.json({
+      success: true,
+      message: result.message,
+      data: {
+        tempPasswordCreatedAt: result.tempPasswordCreatedAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUser,
   createUser,
   updateUser,
   enableLogin,
+  resendTempPassword,
 };
