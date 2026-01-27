@@ -6,6 +6,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
+import OnboardingChecklist from '@/components/OnboardingChecklist.vue'
 
 const authStore = useAuthStore()
 const tenantStore = useTenantStore()
@@ -13,6 +14,15 @@ const router = useRouter()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+// Onboarding state
+const showOnboarding = ref(false)
+const onboardingSteps = ref({
+  services: false,
+  employees: false,
+  businessHours: false
+})
+const onboardingDismissed = ref(false)
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -91,6 +101,13 @@ async function fetchDashboardData() {
     const response = await api.get('/api/tenant/dashboard-stats')
     const data = response.data.data
     
+    // Update onboarding status
+    if (data.onboarding) {
+      onboardingSteps.value = data.onboarding.steps
+      // Show onboarding if not complete and not dismissed
+      showOnboarding.value = !data.onboarding.complete && !onboardingDismissed.value
+    }
+    
     // Update stats using a more robust approach
     if (data.stats) {
       const statMap: Record<string, keyof typeof data.stats> = {
@@ -131,7 +148,16 @@ async function fetchDashboardData() {
   }
 }
 
+function dismissOnboarding() {
+  onboardingDismissed.value = true
+  showOnboarding.value = false
+  // Optionally persist this to localStorage
+  localStorage.setItem('onboardingDismissed', 'true')
+}
+
 onMounted(async () => {
+  // Check if onboarding was dismissed
+  onboardingDismissed.value = localStorage.getItem('onboardingDismissed') === 'true'
   await fetchDashboardData()
 })
 </script>
@@ -139,7 +165,7 @@ onMounted(async () => {
 <template>
   <div>
     <!-- Welcome Header -->
-    <div class="mb-8">
+    <div class="mb-6">
       <h1 class="text-2xl font-bold text-gray-900">
         {{ greeting }}, {{ authStore.user?.firstName || 'User' }}!
       </h1>
@@ -148,13 +174,20 @@ onMounted(async () => {
       </p>
     </div>
 
+    <!-- Onboarding Checklist -->
+    <OnboardingChecklist 
+      v-if="showOnboarding"
+      :steps="onboardingSteps"
+      @dismiss="dismissOnboarding"
+    />
+
     <!-- Error Message -->
     <div v-if="error" class="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg">
       <p class="text-red-800 dark:text-red-300">{{ error }}</p>
     </div>
 
-    <!-- Phone Forwarding Setup Banner -->
-    <Card class="mb-6 bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200">
+    <!-- Phone Forwarding Setup Banner (show after onboarding complete) -->
+    <Card v-if="!showOnboarding" class="mb-6 bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200">
       <template #content>
         <div class="flex items-center justify-between">
           <div class="flex items-start gap-4">

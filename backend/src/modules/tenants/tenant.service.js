@@ -621,6 +621,19 @@ const getDashboardStats = async (tenantId) => {
   recentActivity.sort((a, b) => b.timestamp - a.timestamp);
   const limitedActivity = recentActivity.slice(0, 10);
 
+  // Check onboarding status
+  const hasServices = servicesCount > 0;
+  const hasEmployees = activeEmployeesCount > 0;
+  
+  // Check if business hours are configured (at least one day enabled)
+  let hasBusinessHours = false;
+  if (tenant.businessHours?.businessHours) {
+    const hours = tenant.businessHours.businessHours;
+    hasBusinessHours = Object.values(hours).some(day => day && day.enabled);
+  }
+
+  const onboardingComplete = hasServices && hasEmployees && hasBusinessHours;
+
   // Format the response
   return {
     stats: {
@@ -628,6 +641,15 @@ const getDashboardStats = async (tenantId) => {
       pendingCalls: pendingCallsCount,
       activeEmployees: activeEmployeesCount,
       servicesOffered: servicesCount,
+    },
+    onboarding: {
+      complete: onboardingComplete,
+      completedAt: tenant.onboardingCompletedAt,
+      steps: {
+        services: hasServices,
+        employees: hasEmployees,
+        businessHours: hasBusinessHours,
+      },
     },
     todayAppointments: todayAppointments.map((apt) => {
       const employee = employeeMap.get(apt.employeeId);
