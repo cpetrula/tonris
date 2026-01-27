@@ -6,7 +6,6 @@ import { useTenantStore } from '@/stores/tenant'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import InactiveAccountBanner from '@/components/InactiveAccountBanner.vue'
-import type { MenuItem } from 'primevue/menuitem'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -206,7 +205,7 @@ onMounted(async () => {
               Your AI phone #: 
             </span>
             <span class="text-sm font-semibold text-violet-600 dark:text-violet-400">
-              {{ formatPhoneNumber(tenantStore.currentTenant.twilioPhoneNumber) }}
+              {{ formatPhoneNumber(tenantStore.currentTenant?.twilioPhoneNumber || '') }}
             </span>
           </div>
         </div>
