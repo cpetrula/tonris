@@ -3,7 +3,7 @@
  * Handles all authentication business logic
  */
 const crypto = require('crypto');
-const { User } = require('../../models');
+const { User, Employee } = require('../../models');
 const { generateTokenPair, verifyToken } = require('./jwt.utils');
 const twoFactorUtils = require('./2fa.utils');
 const logger = require('../../utils/logger');
@@ -352,13 +352,29 @@ const refreshTokens = async (refreshToken) => {
  * @returns {Promise<Object>} - User data
  */
 const getUserById = async (userId, tenantId) => {
-  const user = await User.findOne({ where: { id: userId, tenantId } });
+  const user = await User.findOne({ 
+    where: { id: userId, tenantId },
+    include: [{
+      model: Employee,
+      as: 'employee',
+      attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+      required: false
+    }]
+  });
   
   if (!user) {
     throw new AppError('User not found', 404, 'USER_NOT_FOUND');
   }
 
-  return user.toSafeObject();
+  const userObj = user.toSafeObject();
+  
+  // If user has linked employee, include their name
+  if (user.employee) {
+    userObj.firstName = user.employee.firstName;
+    userObj.lastName = user.employee.lastName;
+  }
+
+  return userObj;
 };
 
 /**
