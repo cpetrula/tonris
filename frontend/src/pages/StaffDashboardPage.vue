@@ -120,17 +120,6 @@ function formatDateShort(dateStr: string) {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-function formatDateFull(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  })
-}
-
 // Check if appointment can be actioned
 function canAction(appointment: any) {
   return appointment.status !== 'completed' && appointment.status !== 'cancelled'
