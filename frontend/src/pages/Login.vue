@@ -37,6 +37,20 @@ async function handleSubmit() {
       return
     }
 
+    // Check if password reset is required (first-time login with temp password)
+    if (response.data.data?.mustResetPassword) {
+      // Redirect to set new password page with userId and temp password
+      router.push({
+        name: 'set-new-password',
+        query: {
+          userId: response.data.data.userId,
+          tempPassword: password.value
+        }
+      })
+      loading.value = false
+      return
+    }
+
     // Login successful
     const { tokens, user } = response.data.data
     const token = tokens.accessToken
