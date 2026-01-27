@@ -17,6 +17,7 @@ const AdminClientsPage = () => import('@/pages/AdminClientsPage.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
+const StaffDashboardPage = () => import('@/pages/StaffDashboardPage.vue')
 const EmployeesPage = () => import('@/pages/EmployeesPage.vue')
 const ServicesPage = () => import('@/pages/ServicesPage.vue')
 const AppointmentsPage = () => import('@/pages/AppointmentsPage.vue')
@@ -107,42 +108,56 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'dashboard',
-        component: DashboardPage
+        component: DashboardPage,
+        meta: { requiresRole: ['superuser', 'admin', 'manager'] }
+      },
+      {
+        path: 'my-schedule',
+        name: 'staff-dashboard',
+        component: StaffDashboardPage,
+        meta: { requiresRole: ['staff'] }
       },
       {
         path: 'employees',
         name: 'employees',
-        component: EmployeesPage
+        component: EmployeesPage,
+        meta: { requiresRole: ['superuser', 'admin', 'manager'] }
       },
       {
         path: 'services',
         name: 'services',
-        component: ServicesPage
+        component: ServicesPage,
+        meta: { requiresRole: ['superuser', 'admin', 'manager'] }
       },
       {
         path: 'appointments',
         name: 'appointments',
-        component: AppointmentsPage
+        component: AppointmentsPage,
+        meta: { requiresRole: ['superuser', 'admin', 'manager'] }
       },
       {
         path: 'billing',
         name: 'billing',
-        component: BillingPage
+        component: BillingPage,
+        meta: { requiresRole: ['superuser', 'admin'] }
       },
       {
         path: 'reports',
         name: 'reports',
-        component: ReportsPage
+        component: ReportsPage,
+        meta: { requiresRole: ['superuser', 'admin', 'manager'] }
       },
       {
         path: 'settings',
         name: 'settings',
-        component: SettingsPage
+        component: SettingsPage,
+        meta: { requiresRole: ['superuser', 'admin'] }
       },
       {
         path: 'phone-forwarding',
         name: 'phone-forwarding',
-        component: PhoneForwardingPage
+        component: PhoneForwardingPage,
+        meta: { requiresRole: ['superuser', 'admin'] }
       }
       // DISABLED: Multi-location feature hidden until business hours per location is implemented
       // {
@@ -165,13 +180,14 @@ const router = createRouter({
   routes
 })
 
-// Navigation guard for authentication
+// Navigation guard for authentication and role-based access
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
   // Check if route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const guestOnly = to.matched.some(record => record.meta.guestOnly)
+  const requiredRoles = to.meta.requiresRole as string[] | undefined
   
   // If we have a token but no user, try to fetch the user first
   // This handles the case when the page is refreshed and user data is not yet loaded
@@ -183,8 +199,27 @@ router.beforeEach(async (to, _from, next) => {
     // Redirect to login if not authenticated
     next({ name: 'login', query: { redirect: to.fullPath } })
   } else if (guestOnly && authStore.isAuthenticated) {
-    // Redirect to dashboard if already authenticated
-    next({ name: 'dashboard' })
+    // Redirect to appropriate dashboard based on role
+    if (authStore.userRole === 'staff') {
+      next({ name: 'staff-dashboard' })
+    } else {
+      next({ name: 'dashboard' })
+    }
+  } else if (requiresAuth && authStore.isAuthenticated) {
+    // Check role requirements
+    if (requiredRoles && !authStore.hasAnyRole(requiredRoles as any[])) {
+      // User doesn't have required role - redirect to their appropriate dashboard
+      if (authStore.userRole === 'staff') {
+        next({ name: 'staff-dashboard' })
+      } else {
+        next({ name: 'dashboard' })
+      }
+    } else if (to.path === '/app' && authStore.userRole === 'staff') {
+      // Staff trying to access /app root - redirect to staff dashboard
+      next({ name: 'staff-dashboard' })
+    } else {
+      next()
+    }
   } else {
     next()
   }

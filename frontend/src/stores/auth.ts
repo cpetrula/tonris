@@ -10,6 +10,7 @@ export interface User {
   firstName: string
   lastName: string
   role: UserRole
+  employeeId?: string
 }
 
 export interface LoginCredentials {

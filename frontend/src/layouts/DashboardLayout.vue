@@ -44,7 +44,8 @@ interface NavItem {
   requiresRole?: ('superuser' | 'admin' | 'manager' | 'staff')[]
 }
 
-const allNavigationItems: NavItem[] = [
+// Full navigation for admins/managers
+const adminNavigationItems: NavItem[] = [
   { name: 'Dashboard', path: '/app', icon: 'pi pi-home' },
   { name: 'Appointments', path: '/app/appointments', icon: 'pi pi-calendar' },
   { name: 'Employees', path: '/app/employees', icon: 'pi pi-users' },
@@ -52,13 +53,24 @@ const allNavigationItems: NavItem[] = [
   // DISABLED: Multi-location feature hidden until business hours per location is implemented
   // { name: 'Locations', path: '/app/locations', icon: 'pi pi-map-marker', requiresRole: ['superuser', 'admin'] },
   { name: 'Reports', path: '/app/reports', icon: 'pi pi-chart-line' },
-  { name: 'Billing', path: '/app/billing', icon: 'pi pi-credit-card' },
-  { name: 'Settings', path: '/app/settings', icon: 'pi pi-cog' }
+  { name: 'Billing', path: '/app/billing', icon: 'pi pi-credit-card', requiresRole: ['superuser', 'admin'] },
+  { name: 'Settings', path: '/app/settings', icon: 'pi pi-cog', requiresRole: ['superuser', 'admin'] }
+]
+
+// Minimal navigation for staff
+const staffNavigationItems: NavItem[] = [
+  { name: 'My Schedule', path: '/app/my-schedule', icon: 'pi pi-calendar' }
 ]
 
 // Filter navigation items based on user role
 const navigationItems = computed(() => {
-  return allNavigationItems.filter(item => {
+  // Staff gets minimal nav
+  if (authStore.userRole === 'staff') {
+    return staffNavigationItems
+  }
+  
+  // Others get full nav filtered by role
+  return adminNavigationItems.filter(item => {
     if (!item.requiresRole) return true
     return authStore.hasAnyRole(item.requiresRole)
   })
