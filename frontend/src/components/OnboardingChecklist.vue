@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import Button from 'primevue/button'
 
 interface OnboardingStep {
   key: string
