@@ -17,6 +17,7 @@ import Menu from 'primevue/menu'
 import Message from 'primevue/message'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
 import Tooltip from 'primevue/tooltip'
 
 const app = createApp(App)
@@ -39,6 +40,7 @@ app.use(PrimeVue, {
   }
 })
 app.use(ToastService)
+app.use(ConfirmationService)
 app.directive('tooltip', Tooltip)
 
 // Register PrimeVue components globally
