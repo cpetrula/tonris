@@ -403,7 +403,7 @@ onMounted(() => {
     <!-- Tabs for different views -->
     <TabView>
       <!-- Today's Schedule -->
-      <TabPanel header="Today's Schedule">
+      <TabPanel value="0" header="Today's Schedule">
         <DataTable 
           :value="todayAppointments" 
           :loading="loading"
@@ -465,7 +465,7 @@ onMounted(() => {
       </TabPanel>
 
       <!-- Upcoming Appointments -->
-      <TabPanel header="Upcoming">
+      <TabPanel value="1" header="Upcoming">
         <DataTable 
           :value="upcomingAppointments" 
           :loading="loading"
@@ -521,7 +521,7 @@ onMounted(() => {
       </TabPanel>
 
       <!-- Completed Appointments -->
-      <TabPanel header="Completed">
+      <TabPanel value="2" header="Completed">
         <!-- Date Filter -->
         <div class="mb-4 flex items-center gap-2">
           <label class="text-sm text-gray-600">Filter by date:</label>
