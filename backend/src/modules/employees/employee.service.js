@@ -159,7 +159,7 @@ const updateEmployee = async (employeeId, tenantId, updateData) => {
   }
 
   // Filter allowed update fields
-  const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'employeeType', 'status', 'hireDate', 'serviceIds', 'metadata', 'schedule', 'role', 'locationId', 'notificationPreferences'];
+  const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'employeeType', 'status', 'hireDate', 'serviceIds', 'metadata', 'schedule', 'role', 'locationId', 'notificationPreferences', 'userId'];
   const filteredData = {};
 
   for (const key of allowedFields) {
