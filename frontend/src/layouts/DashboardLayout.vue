@@ -15,26 +15,45 @@ const tenantStore = useTenantStore()
 const sidebarOpen = ref(false)
 const userMenu = ref()
 
-const userMenuItems: MenuItem[] = [
-  {
-    label: 'Profile',
-    icon: 'pi pi-user',
-    command: () => router.push('/app/profile')
-  },
-  {
-    label: 'Settings',
-    icon: 'pi pi-cog',
-    command: () => router.push('/app/settings')
-  },
-  {
-    separator: true
-  },
-  {
-    label: 'Sign Out',
-    icon: 'pi pi-sign-out',
-    command: () => handleLogout()
+const userMenuItems = computed(() => {
+  // Staff only gets Sign Out
+  if (authStore.userRole === 'staff') {
+    return [
+      {
+        label: 'Sign Out',
+        icon: 'pi pi-sign-out',
+        command: () => handleLogout()
+      }
+    ]
   }
-]
+  
+  // Full menu for admins/managers
+  return [
+    {
+      label: 'Profile',
+      icon: 'pi pi-user',
+      command: () => router.push('/app/profile')
+    },
+    {
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      command: () => router.push('/app/settings')
+    },
+    {
+      separator: true
+    },
+    {
+      label: 'Sign Out',
+      icon: 'pi pi-sign-out',
+      command: () => handleLogout()
+    }
+  ]
+})
+
+// Check if phone number should be shown (not for staff)
+const showPhoneNumber = computed(() => {
+  return authStore.userRole !== 'staff' && tenantStore.currentTenant?.twilioPhoneNumber
+})
 
 // Navigation items with optional role requirements
 interface NavItem {
@@ -180,8 +199,8 @@ onMounted(async () => {
         
         <!-- Search / Breadcrumb placeholder -->
         <div class="flex-1 px-4">
-          <!-- AI Phone Number Display -->
-          <div v-if="tenantStore.currentTenant?.twilioPhoneNumber" class="flex items-center space-x-2">
+          <!-- AI Phone Number Display (hidden for staff) -->
+          <div v-if="showPhoneNumber" class="flex items-center space-x-2">
             <i class="pi pi-phone text-violet-600"></i>
             <span class="text-sm font-medium text-surface-700 dark:text-surface-300 text-violet-600">
               Your AI phone #: 
