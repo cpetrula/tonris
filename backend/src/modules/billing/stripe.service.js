@@ -5,7 +5,7 @@
 const Stripe = require('stripe');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
-const { PLAN_CONFIG, BILLING_INTERVAL } = require('./subscription.model');
+const { PLAN_CONFIG, PLAN_TIER, BILLING_INTERVAL } = require('./subscription.model');
 
 // Initialize Stripe with secret key
 const stripe = env.STRIPE_SECRET_KEY 
@@ -72,7 +72,9 @@ const getCustomer = async (customerId) => {
  * Create a checkout session for subscription
  * @param {Object} params - Checkout parameters
  * @param {string} params.customerId - Stripe customer ID
- * @param {string} params.priceId - Stripe price ID
+ * @param {string} params.priceId - Stripe price ID for base subscription
+ * @param {string} params.meteredPriceId - Stripe price ID for metered overage (optional)
+ * @param {string} params.planTier - Plan tier (starter, professional, business)
  * @param {string} params.tenantId - Tenant identifier
  * @param {string} params.successUrl - URL to redirect after successful payment
  * @param {string} params.cancelUrl - URL to redirect if payment is cancelled
@@ -82,6 +84,8 @@ const getCustomer = async (customerId) => {
 const createCheckoutSession = async ({
   customerId,
   priceId,
+  meteredPriceId,
+  planTier,
   tenantId,
   successUrl,
   cancelUrl,
@@ -90,30 +94,42 @@ const createCheckoutSession = async ({
   ensureStripeConfigured();
   
   try {
+    // Build line items - base subscription
+    const lineItems = [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ];
+    
+    // Add metered price for overage if provided
+    if (meteredPriceId) {
+      lineItems.push({
+        price: meteredPriceId,
+      });
+    }
+    
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: 'subscription',
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
         tenantId,
+        planTier: planTier || PLAN_TIER.PROFESSIONAL,
         ...metadata,
       },
       subscription_data: {
         metadata: {
           tenantId,
+          planTier: planTier || PLAN_TIER.PROFESSIONAL,
         },
       },
     });
     
-    logger.info(`Checkout session created: ${session.id} for tenant: ${tenantId}`);
+    logger.info(`Checkout session created: ${session.id} for tenant: ${tenantId}, plan: ${planTier}`);
     return session;
   } catch (error) {
     logger.error(`Failed to create checkout session: ${error.message}`);
@@ -157,6 +173,25 @@ const getSubscription = async (subscriptionId) => {
     return await stripe.subscriptions.retrieve(subscriptionId);
   } catch (error) {
     logger.error(`Failed to retrieve subscription: ${error.message}`);
+    throw error;
+  }
+};
+
+/**
+ * Update a subscription (e.g., change plan)
+ * @param {string} subscriptionId - Stripe subscription ID
+ * @param {Object} updates - Update parameters
+ * @returns {Promise<Object>} - Updated Stripe subscription
+ */
+const updateSubscription = async (subscriptionId, updates) => {
+  ensureStripeConfigured();
+  
+  try {
+    const subscription = await stripe.subscriptions.update(subscriptionId, updates);
+    logger.info(`Subscription updated: ${subscriptionId}`);
+    return subscription;
+  } catch (error) {
+    logger.error(`Failed to update subscription: ${error.message}`);
     throw error;
   }
 };
@@ -211,6 +246,71 @@ const resumeSubscription = async (subscriptionId) => {
 };
 
 /**
+ * Report usage for metered billing
+ * @param {Object} params - Usage parameters
+ * @param {string} params.subscriptionId - Stripe subscription ID
+ * @param {number} params.quantity - Usage quantity (e.g., minutes)
+ * @param {number} params.timestamp - Unix timestamp for the usage
+ * @param {string} params.action - 'set' or 'increment'
+ * @returns {Promise<Object>} - Stripe usage record
+ */
+const reportUsage = async ({ subscriptionId, quantity, timestamp, action = 'increment' }) => {
+  ensureStripeConfigured();
+  
+  try {
+    // First get the subscription to find the metered subscription item
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    
+    // Find the metered subscription item
+    const meteredItem = subscription.items.data.find(
+      item => item.price.recurring?.usage_type === 'metered'
+    );
+    
+    if (!meteredItem) {
+      logger.warn(`No metered subscription item found for subscription: ${subscriptionId}`);
+      return null;
+    }
+    
+    const usageRecord = await stripe.subscriptionItems.createUsageRecord(
+      meteredItem.id,
+      {
+        quantity,
+        timestamp: timestamp || Math.floor(Date.now() / 1000),
+        action,
+      }
+    );
+    
+    logger.info(`Usage reported: ${quantity} for subscription item: ${meteredItem.id}`);
+    return usageRecord;
+  } catch (error) {
+    logger.error(`Failed to report usage: ${error.message}`);
+    throw error;
+  }
+};
+
+/**
+ * Get usage records for a metered subscription
+ * @param {string} subscriptionItemId - Stripe subscription item ID
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} - Stripe usage record summary
+ */
+const getUsageRecords = async (subscriptionItemId, options = {}) => {
+  ensureStripeConfigured();
+  
+  try {
+    const usageRecords = await stripe.subscriptionItems.listUsageRecordSummaries(
+      subscriptionItemId,
+      options
+    );
+    
+    return usageRecords;
+  } catch (error) {
+    logger.error(`Failed to get usage records: ${error.message}`);
+    throw error;
+  }
+};
+
+/**
  * Construct and verify a Stripe webhook event
  * @param {Buffer} payload - Raw request body
  * @param {string} signature - Stripe signature header
@@ -231,23 +331,84 @@ const constructWebhookEvent = (payload, signature) => {
 };
 
 /**
- * Get price ID based on billing interval
+ * Get price ID based on plan tier and billing interval
+ * @param {string} planTier - Plan tier (starter, professional, business)
  * @param {string} interval - 'month' or 'year'
  * @returns {string} - Stripe price ID
  */
-const getPriceId = (interval) => {
-  // Only monthly pricing is supported now
-  return env.STRIPE_MONTHLY_PRICE_ID;
+const getPriceId = (planTier, interval = 'month') => {
+  // Map plan tiers to environment variable price IDs
+  // These should be configured in environment variables
+  const priceEnvVar = `STRIPE_${planTier.toUpperCase()}_${interval.toUpperCase()}_PRICE_ID`;
+  const priceId = env[priceEnvVar];
+  
+  // Fallback to legacy price ID for backward compatibility
+  if (!priceId && planTier === PLAN_TIER.LEGACY) {
+    return env.STRIPE_MONTHLY_PRICE_ID;
+  }
+  
+  // Default to professional monthly if specific price not found
+  if (!priceId) {
+    return env.STRIPE_PROFESSIONAL_MONTH_PRICE_ID || env.STRIPE_MONTHLY_PRICE_ID;
+  }
+  
+  return priceId;
 };
 
 /**
- * Get plan price based on interval
+ * Get metered price ID for overage billing
+ * @returns {string} - Stripe metered price ID
+ */
+const getMeteredPriceId = () => {
+  return env.STRIPE_OVERAGE_METERED_PRICE_ID;
+};
+
+/**
+ * Get plan price based on tier and interval
+ * @param {string} planTier - Plan tier
  * @param {string} interval - 'month' or 'year'
  * @returns {number} - Price in cents
  */
-const getPlanPrice = (interval) => {
-  // Only monthly pricing is supported now
-  return PLAN_CONFIG.MONTHLY_PRICE;
+const getPlanPrice = (planTier, interval = 'month') => {
+  const config = PLAN_CONFIG[planTier] || PLAN_CONFIG[PLAN_TIER.PROFESSIONAL];
+  return interval === 'year' ? config.annualPrice : config.monthlyPrice;
+};
+
+/**
+ * Get all available plans with pricing
+ * @returns {Array} - Array of plan objects
+ */
+const getAvailablePlans = () => {
+  return [
+    {
+      id: PLAN_TIER.STARTER,
+      name: PLAN_CONFIG[PLAN_TIER.STARTER].name,
+      monthlyPrice: PLAN_CONFIG[PLAN_TIER.STARTER].monthlyPrice,
+      annualPrice: PLAN_CONFIG[PLAN_TIER.STARTER].annualPrice,
+      includedMinutes: PLAN_CONFIG[PLAN_TIER.STARTER].includedMinutes,
+      overageRate: PLAN_CONFIG[PLAN_TIER.STARTER].overageRate,
+      parallelCalls: PLAN_CONFIG[PLAN_TIER.STARTER].parallelCalls,
+    },
+    {
+      id: PLAN_TIER.PROFESSIONAL,
+      name: PLAN_CONFIG[PLAN_TIER.PROFESSIONAL].name,
+      monthlyPrice: PLAN_CONFIG[PLAN_TIER.PROFESSIONAL].monthlyPrice,
+      annualPrice: PLAN_CONFIG[PLAN_TIER.PROFESSIONAL].annualPrice,
+      includedMinutes: PLAN_CONFIG[PLAN_TIER.PROFESSIONAL].includedMinutes,
+      overageRate: PLAN_CONFIG[PLAN_TIER.PROFESSIONAL].overageRate,
+      parallelCalls: PLAN_CONFIG[PLAN_TIER.PROFESSIONAL].parallelCalls,
+      popular: true,
+    },
+    {
+      id: PLAN_TIER.BUSINESS,
+      name: PLAN_CONFIG[PLAN_TIER.BUSINESS].name,
+      monthlyPrice: PLAN_CONFIG[PLAN_TIER.BUSINESS].monthlyPrice,
+      annualPrice: PLAN_CONFIG[PLAN_TIER.BUSINESS].annualPrice,
+      includedMinutes: PLAN_CONFIG[PLAN_TIER.BUSINESS].includedMinutes,
+      overageRate: PLAN_CONFIG[PLAN_TIER.BUSINESS].overageRate,
+      parallelCalls: PLAN_CONFIG[PLAN_TIER.BUSINESS].parallelCalls,
+    },
+  ];
 };
 
 module.exports = {
@@ -256,9 +417,14 @@ module.exports = {
   createCheckoutSession,
   createPortalSession,
   getSubscription,
+  updateSubscription,
   cancelSubscription,
   resumeSubscription,
+  reportUsage,
+  getUsageRecords,
   constructWebhookEvent,
   getPriceId,
+  getMeteredPriceId,
   getPlanPrice,
+  getAvailablePlans,
 };

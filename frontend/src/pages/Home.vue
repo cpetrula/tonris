@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import Button from 'primevue/button'
-import Card from 'primevue/card'
 
 const demoPhoneNumber = '1-424-283-9238'
 const demoPhoneNumberFormatted = '1-424-283-9238'
@@ -29,13 +28,6 @@ const benefits = [
   }
 ]
 
-const pricing = {
-  monthly: {
-    price: 295,
-    period: 'month'
-  }
-}
-
 const employeeCostComparison = {
   employee: {
     hourlyWage: 15,
@@ -49,7 +41,7 @@ const employeeCostComparison = {
     }
   },
   critonAI: {
-    monthlyCost: 295,
+    monthlyCost: 149, // Professional plan price
     get annualCost() {
       return this.monthlyCost * 12
     }
@@ -189,7 +181,7 @@ const employeeCostComparison = {
       </div>
     </section>
 
-    <!-- Pricing Section -->
+    <!-- Pricing Section - Teaser -->
     <section class="py-16 md:py-20 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
@@ -197,62 +189,56 @@ const employeeCostComparison = {
             Simple, Transparent Pricing
           </h2>
           <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Get professional call handling at a fraction of the cost of hiring staff. Start with a 15-day free trial—no credit card required.
+            Professional call handling at a fraction of the cost of hiring staff. Plans starting at just $79/month.
           </p>
         </div>
 
-        <div class="max-w-md mx-auto mb-16">
-          <!-- Monthly Plan -->
-          <Card class="shadow-lg border-2 border-violet-500">
-            <template #content>
-              <div class="text-center p-6">
-                <div class="bg-violet-100 text-violet-700 inline-block px-4 py-1 rounded-full text-sm font-medium mb-4">
-                  15-Day Free Trial • No Credit Card Required
-                </div>
-                <h3 class="text-2xl font-semibold text-gray-900 mb-2">Monthly Plan</h3>
-                <div class="mb-6">
-                  <span class="text-5xl font-bold text-violet-600">${{ pricing.monthly.price }}</span>
-                  <span class="text-gray-500 text-xl">/{{ pricing.monthly.period }}</span>
-                </div>
-                <p class="text-gray-600 mb-6">
-                  Cancel anytime. No long-term contracts required.
-                </p>
-                <ul class="text-left space-y-3 mb-8">
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Unlimited calls</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>24/7 AI answering</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Appointment booking</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Call recordings & transcripts</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Email notifications</span>
-                  </li>
-                  <li class="flex items-center gap-2">
-                    <i class="pi pi-check text-green-500"></i>
-                    <span>Basic analytics</span>
-                  </li>
-                </ul>
-                <RouterLink to="/signup">
-                  <Button
-                    label="Start Free Trial"
-                    size="large"
-                    class="w-full"
-                  />
-                </RouterLink>
-              </div>
-            </template>
-          </Card>
+        <!-- Pricing Teaser Cards -->
+        <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
+          <div class="bg-white rounded-xl p-6 text-center border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Starter</h3>
+            <div class="mb-3">
+              <span class="text-3xl font-bold text-gray-900">$79</span>
+              <span class="text-gray-500">/mo</span>
+            </div>
+            <p class="text-sm text-gray-600">200 minutes included</p>
+          </div>
+          
+          <div class="bg-white rounded-xl p-6 text-center border-2 border-violet-500 relative">
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-violet-500 text-white text-xs px-3 py-1 rounded-full">
+              Most Popular
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Professional</h3>
+            <div class="mb-3">
+              <span class="text-3xl font-bold text-gray-900">$149</span>
+              <span class="text-gray-500">/mo</span>
+            </div>
+            <p class="text-sm text-gray-600">500 minutes included</p>
+          </div>
+          
+          <div class="bg-white rounded-xl p-6 text-center border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Business</h3>
+            <div class="mb-3">
+              <span class="text-3xl font-bold text-gray-900">$299</span>
+              <span class="text-gray-500">/mo</span>
+            </div>
+            <p class="text-sm text-gray-600">1,500 minutes included</p>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <RouterLink to="/pricing">
+            <Button
+              label="View Full Pricing & Features"
+              icon="pi pi-arrow-right"
+              icon-pos="right"
+              size="large"
+              class="px-8"
+            />
+          </RouterLink>
+          <p class="text-sm text-gray-500 mt-4">
+            15-day free trial • No credit card required • Cancel anytime
+          </p>
         </div>
 
         <!-- Cost Comparison Section -->

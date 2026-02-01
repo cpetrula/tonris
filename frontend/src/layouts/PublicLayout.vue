@@ -41,6 +41,12 @@ function closeMobileMenu() {
               How It Works
             </RouterLink>
             <RouterLink
+              to="/pricing"
+              class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
+            >
+              Pricing
+            </RouterLink>
+            <RouterLink
               to="/faq"
               class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
             >
@@ -94,6 +100,13 @@ function closeMobileMenu() {
             @click="closeMobileMenu"
           >
             How It Works
+          </RouterLink>
+          <RouterLink
+            to="/pricing"
+            class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+            @click="closeMobileMenu"
+          >
+            Pricing
           </RouterLink>
           <RouterLink
             to="/faq"
@@ -164,7 +177,7 @@ function closeMobileMenu() {
                 </RouterLink>
               </li>
               <li>
-                <RouterLink to="/#pricing" class="text-sm text-gray-500 hover:text-gray-700">
+                <RouterLink to="/pricing" class="text-sm text-gray-500 hover:text-gray-700">
                   Pricing
                 </RouterLink>
               </li>

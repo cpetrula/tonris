@@ -2,7 +2,7 @@
  * Billing Service
  * Handles all billing business logic
  */
-const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = require('./subscription.model');
+const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG, PLAN_TIER } = require('./subscription.model');
 const { Tenant, TENANT_STATUS } = require('../tenants/tenant.model');
 const stripeService = require('./stripe.service');
 const { AppError } = require('../../middleware/errorHandler');
@@ -27,9 +27,10 @@ const getSubscription = async (tenantId) => {
  * Get or create subscription record for a tenant
  * Creates with trial period by default
  * @param {string} tenantId - Tenant identifier
+ * @param {string} planTier - Initial plan tier (default: professional)
  * @returns {Promise<Subscription>} - Subscription model instance
  */
-const getOrCreateSubscription = async (tenantId) => {
+const getOrCreateSubscription = async (tenantId, planTier = PLAN_TIER.PROFESSIONAL) => {
   let subscription = await Subscription.findOne({ where: { tenantId } });
   
   if (!subscription) {
@@ -37,13 +38,19 @@ const getOrCreateSubscription = async (tenantId) => {
     const trialEnd = new Date(now);
     trialEnd.setDate(trialEnd.getDate() + PLAN_CONFIG.TRIAL_DAYS);
     
+    const planConfig = PLAN_CONFIG[planTier] || PLAN_CONFIG[PLAN_TIER.PROFESSIONAL];
+    
     subscription = await Subscription.create({
       tenantId,
       status: SUBSCRIPTION_STATUS.TRIALING,
+      planTier,
+      includedMinutes: PLAN_CONFIG.TRIAL_MINUTES, // Limited trial minutes
       trialStart: now,
       trialEnd: trialEnd,
+      currentPeriodStart: now,
+      currentPeriodEnd: trialEnd,
     });
-    logger.info(`Created new subscription with ${PLAN_CONFIG.TRIAL_DAYS}-day trial for tenant: ${tenantId}`);
+    logger.info(`Created new subscription with ${PLAN_CONFIG.TRIAL_DAYS}-day trial for tenant: ${tenantId}, plan: ${planTier}`);
   }
   
   return subscription;
@@ -91,12 +98,19 @@ const createStripeCustomer = async (tenantId) => {
 /**
  * Create a checkout session for a tenant
  * @param {string} tenantId - Tenant identifier
+ * @param {string} planTier - Plan tier (starter, professional, business)
  * @param {string} billingInterval - 'month' or 'year'
  * @param {string} successUrl - URL to redirect after successful payment
  * @param {string} cancelUrl - URL to redirect if payment is cancelled
  * @returns {Promise<Object>} - Checkout session data
  */
-const createCheckoutSession = async (tenantId, billingInterval, successUrl, cancelUrl) => {
+const createCheckoutSession = async (tenantId, planTier, billingInterval, successUrl, cancelUrl) => {
+  // Validate plan tier
+  if (!Object.values(PLAN_TIER).includes(planTier)) {
+    // Default to professional if invalid
+    planTier = PLAN_TIER.PROFESSIONAL;
+  }
+  
   // Validate billing interval
   if (!Object.values(BILLING_INTERVAL).includes(billingInterval)) {
     throw new AppError(
@@ -107,7 +121,7 @@ const createCheckoutSession = async (tenantId, billingInterval, successUrl, canc
   }
   
   // Ensure customer exists
-  const subscription = await getOrCreateSubscription(tenantId);
+  const subscription = await getOrCreateSubscription(tenantId, planTier);
   
   if (!subscription.stripeCustomerId) {
     // Create customer first
@@ -127,20 +141,21 @@ const createCheckoutSession = async (tenantId, billingInterval, successUrl, canc
   }
   
   // Check if already has active subscription
-  if (subscription.isActive()) {
+  if (subscription.isActive() && subscription.stripeSubscriptionId) {
     throw new AppError(
-      'Tenant already has an active subscription',
+      'Tenant already has an active subscription. Use the billing portal to change plans.',
       400,
       'SUBSCRIPTION_ALREADY_ACTIVE'
     );
   }
   
-  // Get price ID for the interval
-  const priceId = stripeService.getPriceId(billingInterval);
+  // Get price ID for the plan and interval
+  const priceId = stripeService.getPriceId(planTier, billingInterval);
+  const meteredPriceId = stripeService.getMeteredPriceId();
   
   if (!priceId) {
     throw new AppError(
-      'Stripe price not configured for this billing interval',
+      'Stripe price not configured for this plan',
       500,
       'PRICE_NOT_CONFIGURED'
     );
@@ -150,6 +165,8 @@ const createCheckoutSession = async (tenantId, billingInterval, successUrl, canc
   const session = await stripeService.createCheckoutSession({
     customerId: subscription.stripeCustomerId,
     priceId,
+    meteredPriceId,
+    planTier,
     tenantId,
     successUrl,
     cancelUrl,
@@ -213,11 +230,12 @@ const handleSubscriptionUpdate = async (stripeSubscription) => {
   }
   
   // Get or create subscription
-  const subscription = await getOrCreateSubscription(tenantId);
+  const planTier = stripeSubscription.metadata?.planTier || PLAN_TIER.PROFESSIONAL;
+  const subscription = await getOrCreateSubscription(tenantId, planTier);
   await subscription.updateFromStripe(stripeSubscription);
   await syncTenantStatus(subscription);
   
-  logger.info(`Subscription updated for tenant ${tenantId}: status=${stripeSubscription.status}`);
+  logger.info(`Subscription updated for tenant ${tenantId}: status=${stripeSubscription.status}, plan=${subscription.planTier}`);
   
   return subscription.toSafeObject();
 };
@@ -369,6 +387,59 @@ const checkSubscriptionStatus = async (tenantId) => {
   return subscription.toSafeObject();
 };
 
+/**
+ * Change subscription plan
+ * @param {string} tenantId - Tenant identifier
+ * @param {string} newPlanTier - New plan tier
+ * @param {string} billingInterval - Billing interval (month/year)
+ * @returns {Promise<Object>} - Updated subscription
+ */
+const changePlan = async (tenantId, newPlanTier, billingInterval) => {
+  const subscription = await Subscription.findOne({ where: { tenantId } });
+  
+  if (!subscription || !subscription.stripeSubscriptionId) {
+    throw new AppError(
+      'No active subscription found for this tenant',
+      404,
+      'NO_SUBSCRIPTION'
+    );
+  }
+  
+  // Get new price ID
+  const newPriceId = stripeService.getPriceId(newPlanTier, billingInterval);
+  
+  if (!newPriceId) {
+    throw new AppError(
+      'Invalid plan or price not configured',
+      400,
+      'INVALID_PLAN'
+    );
+  }
+  
+  // Update subscription in Stripe
+  const stripeSubscription = await stripeService.updateSubscription(
+    subscription.stripeSubscriptionId,
+    {
+      items: [
+        {
+          id: subscription.stripePriceId,
+          price: newPriceId,
+        },
+      ],
+      metadata: {
+        planTier: newPlanTier,
+      },
+    }
+  );
+  
+  // Update local record
+  await subscription.updateFromStripe(stripeSubscription);
+  
+  logger.info(`Plan changed for tenant ${tenantId}: ${subscription.planTier} -> ${newPlanTier}`);
+  
+  return subscription.toSafeObject();
+};
+
 module.exports = {
   getSubscription,
   getOrCreateSubscription,
@@ -382,4 +453,5 @@ module.exports = {
   hasActiveSubscription,
   cancelSubscription,
   checkSubscriptionStatus,
+  changePlan,
 };

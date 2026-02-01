@@ -4,16 +4,22 @@ import { loadStripe } from '@stripe/stripe-js'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import ProgressBar from 'primevue/progressbar'
 import api from '@/services/api'
-
-// Configuration constants
-const DEFAULT_MONTHLY_PRICE = 295 // $295.00 per month
 
 interface Subscription {
   id: string
   tenantId: string
   status: string
+  planTier: string
+  planName: string
   billingInterval: string | null
+  includedMinutes: number
+  currentPeriodMinutesUsed: number
+  remainingMinutes: number
+  usagePercentage: number
+  overageMinutes: number
+  overageRate: number
   currentPeriodStart: string | null
   currentPeriodEnd: string | null
   cancelAtPeriodEnd: boolean
@@ -23,15 +29,38 @@ interface Subscription {
   isActive: boolean
   isInactive: boolean
   hasAccess: boolean
+  hasUnlimitedMinutes: boolean
 }
 
 interface Plan {
   id: string
   name: string
-  price: number
-  priceFormatted: string
-  interval: string
-  intervalLabel: string
+  monthlyPrice: number
+  annualPrice: number
+  monthlyPriceFormatted: string
+  annualPriceFormatted: string
+  annualMonthlyPriceFormatted: string
+  includedMinutes: number
+  includedMinutesFormatted: string
+  overageRate: number
+  overageRateFormatted: string
+  parallelCalls: number
+  popular?: boolean
+}
+
+interface Usage {
+  planTier: string
+  planName: string
+  periodStart: string
+  periodEnd: string
+  includedMinutes: number | string
+  minutesUsed: number
+  remainingMinutes: number
+  usagePercentage: number
+  overageMinutes: number
+  overageRate: number
+  estimatedOverageCharge: number
+  hasUnlimitedMinutes: boolean
 }
 
 const loading = ref(false)
@@ -39,11 +68,10 @@ const error = ref('')
 const subscription = ref<Subscription | null>(null)
 const availablePlans = ref<Plan[]>([])
 const trialDays = ref(15)
+const trialMinutes = ref(100)
 const processingCheckout = ref(false)
-
-const hasActiveSubscription = computed(() => {
-  return subscription.value?.isActive || false
-})
+const usage = ref<Usage | null>(null)
+const loadingUsage = ref(false)
 
 const isTrialing = computed(() => {
   return subscription.value?.status === 'trialing'
@@ -71,9 +99,12 @@ const subscriptionStatusLabel = computed(() => {
   return statusLabels[status] || status
 })
 
-const subscriptionPrice = computed(() => {
-  if (!subscription.value || !availablePlans.value.length || !availablePlans.value[0]) return DEFAULT_MONTHLY_PRICE
-  return availablePlans.value[0].price / 100
+const usageProgressColor = computed(() => {
+  if (!subscription.value || subscription.value.hasUnlimitedMinutes) return 'bg-green-500'
+  const percentage = subscription.value.usagePercentage
+  if (percentage >= 100) return 'bg-red-500'
+  if (percentage >= 80) return 'bg-yellow-500'
+  return 'bg-green-500'
 })
 
 function formatDate(dateStr: string | null): string {
@@ -108,8 +139,9 @@ async function fetchSubscription() {
     
     if (response.data.success) {
       subscription.value = response.data.data.subscription
-      availablePlans.value = response.data.data.plans.monthly ? [response.data.data.plans.monthly] : []
+      availablePlans.value = response.data.data.plans || []
       trialDays.value = response.data.data.trialDays || 15
+      trialMinutes.value = response.data.data.trialMinutes || 100
     }
   } catch (err: unknown) {
     console.error('Failed to fetch subscription:', err)
@@ -121,6 +153,20 @@ async function fetchSubscription() {
     }
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchUsage() {
+  try {
+    loadingUsage.value = true
+    const response = await api.get('/api/billing/usage')
+    if (response.data.success) {
+      usage.value = response.data.data
+    }
+  } catch (err) {
+    console.error('Failed to fetch usage:', err)
+  } finally {
+    loadingUsage.value = false
   }
 }
 
@@ -147,12 +193,11 @@ async function openStripePortal() {
   }
 }
 
-async function startCheckout() {
+async function startCheckout(planTier: string = 'professional', billingInterval: string = 'month') {
   try {
     processingCheckout.value = true
     error.value = ''
     
-    // Validate Stripe publishable key is configured
     const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
     if (!stripeKey) {
       error.value = 'Stripe is not configured. Please contact support.'
@@ -164,7 +209,8 @@ async function startCheckout() {
     const cancelUrl = `${window.location.origin}/app/billing?cancelled=true`
     
     const response = await api.post('/api/billing/create-checkout-session', {
-      billingInterval: 'month',
+      planTier,
+      billingInterval,
       successUrl,
       cancelUrl
     })
@@ -178,7 +224,6 @@ async function startCheckout() {
         return
       }
       
-      // redirectToCheckout is a valid method - using type assertion for compatibility
       const result = await (stripe as any).redirectToCheckout({
         sessionId: response.data.data.sessionId
       })
@@ -203,11 +248,16 @@ async function startCheckout() {
 onMounted(async () => {
   await fetchSubscription()
   
+  // Fetch usage if subscribed
+  if (subscription.value?.isActive) {
+    await fetchUsage()
+  }
+  
   // Check for success/cancelled query params
   const urlParams = new URLSearchParams(window.location.search)
   if (urlParams.get('success') === 'true') {
-    // Refresh subscription data after successful payment
     await fetchSubscription()
+    await fetchUsage()
   } else if (urlParams.get('cancelled') === 'true') {
     error.value = 'Checkout was cancelled'
   }
@@ -224,7 +274,7 @@ onMounted(async () => {
     <!-- Header -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-gray-900">Billing & Subscription</h1>
-      <p class="text-gray-600 mt-1">Manage your subscription plan and payment methods</p>
+      <p class="text-gray-600 mt-1">Manage your subscription plan and track usage</p>
     </div>
 
     <Message v-if="error" severity="error" class="mb-6">{{ error }}</Message>
@@ -235,83 +285,84 @@ onMounted(async () => {
       <p class="text-gray-600 mt-4">Loading subscription information...</p>
     </div>
 
-    <!-- No Subscription / Inactive -->
+    <!-- No Subscription / Inactive - Show Plan Selection -->
     <div v-else-if="!subscription || isInactive">
-      <Card class="shadow-sm">
-        <template #title>Start Your Subscription</template>
+      <Card class="shadow-sm mb-6">
+        <template #title>Choose Your Plan</template>
         <template #content>
-          <div class="text-center py-8">
-            <i class="pi pi-credit-card text-6xl text-gray-300 mb-4"></i>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">No Active Subscription</h3>
-            <p class="text-gray-600 mb-6">
-              {{ isInactive ? 'Your trial has ended. Subscribe now to continue using CRITON.AI.' : 'Subscribe to get started with CRITON.AI Assistant.' }}
+          <div class="text-center mb-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">
+              {{ isInactive ? 'Your trial has ended' : 'Start your subscription' }}
+            </h3>
+            <p class="text-gray-600">
+              {{ isInactive ? 'Subscribe now to continue using CRITON.AI.' : 'Choose the plan that fits your business needs.' }}
             </p>
-            
-            <div class="max-w-md mx-auto">
-              <div class="border-2 rounded-xl p-6 mb-6">
-                <h3 class="text-xl font-bold text-gray-900 mb-1">Monthly Plan</h3>
-                <p class="text-gray-500 text-sm mb-4">Cancel anytime. No long-term contracts required.</p>
-
-                <div class="mb-4">
-                  <span class="text-3xl font-bold text-gray-900">${{ subscriptionPrice }}</span>
-                  <span class="text-gray-500">/month</span>
-                </div>
-
-                <ul class="space-y-2 mb-6 text-left">
-                  <li class="flex items-start text-sm text-gray-600">
-                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                    Unlimited calls
-                  </li>
-                  <li class="flex items-start text-sm text-gray-600">
-                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                    24/7 AI answering
-                  </li>
-                  <li class="flex items-start text-sm text-gray-600">
-                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                    Appointment booking
-                  </li>
-                  <li class="flex items-start text-sm text-gray-600">
-                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                    Call recordings & transcripts
-                  </li>
-                  <li class="flex items-start text-sm text-gray-600">
-                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                    Email notifications
-                  </li>
-                  <li class="flex items-start text-sm text-gray-600">
-                    <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                    Basic analytics
-                  </li>
-                </ul>
-
-                <Button
-                  label="Subscribe Now"
-                  icon="pi pi-credit-card"
-                  class="w-full"
-                  :loading="processingCheckout"
-                  @click="startCheckout"
-                />
+          </div>
+          
+          <div class="grid md:grid-cols-3 gap-6">
+            <div 
+              v-for="plan in availablePlans" 
+              :key="plan.id"
+              :class="[
+                'border-2 rounded-xl p-6 relative transition-all hover:shadow-lg',
+                plan.popular ? 'border-violet-500' : 'border-gray-200'
+              ]"
+            >
+              <div v-if="plan.popular" class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-violet-500 text-white text-xs px-3 py-1 rounded-full">
+                Most Popular
               </div>
+              
+              <h3 class="text-xl font-bold text-gray-900 mb-1">{{ plan.name }}</h3>
+              <div class="mb-4">
+                <span class="text-3xl font-bold text-gray-900">{{ plan.monthlyPriceFormatted }}</span>
+                <span class="text-gray-500">/month</span>
+              </div>
+              
+              <ul class="space-y-2 mb-6 text-sm">
+                <li class="flex items-center text-gray-600">
+                  <i class="pi pi-check text-green-500 mr-2"></i>
+                  {{ plan.includedMinutesFormatted }} minutes included
+                </li>
+                <li class="flex items-center text-gray-600">
+                  <i class="pi pi-check text-green-500 mr-2"></i>
+                  {{ plan.overageRateFormatted }}/min overage
+                </li>
+                <li class="flex items-center text-gray-600">
+                  <i class="pi pi-check text-green-500 mr-2"></i>
+                  {{ plan.parallelCalls === -1 ? 'Unlimited' : plan.parallelCalls }} parallel calls
+                </li>
+              </ul>
+              
+              <Button
+                :label="plan.popular ? 'Get Started' : 'Select'"
+                :class="plan.popular ? 'w-full' : 'w-full p-button-outlined'"
+                :loading="processingCheckout"
+                @click="startCheckout(plan.id, 'month')"
+              />
             </div>
           </div>
+          
+          <p class="text-center text-sm text-gray-500 mt-6">
+            All plans include a {{ trialDays }}-day free trial with {{ trialMinutes }} minutes. No credit card required to start.
+          </p>
         </template>
       </Card>
     </div>
 
     <!-- Active/Trial Subscription -->
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Current Subscription -->
-      <Card class="shadow-sm lg:col-span-2">
+    <div v-else class="space-y-6">
+      <!-- Usage Overview Card -->
+      <Card class="shadow-sm">
         <template #title>
           <div class="flex items-center justify-between">
-            <span>Current Subscription</span>
+            <span>Usage This Period</span>
             <span :class="['px-3 py-1 rounded-full text-sm font-medium', getStatusColor(subscription.status)]">
               {{ subscriptionStatusLabel }}
             </span>
           </div>
         </template>
         <template #content>
-          <!-- Trial Information -->
+          <!-- Trial Info -->
           <div v-if="isTrialing" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-start">
               <i class="pi pi-info-circle text-blue-600 text-xl mr-3 mt-0.5"></i>
@@ -319,118 +370,130 @@ onMounted(async () => {
                 <h4 class="font-medium text-blue-900 mb-1">Free Trial Active</h4>
                 <p class="text-sm text-blue-700">
                   Your {{ trialDays }}-day free trial ends on {{ formatDate(subscription.trialEnd) }}.
-                  Add a payment method to continue your service after the trial.
+                  You have {{ trialMinutes }} minutes included during the trial.
                 </p>
               </div>
             </div>
           </div>
-
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <div>
-              <h3 class="text-2xl font-bold text-white">Professional Plan</h3>
-              <p class="text-gray-400">
-                ${{ subscriptionPrice }}/month
-              </p>
+          
+          <!-- Usage Meter -->
+          <div v-if="!subscription.hasUnlimitedMinutes" class="mb-6">
+            <div class="flex justify-between mb-2">
+              <span class="text-gray-600">Minutes Used</span>
+              <span class="font-medium">
+                {{ subscription.currentPeriodMinutesUsed }} / {{ subscription.includedMinutes }}
+                <span class="text-gray-500">({{ subscription.usagePercentage }}%)</span>
+              </span>
             </div>
-            <div v-if="subscription.currentPeriodEnd && hasActiveSubscription" class="mt-4 md:mt-0 text-right">
-              <p class="text-sm text-gray-500">
-                {{ subscription.cancelAtPeriodEnd ? 'Ends on' : 'Next billing date' }}
-              </p>
-              <p class="font-medium text-gray-900">{{ formatDate(subscription.currentPeriodEnd) }}</p>
-            </div>
-          </div>
-
-          <div class="border-t border-gray-200 pt-4">
-            <h4 class="font-medium text-gray-900 mb-3">Plan Features</h4>
-            <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <li class="flex items-center text-gray-400">
-                <i class="pi pi-check text-green-500 mr-2"></i>
-                Unlimited calls
-              </li>
-              <li class="flex items-center text-gray-400">
-                <i class="pi pi-check text-green-500 mr-2"></i>
-                24/7 AI answering
-              </li>
-              <li class="flex items-center text-gray-400">
-                <i class="pi pi-check text-green-500 mr-2"></i>
-                Appointment booking
-              </li>
-              <li class="flex items-center text-gray-400">
-                <i class="pi pi-check text-green-500 mr-2"></i>
-                Call recordings & transcripts
-              </li>
-              <li class="flex items-center text-gray-400">
-                <i class="pi pi-check text-green-500 mr-2"></i>
-                Email notifications
-              </li>
-              <li class="flex items-center text-gray-400">
-                <i class="pi pi-check text-green-500 mr-2"></i>
-                Basic analytics
-              </li>
-            </ul>
-          </div>
-
-          <div class="mt-6 flex gap-3">
-            <Button
-              label="Manage in Stripe"
-              icon="pi pi-external-link"
-              :loading="processingCheckout"
-              @click="openStripePortal"
+            <ProgressBar 
+              :value="Math.min(subscription.usagePercentage, 100)" 
+              :showValue="false"
+              :class="usageProgressColor"
+              style="height: 10px"
             />
+            <div class="flex justify-between mt-2 text-sm">
+              <span class="text-gray-500">
+                {{ subscription.remainingMinutes }} minutes remaining
+              </span>
+              <span v-if="subscription.overageMinutes > 0" class="text-orange-600">
+                {{ subscription.overageMinutes }} overage minutes @ ${{ (subscription.overageRate / 100).toFixed(2) }}/min
+              </span>
+            </div>
+          </div>
+          
+          <!-- Unlimited indicator -->
+          <div v-else class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-center">
+              <i class="pi pi-check-circle text-green-600 text-xl mr-3"></i>
+              <div>
+                <h4 class="font-medium text-green-900">Unlimited Minutes</h4>
+                <p class="text-sm text-green-700">
+                  You have unlimited call minutes on your current plan.
+                  Used this period: {{ subscription.currentPeriodMinutesUsed }} minutes
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Period Info -->
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-gray-500">Current Period</span>
+              <p class="font-medium">{{ formatDate(subscription.currentPeriodStart) }} - {{ formatDate(subscription.currentPeriodEnd) }}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-gray-500">Plan</span>
+              <p class="font-medium">{{ subscription.planName }} ({{ subscription.billingInterval === 'year' ? 'Annual' : 'Monthly' }})</p>
+            </div>
           </div>
         </template>
       </Card>
 
-      <!-- Payment Method -->
+      <!-- Subscription Details Card -->
       <Card class="shadow-sm">
-        <template #title>Payment Method</template>
+        <template #title>Subscription Details</template>
         <template #content>
-          <div v-if="isTrialing" class="text-center py-4">
-            <i class="pi pi-credit-card text-4xl text-gray-300 mb-3"></i>
-            <p class="text-sm text-gray-300 mb-4">
-              No payment method on file. Add one before your trial ends.
-            </p>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <h4 class="font-medium text-gray-900 mb-3">Current Plan: {{ subscription.planName }}</h4>
+              <ul class="space-y-2 text-sm text-gray-600">
+                <li class="flex items-center">
+                  <i class="pi pi-check text-green-500 mr-2"></i>
+                  {{ subscription.hasUnlimitedMinutes ? 'Unlimited' : subscription.includedMinutes }} minutes/month
+                </li>
+                <li class="flex items-center">
+                  <i class="pi pi-check text-green-500 mr-2"></i>
+                  24/7 AI phone answering
+                </li>
+                <li class="flex items-center">
+                  <i class="pi pi-check text-green-500 mr-2"></i>
+                  Appointment scheduling
+                </li>
+                <li class="flex items-center">
+                  <i class="pi pi-check text-green-500 mr-2"></i>
+                  Call recordings & transcripts
+                </li>
+              </ul>
+            </div>
+            
+            <div class="text-right">
+              <div v-if="subscription.cancelAtPeriodEnd" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-left">
+                <p class="text-sm text-yellow-700">
+                  <i class="pi pi-exclamation-triangle mr-1"></i>
+                  Your subscription will end on {{ formatDate(subscription.currentPeriodEnd) }}
+                </p>
+              </div>
+              
+              <Button
+                label="Manage Subscription"
+                icon="pi pi-external-link"
+                :loading="processingCheckout"
+                @click="openStripePortal"
+              />
+              <p class="text-xs text-gray-500 mt-2">
+                Change plan, update payment, or cancel
+              </p>
+            </div>
           </div>
-          <div v-else-if="hasActiveSubscription" class="text-center py-4">
-            <i class="pi pi-credit-card text-4xl text-green-500 mb-3"></i>
-            <p class="text-sm text-gray-300 mb-4">
-              Payment method is on file and managed through Stripe.
-            </p>
-          </div>
-          <div v-else class="text-center py-4 text-gray-300">
-            No payment method on file
-          </div>
-          <Button
-            label="Manage Payment Method"
-            icon="pi pi-credit-card"
-            outlined
-            class="w-full"
-            :loading="processingCheckout"
-            @click="openStripePortal"
-          />
         </template>
       </Card>
-    </div>
 
-    <!-- Billing History Card -->
-    <Card v-if="subscription && !isInactive" class="shadow-sm mt-6">
-      <template #title>
-        <div class="flex items-center justify-between">
-          <span>Billing History</span>
-          <Button
-            label="View All in Stripe"
-            text
-            size="small"
-            :loading="processingCheckout"
-            @click="openStripePortal"
-          />
-        </div>
-      </template>
-      <template #content>
-        <div class="text-center py-8 text-gray-500">
-          View your complete billing history in the Stripe customer portal.
-        </div>
-      </template>
-    </Card>
+      <!-- Overage Warning -->
+      <Message v-if="subscription.overageMinutes > 0" severity="warn">
+        <strong>Overage Alert:</strong> You've used {{ subscription.overageMinutes }} minutes beyond your included amount.
+        Estimated overage charge: ${{ ((subscription.overageMinutes * subscription.overageRate) / 100).toFixed(2) }}.
+        Consider upgrading to a higher plan for more included minutes at a lower overage rate.
+      </Message>
+    </div>
   </div>
 </template>
+
+<style scoped>
+:deep(.p-progressbar) {
+  border-radius: 9999px;
+}
+:deep(.p-progressbar-value) {
+  border-radius: 9999px;
+}
+</style>
+

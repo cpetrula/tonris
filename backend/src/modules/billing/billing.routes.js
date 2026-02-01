@@ -64,4 +64,13 @@ router.post('/portal-session', strictLimiter, authMiddleware, billingController.
 // POST /api/billing/cancel - Cancel subscription
 router.post('/cancel', strictLimiter, authMiddleware, billingController.cancelSubscription);
 
+// POST /api/billing/change-plan - Change subscription plan
+router.post('/change-plan', strictLimiter, authMiddleware, billingController.changePlan);
+
+// GET /api/billing/usage - Get current period usage
+router.get('/usage', standardLimiter, authMiddleware, billingController.getCurrentUsage);
+
+// GET /api/billing/usage/history - Get usage history
+router.get('/usage/history', standardLimiter, authMiddleware, billingController.getUsageHistory);
+
 module.exports = router;

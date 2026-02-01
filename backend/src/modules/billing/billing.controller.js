@@ -3,8 +3,10 @@
  * Handles HTTP requests for billing endpoints
  */
 const billingService = require('./billing.service');
+const usageService = require('./usage.service');
 const webhookHandler = require('./webhook.handler');
-const { BILLING_INTERVAL, PLAN_CONFIG } = require('./subscription.model');
+const stripeService = require('./stripe.service');
+const { BILLING_INTERVAL, PLAN_CONFIG, PLAN_TIER } = require('./subscription.model');
 const { getTenantUUID } = require('../../utils/tenant');
 
 /**
@@ -24,14 +26,9 @@ const getSubscription = async (req, res, next) => {
       success: true,
       data: {
         subscription,
-        plans: {
-          monthly: {
-            price: PLAN_CONFIG.MONTHLY_PRICE,
-            interval: BILLING_INTERVAL.MONTH,
-            priceFormatted: `$${(PLAN_CONFIG.MONTHLY_PRICE / 100).toFixed(2)}`,
-          },
-        },
+        plans: stripeService.getAvailablePlans(),
         trialDays: PLAN_CONFIG.TRIAL_DAYS,
+        trialMinutes: PLAN_CONFIG.TRIAL_MINUTES,
       },
     });
   } catch (error) {
@@ -45,16 +42,11 @@ const getSubscription = async (req, res, next) => {
  */
 const createCheckoutSession = async (req, res, next) => {
   try {
-    const { billingInterval, successUrl, cancelUrl } = req.body;
+    const { planTier, billingInterval, successUrl, cancelUrl } = req.body;
     
-    // Validate required fields
-    if (!billingInterval) {
-      return res.status(400).json({
-        success: false,
-        error: 'Billing interval is required',
-        code: 'VALIDATION_ERROR',
-      });
-    }
+    // Default to professional plan and monthly billing
+    const tier = planTier || PLAN_TIER.PROFESSIONAL;
+    const interval = billingInterval || BILLING_INTERVAL.MONTH;
     
     if (!successUrl || !cancelUrl) {
       return res.status(400).json({
@@ -67,7 +59,8 @@ const createCheckoutSession = async (req, res, next) => {
     const tenantUUID = await getTenantUUID(req.tenantId);
     const session = await billingService.createCheckoutSession(
       tenantUUID,
-      billingInterval,
+      tier,
+      interval,
       successUrl,
       cancelUrl
     );
@@ -139,6 +132,39 @@ const cancelSubscription = async (req, res, next) => {
 };
 
 /**
+ * POST /api/billing/change-plan
+ * Change subscription plan
+ */
+const changePlan = async (req, res, next) => {
+  try {
+    const { planTier, billingInterval } = req.body;
+    
+    if (!planTier || !Object.values(PLAN_TIER).includes(planTier)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Valid plan tier is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+    
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const subscription = await billingService.changePlan(
+      tenantUUID,
+      planTier,
+      billingInterval || BILLING_INTERVAL.MONTH
+    );
+    
+    res.status(200).json({
+      success: true,
+      data: { subscription },
+      message: `Plan changed to ${PLAN_CONFIG[planTier].name}`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * POST /api/webhooks/stripe
  * Handle Stripe webhook events
  * Note: This endpoint uses raw body parser
@@ -180,22 +206,60 @@ const handleStripeWebhook = async (req, res, next) => {
  * Get available subscription plans
  */
 const getPlans = async (req, res) => {
+  const plans = stripeService.getAvailablePlans();
+  
   res.status(200).json({
     success: true,
     data: {
-      plans: [
-        {
-          id: 'monthly',
-          name: 'Monthly Plan',
-          price: PLAN_CONFIG.MONTHLY_PRICE,
-          priceFormatted: `$${(PLAN_CONFIG.MONTHLY_PRICE / 100).toFixed(2)}`,
-          interval: BILLING_INTERVAL.MONTH,
-          intervalLabel: 'per month',
-        },
-      ],
+      plans: plans.map(plan => ({
+        ...plan,
+        monthlyPriceFormatted: `$${(plan.monthlyPrice / 100).toFixed(2)}`,
+        annualPriceFormatted: `$${(plan.annualPrice / 100).toFixed(2)}`,
+        annualMonthlyPriceFormatted: `$${((plan.annualPrice / 12) / 100).toFixed(2)}`,
+        overageRateFormatted: `$${(plan.overageRate / 100).toFixed(2)}`,
+        includedMinutesFormatted: plan.includedMinutes === -1 ? 'Unlimited' : plan.includedMinutes,
+      })),
       trialDays: PLAN_CONFIG.TRIAL_DAYS,
+      trialMinutes: PLAN_CONFIG.TRIAL_MINUTES,
     },
   });
+};
+
+/**
+ * GET /api/billing/usage
+ * Get current period usage for the tenant
+ */
+const getCurrentUsage = async (req, res, next) => {
+  try {
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const usage = await usageService.getCurrentUsage(tenantUUID);
+    
+    res.status(200).json({
+      success: true,
+      data: usage,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/billing/usage/history
+ * Get usage history for the tenant
+ */
+const getUsageHistory = async (req, res, next) => {
+  try {
+    const periods = parseInt(req.query.periods, 10) || 6;
+    const tenantUUID = await getTenantUUID(req.tenantId);
+    const history = await usageService.getUsageHistory(tenantUUID, periods);
+    
+    res.status(200).json({
+      success: true,
+      data: { history },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = {
@@ -203,6 +267,9 @@ module.exports = {
   createCheckoutSession,
   createPortalSession,
   cancelSubscription,
+  changePlan,
   handleStripeWebhook,
   getPlans,
+  getCurrentUsage,
+  getUsageHistory,
 };

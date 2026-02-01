@@ -1527,6 +1527,39 @@ const handleConversationEndWebhook = async (req, res, next) => {
       transcriptionLength: callLog.transcription?.length || 0
     });
     
+    // Record usage for billing (new hybrid pricing model)
+    if (callLog.duration && callLog.duration > 0 && callLog.tenantId) {
+      try {
+        const { recordCallUsage } = require('../billing/usage.service');
+        const usageResult = await recordCallUsage({
+          tenantId: callLog.tenantId,
+          durationSeconds: callLog.duration,
+          callLogId: callLog.id,
+          metadata: {
+            conversationId: conversation_id,
+            callSid,
+            callSuccessful: call_successful,
+            endReason: end_reason,
+          },
+        });
+        
+        if (usageResult) {
+          logger.info(`Recorded ${Math.ceil(callLog.duration / 60)} minutes usage for tenant ${callLog.tenantId}`, {
+            totalMinutes: usageResult.currentUsage.totalMinutes,
+            remainingMinutes: usageResult.currentUsage.remainingMinutes,
+            usagePercentage: usageResult.currentUsage.usagePercentage,
+          });
+        }
+      } catch (usageError) {
+        // Log but don't fail the webhook - usage recording is secondary
+        logger.error(`Failed to record call usage: ${usageError.message}`, {
+          tenantId: callLog.tenantId,
+          callLogId: callLog.id,
+          duration: callLog.duration,
+        });
+      }
+    }
+    
     res.status(200).json({
       success: true,
       message: 'Call log updated successfully',
