@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
+import { analytics } from '@/plugins/mixpanel'
 
 export type UserRole = 'superuser' | 'admin' | 'manager' | 'staff'
 
@@ -77,6 +78,15 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = userData
       localStorage.setItem('token', tokens.accessToken)
 
+      // Identify user in Mixpanel
+      analytics.identify(userData.id, {
+        $email: userData.email,
+        $first_name: userData.firstName,
+        $last_name: userData.lastName,
+        role: userData.role
+      })
+      analytics.track('Login', { method: 'email' })
+
       return true
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -103,6 +113,15 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = userData
       localStorage.setItem('token', tokens.accessToken)
 
+      // Identify user in Mixpanel
+      analytics.identify(userData.id, {
+        $email: userData.email,
+        $first_name: userData.firstName,
+        $last_name: userData.lastName,
+        role: userData.role
+      })
+      analytics.track('Sign Up', { method: 'email' })
+
       return true
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -118,6 +137,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout(): Promise<void> {
+    analytics.track('Logout')
+    analytics.reset()
     token.value = null
     user.value = null
     localStorage.removeItem('token')

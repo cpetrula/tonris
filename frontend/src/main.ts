@@ -5,6 +5,7 @@ import Aura from '@primevue/themes/aura'
 
 import App from './App.vue'
 import router from './router'
+import { mixpanelPlugin } from './plugins/mixpanel'
 
 import './style.css'
 
@@ -27,6 +28,9 @@ app.use(createPinia())
 
 // Vue Router
 app.use(router)
+
+// Mixpanel Analytics (auto-tracks page views)
+app.use(mixpanelPlugin, { router })
 
 // PrimeVue
 app.use(PrimeVue, {
