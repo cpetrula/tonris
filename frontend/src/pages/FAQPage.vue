@@ -50,7 +50,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Can the AI book appointments?',
-        answer: 'Absolutely! The AI integrates with Google Calendar, Outlook, and other popular calendar apps. When a customer requests an appointment, the AI checks your availability in real-time and books directly into your calendar.'
+        answer: 'Absolutely! When a customer requests an appointment, the AI checks your availability in real-time and books directly into your schedule. You can manage all appointments from your CRITON.AI dashboard.'
       },
       {
         question: 'What happens if a caller has a complex question?',
@@ -106,7 +106,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Can I integrate CRITON.AI with my CRM or other tools?',
-        answer: 'We integrate with Google Calendar and can send notifications via email or SMS.'
+        answer: 'We can send notifications via email or SMS when appointments are booked or messages are received. More integrations are coming soon.'
       }
     ]
   },

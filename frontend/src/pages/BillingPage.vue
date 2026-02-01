@@ -272,7 +272,7 @@ onMounted(async () => {
                   </li>
                   <li class="flex items-start text-sm text-gray-600">
                     <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
-                    Calendar integration
+                    Call recordings & transcripts
                   </li>
                   <li class="flex items-start text-sm text-gray-600">
                     <i class="pi pi-check text-green-500 mr-2 mt-0.5"></i>
@@ -357,7 +357,7 @@ onMounted(async () => {
               </li>
               <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>
-                Calendar integration
+                Call recordings & transcripts
               </li>
               <li class="flex items-center text-gray-400">
                 <i class="pi pi-check text-green-500 mr-2"></i>

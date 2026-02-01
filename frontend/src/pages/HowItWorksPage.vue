@@ -20,7 +20,7 @@ const steps = [
   {
     number: 3,
     title: 'AI Handles Everything',
-    description: 'Our AI assistant answers calls professionally, provides information about your services, and books appointments directly into your calendar.',
+    description: 'Our AI assistant answers calls professionally, provides information about your services, and books appointments directly into your schedule.',
     icon: 'pi pi-bolt',
     color: 'bg-fuchsia-500'
   },
@@ -46,7 +46,7 @@ const features = [
   },
   {
     title: 'Smart Appointment Scheduling',
-    description: 'Syncs with Google Calendar, Outlook, and other popular calendar apps in real-time.',
+    description: 'Manage all your bookings from one dashboard. Get notified instantly when appointments are made.',
     icon: 'pi pi-calendar'
   },
   {
@@ -234,7 +234,7 @@ const demoPhoneNumber = '1-800-CRITON-1'
                 <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i class="pi pi-check text-green-600 text-sm"></i>
                 </div>
-                <span class="text-gray-700">Syncs with Google Calendar and Outlook</span>
+                <span class="text-gray-700">Manage appointments from your dashboard</span>
               </li>
               <li class="flex items-start gap-3">
                 <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -251,23 +251,23 @@ const demoPhoneNumber = '1-800-CRITON-1'
             </ul>
           </div>
           <div class="bg-white rounded-2xl shadow-xl p-8">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Popular Integrations</h3>
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Notifications & Alerts</h3>
             <div class="grid grid-cols-2 gap-4">
-              <div class="p-4 bg-gray-50 rounded-lg text-center">
-                <i class="pi pi-google text-3xl text-gray-700 mb-2 block"></i>
-                <span class="text-sm text-gray-600">Google Calendar</span>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-lg text-center">
-                <i class="pi pi-microsoft text-3xl text-gray-700 mb-2 block"></i>
-                <span class="text-sm text-gray-600">Outlook</span>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-lg text-center">
-                <i class="pi pi-slack text-3xl text-gray-700 mb-2 block"></i>
-                <span class="text-sm text-gray-600">Slack</span>
-              </div>
               <div class="p-4 bg-gray-50 rounded-lg text-center">
                 <i class="pi pi-envelope text-3xl text-gray-700 mb-2 block"></i>
                 <span class="text-sm text-gray-600">Email</span>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-lg text-center">
+                <i class="pi pi-mobile text-3xl text-gray-700 mb-2 block"></i>
+                <span class="text-sm text-gray-600">SMS</span>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-lg text-center">
+                <i class="pi pi-bell text-3xl text-gray-700 mb-2 block"></i>
+                <span class="text-sm text-gray-600">Push Notifications</span>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-lg text-center">
+                <i class="pi pi-file text-3xl text-gray-700 mb-2 block"></i>
+                <span class="text-sm text-gray-600">Call Transcripts</span>
               </div>
             </div>
           </div>

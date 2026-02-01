@@ -171,7 +171,7 @@ const employeeCostComparison = {
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">Smart Scheduling</h3>
             <p class="text-gray-600">
-              Callers book appointments directly. Syncs with your calendar in real-time.
+              Callers book appointments directly. Manage everything from your dashboard.
             </p>
           </div>
 
@@ -232,7 +232,7 @@ const employeeCostComparison = {
                   </li>
                   <li class="flex items-center gap-2">
                     <i class="pi pi-check text-green-500"></i>
-                    <span>Calendar integration</span>
+                    <span>Call recordings & transcripts</span>
                   </li>
                   <li class="flex items-center gap-2">
                     <i class="pi pi-check text-green-500"></i>
