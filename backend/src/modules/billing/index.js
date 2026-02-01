@@ -3,6 +3,7 @@
  * Exports all billing-related components
  */
 const billingRoutes = require('./billing.routes');
+const billingController = require('./billing.controller');
 const billingService = require('./billing.service');
 const stripeService = require('./stripe.service');
 const usageService = require('./usage.service');
@@ -12,6 +13,7 @@ const { UsageRecord, USAGE_TYPE } = require('./usageRecord.model');
 
 module.exports = {
   billingRoutes,
+  billingController,
   billingService,
   stripeService,
   usageService,
