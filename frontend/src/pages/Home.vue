@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import Button from 'primevue/button'
+import QrcodeVue from 'qrcode.vue'
 
 const demoPhoneNumber = '1-424-283-9238'
 const demoPhoneNumberFormatted = '1-424-283-9238'
+const demoPhoneTelLink = 'tel:+14242839238'
 
 const benefits = [
   {
@@ -121,6 +123,17 @@ const employeeCostComparison = {
                 <span class="text-3xl md:text-4xl font-bold tracking-wide">{{ demoPhoneNumber }}</span>
                 <!-- <span class="text-sm text-gray-500 block mt-1">({{ demoPhoneNumberFormatted }})</span> -->
               </a>
+
+              <!-- QR Code -->
+              <div class="bg-white rounded-xl p-4 inline-block mb-4">
+                <QrcodeVue 
+                  :value="demoPhoneTelLink" 
+                  :size="120"
+                  level="M"
+                  render-as="svg"
+                />
+                <p class="text-xs text-gray-500 mt-2">Scan to call</p>
+              </div>
               
               <p class="text-sm text-violet-200">
                 <i class="pi pi-info-circle mr-1"></i>
