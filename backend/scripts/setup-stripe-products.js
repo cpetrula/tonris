@@ -34,6 +34,16 @@ if (!STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
+// Shared features across all plans (only minutes and overage differ)
+const SHARED_FEATURES = [
+  '24/7 AI phone answering',
+  'Appointment scheduling',
+  'Call recordings & transcripts',
+  'Email & SMS notifications',
+  'Analytics & reporting',
+  'Custom AI voice selection',
+];
+
 // Plan configurations (prices in cents)
 const PLANS = {
   starter: {
@@ -43,15 +53,7 @@ const PLANS = {
     annualPrice: 80400, // $804/year ($67/mo)
     includedMinutes: 200,
     overageRate: 15, // $0.15/min
-    features: [
-      '200 minutes included/month',
-      '24/7 AI phone answering',
-      'Appointment scheduling',
-      'Call recordings & transcripts',
-      'Email notifications',
-      'Basic analytics',
-      '2 parallel calls',
-    ],
+    features: ['200 minutes included/month', '$0.15/min overage', ...SHARED_FEATURES],
   },
   professional: {
     name: 'Professional',
@@ -60,17 +62,7 @@ const PLANS = {
     annualPrice: 152400, // $1,524/year ($127/mo)
     includedMinutes: 500,
     overageRate: 12, // $0.12/min
-    features: [
-      '500 minutes included/month',
-      '24/7 AI phone answering',
-      'Appointment scheduling',
-      'Call recordings & transcripts',
-      'Email & SMS notifications',
-      'Advanced analytics & reporting',
-      '5 parallel calls',
-      'CRM integrations (Zapier)',
-      'Custom AI voice selection',
-    ],
+    features: ['500 minutes included/month', '$0.12/min overage', ...SHARED_FEATURES],
   },
   business: {
     name: 'Business',
@@ -79,20 +71,7 @@ const PLANS = {
     annualPrice: 304800, // $3,048/year ($254/mo)
     includedMinutes: 1500,
     overageRate: 10, // $0.10/min
-    features: [
-      '1,500 minutes included/month',
-      '24/7 AI phone answering',
-      'Appointment scheduling',
-      'Call recordings & transcripts',
-      'Email & SMS notifications',
-      'Advanced analytics & reporting',
-      'Unlimited parallel calls',
-      'CRM integrations (Zapier)',
-      'Custom AI voice selection',
-      'Priority support',
-      'Dedicated account manager',
-      'Custom integrations',
-    ],
+    features: ['1,500 minutes included/month', '$0.10/min overage', ...SHARED_FEATURES],
   },
 };
 

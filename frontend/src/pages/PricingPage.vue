@@ -6,6 +6,16 @@ import ToggleSwitch from 'primevue/toggleswitch'
 
 const isAnnual = ref(false)
 
+// All plans have the same features - only minutes and overage rate differ
+const sharedFeatures = [
+  '24/7 AI phone answering',
+  'Appointment scheduling',
+  'Call recordings & transcripts',
+  'Email & SMS notifications',
+  'Analytics & reporting',
+  'Custom AI voice selection',
+]
+
 const plans = [
   {
     name: 'Starter',
@@ -16,18 +26,10 @@ const plans = [
     overageRate: 0.15,
     features: [
       '200 minutes included/month',
-      '24/7 AI phone answering',
-      'Appointment scheduling',
-      'Call recordings & transcripts',
-      'Email notifications',
-      'Basic analytics',
-      '2 parallel calls',
+      '$0.15/min overage',
+      ...sharedFeatures,
     ],
-    notIncluded: [
-      'CRM integrations',
-      'Advanced analytics',
-      'Priority support',
-    ],
+    notIncluded: [],
     cta: 'Start Free Trial',
     popular: false,
   },
@@ -40,18 +42,10 @@ const plans = [
     overageRate: 0.12,
     features: [
       '500 minutes included/month',
-      '24/7 AI phone answering',
-      'Appointment scheduling',
-      'Call recordings & transcripts',
-      'Email & SMS notifications',
-      'Advanced analytics & reporting',
-      '5 parallel calls',
-      'CRM integrations (Zapier)',
-      'Custom AI voice selection',
+      '$0.12/min overage',
+      ...sharedFeatures,
     ],
-    notIncluded: [
-      'Priority support',
-    ],
+    notIncluded: [],
     cta: 'Start Free Trial',
     popular: true,
   },
@@ -64,17 +58,8 @@ const plans = [
     overageRate: 0.10,
     features: [
       '1,500 minutes included/month',
-      '24/7 AI phone answering',
-      'Appointment scheduling',
-      'Call recordings & transcripts',
-      'Email & SMS notifications',
-      'Advanced analytics & reporting',
-      'Unlimited parallel calls',
-      'CRM integrations (Zapier)',
-      'Custom AI voice selection',
-      'Priority support',
-      'Dedicated account manager',
-      'Custom integrations',
+      '$0.10/min overage',
+      ...sharedFeatures,
     ],
     notIncluded: [],
     cta: 'Start Free Trial',
