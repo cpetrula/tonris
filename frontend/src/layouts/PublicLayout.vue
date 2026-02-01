@@ -191,16 +191,25 @@ function closeMobileMenu() {
 
           <!-- Legal -->
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Legal</h3>
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Contact</h3>
             <ul class="space-y-2">
+              <li>
+                <a href="tel:+18185316200" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <i class="pi pi-phone text-xs"></i>
+                  (818) 531-6200
+                </a>
+              </li>
+              <li>
+                <a href="mailto:support@criton.ai" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <i class="pi pi-envelope text-xs"></i>
+                  support@criton.ai
+                </a>
+              </li>
               <li>
                 <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Privacy Policy</a>
               </li>
               <li>
                 <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Terms of Service</a>
-              </li>
-              <li>
-                <a href="mailto:support@criton.ai" class="text-sm text-gray-500 hover:text-gray-700">Contact</a>
               </li>
             </ul>
           </div>

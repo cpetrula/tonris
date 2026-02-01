@@ -192,19 +192,19 @@ const faqCategories: FAQCategory[] = [
             Can't find the answer you're looking for? Our friendly team is here to help. Reach out and we'll get back to you as soon as possible.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="tel:+18185316200">
+              <Button
+                label="Call Us: (818) 531-6200"
+                icon="pi pi-phone"
+                class="px-6"
+              />
+            </a>
             <a href="mailto:support@criton.ai">
               <Button
                 label="Email Support"
                 icon="pi pi-envelope"
                 severity="secondary"
                 outlined
-                class="px-6"
-              />
-            </a>
-            <a href="tel:18008667471">
-              <Button
-                label="Call Our Demo Line"
-                icon="pi pi-phone"
                 class="px-6"
               />
             </a>
