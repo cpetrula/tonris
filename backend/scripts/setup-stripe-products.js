@@ -22,7 +22,7 @@
  *   STRIPE_OVERAGE_METERED_PRICE_ID=price_xxx
  */
 
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../src/.env') });
 const Stripe = require('stripe');
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -106,8 +106,8 @@ async function createProduct(tier, config) {
       tier,
       includedMinutes: String(config.includedMinutes),
       overageRate: String(config.overageRate),
+      features: config.features.join('|'), // Store features as pipe-separated string in metadata
     },
-    features: config.features.map(f => ({ name: f })),
   });
   
   console.log(`  Created product: ${product.id}`);

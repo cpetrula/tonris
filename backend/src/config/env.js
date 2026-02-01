@@ -30,8 +30,20 @@ const env = {
   // Stripe Configuration
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+  // Legacy price IDs (for backward compatibility)
   STRIPE_MONTHLY_PRICE_ID: process.env.STRIPE_MONTHLY_PRICE_ID || '',
   STRIPE_YEARLY_PRICE_ID: process.env.STRIPE_YEARLY_PRICE_ID || '',
+  // New tiered pricing - Starter
+  STRIPE_STARTER_MONTH_PRICE_ID: process.env.STRIPE_STARTER_MONTH_PRICE_ID || '',
+  STRIPE_STARTER_YEAR_PRICE_ID: process.env.STRIPE_STARTER_YEAR_PRICE_ID || '',
+  // New tiered pricing - Professional
+  STRIPE_PROFESSIONAL_MONTH_PRICE_ID: process.env.STRIPE_PROFESSIONAL_MONTH_PRICE_ID || '',
+  STRIPE_PROFESSIONAL_YEAR_PRICE_ID: process.env.STRIPE_PROFESSIONAL_YEAR_PRICE_ID || '',
+  // New tiered pricing - Business
+  STRIPE_BUSINESS_MONTH_PRICE_ID: process.env.STRIPE_BUSINESS_MONTH_PRICE_ID || '',
+  STRIPE_BUSINESS_YEAR_PRICE_ID: process.env.STRIPE_BUSINESS_YEAR_PRICE_ID || '',
+  // Metered billing for overage
+  STRIPE_OVERAGE_METERED_PRICE_ID: process.env.STRIPE_OVERAGE_METERED_PRICE_ID || '',
   
   // Twilio Configuration (Voice/Telephony)
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
