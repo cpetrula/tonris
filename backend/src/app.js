@@ -37,6 +37,8 @@ app.use(helmet({
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
       'media-src': ["'self'", 'blob:'],
+      'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.mxpnl.com'],
+      'connect-src': ["'self'", 'https://api.mixpanel.com', 'https://api-js.mixpanel.com'],
     },
   },
 }));
