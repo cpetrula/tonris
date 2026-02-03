@@ -22,6 +22,13 @@ const activeStreams = new Map();
 const isDebugMode = process.env.LOG_LEVEL === 'debug';
 
 /**
+ * Maximum number of audio packets to buffer while waiting for ElevenLabs connection
+ * At 8kHz μ-law (~50 packets/sec), 200 packets ≈ 4 seconds of audio
+ * This prevents memory issues if ElevenLabs connection is slow
+ */
+const MAX_AUDIO_BUFFER_SIZE = 200;
+
+/**
  * Handle incoming WebSocket connection from Twilio Media Stream
  * @param {WebSocket} twilioWs - WebSocket connection from Twilio
  * @param {Object} req - Express request object
@@ -35,6 +42,10 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
   let tenantId = null;
   let agentId = null;
   let customParameters = {};
+
+  // Buffer for audio packets received before ElevenLabs connection is ready
+  // This prevents losing the caller's first words during cold starts
+  const audioBuffer = [];
 
   // Extract query parameters if present
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -176,6 +187,16 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
         }
         elevenLabsWs.send(JSON.stringify(initMessage));
         logger.info(`[MediaStream] Sent initialization message to ElevenLabs for call ${callSid}, tenant: ${tenantId}`);
+
+        // Flush any buffered audio packets that arrived before connection was ready
+        if (audioBuffer.length > 0) {
+          logger.info(`[MediaStream] Flushing ${audioBuffer.length} buffered audio packets for call ${callSid}`);
+          for (const payload of audioBuffer) {
+            elevenLabsWs.send(JSON.stringify({ user_audio_chunk: payload }));
+          }
+          // Clear the buffer
+          audioBuffer.length = 0;
+        }
       });
 
       // Handle messages from ElevenLabs
@@ -396,27 +417,38 @@ const handleMediaStreamConnection = async (twilioWs, req) => {
           // Forward audio from Twilio to ElevenLabs
           // Twilio sends μ-law encoded audio at 8kHz as Base64
           // ElevenLabs expects it in the format: { "user_audio_chunk": "BASE64_DATA" }
+          if (!data.media?.payload) {
+            logger.error(`[MediaStream] Invalid media event from Twilio: missing payload`);
+            break;
+          }
+
           if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
-            // Verify we have a valid payload
-            if (!data.media?.payload) {
-              logger.error(`[MediaStream] Invalid media event from Twilio: missing payload`);
-              break;
-            }
-            
             const audioMessage = {
               user_audio_chunk: data.media.payload,
             };
             elevenLabsWs.send(JSON.stringify(audioMessage));
-            
+
             // Debug logging for audio format verification (only in debug mode)
             if (isDebugMode && Math.random() < 0.01) {
               // Sample 1% of audio packets to avoid log spam
               logger.debug(`[MediaStream] Forwarded audio to ElevenLabs: payloadLength=${data.media.payload.length}`);
             }
-          } else if (!elevenLabsWs) {
-            logger.error(`[MediaStream] Cannot forward audio: ElevenLabs WebSocket not initialized`);
-          } else if (elevenLabsWs.readyState !== WebSocket.OPEN) {
-            logger.warn(`[MediaStream] Cannot forward audio: ElevenLabs WebSocket not open (state: ${elevenLabsWs.readyState})`);
+          } else {
+            // Buffer audio while ElevenLabs connection is being established
+            // This prevents losing the caller's first words during cold starts
+            if (audioBuffer.length < MAX_AUDIO_BUFFER_SIZE) {
+              audioBuffer.push(data.media.payload);
+              // Log only once when buffering starts
+              if (audioBuffer.length === 1) {
+                logger.info(`[MediaStream] Buffering audio while waiting for ElevenLabs connection (call ${callSid})`);
+              }
+            } else if (audioBuffer.length === MAX_AUDIO_BUFFER_SIZE) {
+              // Log once when buffer is full
+              logger.warn(`[MediaStream] Audio buffer full (${MAX_AUDIO_BUFFER_SIZE} packets), dropping older audio for call ${callSid}`);
+              // Shift out oldest packet to make room (sliding window)
+              audioBuffer.shift();
+              audioBuffer.push(data.media.payload);
+            }
           }
           break;
 
