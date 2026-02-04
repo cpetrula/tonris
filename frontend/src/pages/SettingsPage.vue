@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -9,15 +9,22 @@ import InputSwitch from 'primevue/inputswitch'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import Message from 'primevue/message'
+import Accordion from 'primevue/accordion'
+import AccordionPanel from 'primevue/accordionpanel'
+import AccordionHeader from 'primevue/accordionheader'
+import AccordionContent from 'primevue/accordionpanel'
+import Password from 'primevue/password'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
 import { useTenantStore } from '@/stores/tenant'
 import { useVoiceStore } from '@/stores/voice'
+import { useIntegrationStore, type VagaroLocation } from '@/stores/integrations'
 
 const toast = useToast()
 const router = useRouter()
 const tenantStore = useTenantStore()
 const voiceStore = useVoiceStore()
+const integrationStore = useIntegrationStore()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -121,6 +128,49 @@ const notifications = ref({
   smsReminderHours: 24
 })
 
+// Vagaro Integration
+const vagaroSyncSettings = ref({
+  syncAppointments: true,
+  syncCustomers: true,
+  syncEmployees: false
+})
+const vagaroSetupLoading = ref(false)
+const vagaroTestLoading = ref(false)
+const vagaroImportLoading = ref(false)
+const copySuccess = ref(false)
+
+// Vagaro API credentials
+const vagaroCredentials = ref({
+  clientId: '',
+  clientSecretKey: '',
+  region: 'us02',
+  businessId: '',
+  businessName: ''
+})
+
+// Vagaro regions
+const vagaroRegions = [
+  { label: 'US East (us02)', value: 'us02' },
+  { label: 'US West (us04)', value: 'us04' }
+]
+
+// Test connection result
+const testConnectionResult = ref<{ success: boolean; message: string } | null>(null)
+
+// Computed property for Vagaro integration status
+const vagaroIntegration = computed(() => integrationStore.currentIntegration)
+const vagaroWebhookUrl = computed(() => integrationStore.webhookUrl)
+const vagaroLocations = computed(() => integrationStore.vagaroLocations)
+const isVagaroConnected = computed(() => 
+  vagaroIntegration.value && 
+  (vagaroIntegration.value.status === 'active' || vagaroIntegration.value.status === 'pending')
+)
+const hasVagaroCredentials = computed(() => 
+  vagaroIntegration.value?.config?.clientId && 
+  vagaroIntegration.value?.config?.clientSecretKey &&
+  vagaroIntegration.value?.config?.businessId
+)
+
 const timeSlots = [
   '6:00 AM', '6:30 AM', '7:00 AM', '7:30 AM', '8:00 AM', '8:30 AM',
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
@@ -215,6 +265,211 @@ async function saveNotifications() {
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save preferences', life: 3000 })
   } finally {
     saving.value = false
+  }
+}
+
+// Vagaro Integration Functions
+async function setupVagaroIntegration() {
+  vagaroSetupLoading.value = true
+  try {
+    const success = await integrationStore.setupVagaroIntegration({}, vagaroSyncSettings.value)
+    if (success) {
+      toast.add({ severity: 'success', summary: 'Success', detail: 'Vagaro integration created! Copy the webhook URL and add it to Vagaro.', life: 5000 })
+    } else {
+      toast.add({ severity: 'error', summary: 'Error', detail: integrationStore.error || 'Failed to setup integration', life: 3000 })
+    }
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to setup integration', life: 3000 })
+  } finally {
+    vagaroSetupLoading.value = false
+  }
+}
+
+async function updateVagaroSyncSettings() {
+  vagaroSetupLoading.value = true
+  try {
+    const success = await integrationStore.updateIntegration('vagaro', { syncSettings: vagaroSyncSettings.value })
+    if (success) {
+      toast.add({ severity: 'success', summary: 'Success', detail: 'Sync settings updated', life: 3000 })
+    } else {
+      toast.add({ severity: 'error', summary: 'Error', detail: integrationStore.error || 'Failed to update settings', life: 3000 })
+    }
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update settings', life: 3000 })
+  } finally {
+    vagaroSetupLoading.value = false
+  }
+}
+
+async function regenerateVagaroToken() {
+  if (!confirm('Are you sure? You will need to update the webhook URL in Vagaro.')) {
+    return
+  }
+  vagaroSetupLoading.value = true
+  try {
+    const success = await integrationStore.regenerateToken('vagaro')
+    if (success) {
+      toast.add({ severity: 'success', summary: 'Success', detail: 'New webhook URL generated. Update it in Vagaro.', life: 5000 })
+    } else {
+      toast.add({ severity: 'error', summary: 'Error', detail: integrationStore.error || 'Failed to regenerate token', life: 3000 })
+    }
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to regenerate token', life: 3000 })
+  } finally {
+    vagaroSetupLoading.value = false
+  }
+}
+
+async function disconnectVagaro() {
+  if (!confirm('Are you sure you want to disconnect Vagaro? You will stop receiving updates from Vagaro.')) {
+    return
+  }
+  vagaroSetupLoading.value = true
+  try {
+    const success = await integrationStore.deleteIntegration('vagaro')
+    if (success) {
+      toast.add({ severity: 'success', summary: 'Success', detail: 'Vagaro disconnected', life: 3000 })
+    } else {
+      toast.add({ severity: 'error', summary: 'Error', detail: integrationStore.error || 'Failed to disconnect', life: 3000 })
+    }
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to disconnect', life: 3000 })
+  } finally {
+    vagaroSetupLoading.value = false
+  }
+}
+
+function copyWebhookUrl() {
+  if (vagaroWebhookUrl.value) {
+    navigator.clipboard.writeText(vagaroWebhookUrl.value)
+    copySuccess.value = true
+    toast.add({ severity: 'success', summary: 'Copied!', detail: 'Webhook URL copied to clipboard', life: 2000 })
+    setTimeout(() => { copySuccess.value = false }, 2000)
+  }
+}
+
+// Test Vagaro API connection
+async function testVagaroConnection() {
+  if (!vagaroCredentials.value.clientId || !vagaroCredentials.value.clientSecretKey) {
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please enter Client ID and Client Secret', life: 3000 })
+    return
+  }
+  
+  vagaroTestLoading.value = true
+  testConnectionResult.value = null
+  
+  try {
+    const result = await integrationStore.testVagaroConnection({
+      clientId: vagaroCredentials.value.clientId,
+      clientSecretKey: vagaroCredentials.value.clientSecretKey,
+      region: vagaroCredentials.value.region
+    })
+    
+    testConnectionResult.value = { success: result.success, message: result.message }
+    
+    if (result.success) {
+      toast.add({ severity: 'success', summary: 'Success', detail: result.message, life: 5000 })
+      // If there's only one location, auto-select it
+      if (result.locations.length === 1) {
+        vagaroCredentials.value.businessId = result.locations[0].businessId
+        vagaroCredentials.value.businessName = result.locations[0].businessName
+      }
+    } else {
+      toast.add({ severity: 'error', summary: 'Connection Failed', detail: result.message, life: 5000 })
+    }
+  } catch {
+    testConnectionResult.value = { success: false, message: 'Connection test failed' }
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to test connection', life: 3000 })
+  } finally {
+    vagaroTestLoading.value = false
+  }
+}
+
+// Save Vagaro credentials
+async function saveVagaroCredentials() {
+  if (!vagaroCredentials.value.clientId || !vagaroCredentials.value.clientSecretKey || !vagaroCredentials.value.businessId) {
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please fill in all required fields and select a business location', life: 3000 })
+    return
+  }
+  
+  vagaroSetupLoading.value = true
+  try {
+    const config = {
+      clientId: vagaroCredentials.value.clientId,
+      clientSecretKey: vagaroCredentials.value.clientSecretKey,
+      region: vagaroCredentials.value.region,
+      businessId: vagaroCredentials.value.businessId,
+      businessName: vagaroCredentials.value.businessName
+    }
+    
+    const success = await integrationStore.setupVagaroIntegration(config, vagaroSyncSettings.value)
+    if (success) {
+      toast.add({ severity: 'success', summary: 'Success', detail: 'Vagaro credentials saved successfully', life: 3000 })
+    } else {
+      toast.add({ severity: 'error', summary: 'Error', detail: integrationStore.error || 'Failed to save credentials', life: 3000 })
+    }
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save credentials', life: 3000 })
+  } finally {
+    vagaroSetupLoading.value = false
+  }
+}
+
+// Select a business location
+function selectVagaroLocation(location: { businessId: string; businessName: string }) {
+  vagaroCredentials.value.businessId = location.businessId
+  vagaroCredentials.value.businessName = location.businessName
+}
+
+// Import services from Vagaro
+async function importVagaroServices() {
+  if (!hasVagaroCredentials.value) {
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please save your Vagaro credentials first', life: 3000 })
+    return
+  }
+  
+  if (!confirm('This will import services from Vagaro. Existing services with the same name will be updated. Continue?')) {
+    return
+  }
+  
+  vagaroImportLoading.value = true
+  try {
+    const result = await integrationStore.importVagaroServices()
+    if (result.success) {
+      toast.add({ severity: 'success', summary: 'Import Completed', detail: result.message, life: 5000 })
+    } else {
+      toast.add({ severity: 'error', summary: 'Import Failed', detail: result.message, life: 5000 })
+    }
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to import services', life: 3000 })
+  } finally {
+    vagaroImportLoading.value = false
+  }
+}
+
+// Import staff from Vagaro
+async function importVagaroStaff() {
+  if (!hasVagaroCredentials.value) {
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please save your Vagaro credentials first', life: 3000 })
+    return
+  }
+  
+  if (!confirm('This will import staff/employees from Vagaro. Existing staff with the same email will be updated. Continue?')) {
+    return
+  }
+  
+  vagaroImportLoading.value = true
+  try {
+    const result = await integrationStore.importVagaroStaff()
+    if (result.success) {
+      toast.add({ severity: 'success', summary: 'Import Completed', detail: result.message, life: 5000 })
+    } else {
+      toast.add({ severity: 'error', summary: 'Import Failed', detail: result.message, life: 5000 })
+    }
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to import staff', life: 3000 })
+  } finally {
+    vagaroImportLoading.value = false
   }
 }
 
@@ -328,6 +583,26 @@ onMounted(async () => {
         smsCancellation: notifSettings.smsCancellation ?? true,
         smsReminderEnabled: notifSettings.smsReminderEnabled ?? true,
         smsReminderHours: notifSettings.smsReminderHours ?? 24
+      }
+    }
+
+    // Fetch Vagaro integration
+    const vagaroInt = await integrationStore.fetchIntegration('vagaro')
+    if (vagaroInt?.syncSettings) {
+      vagaroSyncSettings.value = {
+        syncAppointments: vagaroInt.syncSettings.syncAppointments ?? true,
+        syncCustomers: vagaroInt.syncSettings.syncCustomers ?? true,
+        syncEmployees: vagaroInt.syncSettings.syncEmployees ?? false
+      }
+    }
+    // Load saved credentials
+    if (vagaroInt?.config) {
+      vagaroCredentials.value = {
+        clientId: (vagaroInt.config.clientId as string) || '',
+        clientSecretKey: (vagaroInt.config.clientSecretKey as string) || '',
+        region: (vagaroInt.config.region as string) || 'us02',
+        businessId: (vagaroInt.config.businessId as string) || '',
+        businessName: (vagaroInt.config.businessName as string) || ''
       }
     }
   } catch (error) {
@@ -631,6 +906,328 @@ onMounted(async () => {
                   :loading="saving"
                   @click="saveNotifications"
                 />
+              </div>
+            </div>
+          </template>
+        </Card>
+      </TabPanel>
+
+      <!-- Integrations Tab -->
+      <TabPanel value="4" header="Integrations">
+        <Card class="shadow-sm">
+          <template #content>
+            <div class="space-y-6">
+              <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Third-Party Integrations</h3>
+                <p class="text-sm text-gray-500">Connect your business tools to sync data automatically</p>
+              </div>
+
+              <!-- Integrations Accordion -->
+              <Accordion :multiple="true" :activeIndex="[0]">
+                <!-- Vagaro Integration -->
+                <AccordionPanel value="vagaro">
+                  <AccordionHeader>
+                    <div class="flex items-center gap-3 w-full">
+                      <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="pi pi-link text-xl text-purple-600"></i>
+                      </div>
+                      <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Vagaro</h4>
+                        <p class="text-xs text-gray-500">Salon, spa & fitness scheduling software</p>
+                      </div>
+                      <span 
+                        v-if="hasVagaroCredentials" 
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700"
+                      >
+                        <i class="pi pi-check-circle"></i>
+                        Connected
+                      </span>
+                      <span 
+                        v-else-if="isVagaroConnected" 
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700"
+                      >
+                        <i class="pi pi-clock"></i>
+                        Setup Required
+                      </span>
+                      <span v-else class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <i class="pi pi-times-circle"></i>
+                        Not Connected
+                      </span>
+                    </div>
+                  </AccordionHeader>
+                  <AccordionContent>
+                    <div class="space-y-6 pt-4">
+                      <!-- API Credentials Section -->
+                      <div class="bg-gray-50 rounded-lg p-4">
+                        <h5 class="font-medium text-gray-900 mb-3">
+                          <i class="pi pi-key mr-2"></i>
+                          API Credentials
+                        </h5>
+                        <p class="text-sm text-gray-600 mb-4">
+                          Enter your Vagaro API credentials. You can find these in Vagaro under 
+                          Settings → Developers → APIs & Webhooks.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
+                            <InputText 
+                              v-model="vagaroCredentials.clientId" 
+                              class="w-full" 
+                              placeholder="Your Vagaro Client ID"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret *</label>
+                            <Password 
+                              v-model="vagaroCredentials.clientSecretKey" 
+                              class="w-full" 
+                              :feedback="false"
+                              toggleMask
+                              placeholder="Your Client Secret"
+                              inputClass="w-full"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                            <Select 
+                              v-model="vagaroCredentials.region" 
+                              :options="vagaroRegions" 
+                              optionLabel="label" 
+                              optionValue="value"
+                              class="w-full" 
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Business Location *</label>
+                            <div v-if="vagaroCredentials.businessName" class="flex items-center gap-2">
+                              <InputText 
+                                :modelValue="vagaroCredentials.businessName" 
+                                class="w-full" 
+                                disabled
+                              />
+                              <Button 
+                                icon="pi pi-times" 
+                                severity="secondary" 
+                                outlined 
+                                size="small"
+                                @click="vagaroCredentials.businessId = ''; vagaroCredentials.businessName = ''"
+                                v-tooltip="'Clear selection'"
+                              />
+                            </div>
+                            <p v-else class="text-sm text-gray-500 italic">
+                              Test connection to see available locations
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                          <Button 
+                            label="Test Connection" 
+                            icon="pi pi-bolt"
+                            severity="secondary"
+                            :loading="vagaroTestLoading"
+                            @click="testVagaroConnection"
+                          />
+                          <Button 
+                            label="Save Credentials" 
+                            icon="pi pi-save"
+                            :loading="vagaroSetupLoading"
+                            :disabled="!vagaroCredentials.clientId || !vagaroCredentials.clientSecretKey || !vagaroCredentials.businessId"
+                            @click="saveVagaroCredentials"
+                          />
+                        </div>
+                        
+                        <!-- Test Result -->
+                        <div v-if="testConnectionResult" class="mt-4">
+                          <Message 
+                            :severity="testConnectionResult.success ? 'success' : 'error'" 
+                            :closable="false"
+                          >
+                            {{ testConnectionResult.message }}
+                          </Message>
+                        </div>
+                        
+                        <!-- Location Selection -->
+                        <div v-if="vagaroLocations.length > 0 && !vagaroCredentials.businessId" class="mt-4">
+                          <h6 class="text-sm font-medium text-gray-700 mb-2">Select a Business Location:</h6>
+                          <div class="grid gap-2">
+                            <div 
+                              v-for="location in vagaroLocations" 
+                              :key="location.businessId"
+                              class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-purple-300 cursor-pointer transition-colors"
+                              @click="selectVagaroLocation(location)"
+                            >
+                              <div>
+                                <p class="font-medium text-gray-900">{{ location.businessName }}</p>
+                                <p class="text-xs text-gray-500">{{ location.city }}, {{ location.regionCode }}</p>
+                              </div>
+                              <i class="pi pi-chevron-right text-gray-400"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Import Section - Only show when credentials are saved -->
+                      <div v-if="hasVagaroCredentials" class="bg-white border border-gray-200 rounded-lg p-4">
+                        <h5 class="font-medium text-gray-900 mb-3">
+                          <i class="pi pi-download mr-2"></i>
+                          Import Data from Vagaro
+                        </h5>
+                        <p class="text-sm text-gray-600 mb-4">
+                          Import your staff and services from Vagaro. This will create or update records in Criton.AI.
+                        </p>
+                        
+                        <div class="flex flex-wrap items-center gap-3">
+                          <Button 
+                            label="Import Staff" 
+                            icon="pi pi-users"
+                            severity="secondary"
+                            outlined
+                            :loading="vagaroImportLoading"
+                            @click="importVagaroStaff"
+                          />
+                          <Button 
+                            label="Import Services" 
+                            icon="pi pi-list"
+                            severity="secondary"
+                            outlined
+                            :loading="vagaroImportLoading"
+                            @click="importVagaroServices"
+                          />
+                        </div>
+                        
+                        <!-- Last Import Info -->
+                        <div v-if="vagaroIntegration?.metadata" class="mt-4 text-xs text-gray-500 space-y-1">
+                          <p v-if="vagaroIntegration.metadata.lastStaffImport">
+                            <i class="pi pi-users mr-1"></i>
+                            Last staff import: {{ new Date(vagaroIntegration.metadata.lastStaffImport).toLocaleString() }}
+                            <span v-if="vagaroIntegration.metadata.staffImportResults" class="ml-2">
+                              ({{ vagaroIntegration.metadata.staffImportResults.imported }} new, {{ vagaroIntegration.metadata.staffImportResults.updated }} updated)
+                            </span>
+                          </p>
+                          <p v-if="vagaroIntegration.metadata.lastServicesImport">
+                            <i class="pi pi-list mr-1"></i>
+                            Last services import: {{ new Date(vagaroIntegration.metadata.lastServicesImport).toLocaleString() }}
+                            <span v-if="vagaroIntegration.metadata.servicesImportResults" class="ml-2">
+                              ({{ vagaroIntegration.metadata.servicesImportResults.imported }} new, {{ vagaroIntegration.metadata.servicesImportResults.updated }} updated)
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <!-- Webhook Section -->
+                      <div v-if="isVagaroConnected" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h5 class="font-medium text-blue-900 mb-2">
+                          <i class="pi pi-bolt mr-2"></i>
+                          Real-time Webhooks (Optional)
+                        </h5>
+                        <p class="text-sm text-blue-700 mb-3">
+                          Set up webhooks to receive real-time updates from Vagaro when appointments change.
+                        </p>
+                        <div class="flex items-center gap-2 mb-3">
+                          <code class="flex-1 bg-white px-3 py-2 rounded border border-blue-200 text-xs font-mono text-gray-800 overflow-x-auto">
+                            {{ vagaroWebhookUrl }}
+                          </code>
+                          <Button 
+                            :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'" 
+                            :severity="copySuccess ? 'success' : 'secondary'"
+                            outlined
+                            size="small"
+                            @click="copyWebhookUrl"
+                            v-tooltip="'Copy to clipboard'"
+                          />
+                        </div>
+                        <p v-if="vagaroIntegration" class="text-xs text-blue-600">
+                          <span v-if="vagaroIntegration.lastWebhookAt">
+                            Last webhook: {{ new Date(vagaroIntegration.lastWebhookAt).toLocaleString() }} • 
+                          </span>
+                          Total received: {{ vagaroIntegration.webhookCount }}
+                        </p>
+                      </div>
+                      
+                      <!-- Sync Settings -->
+                      <div v-if="isVagaroConnected" class="bg-white border border-gray-200 rounded-lg p-4">
+                        <h5 class="font-medium text-gray-900 mb-3">Webhook Sync Settings</h5>
+                        <div class="space-y-2">
+                          <div class="flex items-center gap-2">
+                            <InputSwitch v-model="vagaroSyncSettings.syncAppointments" />
+                            <span class="text-sm">Sync appointments</span>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <InputSwitch v-model="vagaroSyncSettings.syncCustomers" />
+                            <span class="text-sm">Sync customers</span>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <InputSwitch v-model="vagaroSyncSettings.syncEmployees" />
+                            <span class="text-sm">Sync employees</span>
+                          </div>
+                        </div>
+                        <div class="mt-3">
+                          <Button 
+                            label="Save Settings" 
+                            size="small"
+                            :loading="vagaroSetupLoading"
+                            @click="updateVagaroSyncSettings" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <!-- Error Display -->
+                      <div v-if="vagaroIntegration?.lastError" class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-sm text-red-700">
+                          <i class="pi pi-exclamation-triangle mr-2"></i>
+                          {{ vagaroIntegration.lastError }}
+                        </p>
+                      </div>
+                      
+                      <!-- Disconnect -->
+                      <div v-if="isVagaroConnected" class="pt-4 border-t border-gray-200">
+                        <Button 
+                          label="Disconnect Vagaro" 
+                          icon="pi pi-times"
+                          severity="danger"
+                          outlined
+                          size="small"
+                          :loading="vagaroSetupLoading"
+                          @click="disconnectVagaro"
+                        />
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionPanel>
+              </Accordion>
+
+              <!-- Future Integrations Placeholder -->
+              <div class="border-t border-gray-200 pt-6">
+                <h3 class="font-medium text-gray-900 mb-4">Coming Soon</h3>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div class="bg-gray-50 rounded-lg p-4 opacity-60">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <i class="pi pi-calendar text-gray-500"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-medium text-gray-700">Google Calendar</h4>
+                        <p class="text-xs text-gray-500">Sync appointments with Google Calendar</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4 opacity-60">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <i class="pi pi-credit-card text-gray-500"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-medium text-gray-700">Square</h4>
+                        <p class="text-xs text-gray-500">Accept payments and sync appointments</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </template>

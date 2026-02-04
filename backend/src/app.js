@@ -16,10 +16,11 @@ const logger = require('./utils/logger');
 // Initialize models and associations early
 require('./models');
 
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes, adminRoutes, voiceRoutes, cronRoutes, locationRoutes, userRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes, adminRoutes, voiceRoutes, cronRoutes, locationRoutes, userRoutes, integrationRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
 const { aiController, handleMediaStreamConnection } = require('./modules/ai-assistant');
+const { handleVagaroWebhook } = require('./modules/integrations');
 const {
   tenantMiddleware,
   notFoundHandler,
@@ -196,6 +197,14 @@ app.patch('/api/webhooks/elevenlabs/agents/:agentId',
   aiController.handleUpdateAgentWebhook
 );
 
+// Vagaro webhook - receives events from Vagaro (appointments, customers, etc.)
+// This endpoint is public but authenticated via webhook token in URL
+app.post('/api/webhooks/vagaro/:webhookToken',
+  webhookRateLimiter,
+  express.json(),
+  handleVagaroWebhook
+);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -232,6 +241,7 @@ app.use('/api/voices', voiceRoutes);
 app.use('/api/cron', cronRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/integrations', integrationRoutes);
 
 // Static file serving - serve frontend build from frontend/dist directory
 const frontendDistPath = path.join(__dirname, '../../frontend/dist');
