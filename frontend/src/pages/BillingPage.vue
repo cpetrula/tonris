@@ -198,7 +198,7 @@ async function startCheckout(planTier: string = 'professional', billingInterval:
     processingCheckout.value = true
     error.value = ''
     
-    const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+    const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51SlETHAhAXdJy2WMmvdaD3n92qfJEsRNyH03LcLOofXsf4IcHSBWUhoaGXUL6UgM7LJ6rxykQj7uAMWMBqkSQDqw00rWur2gNX'
     if (!stripeKey) {
       error.value = 'Stripe is not configured. Please contact support.'
       processingCheckout.value = false
