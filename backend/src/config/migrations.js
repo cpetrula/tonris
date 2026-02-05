@@ -6,12 +6,42 @@ const { sequelize } = require('./db');
 const logger = require('../utils/logger');
 
 /**
+ * Add missing columns to subscriptions table
+ */
+const addMissingColumns = async () => {
+  const columnsToAdd = [
+    { name: 'plan_tier', sql: "ADD COLUMN plan_tier ENUM('starter', 'professional', 'business', 'legacy') NOT NULL DEFAULT 'professional'" },
+    { name: 'stripe_metered_price_id', sql: "ADD COLUMN stripe_metered_price_id VARCHAR(255) NULL" },
+    { name: 'included_minutes', sql: "ADD COLUMN included_minutes INT DEFAULT NULL" },
+    { name: 'current_period_minutes_used', sql: "ADD COLUMN current_period_minutes_used INT DEFAULT 0 NOT NULL" },
+    { name: 'usage_alert_sent_80', sql: "ADD COLUMN usage_alert_sent_80 TINYINT(1) DEFAULT 0" },
+    { name: 'usage_alert_sent_100', sql: "ADD COLUMN usage_alert_sent_100 TINYINT(1) DEFAULT 0" },
+  ];
+
+  for (const col of columnsToAdd) {
+    try {
+      await sequelize.query(`ALTER TABLE subscriptions ${col.sql}`);
+      logger.info(`Migration: Added column ${col.name}`);
+    } catch (error) {
+      if (error.message.includes('Duplicate column')) {
+        // Column already exists, skip
+      } else if (!error.message.includes("doesn't exist")) {
+        logger.warn(`Migration: Could not add ${col.name}: ${error.message}`);
+      }
+    }
+  }
+};
+
+/**
  * Fix subscription ENUM columns to match code definitions
  * This is needed when new ENUM values are added to the Sequelize model
  * but the database column wasn't updated
  */
 const fixSubscriptionEnums = async () => {
   try {
+    // First add any missing columns
+    await addMissingColumns();
+
     // Update status ENUM to include all values
     await sequelize.query(`
       ALTER TABLE subscriptions
