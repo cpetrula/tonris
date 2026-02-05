@@ -92,11 +92,31 @@ const fixSubscriptionEnums = async () => {
 };
 
 /**
+ * Sync Subscription model with database (add missing columns)
+ */
+const syncSubscriptionTable = async () => {
+  try {
+    // Import the Subscription model and sync with alter
+    const { Subscription } = require('../modules/billing/subscription.model');
+    await Subscription.sync({ alter: true });
+    logger.info('Migration: Synced Subscription table schema');
+    return true;
+  } catch (error) {
+    logger.error(`Migration: Failed to sync Subscription table: ${error.message}`);
+    return false;
+  }
+};
+
+/**
  * Run all pending migrations
  */
 const runMigrations = async () => {
   logger.info('Running database migrations...');
 
+  // First sync the table schema to add any missing columns
+  await syncSubscriptionTable();
+
+  // Then fix ENUM values
   await fixSubscriptionEnums();
 
   logger.info('Database migrations complete');
