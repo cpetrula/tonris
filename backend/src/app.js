@@ -26,6 +26,7 @@ const {
   errorHandler,
 } = require('./middleware');
 const { initScheduler } = require('./modules/cron/scheduler');
+const { runMigrations } = require('./config/migrations');
 
 // Create Express application
 const app = express();
@@ -285,11 +286,14 @@ const startServer = () => {
   });
   
   // Start the server
-  server.listen(env.PORT, () => {
+  server.listen(env.PORT, async () => {
     logger.info(`CRITON.AI Backend server running on port ${env.PORT}`);
     logger.info(`Environment: ${env.NODE_ENV}`);
     logger.info(`Health check: http://localhost:${env.PORT}/health`);
     logger.info(`WebSocket media stream: ws://localhost:${env.PORT}/media-stream`);
+
+    // Run database migrations
+    await runMigrations();
 
     // Check critical configuration
     if (!env.RESEND_API_KEY) {
