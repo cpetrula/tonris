@@ -188,7 +188,7 @@ const checkAndSendUsageAlerts = async (subscription) => {
 const sendUsageAlert = async (subscription, threshold) => {
   const { Tenant } = require('../tenants/tenant.model');
   
-  const tenant = await Tenant.findOne({ where: { tenantId: subscription.tenantId } });
+  const tenant = await Tenant.findOne({ where: { id: subscription.tenantId } });
   
   if (!tenant || !tenant.contactEmail) {
     logger.warn(`No contact email for tenant ${subscription.tenantId}, skipping usage alert`);

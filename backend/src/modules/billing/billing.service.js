@@ -63,7 +63,7 @@ const getOrCreateSubscription = async (tenantId, planTier = PLAN_TIER.PROFESSION
  */
 const createStripeCustomer = async (tenantId) => {
   // Get tenant info
-  const tenant = await Tenant.findOne({ where: { tenantId } });
+  const tenant = await Tenant.findOne({ where: { id: tenantId } });
   if (!tenant) {
     throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
   }
@@ -125,7 +125,7 @@ const createCheckoutSession = async (tenantId, planTier, billingInterval, succes
   
   if (!subscription.stripeCustomerId) {
     // Create customer first
-    const tenant = await Tenant.findOne({ where: { tenantId } });
+    const tenant = await Tenant.findOne({ where: { id: tenantId } });
     if (!tenant) {
       throw new AppError('Tenant not found', 404, 'TENANT_NOT_FOUND');
     }
@@ -291,7 +291,7 @@ const handleCheckoutComplete = async (session) => {
  * @returns {Promise<void>}
  */
 const syncTenantStatus = async (subscription) => {
-  const tenant = await Tenant.findOne({ where: { tenantId: subscription.tenantId } });
+  const tenant = await Tenant.findOne({ where: { id: subscription.tenantId } });
   
   if (!tenant) {
     logger.warn(`Tenant not found for subscription: ${subscription.tenantId}`);
