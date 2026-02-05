@@ -22,11 +22,21 @@ const getSubscription = async (req, res, next) => {
     
     const subscription = await billingService.getSubscription(tenantUUID);
     
+    // Format plans with price display strings
+    const plans = stripeService.getAvailablePlans().map(plan => ({
+      ...plan,
+      monthlyPriceFormatted: `$${(plan.monthlyPrice / 100).toFixed(2)}`,
+      annualPriceFormatted: `$${(plan.annualPrice / 100).toFixed(2)}`,
+      annualMonthlyPriceFormatted: `$${((plan.annualPrice / 12) / 100).toFixed(2)}`,
+      overageRateFormatted: `$${(plan.overageRate / 100).toFixed(2)}`,
+      includedMinutesFormatted: plan.includedMinutes === -1 ? 'Unlimited' : plan.includedMinutes,
+    }));
+
     res.status(200).json({
       success: true,
       data: {
         subscription,
-        plans: stripeService.getAvailablePlans(),
+        plans,
         trialDays: PLAN_CONFIG.TRIAL_DAYS,
         trialMinutes: PLAN_CONFIG.TRIAL_MINUTES,
       },
