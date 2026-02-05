@@ -215,19 +215,23 @@ async function startCheckout(planTier: string = 'professional', billingInterval:
       cancelUrl
     })
     
-    if (response.data.success && response.data.data.sessionId) {
+    if (response.data.success && response.data.data.url) {
+      // Redirect directly to Stripe checkout URL
+      window.location.href = response.data.data.url
+    } else if (response.data.success && response.data.data.sessionId) {
+      // Fallback: use Stripe.js redirect
       const stripe = await loadStripe(stripeKey)
-      
+
       if (!stripe) {
         error.value = 'Failed to load Stripe. Please refresh and try again.'
         processingCheckout.value = false
         return
       }
-      
+
       const result = await (stripe as any).redirectToCheckout({
         sessionId: response.data.data.sessionId
       })
-      
+
       if (result && result.error) {
         error.value = result.error.message || 'Failed to redirect to checkout'
         processingCheckout.value = false
