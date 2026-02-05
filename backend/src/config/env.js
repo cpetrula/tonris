@@ -42,8 +42,13 @@ const env = {
   // New tiered pricing - Business
   STRIPE_BUSINESS_MONTH_PRICE_ID: process.env.STRIPE_BUSINESS_MONTH_PRICE_ID || '',
   STRIPE_BUSINESS_YEAR_PRICE_ID: process.env.STRIPE_BUSINESS_YEAR_PRICE_ID || '',
-  // Metered billing for overage
-  STRIPE_OVERAGE_METERED_PRICE_ID: process.env.STRIPE_OVERAGE_METERED_PRICE_ID || '',
+  // Metered billing for overage (tier-specific)
+  STRIPE_OVERAGE_METERED_PRICE_ID: process.env.STRIPE_OVERAGE_METERED_PRICE_ID || '', // Legacy/default
+  STRIPE_STARTER_OVERAGE_PRICE_ID: process.env.STRIPE_STARTER_OVERAGE_PRICE_ID || '',
+  STRIPE_PROFESSIONAL_OVERAGE_PRICE_ID: process.env.STRIPE_PROFESSIONAL_OVERAGE_PRICE_ID || '',
+  STRIPE_BUSINESS_OVERAGE_PRICE_ID: process.env.STRIPE_BUSINESS_OVERAGE_PRICE_ID || '',
+  // Stripe Meter ID for usage reporting
+  STRIPE_METER_ID: process.env.STRIPE_METER_ID || '',
   
   // Twilio Configuration (Voice/Telephony)
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',

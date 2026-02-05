@@ -357,10 +357,19 @@ const getPriceId = (planTier, interval = 'month') => {
 
 /**
  * Get metered price ID for overage billing
+ * @param {string} planTier - Plan tier (starter, professional, business)
  * @returns {string} - Stripe metered price ID
  */
-const getMeteredPriceId = () => {
-  return env.STRIPE_OVERAGE_METERED_PRICE_ID;
+const getMeteredPriceId = (planTier) => {
+  // Tier-specific metered prices
+  const tierPriceMap = {
+    [PLAN_TIER.STARTER]: env.STRIPE_STARTER_OVERAGE_PRICE_ID,
+    [PLAN_TIER.PROFESSIONAL]: env.STRIPE_PROFESSIONAL_OVERAGE_PRICE_ID,
+    [PLAN_TIER.BUSINESS]: env.STRIPE_BUSINESS_OVERAGE_PRICE_ID,
+  };
+
+  // Return tier-specific price, or fall back to legacy
+  return tierPriceMap[planTier] || env.STRIPE_OVERAGE_METERED_PRICE_ID;
 };
 
 /**

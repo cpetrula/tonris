@@ -151,7 +151,7 @@ const createCheckoutSession = async (tenantId, planTier, billingInterval, succes
   
   // Get price ID for the plan and interval
   const priceId = stripeService.getPriceId(planTier, billingInterval);
-  const meteredPriceId = stripeService.getMeteredPriceId();
+  const meteredPriceId = stripeService.getMeteredPriceId(planTier);
   
   if (!priceId) {
     throw new AppError(
