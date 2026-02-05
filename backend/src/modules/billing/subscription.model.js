@@ -54,6 +54,7 @@ const PLAN_CONFIG = {
     annualPrice: 80400, // $804.00/year ($67/mo)
     includedMinutes: 200,
     overageRate: 15, // $0.15/min in cents
+    parallelCalls: 1,
   },
   [PLAN_TIER.PROFESSIONAL]: {
     name: 'Professional',
@@ -61,6 +62,7 @@ const PLAN_CONFIG = {
     annualPrice: 152400, // $1,524.00/year ($127/mo)
     includedMinutes: 500,
     overageRate: 12, // $0.12/min in cents
+    parallelCalls: 3,
   },
   [PLAN_TIER.BUSINESS]: {
     name: 'Business',
@@ -68,6 +70,7 @@ const PLAN_CONFIG = {
     annualPrice: 304800, // $3,048.00/year ($254/mo)
     includedMinutes: 1500,
     overageRate: 10, // $0.10/min in cents
+    parallelCalls: 5,
   },
   [PLAN_TIER.LEGACY]: {
     name: 'Legacy Unlimited',
@@ -75,6 +78,7 @@ const PLAN_CONFIG = {
     annualPrice: 354000, // $3,540.00/year
     includedMinutes: -1, // Unlimited
     overageRate: 0,
+    parallelCalls: -1, // Unlimited
   },
   
   // Backward compatibility
