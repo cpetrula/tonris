@@ -27,6 +27,7 @@ const {
 } = require('./middleware');
 const { initScheduler } = require('./modules/cron/scheduler');
 const { runMigrations } = require('./config/migrations');
+const healthMonitor = require('./modules/health-monitor');
 
 // Create Express application
 const app = express();
@@ -302,6 +303,9 @@ const startServer = () => {
 
     // Initialize cron scheduler
     initScheduler();
+
+    // Start health monitor (self-healing DB check)
+    healthMonitor.start();
   });
 
   // Graceful shutdown

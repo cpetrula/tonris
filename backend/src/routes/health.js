@@ -5,6 +5,7 @@
 const express = require('express');
 const { testConnection } = require('../config/db');
 const env = require('../config/env');
+const healthMonitor = require('../modules/health-monitor');
 
 const router = express.Router();
 
@@ -85,6 +86,17 @@ router.get('/live', (req, res) => {
   res.json({
     success: true,
     status: 'alive',
+  });
+});
+
+/**
+ * GET /health/monitor
+ * Health monitor status (self-healing DB check)
+ */
+router.get('/monitor', (req, res) => {
+  res.json({
+    success: true,
+    ...healthMonitor.getStatus(),
   });
 });
 
