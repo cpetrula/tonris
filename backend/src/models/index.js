@@ -11,6 +11,7 @@ const { Appointment, APPOINTMENT_STATUS, CANCELLATION_REASONS } = require('../mo
 const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = require('../modules/billing/subscription.model');
 const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../modules/telephony/callLog.model');
 const { BusinessType } = require('../modules/business-types/businessType.model');
+const { WaitingList, WAITING_STATUS, WAITING_TYPE } = require('../modules/appointments/waitingList.model');
 
 /**
  * Define model associations
@@ -57,4 +58,7 @@ module.exports = {
   CALL_DIRECTION,
   CALL_STATUS,
   BusinessType,
+  WaitingList,
+  WAITING_STATUS,
+  WAITING_TYPE,
 };

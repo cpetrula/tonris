@@ -16,7 +16,7 @@ const logger = require('./utils/logger');
 // Initialize models and associations early
 require('./models');
 
-const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes, adminRoutes, voiceRoutes, cronRoutes, locationRoutes, userRoutes } = require('./routes');
+const { healthRoutes, meRoutes, authRoutes, tenantRoutes, employeeRoutes, serviceRoutes, appointmentRoutes, availabilityRoutes, waitingListRoutes, billingRoutes, telephonyRoutes, aiRoutes, businessTypesRoutes, adminRoutes, voiceRoutes, cronRoutes, locationRoutes, userRoutes } = require('./routes');
 const { billingController } = require('./modules/billing');
 const { telephonyController } = require('./modules/telephony');
 const { aiController, handleMediaStreamConnection } = require('./modules/ai-assistant');
@@ -160,6 +160,18 @@ app.post('/api/webhooks/elevenlabs/appointments',
   aiController.handleElevenLabsCreateAppointmentWebhook
 );
 
+// ElevenLabs Waiting List webhook
+// Called by ElevenLabs AI agent to add a caller to the waiting list
+app.post('/api/webhooks/elevenlabs/waiting-list',
+  webhookRateLimiter,
+  express.json({
+    verify: (req, _res, buf) => {
+      req.rawBody = buf.toString();
+    },
+  }),
+  aiController.handleElevenLabsWaitingListWebhook
+);
+
 // ElevenLabs Conversation End webhook
 // Called by ElevenLabs when a conversation ends
 // Provides comprehensive data about the call including status, duration, transcript, and summary
@@ -225,6 +237,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/waiting-list', waitingListRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/telephony', telephonyRoutes);
 app.use('/api/ai', aiRoutes);

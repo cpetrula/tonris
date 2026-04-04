@@ -2019,6 +2019,80 @@ const handleEmployeeScheduleWebhook = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/webhooks/elevenlabs/waiting-list
+ * Called by ElevenLabs AI agent to add a caller to the waiting list
+ * Supports both slot_backfill (salon) and enrollment (school/childcare)
+ *
+ * Query params: ?tenantId=uuid
+ * Body: {
+ *   type: 'slot_backfill' | 'enrollment',
+ *   customerName, customerPhone, customerEmail,
+ *   // slot_backfill:
+ *   serviceName, serviceDurationMinutes,
+ *   // enrollment:
+ *   childName, childDob, programName, preferredSchedule,
+ *   preferredLocation, preferredStartDate, notes
+ * }
+ */
+const handleElevenLabsWaitingListWebhook = async (req, res, next) => {
+  try {
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+
+    if (env.isProduction() && webhookSecret && signature) {
+      if (!req.rawBody) {
+        throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
+      }
+      if (!verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    } else if (env.isProduction() && webhookSecret && !signature) {
+      logger.warn('ElevenLabs Waiting List: No signature provided (allowing request from tool call)');
+    }
+
+    const tenantId = req.query.tenantId || req.body.tenantId;
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+    if (!isValidUUID(tenantId)) {
+      throw new AppError('Invalid tenant ID format', 400, 'VALIDATION_ERROR');
+    }
+
+    const { customerName, customerPhone } = req.body;
+    if (!customerName || !customerPhone) {
+      throw new AppError('customerName and customerPhone are required', 400, 'VALIDATION_ERROR');
+    }
+
+    const { waitingListService } = require('../appointments');
+
+    const result = await waitingListService.addToWaitingList({
+      tenantId,
+      ...req.body,
+    });
+
+    if (!result.success) {
+      logger.warn(`ElevenLabs Waiting List: ${result.error}`);
+      return res.status(result.code === 'ALREADY_ON_LIST' ? 409 : 400).json(result);
+    }
+
+    logger.info(`ElevenLabs Waiting List: Added ${customerName} (${customerPhone}) to ${req.body.type || 'slot_backfill'} list for tenant ${tenantId}`);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        position: result.position,
+        message: result.entry.type === 'enrollment'
+          ? `Added to the waitlist for ${result.entry.programName || 'the program'}. You are number ${result.position} on the list.`
+          : `Added to the waiting list. You are number ${result.position} in line.`,
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Waiting List webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -2033,6 +2107,7 @@ module.exports = {
   handleCheckCallerWebhook,
   handleElevenLabsAppointmentsWebhook,
   handleElevenLabsCreateAppointmentWebhook,
+  handleElevenLabsWaitingListWebhook,
   handleConversationEndWebhook,
   handleEmployeeScheduleWebhook,
   getAIConfig,

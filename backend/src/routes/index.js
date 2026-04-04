@@ -8,7 +8,7 @@ const { authRoutes } = require('../modules/auth');
 const { tenantRoutes } = require('../modules/tenants');
 const { employeeRoutes } = require('../modules/employees');
 const { serviceRoutes } = require('../modules/services');
-const { appointmentRoutes, availabilityRoutes } = require('../modules/appointments');
+const { appointmentRoutes, availabilityRoutes, waitingListRoutes } = require('../modules/appointments');
 const { billingRoutes } = require('../modules/billing');
 const { telephonyRoutes } = require('../modules/telephony');
 const { aiRoutes } = require('../modules/ai-assistant');
@@ -28,6 +28,7 @@ module.exports = {
   serviceRoutes,
   appointmentRoutes,
   availabilityRoutes,
+  waitingListRoutes,
   billingRoutes,
   telephonyRoutes,
   aiRoutes,
