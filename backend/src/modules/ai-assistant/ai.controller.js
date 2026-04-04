@@ -1243,10 +1243,10 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
     }
     
     // Validate UUID formats
-    if (!isValidUUID(employeeId)) {
+    if (employeeId && !isValidUUID(employeeId)) {
       throw new AppError('Invalid employee ID format', 400, 'VALIDATION_ERROR');
     }
-    
+
     if (!isValidUUID(serviceId)) {
       throw new AppError('Invalid service ID format', 400, 'VALIDATION_ERROR');
     }
