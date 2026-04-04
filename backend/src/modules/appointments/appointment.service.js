@@ -142,12 +142,20 @@ const createAppointment = async (appointmentData, tenantId) => {
     notes,
   } = appointmentData;
 
-  // Verify employee exists and is active
-  const employee = await Employee.findOne({
-    where: { id: employeeId, tenantId, status: EMPLOYEE_STATUS.ACTIVE },
-  });
-  if (!employee) {
-    throw new AppError('Employee not found or not active', 404, 'EMPLOYEE_NOT_FOUND');
+  // Verify employee exists and is active (optional for schools/tours)
+  let employee = null;
+  if (employeeId) {
+    employee = await Employee.findOne({
+      where: { id: employeeId, tenantId, status: EMPLOYEE_STATUS.ACTIVE },
+    });
+    if (!employee) {
+      throw new AppError('Employee not found or not active', 404, 'EMPLOYEE_NOT_FOUND');
+    }
+
+    // Verify employee can perform this service
+    if (!employee.serviceIds || !employee.serviceIds.includes(serviceId)) {
+      throw new AppError('Employee is not qualified for this service', 400, 'EMPLOYEE_NOT_QUALIFIED');
+    }
   }
 
   // Verify service exists
@@ -156,11 +164,6 @@ const createAppointment = async (appointmentData, tenantId) => {
   });
   if (!service) {
     throw new AppError('Service not found', 404, 'SERVICE_NOT_FOUND');
-  }
-
-  // Verify employee can perform this service
-  if (!employee.serviceIds || !employee.serviceIds.includes(serviceId)) {
-    throw new AppError('Employee is not qualified for this service', 400, 'EMPLOYEE_NOT_QUALIFIED');
   }
 
   // Calculate totals
@@ -209,26 +212,28 @@ const createAppointment = async (appointmentData, tenantId) => {
     }
   }
 
-  // Check for conflicts
-  const availability = await checkSlotAvailability(
-    employeeId,
-    tenantId,
-    startDateTime,
-    endDateTime
-  );
-
-  if (!availability.available) {
-    throw new AppError(
-      'Time slot is not available. Employee already has an appointment during this time.',
-      409,
-      'TIME_SLOT_CONFLICT'
+  // Check for conflicts (only if employee is assigned)
+  if (employeeId) {
+    const availability = await checkSlotAvailability(
+      employeeId,
+      tenantId,
+      startDateTime,
+      endDateTime
     );
+
+    if (!availability.available) {
+      throw new AppError(
+        'Time slot is not available. Employee already has an appointment during this time.',
+        409,
+        'TIME_SLOT_CONFLICT'
+      );
+    }
   }
 
   // Create appointment
   const appointment = await Appointment.create({
     tenantId,
-    employeeId,
+    employeeId: employeeId || null,
     serviceId,
     customerName,
     customerEmail,
@@ -247,10 +252,12 @@ const createAppointment = async (appointmentData, tenantId) => {
   // Use tenant and tenantTimezone already fetched above for SMS formatting
 
   // Send SMS confirmation to customer asynchronously (don't wait for it to complete)
-  smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId, tenantTimezone)
-    .catch(error => {
-      logger.error(`Failed to send SMS for appointment ${appointment.id}: ${error.message}`);
-    });
+  if (employee) {
+    smsService.sendAppointmentConfirmationSms(appointment, employee, service, tenantId, tenantTimezone)
+      .catch(error => {
+        logger.error(`Failed to send SMS for appointment ${appointment.id}: ${error.message}`);
+      });
+  }
 
   // Send email notification to business owner asynchronously
   sendNewAppointmentEmailNotification(appointment, employee, service, tenantId)

@@ -1225,10 +1225,10 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
       notes,
     } = req.body;
     
-    // Validate required fields
-    if (!employeeId || !serviceId || !customerName || !startTime) {
+    // Validate required fields (employeeId is optional for schools/tours)
+    if (!serviceId || !customerName || !startTime) {
       throw new AppError(
-        'employeeId, serviceId, customerName, and startTime are required',
+        'serviceId, customerName, and startTime are required',
         400,
         'VALIDATION_ERROR'
       );

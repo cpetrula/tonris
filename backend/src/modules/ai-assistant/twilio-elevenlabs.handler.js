@@ -958,6 +958,19 @@ const handleConversationInitiation = async (params) => {
 
   logger.info(`ElevenLabs Conversation Initiation: conversation=${conversationId}, agent=${agentId}, tenant=${tenantId}`);
 
+  // Build current datetime string in tenant's timezone
+  const now = new Date();
+  const currentDatetime = now.toLocaleString('en-US', {
+    timeZone: 'America/Los_Angeles',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
   // Build dynamic variables for tool calls and prompt
   const responseVariables = {
     tenant_id: tenantId || '',
@@ -966,6 +979,8 @@ const handleConversationInitiation = async (params) => {
     caller_number: callerNumber || '',
     call_sid: callSid || '',
     conversation_id: conversationId,
+    current_datetime: currentDatetime,
+    timezone: 'America/Los_Angeles',
   };
 
   // Build response with conversation_config_override for Twilio audio compatibility
