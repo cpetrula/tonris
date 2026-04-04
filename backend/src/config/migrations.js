@@ -110,6 +110,19 @@ const syncSubscriptionTable = async () => {
 /**
  * Run all pending migrations
  */
+/**
+ * Sync the Enrollment table (create if not exists)
+ */
+const syncEnrollmentTable = async () => {
+  try {
+    const { Enrollment } = require('../modules/enrollments/enrollment.model');
+    await Enrollment.sync();
+    logger.info('Migration: Enrollment table synced');
+  } catch (error) {
+    logger.error(`Migration: Failed to sync Enrollment table: ${error.message}`);
+  }
+};
+
 const runMigrations = async () => {
   logger.info('Running database migrations...');
 
@@ -118,6 +131,9 @@ const runMigrations = async () => {
 
   // Then fix ENUM values
   await fixSubscriptionEnums();
+
+  // Sync new tables
+  await syncEnrollmentTable();
 
   logger.info('Database migrations complete');
 };
