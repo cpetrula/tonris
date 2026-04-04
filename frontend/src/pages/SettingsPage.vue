@@ -34,7 +34,8 @@ const businessProfile = ref({
   state: '',
   zipCode: '',
   website: '',
-  description: ''
+  description: '',
+  maxConcurrentTours: 3
 })
 
 // Business hours
@@ -149,7 +150,8 @@ async function saveBusinessProfile() {
       },
       metadata: {
         website: businessProfile.value.website,
-        description: businessProfile.value.description
+        description: businessProfile.value.description,
+        maxConcurrentTours: businessProfile.value.maxConcurrentTours || 3
       }
     }
 
@@ -285,6 +287,7 @@ onMounted(async () => {
       businessProfile.value.zipCode = tenant.address?.zipCode || tenant.address?.zip || ''
       businessProfile.value.website = tenant.metadata?.website || ''
       businessProfile.value.description = tenant.metadata?.description || ''
+      businessProfile.value.maxConcurrentTours = tenant.metadata?.maxConcurrentTours || 3
       
       // Populate AI settings from tenant data
       // If tenant has a custom first message, use it; otherwise use a default with business name
@@ -418,6 +421,12 @@ onMounted(async () => {
               <div>
                 <label class="block text-sm font-medium  mb-1">Business Description</label>
                 <Textarea v-model="businessProfile.description" rows="3" class="w-full" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium  mb-1">Max Concurrent Appointments Per Time Slot</label>
+                <InputText v-model.number="businessProfile.maxConcurrentTours" type="number" min="1" max="10" class="w-full sm:w-32" />
+                <p class="text-sm mt-1">Maximum number of appointments that can be booked at the same time (e.g., simultaneous tours). Default: 3</p>
               </div>
 
               <div class="flex justify-end">

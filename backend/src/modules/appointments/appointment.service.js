@@ -212,8 +212,9 @@ const createAppointment = async (appointmentData, tenantId) => {
     }
   }
 
-  // Check for conflicts (only if employee is assigned)
+  // Check for conflicts
   if (employeeId) {
+    // Employee-based availability check (salons/plumbers)
     const availability = await checkSlotAvailability(
       employeeId,
       tenantId,
@@ -226,6 +227,27 @@ const createAppointment = async (appointmentData, tenantId) => {
         'Time slot is not available. Employee already has an appointment during this time.',
         409,
         'TIME_SLOT_CONFLICT'
+      );
+    }
+  } else {
+    // Concurrency-based check for no-employee bookings (school tours, etc.)
+    const maxConcurrent = tenant?.metadata?.maxConcurrentTours || 3;
+    const { Op } = require('sequelize');
+    const overlapping = await Appointment.count({
+      where: {
+        tenantId,
+        serviceId,
+        status: { [Op.in]: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED] },
+        startTime: { [Op.lt]: endDateTime },
+        endTime: { [Op.gt]: startDateTime },
+      },
+    });
+
+    if (overlapping >= maxConcurrent) {
+      throw new AppError(
+        `This time slot is fully booked (maximum ${maxConcurrent} appointments). Please choose a different time.`,
+        409,
+        'TIME_SLOT_FULL'
       );
     }
   }
