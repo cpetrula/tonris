@@ -1281,12 +1281,20 @@ const handleElevenLabsCreateAppointmentWebhook = async (req, res, next) => {
       notes: notes || 'Created via ElevenLabs AI',
     }, tenantId);
     
-    // Return appointment in the format expected by ElevenLabs
+    // Return appointment with explicit day-of-week so the agent can verify
+    const bookedDate = new Date(appointment.startTime);
+    const dayOfWeek = bookedDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/Los_Angeles' });
+    const formattedDate = bookedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Los_Angeles' });
+    const formattedTime = bookedDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Los_Angeles' });
+
     res.status(201).json({
       success: true,
       data: {
         appointment,
-        message: 'Appointment created successfully',
+        message: `Appointment created successfully for ${formattedDate} at ${formattedTime}`,
+        bookedDayOfWeek: dayOfWeek,
+        bookedDate: formattedDate,
+        bookedTime: formattedTime,
       },
     });
   } catch (error) {
