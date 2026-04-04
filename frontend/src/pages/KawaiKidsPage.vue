@@ -97,6 +97,30 @@ const reviews = [
   }
 ]
 
+const blogPosts = [
+  {
+    title: 'Why Reading with Children is Important',
+    category: 'Parenting Tips',
+    date: 'March 28, 2026',
+    excerpt: 'Reading with your child at least 10 minutes a day is very important for your child\'s brain development and helps in getting ready for future school success.',
+    image: 'https://kawaikids.com/wp-content/uploads/2021/11/reading-with-children-1920x1280-1-408x250.jpg',
+  },
+  {
+    title: 'Importance of Art in Early Child Development',
+    category: 'Kids Education',
+    date: 'March 27, 2026',
+    excerpt: 'Art since prehistoric times has garnered immense significance in the development of mankind. Today\'s education system has realized the vitality of including arts in the curriculum.',
+    image: 'https://kawaikids.com/wp-content/uploads/2021/11/kids-blocks-1920x1280-1-408x250.jpg',
+  },
+  {
+    title: 'Importance of Free Play',
+    category: 'Parenting Tips',
+    date: 'March 26, 2026',
+    excerpt: 'Play is essential to development because it contributes to the cognitive, physical, social and emotional well-being of children and youth.',
+    image: 'https://kawaikids.com/wp-content/uploads/2021/09/playing-game-1920x1280-1-408x250.jpg',
+  },
+]
+
 const highlights = [
   { icon: 'pi pi-clock', label: 'Open 7AM – 6PM', sublabel: 'Monday through Friday' },
   { icon: 'pi pi-heart', label: 'Est. 2007', sublabel: '19 years of trusted care' },
@@ -603,79 +627,39 @@ const kawaiPhone = '(323) 728-5437'
       </div>
     </section>
 
-    <!-- Criton AI Phone Agent Section -->
-    <section class="py-16 md:py-24 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white relative overflow-hidden">
-      <!-- Decorative elements -->
-      <div class="absolute top-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div class="absolute bottom-0 right-0 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+    <!-- Blog / Parenting Tips Section -->
+    <section class="py-16 md:py-24 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <p class="text-purple-500 font-bold mb-2" style="font-family: 'Caveat', cursive; font-size: 1.5rem;">From Our Blog</p>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4" style="font-family: 'Fredoka', sans-serif;">
+            Parenting Tips & Resources
+          </h2>
+        </div>
 
-      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <div class="flex items-center gap-3 mb-6">
-              <img src="/criton-logo.svg" alt="Criton AI" class="h-10 w-auto" />
-              <span class="text-sm font-medium text-purple-300 bg-purple-500/20 px-3 py-1 rounded-full">Powered by CRITON.AI</span>
-            </div>
-            <h2 class="text-3xl md:text-4xl font-bold mb-6" style="font-family: 'Fredoka', sans-serif;">
-              Never Miss a Parent's Call Again
-            </h2>
-            <p class="text-lg text-purple-200 mb-8 leading-relaxed">
-              Our AI phone receptionist answers calls 24/7, provides information about programs and availability,
-              and helps parents schedule tours — even when your team is busy caring for kids.
-            </p>
-
-            <div class="space-y-4 mb-8">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <i class="pi pi-check text-green-400 text-sm"></i>
-                </div>
-                <span class="text-purple-100">Answers questions about programs, schedules, and enrollment</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <i class="pi pi-check text-green-400 text-sm"></i>
-                </div>
-                <span class="text-purple-100">Helps parents book tours and get started</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <i class="pi pi-check text-green-400 text-sm"></i>
-                </div>
-                <span class="text-purple-100">Available 24/7, even after hours and on weekends</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <i class="pi pi-check text-green-400 text-sm"></i>
-                </div>
-                <span class="text-purple-100">Natural, friendly voice — parents love it</span>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div
+            v-for="post in blogPosts"
+            :key="post.title"
+            class="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100"
+          >
+            <div class="relative h-48 overflow-hidden">
+              <img
+                :src="post.image"
+                :alt="post.title"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div class="absolute top-3 left-3 bg-purple-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                {{ post.category }}
               </div>
             </div>
-          </div>
-
-          <!-- Phone Demo Card -->
-          <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center">
-            <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-purple-500 to-fuchsia-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <i class="pi pi-phone text-3xl text-white"></i>
+            <div class="p-6">
+              <p class="text-xs text-gray-400 mb-2">{{ post.date }}</p>
+              <h3 class="text-lg font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors" style="font-family: 'Fredoka', sans-serif;">
+                {{ post.title }}
+              </h3>
+              <p class="text-sm text-gray-600 leading-relaxed">{{ post.excerpt }}</p>
             </div>
-            <h3 class="text-2xl font-bold mb-3" style="font-family: 'Fredoka', sans-serif;">
-              Try the AI Receptionist
-            </h3>
-            <p class="text-purple-200 mb-6">
-              Call now to hear exactly how it works for Kawai Kids
-            </p>
-
-            <a
-              href="tel:+14242839238"
-              class="block bg-white text-purple-700 rounded-xl p-6 hover:bg-purple-50 transition-colors mb-4"
-            >
-              <span class="text-sm text-gray-500 block mb-1">Demo Phone Number</span>
-              <span class="text-3xl font-bold tracking-wide" style="font-family: 'Fredoka', sans-serif;">1-424-283-9238</span>
-            </a>
-
-            <p class="text-sm text-purple-300">
-              <i class="pi pi-info-circle mr-1"></i>
-              Free demo call — No signup required
-            </p>
           </div>
         </div>
       </div>
