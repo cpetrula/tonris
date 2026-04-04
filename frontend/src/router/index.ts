@@ -17,6 +17,7 @@ const AdminLoginPage = () => import('@/pages/AdminLoginPage.vue')
 const AdminClientsPage = () => import('@/pages/AdminClientsPage.vue')
 const KawaiKidsPage = () => import('@/pages/KawaiKidsPage.vue')
 const KawaiKidsEnrollPage = () => import('@/pages/KawaiKidsEnrollPage.vue')
+const KawaiKidsTourPage = () => import('@/pages/KawaiKidsTourPage.vue')
 const EnrollmentsPage = () => import('@/pages/EnrollmentsPage.vue')
 
 // Admin Dashboard Pages
@@ -108,6 +109,12 @@ const routes: RouteRecordRaw[] = [
     path: '/kawaikids/enroll',
     name: 'kawaikids-enroll',
     component: KawaiKidsEnrollPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/kawaikids/tour',
+    name: 'kawaikids-tour',
+    component: KawaiKidsTourPage,
     meta: { requiresAuth: false }
   },
   {

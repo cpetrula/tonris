@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import Accordion from 'primevue/accordion'
 import AccordionPanel from 'primevue/accordionpanel'
 import AccordionHeader from 'primevue/accordionheader'
@@ -7,49 +7,64 @@ import AccordionContent from 'primevue/accordioncontent'
 
 const mobileMenuOpen = ref(false)
 
+const heroImages = [
+  'https://kawaikids.com/wp-content/uploads/2021/10/girl-playing-legos-1920x1280-1.jpg',
+  'https://kawaikids.com/wp-content/uploads/2021/10/writing-1920x1280-1.jpg',
+  'https://kawaikids.com/wp-content/uploads/2021/09/playing-game-1920x1280-1.jpg',
+]
+const currentHeroIndex = ref(0)
+let heroInterval: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  heroInterval = setInterval(() => {
+    currentHeroIndex.value = (currentHeroIndex.value + 1) % heroImages.length
+  }, 5000)
+})
+
+onUnmounted(() => {
+  if (heroInterval) clearInterval(heroInterval)
+})
+
 const programs = [
   {
-    name: 'Infant Care',
-    room: 'Caterpillar Room',
-    ages: '3 months – 12 months',
-    description: 'A warm, nurturing home-away-from-home where your baby receives individualized attention. Sensory exploration, music, and early literacy in a schedule tailored to their needs.',
-    ratio: '1:3',
+    name: 'Infants',
+    ages: '0 – 12 months',
+    description: 'Our Infant Program is a home away from home. The majority of our day is filled with cuddling, singing and talking with your baby. A schedule tailored to your child\'s individual needs.',
     image: 'https://kawaikids.com/wp-content/uploads/2021/10/infant-1920x1280-1-408x250.jpg',
     color: 'from-pink-400 to-rose-500'
   },
   {
-    name: 'Toddler',
-    room: 'Dragonfly Room',
+    name: 'Toddlers',
     ages: '12 – 24 months',
-    description: 'Structured schedules with indoor and outdoor activities that promote physical, social, and cognitive development through guided play and exploration.',
-    ratio: '1:3',
+    description: 'A structured schedule with balanced indoor and outdoor activities promoting overall development — language, literacy, physical, social, emotional, and cognitive growth.',
     image: 'https://kawaikids.com/wp-content/uploads/2017/06/baby-alphabet-1920x1280-1-408x250.jpg',
     color: 'from-orange-400 to-amber-500'
   },
   {
-    name: 'Preschool',
-    room: 'Bumblebee Room',
-    ages: '2.5 – 4 years',
-    description: 'Hands-on experiences that promote language development, independence, and a love of learning. Getting kids ready for the next big step — kindergarten!',
-    ratio: '1:7',
+    name: 'Early Preschool',
+    ages: '2 – 3 years',
+    description: 'Structured indoor and outdoor activities promoting language, literacy, physical, social, emotional, and cognitive development through guided play and creative expression.',
     image: 'https://kawaikids.com/wp-content/uploads/2021/10/kids-playing-music-1920x1280-1-408x250.jpg',
     color: 'from-violet-400 to-purple-500'
   },
   {
-    name: 'Pre-Kindergarten',
-    room: 'Butterfly Room',
-    ages: '4 – 5 years',
-    description: 'Focused kindergarten readiness with structured academic activities, social skills development, and confidence building for a smooth school transition.',
-    ratio: '1:10',
-    image: 'https://kawaikids.com/wp-content/uploads/2021/11/reading-with-children-1920x1280-1-408x250.jpg',
+    name: 'Preschool',
+    ages: '3 – 4 years',
+    description: 'Our curriculum provides engaging hands-on experiences that promote language development, independence, and exploration of their surroundings.',
+    image: 'https://kawaikids.com/wp-content/uploads/2021/10/painting-1920x1280-1-450x450.jpg',
     color: 'from-cyan-400 to-teal-500'
   },
   {
+    name: 'Pre-Kindergarten',
+    ages: '4 – 5 years',
+    description: 'Structured activities promoting language, literacy, physical, social, emotional, and cognitive development to prepare children for a smooth transition to kindergarten.',
+    image: 'https://kawaikids.com/wp-content/uploads/2021/11/reading-with-children-1920x1280-1-408x250.jpg',
+    color: 'from-blue-400 to-indigo-500'
+  },
+  {
     name: 'School Age',
-    room: 'After School Program',
     ages: 'TK – 12 years',
-    description: 'Homework help, nutritious snacks, character development, and recreational programs during school breaks. A safe and enriching after-school environment.',
-    ratio: '1:10',
+    description: 'Homework assistance during the school year and recreational programs during school breaks and early dismissal days, with indoor and outdoor activities and character development.',
     image: 'https://kawaikids.com/wp-content/uploads/2021/11/kids-blocks-1920x1280-1-408x250.jpg',
     color: 'from-emerald-400 to-green-500'
   }
@@ -86,7 +101,7 @@ const highlights = [
   { icon: 'pi pi-clock', label: 'Open 7AM – 6PM', sublabel: 'Monday through Friday' },
   { icon: 'pi pi-heart', label: 'Est. 2007', sublabel: '19 years of trusted care' },
   { icon: 'pi pi-star', label: '4.9 Stars', sublabel: 'on Yelp reviews' },
-  { icon: 'pi pi-users', label: '1:3 Infant Ratio', sublabel: 'Individualized attention' },
+  { icon: 'pi pi-users', label: 'Newborn – 12 yrs', sublabel: 'Programs for every age' },
   { icon: 'pi pi-apple', label: 'On-Site Chef', sublabel: 'All meals included' },
   { icon: 'pi pi-shield', label: 'Licensed & Certified', sublabel: 'First Aid & CPR trained' }
 ]
@@ -197,9 +212,12 @@ const kawaiPhone = '(323) 728-5437'
       <!-- Background with overlay -->
       <div class="absolute inset-0">
         <img
-          src="https://kawaikids.com/wp-content/uploads/2021/10/girl-playing-legos-1920x1280-1.jpg"
-          alt="Children playing"
-          class="w-full h-full object-cover"
+          v-for="(img, index) in heroImages"
+          :key="img"
+          :src="img"
+          alt="Children at Kawai Kids"
+          class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+          :class="index === currentHeroIndex ? 'opacity-100' : 'opacity-0'"
         />
         <div class="absolute inset-0 bg-gradient-to-r from-purple-900/85 via-purple-800/75 to-fuchsia-900/70"></div>
       </div>
@@ -233,8 +251,7 @@ const kawaiPhone = '(323) 728-5437'
                 <i class="pi pi-arrow-right"></i>
               </a>
               <a
-                href="/kawaikids/enroll"
-
+                href="/kawaikids/tour"
                 class="inline-flex items-center justify-center gap-2 bg-white/15 backdrop-blur text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/25 transition-all border border-white/30"
                 style="font-family: 'Fredoka', sans-serif;"
               >
@@ -328,11 +345,7 @@ const kawaiPhone = '(323) 728-5437'
               </div>
             </div>
             <div class="p-6">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xl font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">{{ program.name }}</h3>
-                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">{{ program.ratio }} ratio</span>
-              </div>
-              <p class="text-sm text-purple-500 mb-3 font-medium" style="font-family: 'Caveat', cursive; font-size: 1.1rem;">{{ program.room }}</p>
+              <h3 class="text-xl font-bold text-gray-900 mb-2" style="font-family: 'Fredoka', sans-serif;">{{ program.name }}</h3>
               <p class="text-gray-600 text-sm leading-relaxed">{{ program.description }}</p>
             </div>
           </div>
@@ -524,8 +537,7 @@ const kawaiPhone = '(323) 728-5437'
               </div>
             </div>
             <a
-              href="/kawaikids/enroll"
-  
+              href="/kawaikids/tour"
               class="inline-flex items-center gap-2 mt-6 bg-purple-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-purple-700 transition-colors text-sm"
               style="font-family: 'Fredoka', sans-serif;"
             >
@@ -556,8 +568,7 @@ const kawaiPhone = '(323) 728-5437'
               </div>
             </div>
             <a
-              href="/kawaikids/enroll"
-  
+              href="/kawaikids/tour"
               class="inline-flex items-center gap-2 mt-6 bg-teal-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-teal-700 transition-colors text-sm"
               style="font-family: 'Fredoka', sans-serif;"
             >

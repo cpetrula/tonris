@@ -125,12 +125,12 @@ const getPublicPrograms = async (req, res, next) => {
     // Return available programs
     // In the future this could be dynamic per tenant, but for now it's a standard list
     const programs = [
-      { id: 'infant', name: 'Infant Care', ages: '3 months – 12 months', room: 'Caterpillar Room' },
-      { id: 'toddler', name: 'Toddler', ages: '12 – 24 months', room: 'Dragonfly Room' },
-      { id: 'early-preschool', name: 'Early Preschool', ages: '2 – 3 years', room: '' },
-      { id: 'preschool', name: 'Preschool', ages: '2.5 – 4 years', room: 'Bumblebee Room' },
-      { id: 'pre-k', name: 'Pre-Kindergarten', ages: '4 – 5 years', room: 'Butterfly Room' },
-      { id: 'school-age', name: 'School Age', ages: 'TK – 12 years', room: '' },
+      { id: 'infant', name: 'Infants', ages: '0 – 12 months' },
+      { id: 'toddler', name: 'Toddlers', ages: '12 – 24 months' },
+      { id: 'early-preschool', name: 'Early Preschool', ages: '2 – 3 years' },
+      { id: 'preschool', name: 'Preschool', ages: '3 – 4 years' },
+      { id: 'pre-k', name: 'Pre-Kindergarten', ages: '4 – 5 years' },
+      { id: 'school-age', name: 'School Age', ages: 'TK – 12 years' },
     ];
 
     const scheduleOptions = [
@@ -142,6 +142,90 @@ const getPublicPrograms = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: { programs, scheduleOptions },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/public/enrollments/tour
+ * Submit a tour request (lightweight enrollment)
+ */
+const submitTourRequest = async (req, res, next) => {
+  try {
+    const tenantSlug = req.query.tenant;
+    if (!tenantSlug) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tenant identifier is required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    let tenantId;
+    if (UUID_REGEX.test(tenantSlug)) {
+      tenantId = tenantSlug;
+    } else {
+      const tenant = await Tenant.findOne({ where: { slug: tenantSlug } });
+      if (!tenant) {
+        return res.status(404).json({
+          success: false,
+          error: 'Organization not found',
+          code: 'TENANT_NOT_FOUND',
+        });
+      }
+      tenantId = tenant.id;
+    }
+
+    const { firstName, lastName, email, phone, preferredDate, preferredTime, childAge, programInterest, notes } = req.body;
+
+    if (!firstName || !lastName || !email || !phone) {
+      return res.status(400).json({
+        success: false,
+        error: 'First name, last name, email, and phone are required',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (!EMAIL_REGEX.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Create as a lightweight enrollment with "tour" program preference
+    const enrollment = await enrollmentService.createEnrollment(
+      {
+        childFirstName: childAge || 'TBD',
+        childLastName: lastName,
+        childDateOfBirth: '2020-01-01', // Placeholder — will be collected during tour
+        programPreference: programInterest || 'undecided',
+        guardianFirstName: firstName,
+        guardianLastName: lastName,
+        guardianEmail: email,
+        guardianPhone: phone,
+        preferredStartDate: preferredDate || undefined,
+        additionalNotes: [
+          'TOUR REQUEST',
+          preferredDate ? `Preferred date: ${preferredDate}` : null,
+          preferredTime ? `Preferred time: ${preferredTime}` : null,
+          childAge ? `Child age: ${childAge}` : null,
+          notes || null,
+        ].filter(Boolean).join(' | '),
+        source: 'website',
+      },
+      tenantId
+    );
+
+    logger.info(`Tour request submitted: ${enrollment.id} from ${firstName} ${lastName} (tenant: ${tenantId})`);
+
+    res.status(201).json({
+      success: true,
+      data: { tourRequest: enrollment },
+      message: 'Tour request submitted. We will call you within 24 hours to confirm.',
     });
   } catch (error) {
     next(error);
@@ -303,6 +387,7 @@ const rejectEnrollment = async (req, res, next) => {
 
 module.exports = {
   submitPublicEnrollment,
+  submitTourRequest,
   getPublicPrograms,
   getEnrollments,
   getEnrollment,

@@ -44,6 +44,9 @@ const standardLimiter = rateLimit({
 // POST /api/public/enrollments - Submit enrollment form
 publicRouter.post('/', publicEnrollmentLimiter, enrollmentController.submitPublicEnrollment);
 
+// POST /api/public/enrollments/tour - Submit tour request
+publicRouter.post('/tour', publicEnrollmentLimiter, enrollmentController.submitTourRequest);
+
 // GET /api/public/enrollments/programs - Get available programs
 publicRouter.get('/programs', standardLimiter, enrollmentController.getPublicPrograms);
 

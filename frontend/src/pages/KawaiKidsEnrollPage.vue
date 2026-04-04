@@ -50,10 +50,10 @@ const additionalNotes = ref('')
 
 // Options
 const programOptions = [
-  { label: 'Infant Care (3mo – 12mo)', value: 'infant' },
-  { label: 'Toddler (12 – 24 months)', value: 'toddler' },
+  { label: 'Infants (0 – 12 months)', value: 'infant' },
+  { label: 'Toddlers (12 – 24 months)', value: 'toddler' },
   { label: 'Early Preschool (2 – 3 years)', value: 'early-preschool' },
-  { label: 'Preschool (2.5 – 4 years)', value: 'preschool' },
+  { label: 'Preschool (3 – 4 years)', value: 'preschool' },
   { label: 'Pre-Kindergarten (4 – 5 years)', value: 'pre-k' },
   { label: 'School Age (TK – 12 years)', value: 'school-age' },
 ]
