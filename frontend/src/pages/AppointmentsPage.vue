@@ -82,7 +82,8 @@ const emptyAppointment: Appointment = {
   time: '9:00 AM',
   duration: 45,
   status: 'scheduled',
-  notes: ''
+  notes: '',
+  childName: ''
 }
 
 const currentAppointment = ref<Appointment>({ ...emptyAppointment })
