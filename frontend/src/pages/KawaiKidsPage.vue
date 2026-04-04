@@ -121,6 +121,40 @@ const blogPosts = [
   },
 ]
 
+const tuition = [
+  {
+    group: 'Infant (0–24 months)',
+    rates: [
+      { schedule: '5 days (Mon–Fri)', biweekly: '$600', monthly: '$1,300' },
+      { schedule: '3 days (Mon/Wed/Fri)', biweekly: '$404', monthly: '$875' },
+      { schedule: '2 days (Tue/Thu)', biweekly: '$300', monthly: '$650' },
+    ]
+  },
+  {
+    group: 'Potty Trained (2–5 years)',
+    rates: [
+      { schedule: '5 days (Mon–Fri)', biweekly: '$462', monthly: '$1,000' },
+      { schedule: '3 days (Mon/Wed/Fri)', biweekly: '$300', monthly: '$650' },
+      { schedule: '2 days (Tue/Thu)', biweekly: '$222', monthly: '$480' },
+    ]
+  },
+  {
+    group: 'Non-Potty Trained (2–5 years)',
+    rates: [
+      { schedule: '5 days (Mon–Fri)', biweekly: '$531', monthly: '$1,150' },
+      { schedule: '3 days (Mon/Wed/Fri)', biweekly: '$347', monthly: '$750' },
+      { schedule: '2 days (Tue/Thu)', biweekly: '$254', monthly: '$550' },
+    ]
+  },
+  {
+    group: 'School Age (TK–12 years)',
+    rates: [
+      { schedule: '5 days (Mon–Fri)', biweekly: '', monthly: '$200/week' },
+      { schedule: 'Half days', biweekly: '', monthly: '$125/week' },
+    ]
+  },
+]
+
 const highlights = [
   { icon: 'pi pi-clock', label: 'Open 7AM – 6PM', sublabel: 'Monday through Friday' },
   { icon: 'pi pi-heart', label: 'Est. 2007', sublabel: '19 years of trusted care' },
@@ -665,6 +699,62 @@ const kawaiPhone = '(323) 728-5437'
       </div>
     </section>
 
+    <!-- Tuition Section -->
+    <section id="tuition" class="py-16 md:py-24 bg-white">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <p class="text-purple-500 font-bold mb-2" style="font-family: 'Caveat', cursive; font-size: 1.5rem;">Transparent Pricing</p>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4" style="font-family: 'Fredoka', sans-serif;">
+            Tuition & Fees
+          </h2>
+          <p class="text-gray-600 max-w-2xl mx-auto">All meals included — breakfast, lunch, and two snacks prepared daily by our on-site chef.</p>
+        </div>
+
+        <div class="bg-purple-50 rounded-2xl p-6 md:p-8 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center mb-6">
+            <div class="bg-white rounded-xl p-4">
+              <p class="text-sm text-gray-500">Registration Fee</p>
+              <p class="text-2xl font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">$150</p>
+              <p class="text-xs text-gray-400">one-time</p>
+            </div>
+            <div class="bg-white rounded-xl p-4">
+              <p class="text-sm text-gray-500">Refundable Deposit</p>
+              <p class="text-2xl font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">$300</p>
+              <p class="text-xs text-gray-400">returned with 3 weeks' notice</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 col-span-2 md:col-span-1">
+              <p class="text-sm text-gray-500">Sibling Discount</p>
+              <p class="text-2xl font-bold text-green-600" style="font-family: 'Fredoka', sans-serif;">10% off</p>
+              <p class="text-xs text-gray-400">all siblings full-time</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div v-for="group in tuition" :key="group.group" class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="bg-purple-600 text-white px-6 py-3">
+              <h3 class="font-semibold" style="font-family: 'Fredoka', sans-serif;">{{ group.group }}</h3>
+            </div>
+            <div class="divide-y divide-gray-100">
+              <div
+                v-for="rate in group.rates"
+                :key="rate.schedule"
+                class="flex items-center justify-between px-6 py-3 text-sm"
+              >
+                <span class="text-gray-700">{{ rate.schedule }}</span>
+                <div class="flex gap-6 text-right">
+                  <span v-if="rate.biweekly" class="text-gray-500 hidden sm:block">{{ rate.biweekly }}<span class="text-xs text-gray-400"> /bi-weekly</span></span>
+                  <span class="font-semibold text-gray-900">{{ rate.monthly }}<span v-if="!rate.monthly.includes('week')" class="text-xs text-gray-400"> /month</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-center text-sm text-gray-400 mt-6">Minimum 3% annual tuition increase. No refunds for holidays, vacations, or absences.</p>
+      </div>
+    </section>
+
     <!-- CTA Section -->
     <section class="py-16 md:py-20 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 text-white">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -735,11 +825,38 @@ const kawaiPhone = '(323) 728-5437'
             </div>
           </div>
         </div>
-        <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p class="text-sm">&copy; {{ new Date().getFullYear() }} Kawai Kids Learning Center. All rights reserved.</p>
-          <div class="flex items-center gap-2 text-sm">
-            <span>Website powered by</span>
-            <a href="/" class="text-purple-400 hover:text-purple-300 font-semibold transition-colors">CRITON.AI</a>
+        <!-- Social Links -->
+        <div class="border-t border-gray-800 mt-8 pt-8">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-4">
+              <span class="text-sm text-gray-500">Follow us:</span>
+              <a href="https://www.instagram.com/kawaikidsmontebello/" target="_blank" class="text-gray-400 hover:text-white transition-colors text-sm">
+                <i class="pi pi-instagram mr-1"></i>Montebello
+              </a>
+              <a href="https://www.instagram.com/kawaikidsalhambra/" target="_blank" class="text-gray-400 hover:text-white transition-colors text-sm">
+                <i class="pi pi-instagram mr-1"></i>Alhambra
+              </a>
+              <a href="https://www.facebook.com/kawaikids" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                <i class="pi pi-facebook text-lg"></i>
+              </a>
+              <a href="https://www.yelp.com/biz/kawai-kids-montebello" target="_blank" class="text-gray-400 hover:text-white transition-colors text-sm font-bold">
+                Yelp
+              </a>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-500">
+              <a href="https://kawaikids.com/our-policy/" target="_blank" class="hover:text-gray-300 transition-colors">Our Policy</a>
+              <span>|</span>
+              <a href="https://kawaikids.com/terms-of-use/" target="_blank" class="hover:text-gray-300 transition-colors">Terms of Use</a>
+              <span>|</span>
+              <a href="https://kawaikids.com/privacy-policy/" target="_blank" class="hover:text-gray-300 transition-colors">Privacy Policy</a>
+            </div>
+          </div>
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4 mt-6">
+            <p class="text-sm">&copy; {{ new Date().getFullYear() }} Kawai Kids Learning Center. All rights reserved.</p>
+            <div class="flex items-center gap-2 text-sm">
+              <span>Website powered by</span>
+              <a href="/" class="text-purple-400 hover:text-purple-300 font-semibold transition-colors">CRITON.AI</a>
+            </div>
           </div>
         </div>
       </div>
