@@ -713,6 +713,9 @@ const handleConversationInitiationWebhook = async (req, res, next) => {
       logger.warn('ElevenLabs Conversation Initiation: Webhook secret not configured');
     }
     
+    // Log the full request body for debugging conversation initiation
+    logger.info(`ElevenLabs Conversation Initiation payload: ${JSON.stringify(req.body)}`);
+
     // Validate request type
     if (req.body.type && req.body.type !== 'conversation_initiation_client_data') {
       logger.warn(`ElevenLabs Conversation Initiation: Unexpected type ${req.body.type}`);
