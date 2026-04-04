@@ -2,6 +2,7 @@
  * Enrollment Controller
  * Handles HTTP requests for enrollment endpoints
  */
+const { Op } = require('sequelize');
 const enrollmentService = require('./enrollment.service');
 const { getTenantUUID } = require('../../utils/tenant');
 const { EMAIL_REGEX } = require('../../utils/validation');
@@ -9,6 +10,34 @@ const { Tenant } = require('../tenants/tenant.model');
 const logger = require('../../utils/logger');
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve tenant ID from a slug, name fragment, or UUID
+ * Slugs are generated as "name-timestamp" so we also try matching by slug prefix
+ */
+const resolveTenantId = async (identifier) => {
+  if (UUID_REGEX.test(identifier)) {
+    return identifier;
+  }
+
+  // Try exact slug match first
+  let tenant = await Tenant.findOne({ where: { slug: identifier } });
+  if (tenant) return tenant.id;
+
+  // Try slug prefix match (slugs are "name-timestamp")
+  tenant = await Tenant.findOne({
+    where: { slug: { [Op.like]: `${identifier}-%` } },
+  });
+  if (tenant) return tenant.id;
+
+  // Try case-insensitive name match
+  tenant = await Tenant.findOne({
+    where: { name: { [Op.like]: `%${identifier.replace(/-/g, ' ')}%` } },
+  });
+  if (tenant) return tenant.id;
+
+  return null;
+};
 
 // ==========================================
 // PUBLIC ENDPOINTS (no auth required)
@@ -29,23 +58,13 @@ const submitPublicEnrollment = async (req, res, next) => {
       });
     }
 
-    // Resolve tenant — support both UUID and slug
-    let tenantId;
-    if (UUID_REGEX.test(tenantSlug)) {
-      tenantId = tenantSlug;
-    } else {
-      // Look up tenant by slug/name
-      const tenant = await Tenant.findOne({
-        where: { slug: tenantSlug },
+    const tenantId = await resolveTenantId(tenantSlug);
+    if (!tenantId) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        code: 'TENANT_NOT_FOUND',
       });
-      if (!tenant) {
-        return res.status(404).json({
-          success: false,
-          error: 'Organization not found',
-          code: 'TENANT_NOT_FOUND',
-        });
-      }
-      tenantId = tenant.id;
     }
 
     const {
@@ -163,22 +182,29 @@ const submitTourRequest = async (req, res, next) => {
       });
     }
 
-    let tenantId;
-    if (UUID_REGEX.test(tenantSlug)) {
-      tenantId = tenantSlug;
-    } else {
-      const tenant = await Tenant.findOne({ where: { slug: tenantSlug } });
-      if (!tenant) {
-        return res.status(404).json({
-          success: false,
-          error: 'Organization not found',
-          code: 'TENANT_NOT_FOUND',
-        });
-      }
-      tenantId = tenant.id;
+    const tenantId = await resolveTenantId(tenantSlug);
+    if (!tenantId) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        code: 'TENANT_NOT_FOUND',
+      });
     }
 
     const { firstName, lastName, email, phone, preferredDate, preferredTime, childAge, programInterest, notes } = req.body;
+
+    // Validate preferred date is not on a weekend
+    if (preferredDate) {
+      const date = new Date(preferredDate + 'T12:00:00');
+      const day = date.getDay();
+      if (day === 0 || day === 6) {
+        return res.status(400).json({
+          success: false,
+          error: 'Tours are only available Monday through Friday',
+          code: 'VALIDATION_ERROR',
+        });
+      }
+    }
 
     if (!firstName || !lastName || !email || !phone) {
       return res.status(400).json({

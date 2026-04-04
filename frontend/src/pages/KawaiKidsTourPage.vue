@@ -62,6 +62,14 @@ function validate(): boolean {
     error.value = 'Please enter a valid email address'
     return false
   }
+  if (preferredDate.value) {
+    const date = new Date(preferredDate.value + 'T12:00:00')
+    const day = date.getDay()
+    if (day === 0 || day === 6) {
+      error.value = 'Tours are only available Monday through Friday'
+      return false
+    }
+  }
   return true
 }
 
