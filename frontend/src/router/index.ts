@@ -15,6 +15,9 @@ const PricingPage = () => import('@/pages/PricingPage.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
 const AdminLoginPage = () => import('@/pages/AdminLoginPage.vue')
 const AdminClientsPage = () => import('@/pages/AdminClientsPage.vue')
+const KawaiKidsPage = () => import('@/pages/KawaiKidsPage.vue')
+const KawaiKidsEnrollPage = () => import('@/pages/KawaiKidsEnrollPage.vue')
+const EnrollmentsPage = () => import('@/pages/EnrollmentsPage.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -96,6 +99,18 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/kawaikids',
+    name: 'kawaikids',
+    component: KawaiKidsPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/kawaikids/enroll',
+    name: 'kawaikids-enroll',
+    component: KawaiKidsEnrollPage,
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/criton-admin',
     name: 'admin-login',
     component: AdminLoginPage,
@@ -165,6 +180,12 @@ const routes: RouteRecordRaw[] = [
         name: 'phone-forwarding',
         component: PhoneForwardingPage,
         meta: { requiresRole: ['superuser', 'admin'] }
+      },
+      {
+        path: 'enrollments',
+        name: 'enrollments',
+        component: EnrollmentsPage,
+        meta: { requiresRole: ['superuser', 'admin', 'manager'] }
       }
       // DISABLED: Multi-location feature hidden until business hours per location is implemented
       // {

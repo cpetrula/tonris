@@ -2093,6 +2093,99 @@ const handleElevenLabsWaitingListWebhook = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/webhooks/elevenlabs/enrollment-fields
+ * Returns the fields the AI agent needs to collect for enrollment
+ */
+const handleElevenLabsEnrollmentFieldsWebhook = async (req, res, next) => {
+  try {
+    const tenantId = req.query.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ success: false, error: 'tenantId is required' });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        required_fields: [
+          'childFirstName', 'childLastName', 'childDateOfBirth',
+          'guardianFirstName', 'guardianLastName', 'guardianEmail', 'guardianPhone',
+          'programPreference',
+        ],
+        optional_fields: [
+          'childGender', 'schedulePreference', 'preferredStartDate',
+          'guardianRelationship', 'guardianAddress',
+          'secondaryGuardianFirstName', 'secondaryGuardianLastName', 'secondaryGuardianPhone',
+          'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelationship',
+          'allergies', 'medicalNotes', 'specialNeeds', 'immunizationStatus',
+          'physicianName', 'physicianPhone', 'additionalNotes',
+        ],
+        program_options: ['infant', 'toddler', 'early-preschool', 'preschool', 'pre-k', 'school-age'],
+        schedule_options: ['five_days', 'three_days', 'two_days'],
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Enrollment Fields webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
+/**
+ * POST /api/webhooks/elevenlabs/enrollments
+ * AI agent submits enrollment data collected over phone
+ */
+const handleElevenLabsCreateEnrollmentWebhook = async (req, res, next) => {
+  try {
+    const signature = req.headers['x-elevenlabs-signature'];
+    const webhookSecret = env.ELEVENLABS_WEBHOOK_SECRET;
+
+    if (env.isProduction() && webhookSecret && signature) {
+      if (!req.rawBody) {
+        throw new AppError('Invalid request: missing body', 400, 'INVALID_REQUEST');
+      }
+      if (!verifyElevenLabsSignature(req.rawBody, signature, webhookSecret)) {
+        throw new AppError('Invalid webhook signature', 401, 'UNAUTHORIZED');
+      }
+    } else if (env.isProduction() && webhookSecret && !signature) {
+      logger.warn('ElevenLabs Enrollment: No signature provided (allowing request from tool call)');
+    }
+
+    const tenantId = req.query.tenantId || req.body.tenantId;
+    if (!tenantId) {
+      throw new AppError('Tenant ID is required', 400, 'VALIDATION_ERROR');
+    }
+    if (!isValidUUID(tenantId)) {
+      throw new AppError('Invalid tenant ID format', 400, 'VALIDATION_ERROR');
+    }
+
+    const { childFirstName, childLastName, childDateOfBirth, guardianFirstName, guardianLastName, guardianEmail, guardianPhone, programPreference } = req.body;
+
+    if (!childFirstName || !childLastName || !childDateOfBirth || !guardianFirstName || !guardianLastName || !guardianPhone || !programPreference) {
+      throw new AppError('Missing required enrollment fields', 400, 'VALIDATION_ERROR');
+    }
+
+    const { enrollmentService } = require('../enrollments');
+
+    const enrollment = await enrollmentService.createEnrollment(
+      { ...req.body, source: 'phone_agent' },
+      tenantId
+    );
+
+    logger.info(`ElevenLabs Enrollment: Created enrollment ${enrollment.id} for ${childFirstName} ${childLastName} (tenant: ${tenantId})`);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        enrollmentId: enrollment.id,
+        message: `Enrollment submitted for ${childFirstName} ${childLastName}. The school will contact you within 48-72 hours to complete the enrollment process.`,
+      },
+    });
+  } catch (error) {
+    logger.error(`ElevenLabs Enrollment webhook error: ${error.message}`);
+    next(error);
+  }
+};
+
 module.exports = {
   queryAvailability,
   manageAppointment,
@@ -2118,4 +2211,7 @@ module.exports = {
   handleListAgentsWebhook,
   handleGetAgentWebhook,
   handleUpdateAgentWebhook,
+  // Enrollment webhooks
+  handleElevenLabsEnrollmentFieldsWebhook,
+  handleElevenLabsCreateEnrollmentWebhook,
 };

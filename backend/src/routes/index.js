@@ -18,6 +18,7 @@ const { voiceRoutes } = require('../modules/voices');
 const { cronRoutes } = require('../modules/cron');
 const { locationRoutes } = require('../modules/locations');
 const userRoutes = require('../modules/users/user.routes');
+const { enrollmentRoutes, publicEnrollmentRoutes } = require('../modules/enrollments');
 
 module.exports = {
   healthRoutes,
@@ -38,4 +39,6 @@ module.exports = {
   cronRoutes,
   locationRoutes,
   userRoutes,
+  enrollmentRoutes,
+  publicEnrollmentRoutes,
 };

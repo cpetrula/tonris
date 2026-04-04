@@ -12,6 +12,7 @@ const { Subscription, SUBSCRIPTION_STATUS, BILLING_INTERVAL, PLAN_CONFIG } = req
 const { CallLog, CALL_DIRECTION, CALL_STATUS } = require('../modules/telephony/callLog.model');
 const { BusinessType } = require('../modules/business-types/businessType.model');
 const { WaitingList, WAITING_STATUS, WAITING_TYPE } = require('../modules/appointments/waitingList.model');
+const { Enrollment, ENROLLMENT_STATUS, ENROLLMENT_SOURCE, SCHEDULE_PREFERENCE, IMMUNIZATION_STATUS, GENDER } = require('../modules/enrollments/enrollment.model');
 
 /**
  * Define model associations
@@ -61,4 +62,10 @@ module.exports = {
   WaitingList,
   WAITING_STATUS,
   WAITING_TYPE,
+  Enrollment,
+  ENROLLMENT_STATUS,
+  ENROLLMENT_SOURCE,
+  SCHEDULE_PREFERENCE,
+  IMMUNIZATION_STATUS,
+  GENDER,
 };
