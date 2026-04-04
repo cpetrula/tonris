@@ -38,6 +38,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'img-src': ["'self'", 'data:', 'https://kawaikids.com', 'https://fonts.gstatic.com'],
+      'font-src': ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
+      'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       'media-src': ["'self'", 'blob:'],
       'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.mxpnl.com'],
       'connect-src': ["'self'", 'https://api.mixpanel.com', 'https://api-js.mixpanel.com'],
