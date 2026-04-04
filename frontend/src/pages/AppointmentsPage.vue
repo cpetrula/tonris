@@ -17,22 +17,6 @@ import Tab from 'primevue/tab';
 import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 import api from '@/services/api'
-import { useTenantStore } from '@/stores/tenant'
-
-const tenantStore = useTenantStore()
-
-// Check if this is a school/childcare business (no employees = school context)
-const isSchoolBusiness = computed(() => {
-  // If any appointment has no employeeId, treat as school
-  return appointments.value.length > 0 && appointments.value.every(a => !a.employeeId)
-})
-
-// Extract child's name from notes (format: "Child: Jackson, Age 3 - Preschool")
-function getChildName(notes: string): string {
-  if (!notes) return ''
-  const match = notes.match(/Child:\s*([^,]+)/)
-  return match ? match[1].trim() : ''
-}
 
 interface Appointment {
   id: string
@@ -53,6 +37,11 @@ interface Appointment {
 
 const loading = ref(false)
 const appointments = ref<Appointment[]>([])
+
+// Check if this is a school/childcare business (no employees = school context)
+const isSchoolBusiness = computed(() => {
+  return appointments.value.length > 0 && appointments.value.every(a => !a.employeeId)
+})
 
 const searchQuery = ref('')
 const selectedDate = ref<Date | null>(null)
