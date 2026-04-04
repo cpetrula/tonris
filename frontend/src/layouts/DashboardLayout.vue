@@ -66,6 +66,7 @@ interface NavItem {
 const adminNavigationItems: NavItem[] = [
   { name: 'Dashboard', path: '/app', icon: 'pi pi-home' },
   { name: 'Appointments', path: '/app/appointments', icon: 'pi pi-calendar' },
+  { name: 'Enrollments', path: '/app/enrollments', icon: 'pi pi-file-edit' },
   { name: 'Employees', path: '/app/employees', icon: 'pi pi-users' },
   { name: 'Services', path: '/app/services', icon: 'pi pi-list' },
   // DISABLED: Multi-location feature hidden until business hours per location is implemented
