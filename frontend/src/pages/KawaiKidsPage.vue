@@ -160,7 +160,7 @@ const highlights = [
   { icon: 'pi pi-heart', label: 'Est. 2007', sublabel: '19 years of trusted care' },
   { icon: 'pi pi-star', label: '4.9 Stars', sublabel: 'on Yelp reviews' },
   { icon: 'pi pi-users', label: 'Newborn – 12 yrs', sublabel: 'Programs for every age' },
-  { icon: 'pi pi-apple', label: 'On-Site Chef', sublabel: 'All meals included' },
+  { icon: 'pi pi-sun', label: 'On-Site Chef', sublabel: 'All meals included' },
   { icon: 'pi pi-shield', label: 'Licensed & Certified', sublabel: 'First Aid & CPR trained' }
 ]
 
@@ -441,7 +441,7 @@ const kawaiPhone = '(323) 728-5437'
             <div class="space-y-5">
               <div class="flex items-start gap-4">
                 <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <i class="pi pi-apple text-xl text-amber-600"></i>
+                  <i class="pi pi-sun text-xl text-amber-600"></i>
                 </div>
                 <div>
                   <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Chef-Prepared Meals Daily</h4>
@@ -479,15 +479,6 @@ const kawaiPhone = '(323) 728-5437'
                 </div>
               </div>
 
-              <div class="flex items-start gap-4">
-                <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <i class="pi pi-mobile text-xl text-cyan-600"></i>
-                </div>
-                <div>
-                  <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Brightwheel Connected</h4>
-                  <p class="text-sm text-gray-600">Real-time updates, photos, and daily reports straight to your phone. Stay connected to your child's day.</p>
-                </div>
-              </div>
             </div>
           </div>
 
