@@ -935,19 +935,34 @@ const handleConversationInitiation = async (params) => {
     dynamic_variables: dynamicVariables = {},
   } = params;
 
-  // Extract variables from Twilio connection (no DB queries needed)
-  const tenantId = dynamicVariables.tenant_id;
-  const callerNumber = dynamicVariables.caller_number;
-  const callSid = dynamicVariables.call_sid;
-  const businessName = dynamicVariables.business_name || 'Our Business';
+  // Extract variables from Twilio connection or phone call metadata
+  let tenantId = dynamicVariables.tenant_id;
+  let callerNumber = dynamicVariables.caller_number;
+  let callSid = dynamicVariables.call_sid;
+  let businessName = dynamicVariables.business_name || 'Our Business';
+
+  // For direct ElevenLabs phone number calls, tenant_id won't be pre-populated.
+  // Look up the tenant from the called phone number in the webhook payload.
+  if (!tenantId && params.phone_call) {
+    const calledNumber = params.phone_call.agent_number;
+    callerNumber = callerNumber || params.phone_call.external_number || '';
+    callSid = callSid || params.phone_call.call_sid || '';
+
+    if (calledNumber) {
+      const tenant = await findTenantByPhoneNumber(calledNumber);
+      if (tenant) {
+        tenantId = tenant.id;
+        businessName = tenant.name || businessName;
+        logger.info(`ElevenLabs Conversation Initiation: Resolved tenant ${tenantId} (${businessName}) from phone ${calledNumber}`);
+      } else {
+        logger.warn(`ElevenLabs Conversation Initiation: No tenant found for phone ${calledNumber}`);
+      }
+    }
+  }
 
   logger.info(`ElevenLabs Conversation Initiation: conversation=${conversationId}, agent=${agentId}, tenant=${tenantId}`);
 
-  // OPTIMIZATION: Return immediately without DB queries for faster greeting
-  // Context like caller appointments and business hours will be fetched via tools
-  // when the AI needs them (after the caller states their intent)
-
-  // Build minimal dynamic variables - just what's needed for tool calls
+  // Build dynamic variables for tool calls and prompt
   const responseVariables = {
     tenant_id: tenantId || '',
     tenant_name: businessName,
@@ -957,22 +972,20 @@ const handleConversationInitiation = async (params) => {
     conversation_id: conversationId,
   };
 
-  // Build response with audio format overrides for Twilio compatibility
-  // CRITICAL: Audio format must be ulaw_8000 for Twilio Media Streams
+  // Build response with conversation_config_override for Twilio audio compatibility
+  // CRITICAL: Audio format must be ulaw_8000 for Twilio phone calls
   const response = {
     dynamic_variables: responseVariables,
-    overrides: {
+    conversation_config_override: {
       agent: {
-        agent_output_audio_format: 'ulaw_8000',
-        user_input_audio_format: 'ulaw_8000',
+        prompt: {
+          prompt: null, // don't override prompt
+        },
+        first_message: null, // don't override greeting
         language: 'en',
-        output_format: 'ulaw_8000',
       },
       tts: {
         output_format: 'ulaw_8000',
-      },
-      asr: {
-        input_format: 'ulaw_8000',
       },
     },
   };
