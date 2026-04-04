@@ -35,7 +35,7 @@ const businessProfile = ref({
   zipCode: '',
   website: '',
   description: '',
-  maxConcurrentTours: 3 as string | number
+  maxConcurrentTours: '3'
 })
 
 // Business hours
@@ -151,7 +151,7 @@ async function saveBusinessProfile() {
       metadata: {
         website: businessProfile.value.website,
         description: businessProfile.value.description,
-        maxConcurrentTours: businessProfile.value.maxConcurrentTours || 3
+        maxConcurrentTours: Number(businessProfile.value.maxConcurrentTours) || 3
       }
     }
 
@@ -287,7 +287,7 @@ onMounted(async () => {
       businessProfile.value.zipCode = tenant.address?.zipCode || tenant.address?.zip || ''
       businessProfile.value.website = tenant.metadata?.website || ''
       businessProfile.value.description = tenant.metadata?.description || ''
-      businessProfile.value.maxConcurrentTours = Number(tenant.metadata?.maxConcurrentTours) || 3
+      businessProfile.value.maxConcurrentTours = String(tenant.metadata?.maxConcurrentTours || 3)
       
       // Populate AI settings from tenant data
       // If tenant has a custom first message, use it; otherwise use a default with business name
