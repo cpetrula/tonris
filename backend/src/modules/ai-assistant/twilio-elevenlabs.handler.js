@@ -936,27 +936,23 @@ const handleConversationInitiation = async (params) => {
   } = params;
 
   // Extract variables from Twilio connection or phone call metadata
+  // ElevenLabs sends flat fields for phone calls: caller_id, called_number, call_sid
   let tenantId = dynamicVariables.tenant_id;
-  let callerNumber = dynamicVariables.caller_number;
-  let callSid = dynamicVariables.call_sid;
+  let callerNumber = dynamicVariables.caller_number || params.caller_id || '';
+  let callSid = dynamicVariables.call_sid || params.call_sid || '';
   let businessName = dynamicVariables.business_name || 'Our Business';
+  const calledNumber = params.called_number;
 
   // For direct ElevenLabs phone number calls, tenant_id won't be pre-populated.
-  // Look up the tenant from the called phone number in the webhook payload.
-  if (!tenantId && params.phone_call) {
-    const calledNumber = params.phone_call.agent_number;
-    callerNumber = callerNumber || params.phone_call.external_number || '';
-    callSid = callSid || params.phone_call.call_sid || '';
-
-    if (calledNumber) {
-      const tenant = await findTenantByPhoneNumber(calledNumber);
-      if (tenant) {
-        tenantId = tenant.id;
-        businessName = tenant.name || businessName;
-        logger.info(`ElevenLabs Conversation Initiation: Resolved tenant ${tenantId} (${businessName}) from phone ${calledNumber}`);
-      } else {
-        logger.warn(`ElevenLabs Conversation Initiation: No tenant found for phone ${calledNumber}`);
-      }
+  // Look up the tenant from the called phone number.
+  if (!tenantId && calledNumber) {
+    const tenant = await findTenantByPhoneNumber(calledNumber);
+    if (tenant) {
+      tenantId = tenant.id;
+      businessName = tenant.name || businessName;
+      logger.info(`ElevenLabs Conversation Initiation: Resolved tenant ${tenantId} (${businessName}) from phone ${calledNumber}`);
+    } else {
+      logger.warn(`ElevenLabs Conversation Initiation: No tenant found for phone ${calledNumber}`);
     }
   }
 
