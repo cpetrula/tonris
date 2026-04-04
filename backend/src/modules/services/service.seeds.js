@@ -179,13 +179,81 @@ const generatePlumberServices = () => [
 ];
 
 /**
+ * Generate default services for School / Childcare business type
+ * @returns {Array<Object>} - Array of school/childcare program configurations
+ */
+const generateSchoolChildcareServices = () => [
+  {
+    name: 'Infant Program',
+    description: 'Individualized care for infants with sensory exploration, music, and early literacy activities',
+    category: SERVICE_CATEGORIES.EDUCATION,
+    duration: 660, // full day 7am-6pm
+    price: 0.00, // tuition discussed in person
+    addOns: [],
+  },
+  {
+    name: 'Toddler Program',
+    description: 'Structured indoor/outdoor activities focused on overall development for toddlers',
+    category: SERVICE_CATEGORIES.EDUCATION,
+    duration: 660,
+    price: 0.00,
+    addOns: [],
+  },
+  {
+    name: 'Early Preschool',
+    description: 'Structured activities promoting language, literacy, physical, social, and cognitive development',
+    category: SERVICE_CATEGORIES.EDUCATION,
+    duration: 660,
+    price: 0.00,
+    addOns: [],
+  },
+  {
+    name: 'Preschool',
+    description: 'Balanced mix of structured and play-based learning across all developmental domains',
+    category: SERVICE_CATEGORIES.EDUCATION,
+    duration: 660,
+    price: 0.00,
+    addOns: [],
+  },
+  {
+    name: 'Pre-Kindergarten',
+    description: 'Comprehensive development with focus on kindergarten readiness and school transition',
+    category: SERVICE_CATEGORIES.EDUCATION,
+    duration: 660,
+    price: 0.00,
+    addOns: [],
+  },
+  {
+    name: 'School Age / After-School Program',
+    description: 'Homework assistance during school year and recreational programs during breaks',
+    category: SERVICE_CATEGORIES.EDUCATION,
+    duration: 300, // after school ~5 hours
+    price: 0.00,
+    addOns: [
+      { id: crypto.randomUUID(), name: 'Transportation', price: 0.00, duration: 0 },
+    ],
+  },
+  {
+    name: 'Facility Tour',
+    description: 'Scheduled tour with Center Director to discuss programs, tuition, and enrollment',
+    category: SERVICE_CATEGORIES.EDUCATION,
+    duration: 30,
+    price: 0.00,
+    addOns: [],
+  },
+];
+
+/**
  * Business type name mappings
- * Maps business type names to their service generator functions
+ * Maps business type names (as stored in DB) to their service generator functions
  */
 const BUSINESS_TYPE_SERVICES = {
-  'Salon / Spa': generateSalonSpaServices,
-  'Plumber': generatePlumberServices,
-  'Home Services': generatePlumberServices, // Home Services also gets plumber services as default
+  'Salon/Spa': generateSalonSpaServices,
+  'Salon / Spa': generateSalonSpaServices, // legacy alias
+  'Plumbing': generatePlumberServices,
+  'Plumber': generatePlumberServices, // legacy alias
+  'Home Services': generatePlumberServices,
+  'School / Childcare': generateSchoolChildcareServices,
 };
 
 /**
@@ -196,7 +264,7 @@ const BUSINESS_TYPE_SERVICES = {
 const getServicesByBusinessType = (businessTypeName) => {
   // Get the generator function for the business type
   const generator = BUSINESS_TYPE_SERVICES[businessTypeName];
-  
+
   // Return generated services if found, or empty array if not found
   return generator ? generator() : [];
 };
@@ -212,6 +280,7 @@ const getSupportedBusinessTypes = () => {
 module.exports = {
   generateSalonSpaServices,
   generatePlumberServices,
+  generateSchoolChildcareServices,
   BUSINESS_TYPE_SERVICES,
   getServicesByBusinessType,
   getSupportedBusinessTypes,

@@ -23,6 +23,7 @@ const SERVICE_CATEGORIES = {
   SKIN: 'skin',
   MAKEUP: 'makeup',
   MASSAGE: 'massage',
+  EDUCATION: 'education',
   OTHER: 'other',
 };
 

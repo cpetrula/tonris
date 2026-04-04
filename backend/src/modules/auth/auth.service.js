@@ -549,7 +549,7 @@ const register = async ({
 
   // Create default location from tenant address
   try {
-    await locationService.createDefaultLocationFromTenant(tenant);
+    await locationService.createDefaultLocationFromTenant(tenant.id, tenant);
     logger.info(`Default location created for tenant ${tenant.id}`);
   } catch (error) {
     // Log the error but don't fail the registration
