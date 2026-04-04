@@ -38,7 +38,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      'img-src': ["'self'", 'data:', 'https://kawaikids.com', 'https://fonts.gstatic.com'],
+      'img-src': ["'self'", 'data:', 'https://kawaikids.com', 'https://images.unsplash.com', 'https://fonts.gstatic.com'],
       'font-src': ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
       'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       'media-src': ["'self'", 'blob:'],

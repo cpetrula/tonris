@@ -65,7 +65,7 @@ const programs = [
     name: 'School Age',
     ages: 'TK – 12 years',
     description: 'Homework assistance during the school year and recreational programs during school breaks and early dismissal days, with indoor and outdoor activities and character development.',
-    image: 'https://kawaikids.com/wp-content/uploads/2021/11/kids-blocks-1920x1280-1-408x250.jpg',
+    image: 'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&h=500&fit=crop',
     color: 'from-emerald-400 to-green-500'
   }
 ]
