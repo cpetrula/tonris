@@ -17,6 +17,22 @@ import Tab from 'primevue/tab';
 import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 import api from '@/services/api'
+import { useTenantStore } from '@/stores/tenant'
+
+const tenantStore = useTenantStore()
+
+// Check if this is a school/childcare business (no employees = school context)
+const isSchoolBusiness = computed(() => {
+  // If any appointment has no employeeId, treat as school
+  return appointments.value.length > 0 && appointments.value.every(a => !a.employeeId)
+})
+
+// Extract child's name from notes (format: "Child: Jackson, Age 3 - Preschool")
+function getChildName(notes: string): string {
+  if (!notes) return ''
+  const match = notes.match(/Child:\s*([^,]+)/)
+  return match ? match[1].trim() : ''
+}
 
 interface Appointment {
   id: string
@@ -32,6 +48,7 @@ interface Appointment {
   duration: number
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   notes: string
+  childName: string
 }
 
 const loading = ref(false)
@@ -353,7 +370,8 @@ async function fetchAppointments() {
         time: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
         duration: typeof apt.duration === 'string' ? parseInt(apt.duration, 10) : (apt.duration || (typeof apt.totalDuration === 'string' ? parseInt(apt.totalDuration, 10) : apt.totalDuration) || 30),
         status: apt.status || 'scheduled',
-        notes: apt.notes || ''
+        notes: apt.notes || '',
+        childName: apt.notes ? (apt.notes.match(/Child:\s*([^,]+)/) || [])[1]?.trim() || '' : ''
       }))
     }
   } catch (err) {
@@ -630,7 +648,7 @@ async function deleteAppointment() {
                 </template>
               </Column>
 
-              <Column field="customerName" header="Customer" sortable>
+              <Column field="customerName" :header="isSchoolBusiness ? 'Parent/Guardian' : 'Customer'" sortable>
                 <template #body="{ data }">
                   <div>
                     <p class="font-medium text-white-900">{{ data.customerName }}</p>
@@ -641,7 +659,7 @@ async function deleteAppointment() {
 
               <Column field="service" header="Service" sortable />
 
-              <Column field="employee" header="Employee" sortable />
+              <Column :field="isSchoolBusiness ? 'childName' : 'employee'" :header="isSchoolBusiness ? 'Child\'s Name' : 'Employee'" sortable />
 
               <Column field="status" header="Status" sortable>
                 <template #body="{ data }">

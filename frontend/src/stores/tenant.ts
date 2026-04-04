@@ -20,6 +20,8 @@ export interface Tenant {
     zipCode?: string
     zip?: string  // Support both 'zip' and 'zipCode' for backward compatibility
   }
+  businessTypeId?: string
+  businessType?: string
   metadata?: {
     website?: string
     description?: string
