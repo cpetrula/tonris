@@ -46,7 +46,7 @@ const Appointment = sequelize.define('Appointment', {
   },
   employeeId: {
     type: DataTypes.UUID,
-    allowNull: false,
+    allowNull: true,
     field: 'employee_id',
   },
   serviceId: {
