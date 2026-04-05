@@ -137,8 +137,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout(): Promise<void> {
-    analytics.track('Logout')
-    analytics.reset()
+    try {
+      analytics.track('Logout')
+      analytics.reset()
+    } catch (e) {
+      // Analytics failure should not block logout
+    }
     token.value = null
     user.value = null
     localStorage.removeItem('token')
