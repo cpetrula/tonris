@@ -11,7 +11,8 @@ const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
 const SetNewPasswordPage = () => import('@/pages/SetNewPasswordPage.vue')
 const HowItWorksPage = () => import('@/pages/HowItWorksPage.vue')
 const FAQPage = () => import('@/pages/FAQPage.vue')
-const PricingPage = () => import('@/pages/PricingPage.vue')
+const AboutPage = () => import('@/pages/AboutPage.vue')
+const ContactPage = () => import('@/pages/ContactPage.vue')
 const NotFound = () => import('@/pages/NotFound.vue')
 const AdminLoginPage = () => import('@/pages/AdminLoginPage.vue')
 const AdminClientsPage = () => import('@/pages/AdminClientsPage.vue')
@@ -80,8 +81,8 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: false }
       },
       {
-        path: 'how-it-works',
-        name: 'how-it-works',
+        path: 'work',
+        name: 'work',
         component: HowItWorksPage,
         meta: { requiresAuth: false }
       },
@@ -92,9 +93,15 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: false }
       },
       {
-        path: 'pricing',
-        name: 'pricing',
-        component: PricingPage,
+        path: 'about',
+        name: 'about',
+        component: AboutPage,
+        meta: { requiresAuth: false }
+      },
+      {
+        path: 'contact',
+        name: 'contact',
+        component: ContactPage,
         meta: { requiresAuth: false }
       }
     ]

@@ -27,7 +27,7 @@ function closeMobileMenu() {
               <img src="/logo1.png" alt="CRITON.AI" class="h-10 w-auto sm:h-12" />
               <div class="flex flex-col">
                 <span class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">CRITON.AI</span>
-                <span class="text-xs text-gray-500 tracking-widest">Smart Assistants</span>
+                <span class="text-xs text-gray-500 tracking-widest">AI Studio</span>
               </div>
             </RouterLink>
           </div>
@@ -35,16 +35,16 @@ function closeMobileMenu() {
           <!-- Desktop Navigation Links -->
           <div class="hidden md:flex items-center space-x-6">
             <RouterLink
-              to="/how-it-works"
+              to="/work"
               class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
             >
-              How It Works
+              Work
             </RouterLink>
             <RouterLink
-              to="/pricing"
+              to="/about"
               class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
             >
-              Pricing
+              About
             </RouterLink>
             <RouterLink
               to="/faq"
@@ -52,26 +52,18 @@ function closeMobileMenu() {
             >
               FAQ
             </RouterLink>
+            <RouterLink
+              to="/contact"
+              class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
+            >
+              Contact
+            </RouterLink>
             <template v-if="authStore.isAuthenticated">
               <RouterLink
                 to="/app"
                 class="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-md hover:bg-violet-700 transition-colors"
               >
                 Dashboard
-              </RouterLink>
-            </template>
-            <template v-else>
-              <RouterLink
-                to="/login"
-                class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
-              >
-                Sign In
-              </RouterLink>
-              <RouterLink
-                to="/signup"
-                class="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-md hover:bg-violet-700 transition-colors"
-              >
-                Get Started
               </RouterLink>
             </template>
           </div>
@@ -90,23 +82,23 @@ function closeMobileMenu() {
         </div>
 
         <!-- Mobile Navigation Menu -->
-        <div 
-          v-if="mobileMenuOpen" 
+        <div
+          v-if="mobileMenuOpen"
           class="md:hidden border-t border-gray-200 py-4 space-y-2"
         >
           <RouterLink
-            to="/how-it-works"
+            to="/work"
             class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
             @click="closeMobileMenu"
           >
-            How It Works
+            Work
           </RouterLink>
           <RouterLink
-            to="/pricing"
+            to="/about"
             class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
             @click="closeMobileMenu"
           >
-            Pricing
+            About
           </RouterLink>
           <RouterLink
             to="/faq"
@@ -115,6 +107,13 @@ function closeMobileMenu() {
           >
             FAQ
           </RouterLink>
+          <RouterLink
+            to="/contact"
+            class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+            @click="closeMobileMenu"
+          >
+            Contact
+          </RouterLink>
           <template v-if="authStore.isAuthenticated">
             <RouterLink
               to="/app"
@@ -122,22 +121,6 @@ function closeMobileMenu() {
               @click="closeMobileMenu"
             >
               Dashboard
-            </RouterLink>
-          </template>
-          <template v-else>
-            <RouterLink
-              to="/login"
-              class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
-              @click="closeMobileMenu"
-            >
-              Sign In
-            </RouterLink>
-            <RouterLink
-              to="/signup"
-              class="block px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-md hover:bg-violet-700"
-              @click="closeMobileMenu"
-            >
-              Get Started
             </RouterLink>
           </template>
         </div>
@@ -159,26 +142,26 @@ function closeMobileMenu() {
               <img src="/logo1.png" alt="CRITON.AI" class="h-8 w-auto" />
               <div class="flex flex-col">
                 <span class="text-lg font-bold text-gray-900 tracking-tight">CRITON.AI</span>
-                <span class="text-xs text-gray-500 tracking-wider">Smart Assistants</span>
+                <span class="text-xs text-gray-500 tracking-wider">AI Studio</span>
               </div>
             </RouterLink>
             <p class="text-sm text-gray-500 max-w-md">
-              Your AI-powered phone receptionist that never sleeps. Handle every call professionally, 24/7.
+              We build AI-powered platforms that run your business.
             </p>
           </div>
 
           <!-- Links -->
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Product</h3>
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Company</h3>
             <ul class="space-y-2">
               <li>
-                <RouterLink to="/how-it-works" class="text-sm text-gray-500 hover:text-gray-700">
-                  How It Works
+                <RouterLink to="/work" class="text-sm text-gray-500 hover:text-gray-700">
+                  Work
                 </RouterLink>
               </li>
               <li>
-                <RouterLink to="/pricing" class="text-sm text-gray-500 hover:text-gray-700">
-                  Pricing
+                <RouterLink to="/about" class="text-sm text-gray-500 hover:text-gray-700">
+                  About
                 </RouterLink>
               </li>
               <li>
@@ -186,10 +169,15 @@ function closeMobileMenu() {
                   FAQ
                 </RouterLink>
               </li>
+              <li>
+                <RouterLink to="/contact" class="text-sm text-gray-500 hover:text-gray-700">
+                  Contact
+                </RouterLink>
+              </li>
             </ul>
           </div>
 
-          <!-- Legal -->
+          <!-- Contact & Legal -->
           <div>
             <h3 class="text-sm font-semibold text-gray-900 mb-3">Contact</h3>
             <ul class="space-y-2">
@@ -200,9 +188,9 @@ function closeMobileMenu() {
                 </a>
               </li>
               <li>
-                <a href="mailto:support@criton.ai" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                <a href="mailto:info@criton.ai" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
                   <i class="pi pi-envelope text-xs"></i>
-                  support@criton.ai
+                  info@criton.ai
                 </a>
               </li>
               <li>

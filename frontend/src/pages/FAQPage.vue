@@ -19,108 +19,96 @@ interface FAQCategory {
 
 const faqCategories: FAQCategory[] = [
   {
-    title: 'Getting Started',
-    icon: 'pi pi-play',
+    title: 'Working With Us',
+    icon: 'pi pi-handshake',
     faqs: [
       {
-        question: 'How long does it take to set up CRITON.AI?',
-        answer: 'Most businesses are up and running within 10-15 minutes. Simply create your account, enter your business details, and forward your phone number. Our setup wizard guides you through each step.'
+        question: 'What kind of projects does Criton.ai take on?',
+        answer: 'We build custom AI-powered platforms for businesses \u2014 from AI voice agents and phone systems to video generation pipelines, workflow automation dashboards, and social media tools. If it involves AI and your business needs it, we can build it.'
       },
       {
-        question: 'Do I need any technical knowledge to use CRITON.AI?',
-        answer: 'Not at all! CRITON.AI is designed to be simple and intuitive. If you can forward a phone call, you can use CRITON.AI. We provide step-by-step instructions for setting up call forwarding with all major phone carriers.'
+        question: 'How does a project typically start?',
+        answer: 'It starts with a conversation. You tell us what\u2019s slowing your business down, and we scope out how AI can solve it. From there, we design the system, build it, and get it running \u2014 usually within weeks, not months.'
       },
       {
-        question: 'Can I keep my existing business phone number?',
-        answer: 'Yes! You keep your existing phone number. You simply forward calls from your current number to your new CRITON.AI number. Your customers will never know the difference.'
+        question: 'Do you work with small businesses or just enterprise?',
+        answer: 'Both. Our clients range from indie film productions to car dealerships. What matters isn\u2019t size \u2014 it\u2019s whether AI can meaningfully improve how you operate.'
       },
       {
-        question: 'Is there a free trial?',
-        answer: 'Yes! We offer a 15-day free trial with full access to all features. No credit card required to start. You can cancel anytime during the trial period.'
+        question: 'What industries do you work in?',
+        answer: 'We\u2019ve built platforms for film and television production, automotive marketing, childcare, and professional services. Our approach is industry-specific \u2014 we learn how your business actually works before we build anything.'
       }
     ]
   },
   {
-    title: 'Features & Capabilities',
+    title: 'Our Technology',
     icon: 'pi pi-cog',
     faqs: [
       {
-        question: 'What can the AI assistant do?',
-        answer: 'Our AI assistant can answer common questions about your business, provide information about your services and pricing, schedule appointments, take messages, and transfer urgent calls. It handles natural conversations just like a human receptionist.'
+        question: 'What AI technologies do you use?',
+        answer: 'We work with the best tools for each job \u2014 OpenAI (GPT, Sora, DALL-E), ElevenLabs for voice synthesis, Twilio for telephony, and custom integrations as needed. We\u2019re not locked into one vendor.'
       },
       {
-        question: 'Can the AI book appointments?',
-        answer: 'Absolutely! When a customer requests an appointment, the AI checks your availability in real-time and books directly into your schedule. You can manage all appointments from your CRITON.AI dashboard.'
+        question: 'Do you build from scratch or use templates?',
+        answer: 'From scratch. Every platform we build is custom-designed for the client\u2019s specific workflow. We don\u2019t reskin templates \u2014 we architect systems around how your team actually works.'
       },
       {
-        question: 'What happens if a caller has a complex question?',
-        answer: 'For questions the AI cannot answer, it offers to take a message or transfer the call to you directly. You can also set up custom responses for specific questions unique to your business.'
+        question: 'Can you integrate with our existing tools?',
+        answer: 'Yes. We regularly integrate with existing phone systems, CRMs, social media accounts, calendars, and cloud storage. If it has an API, we can connect to it.'
       },
       {
-        question: 'Can I customize how the AI greets callers?',
-        answer: 'Yes! You can fully customize the greeting, the AI voice, the information it provides, and how it handles different types of calls. You can even set different greetings for business hours vs. after hours.'
-      },
-      {
-        question: 'Does CRITON.AI support multiple languages?',
-        answer: 'Currently, CRITON.AI supports English and Spanish. The AI can automatically detect the language the caller is speaking and respond appropriately. More languages are coming soon.'
+        question: 'Do you handle hosting and maintenance?',
+        answer: 'Yes. We deploy, monitor, and maintain the platforms we build. You don\u2019t need your own engineering team to keep things running.'
       }
     ]
   },
   {
-    title: 'Pricing & Billing',
-    icon: 'pi pi-dollar',
+    title: 'Process & Timeline',
+    icon: 'pi pi-clock',
     faqs: [
       {
-        question: 'How much does CRITON.AI cost?',
-        answer: 'CRITON.AI is $295/month and include unlimited calls, 24/7 coverage, appointment booking, and all core features.'
+        question: 'How long does a typical project take?',
+        answer: 'It depends on scope. A focused tool like an AI phone system can be live in 2\u20133 weeks. A full platform with multiple modules typically takes 6\u201310 weeks. We\u2019ll give you a realistic timeline upfront.'
       },
       {
-        question: 'Are there any per-minute or per-call charges?',
-        answer: 'No! Your subscription includes unlimited incoming calls. There are no hidden fees, no per-minute charges, and no limits on call duration. What you see is what you pay.'
+        question: 'What does the development process look like?',
+        answer: 'Discovery call \u2192 scope & proposal \u2192 design & architecture \u2192 iterative build with regular check-ins \u2192 deployment \u2192 ongoing support. You\u2019re involved at every stage.'
       },
       {
-        question: 'Can I cancel anytime?',
-        answer: 'Yes, you can cancel your subscription at any time. If you cancel, you will retain access until the end of your current billing period. We do not offer partial refunds for unused time.'
-      },
-      {
-        question: 'Do you offer refunds?',
-        answer: 'We offer a 15-day free trial so you can test CRITON.AI risk-free. After the trial, we do not offer refunds, but you can cancel at any time to prevent future charges.'
+        question: 'Do you offer ongoing support after launch?',
+        answer: 'Absolutely. We provide ongoing maintenance, feature updates, and support. The platforms we build are living systems that evolve with your business.'
       }
     ]
   },
   {
-    title: 'Technical & Security',
+    title: 'Pricing & Engagement',
+    icon: 'pi pi-briefcase',
+    faqs: [
+      {
+        question: 'How is pricing structured?',
+        answer: 'We price per project based on scope, complexity, and timeline. No per-seat fees, no surprise charges. We\u2019ll give you a clear proposal before any work begins.'
+      },
+      {
+        question: 'Is there a minimum project size?',
+        answer: 'We don\u2019t have a hard minimum, but our sweet spot is projects where AI can create real operational impact \u2014 not just a chatbot on a website. Reach out and we\u2019ll tell you honestly if we\u2019re the right fit.'
+      },
+      {
+        question: 'Do you do retainer or ongoing engagements?',
+        answer: 'Yes. Many clients start with a project and move to a retainer for ongoing development, new features, and support. We\u2019re flexible.'
+      }
+    ]
+  },
+  {
+    title: 'Security & Privacy',
     icon: 'pi pi-shield',
     faqs: [
       {
-        question: 'Is my data secure?',
-        answer: 'Yes, security is our top priority. All calls are encrypted, and we use bank-level security for all data storage. We are compliant with industry standards and never share your data with third parties.'
+        question: 'How do you handle data security?',
+        answer: 'All platforms we build use encryption at rest and in transit, role-based access control, and industry-standard security practices. We take data isolation seriously \u2014 your data stays yours.'
       },
       {
-        question: 'Are calls recorded?',
-        answer: 'Yes, calls can be recorded for your records. Recordings are stored securely and only accessible by you. You can enable or disable call recording in your settings. All recordings comply with applicable laws.'
-      },
-      {
-        question: 'What happens if the internet goes down?',
-        answer: 'CRITON.AI runs in the cloud with multiple redundant systems. We maintain 99.9% uptime. If our systems detect an issue, calls can automatically forward to a backup number you specify.'
-      },
-      {
-        question: 'Can I integrate CRITON.AI with my CRM or other tools?',
-        answer: 'We can send notifications via email or SMS when appointments are booked or messages are received. More integrations are coming soon.'
-      }
-    ]
-  },
-  {
-    title: 'Support & Help',
-    icon: 'pi pi-question-circle',
-    faqs: [
-      {
-        question: 'How do I get help if I have issues?',
-        answer: 'We offer multiple support channels: email support for all customers, live chat during business hours, and phone support for yearly subscribers. Most issues are resolved within 24 hours.'
-      },
-      {
-        question: 'Do you offer onboarding assistance?',
-        answer: 'Yes! All new customers receive a welcome email with video tutorials and a detailed setup guide.'
+        question: 'Are your platforms compliant with industry regulations?',
+        answer: 'We build with compliance in mind. For example, our production office platform handles SAG-AFTRA compliance, and we support e-signatures and audit trails. We\u2019ll work with you to meet your industry\u2019s requirements.'
       }
     ]
   }
@@ -136,7 +124,7 @@ const faqCategories: FAQCategory[] = [
           Frequently Asked Questions
         </h1>
         <p class="text-xl text-violet-100 mb-8 max-w-3xl mx-auto">
-          Everything you need to know about CRITON.AI. Can't find the answer you're looking for? Feel free to contact us.
+          Everything you need to know about working with Criton.ai. Can't find the answer you're looking for? Feel free to contact us.
         </p>
       </div>
     </section>
@@ -145,8 +133,8 @@ const faqCategories: FAQCategory[] = [
     <section class="py-16 md:py-20 bg-white">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="space-y-8">
-          <div 
-            v-for="(category, categoryIndex) in faqCategories" 
+          <div
+            v-for="(category, categoryIndex) in faqCategories"
             :key="category.title"
             class="bg-gray-50 rounded-xl p-6"
           >
@@ -160,8 +148,8 @@ const faqCategories: FAQCategory[] = [
 
             <!-- FAQ Accordion -->
             <Accordion :value="categoryIndex === 0 ? ['0'] : []" multiple>
-              <AccordionPanel 
-                v-for="(faq, faqIndex) in category.faqs" 
+              <AccordionPanel
+                v-for="(faq, faqIndex) in category.faqs"
                 :key="faqIndex"
                 :value="String(faqIndex)"
               >
@@ -188,20 +176,23 @@ const faqCategories: FAQCategory[] = [
           <h2 class="text-2xl font-bold text-gray-900 mb-4">
             Still have questions?
           </h2>
-          <p class="text-gray-600 mb-8 max-w-xl mx-auto">
-            Can't find the answer you're looking for? Our friendly team is here to help. Reach out and we'll get back to you as soon as possible.
+          <p class="text-gray-600 mb-2">
+            Phone: <a href="tel:+18185316200" class="text-violet-600 hover:underline">(818) 531-6200</a>
+          </p>
+          <p class="text-gray-600 mb-8">
+            Email: <a href="mailto:info@criton.ai" class="text-violet-600 hover:underline">info@criton.ai</a>
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="tel:+18185316200">
+            <RouterLink to="/contact">
               <Button
-                label="Call Us: (818) 531-6200"
-                icon="pi pi-phone"
+                label="Contact Us"
+                icon="pi pi-send"
                 class="px-6"
               />
-            </a>
-            <a href="mailto:support@criton.ai">
+            </RouterLink>
+            <a href="mailto:info@criton.ai">
               <Button
-                label="Email Support"
+                label="Email Us"
                 icon="pi pi-envelope"
                 severity="secondary"
                 outlined
@@ -217,24 +208,24 @@ const faqCategories: FAQCategory[] = [
     <section class="py-16 md:py-20 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl md:text-4xl font-bold mb-4">
-          Ready to Get Started?
+          Ready to Talk?
         </h2>
         <p class="text-lg text-violet-100 mb-8 max-w-2xl mx-auto">
-          Try CRITON.AI free for 14 days. No credit card required.
+          Tell us about your business. We'll tell you what AI can do for it.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <RouterLink to="/signup">
+          <RouterLink to="/contact">
             <Button
-              label="Start Free Trial"
+              label="Get in Touch"
               icon="pi pi-arrow-right"
               icon-pos="right"
               size="large"
               class="px-8 py-3 !bg-white !text-violet-600 hover:!bg-violet-50"
             />
           </RouterLink>
-          <RouterLink to="/how-it-works">
+          <RouterLink to="/work">
             <Button
-              label="See How It Works"
+              label="See Our Work"
               severity="secondary"
               outlined
               size="large"

@@ -2,274 +2,288 @@
 import { RouterLink } from 'vue-router'
 import Button from 'primevue/button'
 
-const steps = [
+const prodcommFeatures = [
   {
-    number: 1,
-    title: 'Sign Up & Set Up',
-    description: 'Create your account and tell us about your business. Customize your AI assistant with your business name, hours, services, and preferred greeting.',
-    icon: 'pi pi-user-plus',
-    color: 'bg-violet-500'
+    title: 'AI Phone System',
+    description: '24/7 intelligent call routing, 70+ languages',
+    icon: 'pi pi-phone'
   },
   {
-    number: 2,
-    title: 'Forward Your Calls',
-    description: 'Forward your business phone to your new CRITON.AI number. Your AI assistant is ready to answer calls 24/7, even when you are busy or after hours.',
-    icon: 'pi pi-phone',
-    color: 'bg-cyan-500'
+    title: 'Call Sheet Builder',
+    description: 'SMS distribution, real-time confirmations',
+    icon: 'pi pi-list'
   },
   {
-    number: 3,
-    title: 'AI Handles Everything',
-    description: 'Our AI assistant answers calls professionally, provides information about your services, and books appointments directly into your schedule.',
-    icon: 'pi pi-bolt',
-    color: 'bg-fuchsia-500'
-  },
-  {
-    number: 4,
-    title: 'You Focus on Business',
-    description: 'Receive notifications of new bookings and messages. Review call transcripts and recordings. Never miss a customer opportunity again.',
-    icon: 'pi pi-chart-line',
-    color: 'bg-green-500'
-  }
-]
-
-const features = [
-  {
-    title: 'Natural Language Understanding',
-    description: 'Our AI understands context and can handle complex conversations, just like a human receptionist.',
-    icon: 'pi pi-comments'
-  },
-  {
-    title: 'Custom Business Rules',
-    description: 'Set your business hours, services, pricing, and any special instructions for the AI to follow.',
-    icon: 'pi pi-sliders-h'
-  },
-  {
-    title: 'Smart Appointment Scheduling',
-    description: 'Manage all your bookings from one dashboard. Get notified instantly when appointments are made.',
+    title: 'Shooting Schedule',
+    description: 'Stripboard, auto-generated Day Out of Days',
     icon: 'pi pi-calendar'
   },
   {
-    title: 'Call Recording & Transcripts',
-    description: 'Every call is recorded and transcribed, so you have a complete record of all interactions.',
-    icon: 'pi pi-file-word'
+    title: 'Crew Onboarding',
+    description: 'Deal memos, W-4, I-9, e-signatures',
+    icon: 'pi pi-users'
   },
   {
-    title: 'Instant Notifications',
-    description: 'Get SMS or email alerts for new appointments, urgent messages, or specific keywords.',
-    icon: 'pi pi-bell'
+    title: 'Cast Tracker',
+    description: 'Real-time 2nd AD status updates',
+    icon: 'pi pi-map-marker'
   },
   {
-    title: 'Multi-Language Support',
-    description: 'Serve customers in English and Spanish, with more languages coming soon.',
-    icon: 'pi pi-globe'
+    title: 'Safety & Compliance',
+    description: 'Injury reporting, SAG-AFTRA Exhibit G, workers comp',
+    icon: 'pi pi-shield'
   }
 ]
 
-const demoPhoneNumber = '1-800-CRITON-1'
+const videoStudioFeatures = [
+  {
+    title: 'AI Video Generation',
+    description: 'Sora-powered, multiple formats and durations',
+    icon: 'pi pi-video'
+  },
+  {
+    title: 'Image Generation',
+    description: 'DALL-E, Flux, multiple styles and scenes',
+    icon: 'pi pi-image'
+  },
+  {
+    title: 'Multi-Platform Publishing',
+    description: 'Instagram, Facebook, YouTube, TikTok',
+    icon: 'pi pi-share-alt'
+  },
+  {
+    title: 'Content Calendar',
+    description: 'Visual scheduling, drag-and-drop',
+    icon: 'pi pi-calendar-plus'
+  },
+  {
+    title: 'Analytics Dashboard',
+    description: 'Views, engagement, cross-platform metrics',
+    icon: 'pi pi-chart-bar'
+  },
+  {
+    title: 'Team Workspaces',
+    description: 'Roles, approval workflows, collaboration',
+    icon: 'pi pi-sitemap'
+  }
+]
+
+const capabilities = [
+  {
+    title: 'AI Voice Agents & Phone Systems',
+    description: 'Intelligent call handling, routing, and conversational AI for any industry.',
+    icon: 'pi pi-phone'
+  },
+  {
+    title: 'Video & Content Generation',
+    description: 'AI-powered video, image, and copy creation at scale.',
+    icon: 'pi pi-video'
+  },
+  {
+    title: 'Workflow Automation & Dashboards',
+    description: 'Replace manual processes with intelligent automation and real-time visibility.',
+    icon: 'pi pi-cog'
+  },
+  {
+    title: 'Social Media Management',
+    description: 'Multi-platform scheduling, publishing, and analytics in one place.',
+    icon: 'pi pi-share-alt'
+  },
+  {
+    title: 'Document & Compliance Automation',
+    description: 'E-signatures, form generation, and regulatory compliance on autopilot.',
+    icon: 'pi pi-file-edit'
+  },
+  {
+    title: 'Custom AI Integrations',
+    description: 'Connect AI capabilities to your existing tools and workflows.',
+    icon: 'pi pi-bolt'
+  }
+]
 </script>
 
 <template>
   <div>
     <!-- Hero Section -->
-    <section class="bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white py-16 md:py-20">
+    <section class="bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white py-16 md:py-24">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 class="text-4xl md:text-5xl font-bold mb-6">
-          How CRITON.AI Works
+          Our Work
         </h1>
-        <p class="text-xl text-violet-100 mb-8 max-w-3xl mx-auto">
-          Get your AI-powered phone receptionist up and running in minutes. No technical expertise required.
+        <p class="text-xl text-violet-100 max-w-3xl mx-auto">
+          Custom AI platforms built for real businesses. Here's what we've shipped.
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <RouterLink to="/signup">
-            <Button
-              label="Start Free Trial"
-              icon="pi pi-arrow-right"
-              icon-pos="right"
-              size="large"
-              class="px-8 py-3"
-            />
-          </RouterLink>
-          <a :href="`tel:18008667471`">
-            <Button
-              label="Call Demo Line"
-              icon="pi pi-phone"
-              severity="secondary"
-              outlined
-              size="large"
-              class="px-8 py-3 !text-white !border-white hover:!bg-white/10"
-            />
-          </a>
+      </div>
+    </section>
+
+    <!-- Project 1 — ProdComm -->
+    <section class="py-16 md:py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="rounded-xl border border-gray-200 overflow-hidden">
+          <!-- Project Header -->
+          <div class="p-8 md:p-10 border-b border-gray-100">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+              <div>
+                <h2 class="text-3xl font-bold text-gray-900">ProdComm</h2>
+                <p class="text-lg text-violet-600 font-medium mt-1">The AI Production Office</p>
+              </div>
+              <span class="inline-flex items-center gap-2 px-4 py-2 bg-violet-50 text-violet-700 rounded-full text-sm font-medium self-start">
+                <i class="pi pi-building text-xs"></i>
+                Film & Television Production
+              </span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">The Problem</h3>
+                <p class="text-gray-700 leading-relaxed">
+                  Production offices run on fragmented tools — one vendor for phones, another for call sheets, spreadsheets for tracking, paper for compliance. Coordinators spend hours chasing confirmations and fielding the same questions.
+                </p>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">The Solution</h3>
+                <p class="text-gray-700 leading-relaxed">
+                  A single platform that replaces it all. ProdComm gives productions a dedicated AI-powered phone number, automated call sheets with real-time confirmations, shooting schedules, crew onboarding, cast tracking, safety compliance, and document e-signatures — live in a day, not a week.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Grid -->
+          <div class="p-8 md:p-10 bg-gray-50">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Key Features</h3>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                v-for="feature in prodcommFeatures"
+                :key="feature.title"
+                class="flex items-start gap-3"
+              >
+                <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i :class="[feature.icon, 'text-lg text-violet-600']"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-gray-900">{{ feature.title }}</h4>
+                  <p class="text-sm text-gray-600 mt-0.5">{{ feature.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="p-8 md:p-10 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">AI Voice</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Automation</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">E-Signatures</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">SMS</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Scheduling</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Compliance</span>
+            </div>
+            <a
+              href="https://prodcomm.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 text-violet-600 font-medium hover:text-violet-700 transition-colors"
+            >
+              Visit prodcomm.com
+              <i class="pi pi-external-link text-sm"></i>
+            </a>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Steps Section -->
-    <section class="py-16 md:py-20 bg-white">
+    <!-- Project 2 — AI Video & Content Studio -->
+    <section class="py-16 md:py-20 bg-gray-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">
-            Get Started in 4 Simple Steps
-          </h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            From sign-up to your first AI-answered call in under 10 minutes.
-          </p>
-        </div>
-
-        <div class="space-y-12 md:space-y-0 md:grid md:grid-cols-4 md:gap-8">
-          <div 
-            v-for="(step, index) in steps" 
-            :key="step.number"
-            class="relative"
-          >
-            <!-- Connector Line (hidden on last item and mobile) -->
-            <div 
-              v-if="index < steps.length - 1"
-              class="hidden md:block absolute top-8 left-1/2 w-full h-0.5 bg-gray-200"
-            ></div>
-            
-            <div class="relative flex flex-col items-center text-center">
-              <!-- Step Number -->
-              <div 
-                :class="[
-                  'w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold z-10',
-                  step.color
-                ]"
-              >
-                <i :class="[step.icon, 'text-2xl']"></i>
+        <div class="rounded-xl border border-gray-200 overflow-hidden bg-white">
+          <!-- Project Header -->
+          <div class="p-8 md:p-10 border-b border-gray-100">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+              <div>
+                <h2 class="text-3xl font-bold text-gray-900">AI Video & Content Studio</h2>
               </div>
-              
-              <h3 class="mt-4 text-xl font-semibold text-gray-900">
-                {{ step.title }}
-              </h3>
-              <p class="mt-2 text-gray-600">
-                {{ step.description }}
-              </p>
+              <span class="inline-flex items-center gap-2 px-4 py-2 bg-fuchsia-50 text-fuchsia-700 rounded-full text-sm font-medium self-start">
+                <i class="pi pi-car text-xs"></i>
+                Luxury Automotive Dealership
+              </span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">The Problem</h3>
+                <p class="text-gray-700 leading-relaxed">
+                  Creating high-quality video content for social media is expensive and slow. Dealerships need a constant stream of cinematic content across multiple platforms but can't afford full production crews.
+                </p>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">The Solution</h3>
+                <p class="text-gray-700 leading-relaxed">
+                  An end-to-end AI content pipeline. Generate cinematic car videos with OpenAI Sora, create product imagery with DALL-E and Flux, then schedule and publish across Instagram, YouTube, TikTok, and Facebook — all from one dashboard with analytics and team collaboration.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Grid -->
+          <div class="p-8 md:p-10 bg-gray-50">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Key Features</h3>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                v-for="feature in videoStudioFeatures"
+                :key="feature.title"
+                class="flex items-start gap-3"
+              >
+                <div class="w-10 h-10 bg-fuchsia-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i :class="[feature.icon, 'text-lg text-fuchsia-600']"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-gray-900">{{ feature.title }}</h4>
+                  <p class="text-sm text-gray-600 mt-0.5">{{ feature.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="p-8 md:p-10 border-t border-gray-100">
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">AI Video</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Image Generation</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Social Media</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Analytics</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Content Pipeline</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Multi-Platform</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Demo Call Section -->
-    <section class="py-16 md:py-20 bg-gray-50">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl p-8 md:p-12 text-white text-center">
-          <div class="w-20 h-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center">
-            <i class="pi pi-phone text-4xl text-violet-600"></i>
-          </div>
-          <h2 class="text-3xl font-bold mb-4">
-            Try It Yourself!
-          </h2>
-          <p class="text-violet-100 mb-6 max-w-xl mx-auto">
-            Experience exactly what your customers will hear when they call your business. 
-            Our demo line showcases the full AI assistant experience.
-          </p>
-          <a 
-            href="tel:18008667471"
-            class="inline-block bg-white text-violet-600 rounded-xl px-8 py-4 font-bold text-2xl hover:bg-violet-50 transition-colors"
-          >
-            {{ demoPhoneNumber }}
-          </a>
-          <p class="text-sm text-violet-200 mt-4">
-            <i class="pi pi-info-circle mr-1"></i>
-            Free call • No signup required • Available 24/7
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features Grid -->
+    <!-- What We Can Build Section -->
     <section class="py-16 md:py-20 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">
-            Powerful Features Built-In
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            What We Can Build For You
           </h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Everything you need to provide exceptional customer service, automatically.
-          </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div 
-            v-for="feature in features" 
-            :key="feature.title"
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div
+            v-for="capability in capabilities"
+            :key="capability.title"
             class="p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow"
           >
             <div class="w-12 h-12 mb-4 bg-violet-100 rounded-lg flex items-center justify-center">
-              <i :class="[feature.icon, 'text-xl text-violet-600']"></i>
+              <i :class="[capability.icon, 'text-xl text-violet-600']"></i>
             </div>
             <h3 class="text-lg font-semibold text-gray-900 mb-2">
-              {{ feature.title }}
+              {{ capability.title }}
             </h3>
             <p class="text-gray-600">
-              {{ feature.description }}
+              {{ capability.description }}
             </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Integration Section -->
-    <section class="py-16 md:py-20 bg-gray-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 class="text-3xl font-bold text-gray-900 mb-6">
-              Works With Your Existing Setup
-            </h2>
-            <p class="text-lg text-gray-600 mb-6">
-              CRITON.AI integrates seamlessly with your current phone system and business tools. 
-              No need to change your phone number or learn new software.
-            </p>
-            <ul class="space-y-4">
-              <li class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <i class="pi pi-check text-green-600 text-sm"></i>
-                </div>
-                <span class="text-gray-700">Keep your existing business phone number</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <i class="pi pi-check text-green-600 text-sm"></i>
-                </div>
-                <span class="text-gray-700">Manage appointments from your dashboard</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <i class="pi pi-check text-green-600 text-sm"></i>
-                </div>
-                <span class="text-gray-700">Works with any phone carrier or VoIP system</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <i class="pi pi-check text-green-600 text-sm"></i>
-                </div>
-                <span class="text-gray-700">Set up in minutes, not days</span>
-              </li>
-            </ul>
-          </div>
-          <div class="bg-white rounded-2xl shadow-xl p-8">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Notifications & Alerts</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="p-4 bg-gray-50 rounded-lg text-center">
-                <i class="pi pi-envelope text-3xl text-gray-700 mb-2 block"></i>
-                <span class="text-sm text-gray-600">Email</span>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-lg text-center">
-                <i class="pi pi-mobile text-3xl text-gray-700 mb-2 block"></i>
-                <span class="text-sm text-gray-600">SMS</span>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-lg text-center">
-                <i class="pi pi-bell text-3xl text-gray-700 mb-2 block"></i>
-                <span class="text-sm text-gray-600">Push Notifications</span>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-lg text-center">
-                <i class="pi pi-file text-3xl text-gray-700 mb-2 block"></i>
-                <span class="text-sm text-gray-600">Call Transcripts</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -279,31 +293,20 @@ const demoPhoneNumber = '1-800-CRITON-1'
     <section class="py-16 md:py-20 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl md:text-4xl font-bold mb-4">
-          Ready to Get Started?
+          Have a Problem AI Can Solve?
         </h2>
         <p class="text-lg text-violet-100 mb-8 max-w-2xl mx-auto">
-          Join hundreds of businesses already using CRITON.AI to handle their calls professionally.
+          We'll scope it, build it, and run it.
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <RouterLink to="/signup">
-            <Button
-              label="Start Your Free Trial"
-              icon="pi pi-arrow-right"
-              icon-pos="right"
-              size="large"
-              class="px-8 py-3 !bg-white !text-violet-600 hover:!bg-violet-50"
-            />
-          </RouterLink>
-          <RouterLink to="/faq">
-            <Button
-              label="View FAQ"
-              severity="secondary"
-              outlined
-              size="large"
-              class="px-8 py-3 !text-white !border-white hover:!bg-white/10"
-            />
-          </RouterLink>
-        </div>
+        <RouterLink to="/contact">
+          <Button
+            label="Get in Touch"
+            icon="pi pi-arrow-right"
+            icon-pos="right"
+            size="large"
+            class="px-8 py-3 !bg-white !text-violet-600 hover:!bg-violet-50"
+          />
+        </RouterLink>
       </div>
     </section>
   </div>
