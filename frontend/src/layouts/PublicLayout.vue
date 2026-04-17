@@ -16,197 +16,196 @@ function closeMobileMenu() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50">
+  <div class="min-h-screen flex flex-col bg-[color:var(--criton-bg)] text-[color:var(--criton-text)]">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+    <header
+      class="sticky top-0 z-40 backdrop-blur-md bg-[color:var(--criton-bg)]/75 border-b border-[color:var(--criton-border)]"
+    >
+      <nav class="max-w-6xl mx-auto px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
           <!-- Logo -->
-          <div class="flex items-center">
-            <RouterLink to="/" class="flex items-center space-x-3">
-              <img src="/logo1.png" alt="CRITON.AI" class="h-10 w-auto sm:h-12" />
-              <div class="flex flex-col">
-                <span class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">CRITON.AI</span>
-                <span class="text-xs text-gray-500 tracking-widest">AI Studio</span>
-              </div>
-            </RouterLink>
-          </div>
+          <RouterLink to="/" class="flex items-center gap-3 group">
+            <img src="/logo1.png" alt="CRITON.AI" class="h-8 w-auto" />
+            <div class="flex flex-col leading-none">
+              <span class="font-display text-lg font-bold tracking-tight text-[color:var(--criton-text)]">
+                CRITON.AI
+              </span>
+              <span class="text-[10px] tracking-[0.22em] uppercase text-[color:var(--criton-text-dim)] mt-0.5">
+                AI Studio
+              </span>
+            </div>
+          </RouterLink>
 
-          <!-- Desktop Navigation Links -->
-          <div class="hidden md:flex items-center space-x-6">
+          <!-- Desktop Nav -->
+          <div class="hidden md:flex items-center gap-8">
             <RouterLink
               to="/work"
-              class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
+              class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors"
             >
               Work
             </RouterLink>
             <RouterLink
               to="/about"
-              class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
+              class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors"
             >
               About
             </RouterLink>
             <RouterLink
               to="/faq"
-              class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
+              class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors"
             >
               FAQ
             </RouterLink>
             <RouterLink
               to="/contact"
-              class="text-sm font-medium text-gray-700 hover:text-violet-600 transition-colors"
+              class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors"
             >
               Contact
             </RouterLink>
             <template v-if="authStore.isAuthenticated">
-              <RouterLink
-                to="/app"
-                class="px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-md hover:bg-violet-700 transition-colors"
-              >
+              <RouterLink to="/app" class="criton-btn-primary !py-2 !px-4 !text-sm">
                 Dashboard
+              </RouterLink>
+            </template>
+            <template v-else>
+              <RouterLink to="/contact" class="criton-btn-primary !py-2 !px-4 !text-sm">
+                Start a project
               </RouterLink>
             </template>
           </div>
 
-          <!-- Mobile Menu Button -->
-          <div class="md:hidden flex items-center">
-            <button
-              type="button"
-              class="text-gray-700 hover:text-violet-600 p-2"
-              @click="toggleMobileMenu"
-              aria-label="Toggle menu"
-            >
-              <i :class="mobileMenuOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-xl"></i>
-            </button>
-          </div>
+          <!-- Mobile toggle -->
+          <button
+            type="button"
+            class="md:hidden text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] p-2"
+            @click="toggleMobileMenu"
+            aria-label="Toggle menu"
+          >
+            <i :class="mobileMenuOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-xl"></i>
+          </button>
         </div>
 
-        <!-- Mobile Navigation Menu -->
+        <!-- Mobile Menu -->
         <div
           v-if="mobileMenuOpen"
-          class="md:hidden border-t border-gray-200 py-4 space-y-2"
+          class="md:hidden border-t border-[color:var(--criton-border)] py-4 space-y-1"
         >
           <RouterLink
-            to="/work"
-            class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+            v-for="item in ['work', 'about', 'faq', 'contact']"
+            :key="item"
+            :to="`/${item}`"
+            class="block px-3 py-2 text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] capitalize"
             @click="closeMobileMenu"
           >
-            Work
-          </RouterLink>
-          <RouterLink
-            to="/about"
-            class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
-            @click="closeMobileMenu"
-          >
-            About
-          </RouterLink>
-          <RouterLink
-            to="/faq"
-            class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
-            @click="closeMobileMenu"
-          >
-            FAQ
-          </RouterLink>
-          <RouterLink
-            to="/contact"
-            class="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
-            @click="closeMobileMenu"
-          >
-            Contact
+            {{ item }}
           </RouterLink>
           <template v-if="authStore.isAuthenticated">
             <RouterLink
               to="/app"
-              class="block px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-md hover:bg-violet-700"
+              class="block mt-2 mx-3 criton-btn-primary !py-2 !px-4 !text-sm text-center"
               @click="closeMobileMenu"
             >
               Dashboard
+            </RouterLink>
+          </template>
+          <template v-else>
+            <RouterLink
+              to="/contact"
+              class="block mt-2 mx-3 criton-btn-primary !py-2 !px-4 !text-sm text-center"
+              @click="closeMobileMenu"
+            >
+              Start a project
             </RouterLink>
           </template>
         </div>
       </nav>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main -->
     <main class="flex-1">
       <RouterView />
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200">
-      <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer class="border-t border-[color:var(--criton-border)] bg-[color:var(--criton-bg)]">
+      <div class="max-w-6xl mx-auto px-6 lg:px-8 py-14">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
           <!-- Brand -->
-          <div class="col-span-1 md:col-span-2">
-            <RouterLink to="/" class="flex items-center space-x-2 mb-4">
+          <div class="md:col-span-5">
+            <RouterLink to="/" class="flex items-center gap-3 mb-4">
               <img src="/logo1.png" alt="CRITON.AI" class="h-8 w-auto" />
-              <div class="flex flex-col">
-                <span class="text-lg font-bold text-gray-900 tracking-tight">CRITON.AI</span>
-                <span class="text-xs text-gray-500 tracking-wider">AI Studio</span>
+              <div class="flex flex-col leading-none">
+                <span class="font-display text-lg font-bold tracking-tight">CRITON.AI</span>
+                <span class="text-[10px] tracking-[0.22em] uppercase text-[color:var(--criton-text-dim)] mt-0.5">
+                  AI Studio
+                </span>
               </div>
             </RouterLink>
-            <p class="text-sm text-gray-500 max-w-md">
-              We build AI-powered platforms that run your business.
+            <p class="text-sm text-[color:var(--criton-text-muted)] max-w-sm leading-relaxed">
+              An AI studio designing, building, and shipping custom platforms for companies that
+              want to own the product.
             </p>
           </div>
 
           <!-- Links -->
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Company</h3>
-            <ul class="space-y-2">
+          <div class="md:col-span-3">
+            <h3 class="criton-eyebrow mb-4 text-[color:var(--criton-text-dim)]">Studio</h3>
+            <ul class="space-y-2.5">
               <li>
-                <RouterLink to="/work" class="text-sm text-gray-500 hover:text-gray-700">
+                <RouterLink to="/work" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors">
                   Work
                 </RouterLink>
               </li>
               <li>
-                <RouterLink to="/about" class="text-sm text-gray-500 hover:text-gray-700">
+                <RouterLink to="/about" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors">
                   About
                 </RouterLink>
               </li>
               <li>
-                <RouterLink to="/faq" class="text-sm text-gray-500 hover:text-gray-700">
+                <RouterLink to="/faq" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors">
                   FAQ
                 </RouterLink>
               </li>
               <li>
-                <RouterLink to="/contact" class="text-sm text-gray-500 hover:text-gray-700">
+                <RouterLink to="/contact" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors">
                   Contact
                 </RouterLink>
               </li>
             </ul>
           </div>
 
-          <!-- Contact & Legal -->
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">Contact</h3>
-            <ul class="space-y-2">
+          <!-- Contact -->
+          <div class="md:col-span-4">
+            <h3 class="criton-eyebrow mb-4 text-[color:var(--criton-text-dim)]">Contact</h3>
+            <ul class="space-y-2.5">
               <li>
-                <a href="tel:+18185316200" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                <a href="tel:+18185316200" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors inline-flex items-center gap-2">
                   <i class="pi pi-phone text-xs"></i>
                   (818) 531-6200
                 </a>
               </li>
               <li>
-                <a href="mailto:info@criton.ai" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                <a href="mailto:info@criton.ai" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors inline-flex items-center gap-2">
                   <i class="pi pi-envelope text-xs"></i>
                   info@criton.ai
                 </a>
               </li>
-              <li>
-                <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Privacy Policy</a>
-              </li>
-              <li>
-                <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Terms of Service</a>
+              <li class="text-sm text-[color:var(--criton-text-muted)] inline-flex items-center gap-2">
+                <i class="pi pi-map-marker text-xs"></i>
+                Los Angeles, CA
               </li>
             </ul>
           </div>
         </div>
 
-        <div class="mt-8 pt-8 border-t border-gray-200">
-          <p class="text-sm text-gray-500 text-center">
-            &copy; {{ new Date().getFullYear() }} CRITON.AI. All rights reserved.
+        <div class="mt-12 pt-6 border-t border-[color:var(--criton-border)] flex flex-col sm:flex-row justify-between gap-3">
+          <p class="text-xs text-[color:var(--criton-text-dim)]">
+            &copy; {{ new Date().getFullYear() }} CRITON.AI · All rights reserved.
           </p>
+          <div class="flex gap-5">
+            <a href="#" class="text-xs text-[color:var(--criton-text-dim)] hover:text-[color:var(--criton-text-muted)]">Privacy</a>
+            <a href="#" class="text-xs text-[color:var(--criton-text-dim)] hover:text-[color:var(--criton-text-muted)]">Terms</a>
+          </div>
         </div>
       </div>
     </footer>

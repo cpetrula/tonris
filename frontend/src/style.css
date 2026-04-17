@@ -1,17 +1,18 @@
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap');
 
 /* Custom styles */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
-  /* TONRIS Brand Colors */
+
+  /* Legacy TONRIS tokens (retained for auth/dashboard pages) */
   --tonris-navy: #1e3a5f;
   --tonris-navy-dark: #1a2744;
   --tonris-purple: #7c3aed;
@@ -19,6 +20,19 @@
   --tonris-magenta: #c026d3;
   --tonris-cyan: #06b6d4;
   --tonris-cyan-light: #00d4ff;
+
+  /* Criton.ai agency brand */
+  --criton-bg: #0a0a0b;
+  --criton-surface: #121214;
+  --criton-surface-2: #17171c;
+  --criton-border: #24242a;
+  --criton-border-bright: #3a3a42;
+  --criton-text: #f5f5f7;
+  --criton-text-muted: #a1a1aa;
+  --criton-text-dim: #71717a;
+  --criton-gold: #d4af37;
+  --criton-gold-bright: #e6c565;
+  --criton-ivory: #f5efe6;
 }
 
 body {
@@ -30,7 +44,140 @@ body {
   min-height: 100vh;
 }
 
-/* PrimeVue Password component full width fix */
+/* Utility: display serif for Criton hero / section headlines */
+.font-display {
+  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif;
+  font-feature-settings: 'liga', 'kern';
+}
+
+/* Gradient-clipped accent span — warm gold */
+.criton-accent {
+  background: linear-gradient(135deg, #e6c565 0%, #d4af37 45%, #f5efe6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 0.08em;
+}
+
+/* Hero dot-grid + radial glow backdrop */
+.criton-hero-bg {
+  background-color: var(--criton-bg);
+  background-image:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 60%),
+    radial-gradient(circle, rgba(212, 175, 55, 0.06) 1px, transparent 1px);
+  background-size: 100% 100%, 36px 36px;
+  background-position: 0 0, 0 0;
+}
+
+/* Subtle surface border treatment used on cards */
+.criton-card {
+  background-color: var(--criton-surface);
+  border: 1px solid var(--criton-border);
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.criton-card:hover {
+  border-color: var(--criton-border-bright);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -24px rgba(212, 175, 55, 0.18);
+}
+
+/* Eyebrow label (uppercase tracked) */
+.criton-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--criton-gold);
+}
+
+/* Pill badge (hero) */
+.criton-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: var(--criton-gold-bright);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.criton-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--criton-gold);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+}
+
+/* Gold CTA button */
+.criton-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1.6rem;
+  background: linear-gradient(135deg, #e6c565 0%, #d4af37 100%);
+  color: #0a0a0b;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(230, 197, 101, 0.4);
+}
+
+.criton-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -10px rgba(212, 175, 55, 0.6);
+}
+
+.criton-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1.6rem;
+  background: transparent;
+  color: var(--criton-text);
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.92rem;
+  border: 1px solid var(--criton-border-bright);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.criton-btn-ghost:hover {
+  border-color: var(--criton-gold);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+/* Case-study image frame — quiets any client brand so it sits well on dark */
+.case-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--criton-border);
+  background: var(--criton-surface-2);
+}
+
+.case-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.case-frame:hover img {
+  transform: scale(1.025);
+}
+
+/* PrimeVue overrides (existing) */
 .p-password {
   width: 100%;
 }
@@ -39,12 +186,11 @@ body {
   width: 100%;
 }
 
-/* PrimeVue InputText full width */
 .p-inputtext {
   width: 100%;
 }
 
 .p-card {
   background: white !important;
-  color:#1a2744 !important;
+  color: #1a2744 !important;
 }
