@@ -24,15 +24,15 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'How does a project typically start?',
-        answer: 'It starts with a conversation. You tell us what's slowing your business down, and we scope out how AI can solve it. From there, we design the system, build it, and get it running — usually within weeks, not months.'
+        answer: "It starts with a conversation. You tell us what\u2019s slowing your business down, and we scope out how AI can solve it. From there, we design the system, build it, and get it running — usually within weeks, not months."
       },
       {
         question: 'Do you work with small businesses or just enterprise?',
-        answer: 'Both. Our clients range from indie film productions to car dealerships. What matters isn't size — it's whether AI can meaningfully improve how you operate.'
+        answer: "Both. Our clients range from indie film productions to car dealerships. What matters isn\u2019t size — it\u2019s whether AI can meaningfully improve how you operate."
       },
       {
         question: 'What industries do you work in?',
-        answer: 'We've built platforms for film and television production, automotive marketing, childcare, and professional services. Our approach is industry-specific — we learn how your business actually works before we build anything.'
+        answer: "We\u2019ve built platforms for film and television production, automotive marketing, childcare, and professional services. Our approach is industry-specific — we learn how your business actually works before we build anything."
       }
     ]
   },
@@ -42,11 +42,11 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: 'What AI technologies do you use?',
-        answer: 'We work with the best tools for each job — OpenAI (GPT, Sora, DALL-E), ElevenLabs for voice synthesis, Twilio for telephony, and custom integrations as needed. We're not locked into one vendor.'
+        answer: "We work with the best tools for each job — OpenAI (GPT, Sora, DALL-E), ElevenLabs for voice synthesis, Twilio for telephony, and custom integrations as needed. We\u2019re not locked into one vendor."
       },
       {
         question: 'Do you build from scratch or use templates?',
-        answer: 'From scratch. Every platform we build is custom-designed for the client's specific workflow. We don't reskin templates — we architect systems around how your team actually works.'
+        answer: "From scratch. Every platform we build is custom-designed for the client\u2019s specific workflow. We don\u2019t reskin templates — we architect systems around how your team actually works."
       },
       {
         question: 'Can you integrate with our existing tools?',
@@ -54,7 +54,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Do you handle hosting and maintenance?',
-        answer: 'Yes. We deploy, monitor, and maintain the platforms we build. You don't need your own engineering team to keep things running.'
+        answer: "Yes. We deploy, monitor, and maintain the platforms we build. You don\u2019t need your own engineering team to keep things running."
       }
     ]
   },
@@ -64,11 +64,11 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: 'How long does a typical project take?',
-        answer: 'It depends on scope. A focused tool like an AI phone system can be live in 2–3 weeks. A full platform with multiple modules typically takes 6–10 weeks. We'll give you a realistic timeline upfront.'
+        answer: "It depends on scope. A focused tool like an AI phone system can be live in 2\u20133 weeks. A full platform with multiple modules typically takes 6\u201310 weeks. We\u2019ll give you a realistic timeline upfront."
       },
       {
         question: 'What does the development process look like?',
-        answer: 'Discovery call → scope & proposal → design & architecture → iterative build with regular check-ins → deployment → ongoing support. You're involved at every stage.'
+        answer: "Discovery call \u2192 scope & proposal \u2192 design & architecture \u2192 iterative build with regular check-ins \u2192 deployment \u2192 ongoing support. You\u2019re involved at every stage."
       },
       {
         question: 'Do you offer ongoing support after launch?',
@@ -82,15 +82,15 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: 'How is pricing structured?',
-        answer: 'We price per project based on scope, complexity, and timeline. No per-seat fees, no surprise charges. We'll give you a clear proposal before any work begins.'
+        answer: "We price per project based on scope, complexity, and timeline. No per-seat fees, no surprise charges. We\u2019ll give you a clear proposal before any work begins."
       },
       {
         question: 'Is there a minimum project size?',
-        answer: 'We don't have a hard minimum, but our sweet spot is projects where AI can create real operational impact — not just a chatbot on a website. Reach out and we'll tell you honestly if we're the right fit.'
+        answer: "We don\u2019t have a hard minimum, but our sweet spot is projects where AI can create real operational impact — not just a chatbot on a website. Reach out and we\u2019ll tell you honestly if we\u2019re the right fit."
       },
       {
         question: 'Do you do retainer or ongoing engagements?',
-        answer: 'Yes. Many clients start with a project and move to a retainer for ongoing development, new features, and support. We're flexible.'
+        answer: "Yes. Many clients start with a project and move to a retainer for ongoing development, new features, and support. We\u2019re flexible."
       }
     ]
   },
@@ -104,7 +104,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: 'Are your platforms compliant with industry regulations?',
-        answer: 'We build with compliance in mind. For example, our production office platform handles SAG-AFTRA compliance, and we support e-signatures and audit trails. We'll work with you to meet your industry's requirements.'
+        answer: "We build with compliance in mind. For example, our production office platform handles SAG-AFTRA compliance, and we support e-signatures and audit trails. We\u2019ll work with you to meet your industry\u2019s requirements."
       }
     ]
   }
@@ -127,7 +127,7 @@ function togglePanel(categoryIndex: number, faqIndex: number) {
     <!-- HERO -->
     <section class="criton-hero-bg relative overflow-hidden">
       <div class="max-w-6xl mx-auto px-6 lg:px-8 pt-28 pb-16 md:pt-36 md:pb-20 text-center">
-        <div class="criton-pill mb-8">Questions & Answers</div>
+        <div class="criton-pill mb-8">Questions &amp; Answers</div>
         <h1
           class="font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-[1.08] tracking-tight mb-7 max-w-4xl mx-auto"
         >
