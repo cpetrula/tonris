@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import Button from 'primevue/button'
-import ToggleSwitch from 'primevue/toggleswitch'
 
 const isAnnual = ref(false)
 
-// All plans have the same features - only minutes and overage rate differ
 const sharedFeatures = [
   '24/7 AI phone answering',
   'Appointment scheduling',
@@ -21,7 +18,7 @@ const plans = [
     name: 'Starter',
     description: 'For solopreneurs and small shops getting started',
     monthlyPrice: 79,
-    annualPrice: 67, // ~15% off
+    annualPrice: 67,
     includedMinutes: 200,
     overageRate: 0.15,
     features: [
@@ -29,15 +26,13 @@ const plans = [
       '$0.15/min overage',
       ...sharedFeatures,
     ],
-    notIncluded: [],
-    cta: 'Start Free Trial',
     popular: false,
   },
   {
     name: 'Professional',
     description: 'For growing businesses with higher call volume',
     monthlyPrice: 149,
-    annualPrice: 127, // ~15% off
+    annualPrice: 127,
     includedMinutes: 500,
     overageRate: 0.12,
     features: [
@@ -45,15 +40,13 @@ const plans = [
       '$0.12/min overage',
       ...sharedFeatures,
     ],
-    notIncluded: [],
-    cta: 'Start Free Trial',
     popular: true,
   },
   {
     name: 'Business',
     description: 'For busy practices and multi-location businesses',
     monthlyPrice: 299,
-    annualPrice: 254, // ~15% off
+    annualPrice: 254,
     includedMinutes: 1500,
     overageRate: 0.10,
     features: [
@@ -61,8 +54,6 @@ const plans = [
       '$0.10/min overage',
       ...sharedFeatures,
     ],
-    notIncluded: [],
-    cta: 'Start Free Trial',
     popular: false,
   },
 ]
@@ -74,7 +65,7 @@ const faqs = [
   },
   {
     question: 'What happens if I go over my included minutes?',
-    answer: 'You\'ll be charged the overage rate for any minutes beyond your plan\'s included amount. We\'ll send you alerts at 80% and 100% usage so there are no surprises. You can also upgrade your plan at any time.',
+    answer: 'You\'ll be charged the overage rate for any minutes beyond your plan\'s included amount. We\'ll send you alerts at 80% and 100% usage so there are no surprises.',
   },
   {
     question: 'Can I change plans later?',
@@ -85,16 +76,12 @@ const faqs = [
     answer: 'Yes! All plans include a 15-day free trial with 100 minutes included. No credit card required to start.',
   },
   {
-    question: 'What\'s included in the free trial?',
-    answer: 'You get full access to all features of the Professional plan for 15 days, including 100 minutes of call time. This lets you test everything before committing.',
-  },
-  {
     question: 'Do unused minutes roll over?',
     answer: 'Minutes do not roll over to the next month. Each billing cycle starts fresh with your full allocation.',
   },
   {
     question: 'How do I cancel?',
-    answer: 'You can cancel anytime from your dashboard. There are no contracts or cancellation fees. If you cancel, you\'ll retain access until the end of your current billing period.',
+    answer: 'You can cancel anytime from your dashboard. There are no contracts or cancellation fees.',
   },
 ]
 
@@ -110,77 +97,91 @@ const getSavings = (plan: typeof plans[0]) => {
 </script>
 
 <template>
-  <div>
-    <!-- Hero Section -->
-    <section class="bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white py-16 md:py-20">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-6">
-          Simple, Transparent Pricing
+  <div class="bg-[color:var(--criton-bg)] text-[color:var(--criton-text)]">
+    <!-- HERO -->
+    <section class="criton-hero-bg relative overflow-hidden">
+      <div class="max-w-6xl mx-auto px-6 lg:px-8 pt-28 pb-16 md:pt-36 md:pb-20 text-center">
+        <div class="criton-pill mb-8">Transparent Pricing</div>
+        <h1
+          class="font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-[1.08] tracking-tight mb-7 max-w-4xl mx-auto"
+        >
+          Simple,<br />
+          <span class="italic criton-accent">fair pricing.</span>
         </h1>
-        <p class="text-xl text-violet-100 mb-8 max-w-3xl mx-auto">
+        <p
+          class="text-lg md:text-xl text-[color:var(--criton-text-muted)] max-w-2xl mx-auto leading-relaxed mb-10"
+        >
           Professional AI phone answering at a fraction of the cost of hiring staff.
           Start with a 15-day free trial—no credit card required.
         </p>
         
         <!-- Billing Toggle -->
-        <div class="flex items-center justify-center gap-4 mb-4">
-          <span :class="['text-lg font-medium', !isAnnual ? 'text-white' : 'text-violet-200']">Monthly</span>
-          <ToggleSwitch v-model="isAnnual" />
-          <span :class="['text-lg font-medium', isAnnual ? 'text-white' : 'text-violet-200']">
+        <div class="flex items-center justify-center gap-4">
+          <span :class="['text-base font-medium', !isAnnual ? 'text-[color:var(--criton-ivory)]' : 'text-[color:var(--criton-text-muted)]']">Monthly</span>
+          <button
+            @click="isAnnual = !isAnnual"
+            :class="[
+              'relative w-14 h-7 rounded-full transition-colors',
+              isAnnual ? 'bg-[color:var(--criton-gold)]' : 'bg-[color:var(--criton-surface-2)] border border-[color:var(--criton-border)]'
+            ]"
+          >
+            <span
+              :class="[
+                'absolute top-1 w-5 h-5 rounded-full transition-transform',
+                isAnnual ? 'translate-x-8 bg-[color:var(--criton-bg)]' : 'translate-x-1 bg-[color:var(--criton-text-muted)]'
+              ]"
+            ></span>
+          </button>
+          <span :class="['text-base font-medium', isAnnual ? 'text-[color:var(--criton-ivory)]' : 'text-[color:var(--criton-text-muted)]']">
             Annual
-            <span class="ml-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">Save 15%</span>
+            <span class="ml-2 bg-[color:var(--criton-gold)] text-[color:var(--criton-bg)] text-xs px-2 py-1 rounded-full font-semibold">Save 15%</span>
           </span>
         </div>
       </div>
     </section>
 
-    <!-- Pricing Cards -->
-    <section class="py-16 md:py-20 bg-gray-50 -mt-8">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-3 gap-8">
+    <!-- PRICING CARDS -->
+    <section class="py-16 md:py-24 border-t border-[color:var(--criton-border)]">
+      <div class="max-w-6xl mx-auto px-6 lg:px-8">
+        <div class="grid md:grid-cols-3 gap-6">
           <div 
             v-for="plan in plans" 
             :key="plan.name"
             :class="[
-              'bg-white rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105',
-              plan.popular ? 'ring-2 ring-violet-500 relative' : ''
+              'criton-card rounded-xl overflow-hidden relative',
+              plan.popular ? 'ring-2 ring-[color:var(--criton-gold)]' : ''
             ]"
           >
             <!-- Popular Badge -->
-            <div v-if="plan.popular" class="bg-violet-500 text-white text-center py-2 text-sm font-medium">
+            <div v-if="plan.popular" class="bg-[color:var(--criton-gold)] text-[color:var(--criton-bg)] text-center py-2 text-sm font-semibold tracking-wide">
               Most Popular
             </div>
             
             <div class="p-8">
               <!-- Plan Header -->
-              <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ plan.name }}</h3>
-              <p class="text-gray-600 mb-6">{{ plan.description }}</p>
+              <h3 class="font-display text-2xl font-bold text-[color:var(--criton-ivory)] mb-2">{{ plan.name }}</h3>
+              <p class="text-[color:var(--criton-text-muted)] text-sm mb-6">{{ plan.description }}</p>
               
               <!-- Price -->
               <div class="mb-6">
                 <div class="flex items-baseline">
-                  <span class="text-5xl font-bold text-gray-900">${{ getPrice(plan) }}</span>
-                  <span class="text-gray-500 ml-2">/month</span>
+                  <span class="font-display text-5xl font-bold text-[color:var(--criton-ivory)]">${{ getPrice(plan) }}</span>
+                  <span class="text-[color:var(--criton-text-muted)] ml-2">/month</span>
                 </div>
-                <div v-if="isAnnual" class="text-green-600 text-sm mt-1">
+                <div v-if="isAnnual" class="text-[color:var(--criton-gold)] text-sm mt-1">
                   Save ${{ getSavings(plan) }}/year
                 </div>
-                <div class="text-gray-500 text-sm mt-2">
+                <div class="text-[color:var(--criton-text-dim)] text-sm mt-2">
                   {{ plan.includedMinutes }} minutes included
-                  <span class="text-gray-400">• ${{ plan.overageRate.toFixed(2) }}/min overage</span>
                 </div>
               </div>
               
               <!-- CTA Button -->
-              <RouterLink to="/signup" class="block mb-8">
-                <Button 
-                  :label="plan.cta" 
-                  :class="[
-                    'w-full',
-                    plan.popular ? '' : 'p-button-outlined'
-                  ]"
-                  size="large"
-                />
+              <RouterLink 
+                to="/signup" 
+                :class="plan.popular ? 'criton-btn-primary w-full justify-center mb-8' : 'criton-btn-ghost w-full justify-center mb-8'"
+              >
+                Start Free Trial
               </RouterLink>
               
               <!-- Features -->
@@ -190,16 +191,8 @@ const getSavings = (plan: typeof plans[0]) => {
                   :key="feature"
                   class="flex items-start gap-3"
                 >
-                  <i class="pi pi-check text-green-500 mt-1"></i>
-                  <span class="text-gray-700">{{ feature }}</span>
-                </li>
-                <li 
-                  v-for="notIncluded in plan.notIncluded" 
-                  :key="notIncluded"
-                  class="flex items-start gap-3"
-                >
-                  <i class="pi pi-times text-gray-300 mt-1"></i>
-                  <span class="text-gray-400">{{ notIncluded }}</span>
+                  <i class="pi pi-check text-[color:var(--criton-gold)] mt-0.5"></i>
+                  <span class="text-sm text-[color:var(--criton-text-muted)]">{{ feature }}</span>
                 </li>
               </ul>
             </div>
@@ -208,76 +201,74 @@ const getSavings = (plan: typeof plans[0]) => {
         
         <!-- Enterprise CTA -->
         <div class="mt-12 text-center">
-          <p class="text-gray-600 mb-4">
+          <p class="text-[color:var(--criton-text-muted)] mb-4">
             Need more than 1,500 minutes or custom features?
           </p>
-          <a href="mailto:sales@criton.ai">
-            <Button 
-              label="Contact Sales for Enterprise Pricing" 
-              severity="secondary"
-              outlined
-            />
+          <a href="mailto:sales@criton.ai" class="criton-btn-ghost">
+            Contact Sales
+            <i class="pi pi-arrow-right text-xs"></i>
           </a>
         </div>
       </div>
     </section>
 
-    <!-- Usage Calculator -->
-    <section class="py-16 md:py-20 bg-white">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- USAGE CALCULATOR -->
+    <section class="py-16 md:py-24 border-t border-[color:var(--criton-border)] bg-[color:var(--criton-surface)]">
+      <div class="max-w-4xl mx-auto px-6 lg:px-8">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">
-            Which Plan is Right for You?
+          <p class="criton-eyebrow mb-4">Plan Guide</p>
+          <h2 class="font-display font-bold text-3xl md:text-4xl leading-tight">
+            Which Plan is<br />
+            <span class="italic text-[color:var(--criton-text-muted)]">Right for You?</span>
           </h2>
-          <p class="text-lg text-gray-600">
-            Estimate your monthly usage to find the best fit
-          </p>
         </div>
         
-        <div class="bg-gray-50 rounded-2xl p-8">
+        <div class="criton-card rounded-xl p-8">
           <div class="grid md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div class="text-4xl font-bold text-violet-600 mb-2">~65</div>
-              <div class="text-gray-600">calls/month</div>
-              <div class="text-sm text-gray-500 mt-1">(~3 min avg)</div>
-              <div class="mt-4 font-semibold text-gray-900">→ Starter</div>
+            <div class="p-4">
+              <div class="font-display text-4xl font-bold text-[color:var(--criton-gold)] mb-2">~65</div>
+              <div class="text-[color:var(--criton-text-muted)]">calls/month</div>
+              <div class="text-sm text-[color:var(--criton-text-dim)] mt-1">(~3 min avg)</div>
+              <div class="mt-4 font-semibold text-[color:var(--criton-ivory)]">→ Starter</div>
             </div>
-            <div>
-              <div class="text-4xl font-bold text-violet-600 mb-2">~165</div>
-              <div class="text-gray-600">calls/month</div>
-              <div class="text-sm text-gray-500 mt-1">(~3 min avg)</div>
-              <div class="mt-4 font-semibold text-gray-900">→ Professional</div>
+            <div class="p-4 border-x border-[color:var(--criton-border)]">
+              <div class="font-display text-4xl font-bold text-[color:var(--criton-gold)] mb-2">~165</div>
+              <div class="text-[color:var(--criton-text-muted)]">calls/month</div>
+              <div class="text-sm text-[color:var(--criton-text-dim)] mt-1">(~3 min avg)</div>
+              <div class="mt-4 font-semibold text-[color:var(--criton-ivory)]">→ Professional</div>
             </div>
-            <div>
-              <div class="text-4xl font-bold text-violet-600 mb-2">~500</div>
-              <div class="text-gray-600">calls/month</div>
-              <div class="text-sm text-gray-500 mt-1">(~3 min avg)</div>
-              <div class="mt-4 font-semibold text-gray-900">→ Business</div>
+            <div class="p-4">
+              <div class="font-display text-4xl font-bold text-[color:var(--criton-gold)] mb-2">~500</div>
+              <div class="text-[color:var(--criton-text-muted)]">calls/month</div>
+              <div class="text-sm text-[color:var(--criton-text-dim)] mt-1">(~3 min avg)</div>
+              <div class="mt-4 font-semibold text-[color:var(--criton-ivory)]">→ Business</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Cost Comparison -->
-    <section class="py-16 md:py-20 bg-gray-50">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- COST COMPARISON -->
+    <section class="py-16 md:py-24 border-t border-[color:var(--criton-border)]">
+      <div class="max-w-4xl mx-auto px-6 lg:px-8">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">
-            Compare the Savings
+          <p class="criton-eyebrow mb-4">The Math</p>
+          <h2 class="font-display font-bold text-3xl md:text-4xl leading-tight">
+            Compare the<br />
+            <span class="italic text-[color:var(--criton-text-muted)]">Savings</span>
           </h2>
         </div>
         
-        <div class="grid md:grid-cols-2 gap-8">
+        <div class="grid md:grid-cols-2 gap-6">
           <!-- Employee Cost -->
-          <div class="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+          <div class="rounded-xl p-6 border-2 border-red-500/30 bg-red-500/5">
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <i class="pi pi-user text-2xl text-red-500"></i>
+              <div class="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center">
+                <i class="pi pi-user text-2xl text-red-400"></i>
               </div>
-              <h4 class="text-lg font-semibold text-gray-900">Full-Time Receptionist</h4>
+              <h4 class="font-display text-lg font-semibold text-[color:var(--criton-ivory)]">Full-Time Receptionist</h4>
             </div>
-            <div class="space-y-2 text-gray-700 mb-4">
+            <div class="space-y-2 text-[color:var(--criton-text-muted)] mb-4">
               <p class="flex justify-between">
                 <span>Salary + Benefits</span>
                 <span>$3,500+/mo</span>
@@ -288,106 +279,99 @@ const getSavings = (plan: typeof plans[0]) => {
               </p>
               <p class="flex justify-between">
                 <span>After hours</span>
-                <span class="text-red-500">Not covered</span>
+                <span class="text-red-400">Not covered</span>
               </p>
             </div>
-            <div class="border-t border-red-200 pt-4">
+            <div class="border-t border-red-500/30 pt-4">
               <p class="flex justify-between items-center">
-                <span class="font-semibold">Annual cost</span>
-                <span class="text-2xl font-bold text-red-600">$42,000+</span>
+                <span class="font-semibold text-[color:var(--criton-ivory)]">Annual cost</span>
+                <span class="font-display text-2xl font-bold text-red-400">$42,000+</span>
               </p>
             </div>
           </div>
 
-          <!-- CRITON.AI Cost -->
-          <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+          <!-- Criton Cost -->
+          <div class="rounded-xl p-6 border-2 border-[color:var(--criton-gold)]/30 bg-[color:var(--criton-gold)]/5">
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <i class="pi pi-bolt text-2xl text-green-500"></i>
+              <div class="w-12 h-12 bg-[color:var(--criton-gold)]/10 border border-[color:var(--criton-gold)]/30 rounded-full flex items-center justify-center">
+                <i class="pi pi-bolt text-2xl text-[color:var(--criton-gold)]"></i>
               </div>
-              <h4 class="text-lg font-semibold text-gray-900">CRITON.AI Professional</h4>
+              <h4 class="font-display text-lg font-semibold text-[color:var(--criton-ivory)]">Criton.ai Professional</h4>
             </div>
-            <div class="space-y-2 text-gray-700 mb-4">
+            <div class="space-y-2 text-[color:var(--criton-text-muted)] mb-4">
               <p class="flex justify-between">
                 <span>Monthly fee</span>
                 <span>$149/mo</span>
               </p>
               <p class="flex justify-between">
                 <span>Coverage</span>
-                <span class="text-green-600">24/7/365</span>
+                <span class="text-[color:var(--criton-gold)]">24/7/365</span>
               </p>
               <p class="flex justify-between">
                 <span>After hours</span>
-                <span class="text-green-600">✓ Included</span>
+                <span class="text-[color:var(--criton-gold)]">✓ Included</span>
               </p>
             </div>
-            <div class="border-t border-green-200 pt-4">
+            <div class="border-t border-[color:var(--criton-gold)]/30 pt-4">
               <p class="flex justify-between items-center">
-                <span class="font-semibold">Annual cost</span>
-                <span class="text-2xl font-bold text-green-600">$1,788</span>
+                <span class="font-semibold text-[color:var(--criton-ivory)]">Annual cost</span>
+                <span class="font-display text-2xl font-bold text-[color:var(--criton-gold)]">$1,788</span>
               </p>
             </div>
           </div>
         </div>
         
         <div class="mt-8 text-center">
-          <div class="inline-block bg-violet-100 text-violet-700 rounded-full px-6 py-3 text-lg font-semibold">
-            Save over $40,000/year with CRITON.AI
+          <div class="inline-block bg-[color:var(--criton-gold)]/10 border border-[color:var(--criton-gold)]/30 text-[color:var(--criton-gold)] rounded-full px-6 py-3 font-semibold">
+            Save over $40,000/year with Criton.ai
           </div>
         </div>
       </div>
     </section>
 
-    <!-- FAQ Section -->
-    <section class="py-16 md:py-20 bg-white">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- FAQ -->
+    <section class="py-16 md:py-24 border-t border-[color:var(--criton-border)] bg-[color:var(--criton-surface)]">
+      <div class="max-w-4xl mx-auto px-6 lg:px-8">
         <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">
-            Frequently Asked Questions
+          <p class="criton-eyebrow mb-4">FAQ</p>
+          <h2 class="font-display font-bold text-3xl md:text-4xl leading-tight">
+            Common<br />
+            <span class="italic text-[color:var(--criton-text-muted)]">Questions</span>
           </h2>
         </div>
         
-        <div class="space-y-6">
+        <div class="space-y-4">
           <div 
             v-for="faq in faqs" 
             :key="faq.question"
-            class="bg-gray-50 rounded-xl p-6"
+            class="criton-card rounded-xl p-6"
           >
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ faq.question }}</h3>
-            <p class="text-gray-600">{{ faq.answer }}</p>
+            <h3 class="font-display text-lg font-semibold text-[color:var(--criton-ivory)] mb-2">{{ faq.question }}</h3>
+            <p class="text-[color:var(--criton-text-muted)] leading-relaxed">{{ faq.answer }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Final CTA -->
-    <section class="py-16 md:py-20 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold mb-4">
-          Ready to Never Miss a Call Again?
+    <!-- CTA -->
+    <section class="relative overflow-hidden border-t border-[color:var(--criton-border)]">
+      <div class="criton-hero-bg absolute inset-0 opacity-60"></div>
+      <div class="relative max-w-4xl mx-auto px-6 lg:px-8 py-24 md:py-32 text-center">
+        <h2 class="font-display font-bold text-3xl md:text-5xl leading-tight mb-6">
+          Ready to never miss<br />
+          <span class="italic criton-accent">a call again?</span>
         </h2>
-        <p class="text-lg text-violet-100 mb-8 max-w-2xl mx-auto">
+        <p class="text-lg text-[color:var(--criton-text-muted)] max-w-xl mx-auto mb-10">
           Start your 15-day free trial today. No credit card required.
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <RouterLink to="/signup">
-            <Button
-              label="Start Free Trial"
-              icon="pi pi-arrow-right"
-              icon-pos="right"
-              size="large"
-              class="px-8 py-3 !bg-white !text-violet-600 hover:!bg-violet-50"
-            />
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <RouterLink to="/signup" class="criton-btn-primary">
+            Start Free Trial
+            <i class="pi pi-arrow-right text-xs"></i>
           </RouterLink>
-          <a href="tel:14242839238">
-            <Button
-              label="Call Our Demo Line"
-              icon="pi pi-phone"
-              severity="secondary"
-              outlined
-              size="large"
-              class="px-8 py-3 !text-white !border-white hover:!bg-white/10"
-            />
+          <a href="tel:14242839238" class="criton-btn-ghost">
+            <i class="pi pi-phone text-xs"></i>
+            Call Our Demo Line
           </a>
         </div>
       </div>
