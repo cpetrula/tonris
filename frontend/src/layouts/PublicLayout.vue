@@ -25,7 +25,7 @@ function closeMobileMenu() {
         <div class="flex justify-between items-center h-16">
           <!-- Logo -->
           <RouterLink to="/" class="flex items-center gap-3 group">
-            <img src="/logo1.png" alt="CRITON.AI" class="h-8 w-auto" />
+            <img src="/criton-logo.png" alt="CRITON.AI" class="h-10 w-auto" />
             <div class="flex flex-col leading-none">
               <span class="font-display text-lg font-bold tracking-tight text-[color:var(--criton-text)]">
                 CRITON.AI
@@ -133,7 +133,7 @@ function closeMobileMenu() {
           <!-- Brand -->
           <div class="md:col-span-5">
             <RouterLink to="/" class="flex items-center gap-3 mb-4">
-              <img src="/logo1.png" alt="CRITON.AI" class="h-8 w-auto" />
+              <img src="/criton-logo.png" alt="CRITON.AI" class="h-10 w-auto" />
               <div class="flex flex-col leading-none">
                 <span class="font-display text-lg font-bold tracking-tight">CRITON.AI</span>
                 <span class="text-[10px] tracking-[0.22em] uppercase text-[color:var(--criton-text-dim)] mt-0.5">
