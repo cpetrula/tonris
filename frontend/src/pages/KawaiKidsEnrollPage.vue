@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import axios from 'axios'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -20,6 +20,7 @@ const childLastName = ref('')
 const childDateOfBirth = ref('')
 const childGender = ref('')
 const programPreference = ref('')
+const preferredLocation = ref('')
 const schedulePreference = ref('')
 const preferredStartDate = ref('')
 
@@ -59,6 +60,19 @@ const scheduleOptions = [
   { label: '2 Days (Tue/Thu)', value: 'two_days' },
 ]
 
+const locationOptions = [
+  { label: 'Montebello', value: 'MTB' },
+  { label: 'Alhambra', value: 'ALH' },
+  { label: 'Both locations', value: 'BOTH' },
+]
+
+// School Age is Montebello-only — hide the Location select entirely when selected
+const locationApplies = computed(() => programPreference.value !== 'school-age')
+
+watch(programPreference, (val) => {
+  if (val === 'school-age') preferredLocation.value = ''
+})
+
 const genderOptions = [
   { label: 'Male', value: 'male' },
   { label: 'Female', value: 'female' },
@@ -90,6 +104,10 @@ const scheduleLabel = computed(() => {
   return scheduleOptions.find(s => s.value === schedulePreference.value)?.label || schedulePreference.value
 })
 
+const locationLabel = computed(() => {
+  return locationOptions.find(l => l.value === preferredLocation.value)?.label || preferredLocation.value
+})
+
 function validateStep(step: number): boolean {
   error.value = ''
   if (step === 1) {
@@ -103,6 +121,10 @@ function validateStep(step: number): boolean {
     }
     if (!programPreference.value) {
       error.value = 'Please select a program'
+      return false
+    }
+    if (locationApplies.value && !preferredLocation.value) {
+      error.value = 'Please select a preferred location'
       return false
     }
   } else if (step === 2) {
@@ -152,6 +174,7 @@ async function handleSubmit() {
       childDateOfBirth: childDateOfBirth.value,
       childGender: childGender.value || undefined,
       programPreference: programPreference.value,
+      preferredLocation: preferredLocation.value || undefined,
       schedulePreference: schedulePreference.value || undefined,
       preferredStartDate: preferredStartDate.value || undefined,
       guardianFirstName: guardianFirstName.value,
@@ -342,6 +365,12 @@ async function handleSubmit() {
               <Select v-model="programPreference" :options="programOptions" optionLabel="label" optionValue="value" placeholder="Select a program" class="w-full" />
             </div>
 
+            <div v-if="locationApplies">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Location *</label>
+              <Select v-model="preferredLocation" :options="locationOptions" optionLabel="label" optionValue="value" placeholder="Select a location" class="w-full" />
+              <p class="text-xs text-gray-500 mt-1">Choose <strong>Both locations</strong> if you're open to whichever has availability.</p>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Schedule Preference</label>
@@ -487,6 +516,7 @@ async function handleSubmit() {
                 <div><span class="text-gray-500">Name:</span> <span class="font-medium text-gray-900">{{ childFirstName }} {{ childLastName }}</span></div>
                 <div><span class="text-gray-500">DOB:</span> <span class="font-medium text-gray-900">{{ childDateOfBirth }}</span></div>
                 <div><span class="text-gray-500">Program:</span> <span class="font-medium text-gray-900">{{ programLabel }}</span></div>
+                <div v-if="preferredLocation"><span class="text-gray-500">Location:</span> <span class="font-medium text-gray-900">{{ locationLabel }}</span></div>
                 <div v-if="schedulePreference"><span class="text-gray-500">Schedule:</span> <span class="font-medium text-gray-900">{{ scheduleLabel }}</span></div>
                 <div v-if="preferredStartDate"><span class="text-gray-500">Start Date:</span> <span class="font-medium text-gray-900">{{ preferredStartDate }}</span></div>
                 <div v-if="childGender"><span class="text-gray-500">Gender:</span> <span class="font-medium text-gray-900 capitalize">{{ childGender }}</span></div>
