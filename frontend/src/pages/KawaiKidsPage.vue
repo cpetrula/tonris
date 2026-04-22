@@ -66,7 +66,8 @@ const programs = [
     ages: 'TK – 12 years',
     description: 'Homework assistance during the school year and recreational programs during school breaks and early dismissal days, with indoor and outdoor activities and character development.',
     image: 'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&h=500&fit=crop',
-    color: 'from-emerald-400 to-green-500'
+    color: 'from-emerald-400 to-green-500',
+    montebelloOnly: true
   }
 ]
 
@@ -152,7 +153,7 @@ const faqs = [
     answer: 'All staff have criminal clearance, a minimum of 12 ECE units, First Aid/CPR certification, and meet all Title 22 requirements. Infant and toddler teachers have additional specialized training.'
   },
   {
-    question: 'Do you have a waitlist?',
+    question: 'How does your waitlist work?',
     answer: 'If no spots are currently available, families are placed on our waitlist and contacted when an opening arises. You\'ll have 48–72 hours to confirm your spot.'
   }
 ]
@@ -354,6 +355,13 @@ const kawaiPhone = '(323) 728-5437'
               <div :class="`absolute inset-0 bg-gradient-to-t ${program.color} opacity-30`"></div>
               <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-purple-700">
                 {{ program.ages }}
+              </div>
+              <div
+                v-if="program.montebelloOnly"
+                class="absolute bottom-3 left-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 shadow-md"
+              >
+                <i class="pi pi-map-marker text-[10px]"></i>
+                Montebello only
               </div>
             </div>
             <div class="p-6">
