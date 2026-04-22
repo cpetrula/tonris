@@ -28,36 +28,36 @@ onUnmounted(() => {
 const programs = [
   {
     name: 'Infants',
-    ages: '0 – 12 months',
-    description: 'Our Infant Program is a home away from home. The majority of our day is filled with cuddling, singing and talking with your baby. A schedule tailored to your child\'s individual needs.',
+    ages: '3 – 18 months',
+    description: 'Our infant program is designed to nurture and support each child through engaging, hands-on experiences, including sensory play, music, movement, and early language development through talking and baby sign language. We focus on building strong bonds, trust, and communication while following a routine tailored to each child\'s individual needs. In a warm and nurturing environment, our infants are encouraged to explore, grow, and thrive at their own pace.',
     image: 'https://kawaikids.com/wp-content/uploads/2021/10/infant-1920x1280-1-408x250.jpg',
     color: 'from-pink-400 to-rose-500'
   },
   {
     name: 'Toddlers',
-    ages: '12 – 24 months',
-    description: 'A structured schedule with balanced indoor and outdoor activities promoting overall development — language, literacy, physical, social, emotional, and cognitive growth.',
+    ages: '18 – 24+ months',
+    description: 'Our toddler program is designed to keep busy little learners engaged through hands-on activities, play-based learning, music, movement, and language development. We focus on building independence, communication, and social skills while maintaining a consistent routine that supports each child\'s growth. Through exploration, creativity, and guided learning, toddlers are encouraged to learn, play, and thrive in a fun and nurturing environment.',
     image: 'https://kawaikids.com/wp-content/uploads/2017/06/baby-alphabet-1920x1280-1-408x250.jpg',
     color: 'from-orange-400 to-amber-500'
   },
   {
     name: 'Early Preschool',
     ages: '2 – 3 years',
-    description: 'Structured indoor and outdoor activities promoting language, literacy, physical, social, emotional, and cognitive development through guided play and creative expression.',
+    description: 'Our early preschool program focuses on engaging, hands-on learning that builds independence, communication, and social skills. Children are introduced to letters, numbers, shapes, and colors through interactive activities. Language enrichment is incorporated through Spanish and Mandarin, and weekly themed lesson plans spark curiosity and exploration.',
     image: 'https://kawaikids.com/wp-content/uploads/2021/10/kids-playing-music-1920x1280-1-408x250.jpg',
     color: 'from-violet-400 to-purple-500'
   },
   {
     name: 'Preschool',
     ages: '3 – 4 years',
-    description: 'Our curriculum provides engaging hands-on experiences that promote language development, independence, and exploration of their surroundings.',
+    description: 'Our preschool program encourages active, hands-on learning that builds confidence, independence, and strong social skills. Children develop early academic foundations, including letters, numbers, shapes, and colors, through engaging and meaningful activities. We incorporate Spanish and Mandarin for language enrichment, and weekly themed lesson plans inspire creativity, curiosity, and a deeper love for learning.',
     image: 'https://kawaikids.com/wp-content/uploads/2021/10/painting-1920x1280-1-450x450.jpg',
     color: 'from-cyan-400 to-teal-500'
   },
   {
     name: 'Pre-Kindergarten',
     ages: '4 – 5 years',
-    description: 'Structured activities promoting language, literacy, physical, social, emotional, and cognitive development to prepare children for a smooth transition to kindergarten.',
+    description: 'Our Pre-Kindergarten program prepares children for a successful transition into Kindergarten by building strong foundations in early literacy, including early reading skills, math, and problem-solving. Children develop confidence, independence, and essential school-readiness skills. Language enrichment is incorporated through Spanish and Mandarin, and weekly themed lesson plans support continued growth, curiosity, and a love for learning.',
     image: 'https://kawaikids.com/wp-content/uploads/2021/11/reading-with-children-1920x1280-1-408x250.jpg',
     color: 'from-blue-400 to-indigo-500'
   },
@@ -121,44 +121,10 @@ const blogPosts = [
   },
 ]
 
-const tuition = [
-  {
-    group: 'Infant (0–24 months)',
-    rates: [
-      { schedule: '5 days (Mon–Fri)', biweekly: '$600', monthly: '$1,300' },
-      { schedule: '3 days (Mon/Wed/Fri)', biweekly: '$404', monthly: '$875' },
-      { schedule: '2 days (Tue/Thu)', biweekly: '$300', monthly: '$650' },
-    ]
-  },
-  {
-    group: 'Potty Trained (2–5 years)',
-    rates: [
-      { schedule: '5 days (Mon–Fri)', biweekly: '$462', monthly: '$1,000' },
-      { schedule: '3 days (Mon/Wed/Fri)', biweekly: '$300', monthly: '$650' },
-      { schedule: '2 days (Tue/Thu)', biweekly: '$222', monthly: '$480' },
-    ]
-  },
-  {
-    group: 'Non-Potty Trained (2–5 years)',
-    rates: [
-      { schedule: '5 days (Mon–Fri)', biweekly: '$531', monthly: '$1,150' },
-      { schedule: '3 days (Mon/Wed/Fri)', biweekly: '$347', monthly: '$750' },
-      { schedule: '2 days (Tue/Thu)', biweekly: '$254', monthly: '$550' },
-    ]
-  },
-  {
-    group: 'School Age (TK–12 years)',
-    rates: [
-      { schedule: '5 days (Mon–Fri)', biweekly: '', monthly: '$200/week' },
-      { schedule: 'Half days', biweekly: '', monthly: '$125/week' },
-    ]
-  },
-]
-
 const highlights = [
   { icon: 'pi pi-clock', label: 'Open 7AM – 6PM', sublabel: 'Monday through Friday' },
   { icon: 'pi pi-heart', label: 'Est. 2007', sublabel: '19 years of trusted care' },
-  { icon: 'pi pi-star', label: '4.9 Stars', sublabel: 'on Yelp reviews' },
+  { icon: 'pi pi-star', label: '5.0 Stars', sublabel: 'on Yelp reviews' },
   { icon: 'pi pi-users', label: 'Newborn – 12 yrs', sublabel: 'Programs for every age' },
   { icon: 'pi pi-sun', label: 'On-Site Chef', sublabel: 'All meals included' },
   { icon: 'pi pi-shield', label: 'Licensed & Certified', sublabel: 'First Aid & CPR trained' }
@@ -171,23 +137,19 @@ const faqs = [
   },
   {
     question: 'Are meals included?',
-    answer: 'Yes! Our on-site chef prepares breakfast, lunch, and two snacks daily. We accommodate dietary needs — just let us know when enrolling. Milk is provided and water is available throughout the day.'
+    answer: 'Yes! Our on-site chef prepares breakfast, lunch, and two snacks daily. Milk is provided and water is available throughout the day.'
   },
   {
     question: 'What are your hours?',
-    answer: 'We are open Monday through Friday, 7:00 AM to 6:00 PM, year-round. We are closed on bank holidays and for one week during Christmas.'
-  },
-  {
-    question: 'What is the enrollment process?',
-    answer: 'Step 1: Fill out our online enrollment form or call us and our AI assistant will help you enroll over the phone. Step 2: We\'ll review your application and contact you within 48-72 hours to schedule a tour. Step 3: Meet with our Director, pay registration fee + deposit + first month\'s tuition. Step 4: Submit immunization records and physician\'s report.'
+    answer: 'We are open Monday–Friday 7am–6pm.'
   },
   {
     question: 'What schedule options are available?',
-    answer: 'We offer flexible schedules: 5 days (Mon–Fri), 3 days (Mon/Wed/Fri), or 2 days (Tue/Thu). Full-day and half-day options are available.'
+    answer: 'We offer flexible schedules: 5 days (Mon–Fri), 3 days (Mon/Wed/Fri), or 2 days (Tue/Thu).'
   },
   {
     question: 'What qualifications do your staff have?',
-    answer: 'All staff have criminal clearance, minimum 12 ECE units, First Aid/CPR certification, and at least 1 year of experience in licensed childcare. Infant/toddler teachers have additional specialized training.'
+    answer: 'All staff have criminal clearance, a minimum of 12 ECE units, First Aid/CPR certification, and meet all Title 22 requirements. Infant and toddler teachers have additional specialized training.'
   },
   {
     question: 'Do you have a waitlist?',
@@ -294,7 +256,7 @@ const kawaiPhone = '(323) 728-5437'
               <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-pink-300">Play, Learn & Grow</span>
             </h1>
             <p class="text-lg text-purple-100 mb-8 leading-relaxed">
-              Since 2007, Kawai Kids has provided safe, loving childcare for children ages newborn through 12.
+              Since 2007, Kawai Kids has provided safe, loving childcare for children newborn–12 years old.
               With on-site meals, flexible schedules, and a curriculum that balances play and academics — your child will thrive.
             </p>
 
@@ -305,16 +267,8 @@ const kawaiPhone = '(323) 728-5437'
                 class="inline-flex items-center justify-center gap-2 bg-amber-400 text-purple-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-amber-300 transition-all hover:scale-105 shadow-lg shadow-amber-400/30"
                 style="font-family: 'Fredoka', sans-serif;"
               >
-                Enroll Now
+                Join Our Waitlist
                 <i class="pi pi-arrow-right"></i>
-              </a>
-              <a
-                href="/kawaikids/tour"
-                class="inline-flex items-center justify-center gap-2 bg-white/15 backdrop-blur text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/25 transition-all border border-white/30"
-                style="font-family: 'Fredoka', sans-serif;"
-              >
-                <i class="pi pi-calendar"></i>
-                Schedule a Tour
               </a>
             </div>
           </div>
@@ -328,11 +282,11 @@ const kawaiPhone = '(323) 728-5437'
                   <div class="text-purple-200 text-sm">Years of Excellence</div>
                 </div>
                 <div class="text-center p-4">
-                  <div class="text-4xl font-bold text-amber-300 mb-1" style="font-family: 'Fredoka', sans-serif;">4.9</div>
+                  <div class="text-4xl font-bold text-amber-300 mb-1" style="font-family: 'Fredoka', sans-serif;">5.0</div>
                   <div class="text-purple-200 text-sm">Yelp Stars</div>
                 </div>
                 <div class="text-center p-4">
-                  <div class="text-4xl font-bold text-amber-300 mb-1" style="font-family: 'Fredoka', sans-serif;">1:3</div>
+                  <div class="text-4xl font-bold text-amber-300 mb-1" style="font-family: 'Fredoka', sans-serif;">1:4</div>
                   <div class="text-purple-200 text-sm">Infant Ratio</div>
                 </div>
                 <div class="text-center p-4">
@@ -410,14 +364,14 @@ const kawaiPhone = '(323) 728-5437'
         </div>
 
         <div class="text-center mt-12">
-          <p class="text-gray-500 mb-4">Flexible scheduling: 2, 3, or 5 days per week | Full-day and half-day available</p>
+          <p class="text-gray-500 mb-4">Flexible scheduling: 2, 3, or 5 days per week</p>
           <a
             href="/kawaikids/enroll"
 
             class="inline-flex items-center gap-2 bg-purple-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-700 transition-colors"
             style="font-family: 'Fredoka', sans-serif;"
           >
-            Enroll Your Child
+            Join Our Waitlist
             <i class="pi pi-arrow-right"></i>
           </a>
         </div>
@@ -435,7 +389,7 @@ const kawaiPhone = '(323) 728-5437'
             </h2>
             <p class="text-gray-600 mb-8 leading-relaxed">
               At Kawai Kids, we believe every child deserves a safe, stimulating, and loving environment.
-              Our curriculum balances play-based and academic learning, guided by the Early Years Foundation Stage framework.
+              Our curriculum balances hands-on and academic learning through weekly themes that encourage curiosity and exploration.
             </p>
 
             <div class="space-y-5">
@@ -445,7 +399,7 @@ const kawaiPhone = '(323) 728-5437'
                 </div>
                 <div>
                   <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Chef-Prepared Meals Daily</h4>
-                  <p class="text-sm text-gray-600">Breakfast, lunch, and two snacks prepared fresh on-site every day. Dietary needs accommodated.</p>
+                  <p class="text-sm text-gray-600">Breakfast, lunch, and two snacks prepared fresh on-site every day.</p>
                 </div>
               </div>
 
@@ -454,18 +408,18 @@ const kawaiPhone = '(323) 728-5437'
                   <i class="pi pi-book text-xl text-teal-600"></i>
                 </div>
                 <div>
-                  <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Play-Based Curriculum</h4>
-                  <p class="text-sm text-gray-600">Teacher-directed and child-initiated activities covering 7 key development areas.</p>
+                  <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Hands-on Curriculum</h4>
+                  <p class="text-sm text-gray-600">Teacher-directed and child-initiated activities that support the whole child — emotionally, socially, physically, and cognitively.</p>
                 </div>
               </div>
 
               <div class="flex items-start gap-4">
                 <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <i class="pi pi-heart text-xl text-pink-600"></i>
+                  <i class="pi pi-comments text-xl text-pink-600"></i>
                 </div>
                 <div>
-                  <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Key Person System</h4>
-                  <p class="text-sm text-gray-600">Each child is assigned a dedicated staff member who tracks their individual progress and milestones.</p>
+                  <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Parent Communication</h4>
+                  <p class="text-sm text-gray-600">We keep families connected through daily updates, photos, and videos shared on the Brightwheel app, providing a window into your child's day.</p>
                 </div>
               </div>
 
@@ -475,7 +429,7 @@ const kawaiPhone = '(323) 728-5437'
                 </div>
                 <div>
                   <h4 class="font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">Trained & Certified Staff</h4>
-                  <p class="text-sm text-gray-600">All staff hold ECE units, First Aid/CPR certifications, and specialized training including special needs awareness.</p>
+                  <p class="text-sm text-gray-600">Our team consists of experienced educators who hold ECE units, Pediatric First Aid and CPR certifications, and meet all Title 22 requirements, ensuring a safe and high-quality learning environment.</p>
                 </div>
               </div>
 
@@ -524,7 +478,7 @@ const kawaiPhone = '(323) 728-5437'
           <div class="flex items-center justify-center gap-2 mb-2">
             <i class="pi pi-star-fill text-amber-400 text-xl" v-for="n in 5" :key="n"></i>
           </div>
-          <p class="text-gray-600">4.9 out of 5 stars on Yelp</p>
+          <p class="text-gray-600">5.0 out of 5 stars on Yelp</p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -557,7 +511,6 @@ const kawaiPhone = '(323) 728-5437'
     <section id="locations" class="py-16 md:py-24 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-          <p class="text-purple-500 font-bold mb-2" style="font-family: 'Caveat', cursive; font-size: 1.5rem;">Visit Us</p>
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4" style="font-family: 'Fredoka', sans-serif;">
             Our Locations
           </h2>
@@ -585,14 +538,6 @@ const kawaiPhone = '(323) 728-5437'
                 <span>Mon – Fri, 7:00 AM – 6:00 PM</span>
               </div>
             </div>
-            <a
-              href="/kawaikids/tour"
-              class="inline-flex items-center gap-2 mt-6 bg-purple-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-purple-700 transition-colors text-sm"
-              style="font-family: 'Fredoka', sans-serif;"
-            >
-              <i class="pi pi-calendar"></i>
-              Schedule a Tour
-            </a>
           </div>
 
           <!-- Alhambra -->
@@ -601,11 +546,11 @@ const kawaiPhone = '(323) 728-5437'
               <i class="pi pi-building text-2xl text-white"></i>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-1" style="font-family: 'Fredoka', sans-serif;">Alhambra</h3>
-            <p class="text-sm text-teal-500 font-medium mb-4">License #198018819</p>
+            <p class="text-sm text-teal-500 font-medium mb-4">License #198021736</p>
             <div class="space-y-3 text-gray-700">
               <div class="flex items-start gap-3">
                 <i class="pi pi-map-marker text-teal-500 mt-0.5"></i>
-                <span>2216 S. Fremont Ave. #18<br/>Alhambra, CA 91803</span>
+                <span>2218 S. Fremont Ave<br/>Alhambra, CA 91803</span>
               </div>
               <div class="flex items-center gap-3">
                 <i class="pi pi-phone text-teal-500"></i>
@@ -616,14 +561,6 @@ const kawaiPhone = '(323) 728-5437'
                 <span>Mon – Fri, 7:00 AM – 6:00 PM</span>
               </div>
             </div>
-            <a
-              href="/kawaikids/tour"
-              class="inline-flex items-center gap-2 mt-6 bg-teal-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-teal-700 transition-colors text-sm"
-              style="font-family: 'Fredoka', sans-serif;"
-            >
-              <i class="pi pi-calendar"></i>
-              Schedule a Tour
-            </a>
           </div>
         </div>
       </div>
@@ -690,62 +627,6 @@ const kawaiPhone = '(323) 728-5437'
       </div>
     </section>
 
-    <!-- Tuition Section -->
-    <section id="tuition" class="py-16 md:py-24 bg-white">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-          <p class="text-purple-500 font-bold mb-2" style="font-family: 'Caveat', cursive; font-size: 1.5rem;">Transparent Pricing</p>
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4" style="font-family: 'Fredoka', sans-serif;">
-            Tuition & Fees
-          </h2>
-          <p class="text-gray-600 max-w-2xl mx-auto">All meals included — breakfast, lunch, and two snacks prepared daily by our on-site chef.</p>
-        </div>
-
-        <div class="bg-purple-50 rounded-2xl p-6 md:p-8 mb-8">
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center mb-6">
-            <div class="bg-white rounded-xl p-4">
-              <p class="text-sm text-gray-500">Registration Fee</p>
-              <p class="text-2xl font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">$150</p>
-              <p class="text-xs text-gray-400">one-time</p>
-            </div>
-            <div class="bg-white rounded-xl p-4">
-              <p class="text-sm text-gray-500">Refundable Deposit</p>
-              <p class="text-2xl font-bold text-gray-900" style="font-family: 'Fredoka', sans-serif;">$300</p>
-              <p class="text-xs text-gray-400">returned with 3 weeks' notice</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 col-span-2 md:col-span-1">
-              <p class="text-sm text-gray-500">Sibling Discount</p>
-              <p class="text-2xl font-bold text-green-600" style="font-family: 'Fredoka', sans-serif;">10% off</p>
-              <p class="text-xs text-gray-400">all siblings full-time</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-6">
-          <div v-for="group in tuition" :key="group.group" class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div class="bg-purple-600 text-white px-6 py-3">
-              <h3 class="font-semibold" style="font-family: 'Fredoka', sans-serif;">{{ group.group }}</h3>
-            </div>
-            <div class="divide-y divide-gray-100">
-              <div
-                v-for="rate in group.rates"
-                :key="rate.schedule"
-                class="flex items-center justify-between px-6 py-3 text-sm"
-              >
-                <span class="text-gray-700">{{ rate.schedule }}</span>
-                <div class="flex gap-6 text-right">
-                  <span v-if="rate.biweekly" class="text-gray-500 hidden sm:block">{{ rate.biweekly }}<span class="text-xs text-gray-400"> /bi-weekly</span></span>
-                  <span class="font-semibold text-gray-900">{{ rate.monthly }}<span v-if="!rate.monthly.includes('week')" class="text-xs text-gray-400"> /month</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <p class="text-center text-sm text-gray-400 mt-6">Minimum 3% annual tuition increase. No refunds for holidays, vacations, or absences.</p>
-      </div>
-    </section>
-
     <!-- CTA Section -->
     <section class="py-16 md:py-20 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 text-white">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -753,7 +634,7 @@ const kawaiPhone = '(323) 728-5437'
           Ready to Give Your Child the Best Start?
         </h2>
         <p class="text-lg text-purple-100 mb-8 max-w-2xl mx-auto">
-          Enroll today and join the Kawai Kids family. Flexible schedules, loving staff, and a curriculum designed to help your child thrive.
+          Join our waitlist today and become part of the Kawai Kids family. Flexible schedules, loving staff, and a curriculum designed to help your child thrive.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <a
@@ -762,7 +643,7 @@ const kawaiPhone = '(323) 728-5437'
             class="inline-flex items-center justify-center gap-2 bg-amber-400 text-purple-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-amber-300 transition-all shadow-lg"
             style="font-family: 'Fredoka', sans-serif;"
           >
-            Enroll Now
+            Join Our Waitlist
             <i class="pi pi-arrow-right"></i>
           </a>
           <a
@@ -788,7 +669,7 @@ const kawaiPhone = '(323) 728-5437'
               class="h-16 w-auto mb-4"
             />
             <p class="text-sm leading-relaxed">
-              A place where the love of learning begins. Serving families in Montebello and Alhambra since 2007.
+              Serving families since 2007.
             </p>
           </div>
           <div>

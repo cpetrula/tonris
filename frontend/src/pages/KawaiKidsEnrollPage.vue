@@ -36,22 +36,17 @@ const secondaryGuardianLastName = ref('')
 const secondaryGuardianPhone = ref('')
 const secondaryGuardianRelationship = ref('')
 
-// Step 3: Emergency & Medical
-const emergencyContactName = ref('')
-const emergencyContactPhone = ref('')
-const emergencyContactRelationship = ref('')
+// Step 3: Medical
 const allergies = ref('')
 const medicalNotes = ref('')
 const specialNeeds = ref('')
 const immunizationStatus = ref('')
-const physicianName = ref('')
-const physicianPhone = ref('')
 const additionalNotes = ref('')
 
 // Options
 const programOptions = [
-  { label: 'Infants (0 – 12 months)', value: 'infant' },
-  { label: 'Toddlers (12 – 24 months)', value: 'toddler' },
+  { label: 'Infants (3 – 18 months)', value: 'infant' },
+  { label: 'Toddlers (18 – 24+ months)', value: 'toddler' },
   { label: 'Early Preschool (2 – 3 years)', value: 'early-preschool' },
   { label: 'Preschool (3 – 4 years)', value: 'preschool' },
   { label: 'Pre-Kindergarten (4 – 5 years)', value: 'pre-k' },
@@ -169,15 +164,10 @@ async function handleSubmit() {
       secondaryGuardianLastName: secondaryGuardianLastName.value || undefined,
       secondaryGuardianPhone: secondaryGuardianPhone.value || undefined,
       secondaryGuardianRelationship: secondaryGuardianRelationship.value || undefined,
-      emergencyContactName: emergencyContactName.value || undefined,
-      emergencyContactPhone: emergencyContactPhone.value || undefined,
-      emergencyContactRelationship: emergencyContactRelationship.value || undefined,
       allergies: allergies.value || undefined,
       medicalNotes: medicalNotes.value || undefined,
       specialNeeds: specialNeeds.value || undefined,
       immunizationStatus: immunizationStatus.value || undefined,
-      physicianName: physicianName.value || undefined,
-      physicianPhone: physicianPhone.value || undefined,
       additionalNotes: additionalNotes.value || undefined,
     })
 
@@ -233,32 +223,28 @@ async function handleSubmit() {
           <i class="pi pi-check text-4xl text-green-600"></i>
         </div>
         <h1 class="text-3xl font-bold text-gray-900 mb-4" style="font-family: 'Fredoka', sans-serif;">
-          Enrollment Submitted!
+          You're on the Waitlist!
         </h1>
         <p class="text-lg text-gray-600 mb-2">
-          Thank you for enrolling <strong>{{ childFirstName }} {{ childLastName }}</strong> at Kawai Kids!
+          Thank you for adding <strong>{{ childFirstName }} {{ childLastName }}</strong> to the Kawai Kids waitlist!
         </p>
         <p class="text-gray-500 mb-8">
-          We will review your enrollment and contact you within <strong>48–72 hours</strong> to discuss next steps, schedule a tour, and complete the enrollment process.
+          We will review your request and contact you within <strong>24–72 hours</strong> with next steps.
         </p>
         <div class="bg-purple-50 rounded-xl p-6 mb-8 text-left">
           <h3 class="font-semibold text-purple-900 mb-3" style="font-family: 'Fredoka', sans-serif;">What happens next?</h3>
           <ol class="space-y-2 text-sm text-purple-800">
             <li class="flex items-start gap-2">
               <span class="bg-purple-200 text-purple-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-              Our Director will review your enrollment
+              Our Director will review your waitlist request
             </li>
             <li class="flex items-start gap-2">
               <span class="bg-purple-200 text-purple-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-              We'll call you to schedule a facility tour
+              We'll contact you when a spot becomes available
             </li>
             <li class="flex items-start gap-2">
               <span class="bg-purple-200 text-purple-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-              Complete registration fee, deposit, and first month's tuition
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="bg-purple-200 text-purple-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
-              Submit immunization records and physician's report
+              Complete enrollment once your spot is confirmed
             </li>
           </ol>
         </div>
@@ -279,9 +265,9 @@ async function handleSubmit() {
       <div class="text-center mb-8">
         <p class="text-purple-500 font-bold mb-1" style="font-family: 'Caveat', cursive; font-size: 1.4rem;">Start the journey</p>
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2" style="font-family: 'Fredoka', sans-serif;">
-          Enroll Your Child
+          Join Our Waitlist
         </h1>
-        <p class="text-gray-500">Fill out the form below and we'll be in touch within 48–72 hours.</p>
+        <p class="text-gray-500">Fill out the form below and we'll be in touch within 24–72 hours.</p>
       </div>
 
       <!-- Step Indicator -->
@@ -449,36 +435,14 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- Step 3: Emergency & Medical -->
+        <!-- Step 3: Medical -->
         <div v-if="currentStep === 3">
           <h2 class="text-xl font-bold text-gray-900 mb-1" style="font-family: 'Fredoka', sans-serif;">
-            <i class="pi pi-heart text-purple-500 mr-2"></i>Emergency Contact & Medical
+            <i class="pi pi-heart text-purple-500 mr-2"></i>Medical Information
           </h2>
           <p class="text-sm text-gray-500 mb-6">This helps us keep your child safe</p>
 
           <div class="space-y-5">
-            <!-- Emergency Contact -->
-            <div class="bg-amber-50 rounded-xl p-5">
-              <p class="text-sm font-medium text-amber-800 mb-3">
-                <i class="pi pi-exclamation-triangle mr-1"></i>Emergency Contact (other than guardian)
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <InputText v-model="emergencyContactName" placeholder="Full name" class="w-full" />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                  <InputMask v-model="emergencyContactPhone" mask="(999) 999-9999" placeholder="(555) 555-5555" class="w-full" />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Relationship</label>
-                  <InputText v-model="emergencyContactRelationship" placeholder="e.g., Aunt, Uncle" class="w-full" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Medical -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
               <Textarea v-model="allergies" rows="2" placeholder="List any food or environmental allergies, or type 'None'" class="w-full" />
@@ -498,17 +462,6 @@ async function handleSubmit() {
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Immunization Status</label>
                 <Select v-model="immunizationStatus" :options="immunizationOptions" optionLabel="label" optionValue="value" placeholder="Select" class="w-full" />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Physician Name</label>
-                <InputText v-model="physicianName" placeholder="Dr. Smith" class="w-full" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Physician Phone</label>
-                <InputMask v-model="physicianPhone" mask="(999) 999-9999" placeholder="(555) 555-5555" class="w-full" />
               </div>
             </div>
 
@@ -558,20 +511,15 @@ async function handleSubmit() {
               </div>
             </div>
 
-            <!-- Emergency & Medical Summary -->
+            <!-- Medical Summary -->
             <div class="bg-amber-50 rounded-xl p-5">
-              <h3 class="font-semibold text-amber-900 mb-3 text-sm" style="font-family: 'Fredoka', sans-serif;">Emergency & Medical</h3>
+              <h3 class="font-semibold text-amber-900 mb-3 text-sm" style="font-family: 'Fredoka', sans-serif;">Medical Information</h3>
               <div class="space-y-2 text-sm">
-                <div v-if="emergencyContactName">
-                  <span class="text-gray-500">Emergency Contact:</span>
-                  <span class="font-medium text-gray-900"> {{ emergencyContactName }} ({{ emergencyContactPhone }})</span>
-                </div>
                 <div v-if="allergies"><span class="text-gray-500">Allergies:</span> <span class="font-medium text-gray-900">{{ allergies }}</span></div>
                 <div v-if="medicalNotes"><span class="text-gray-500">Medical Notes:</span> <span class="font-medium text-gray-900">{{ medicalNotes }}</span></div>
                 <div v-if="specialNeeds"><span class="text-gray-500">Special Needs:</span> <span class="font-medium text-gray-900">{{ specialNeeds }}</span></div>
                 <div v-if="immunizationStatus"><span class="text-gray-500">Immunizations:</span> <span class="font-medium text-gray-900 capitalize">{{ immunizationStatus.replace('_', ' ') }}</span></div>
-                <div v-if="physicianName"><span class="text-gray-500">Physician:</span> <span class="font-medium text-gray-900">{{ physicianName }} ({{ physicianPhone }})</span></div>
-                <div v-if="!emergencyContactName && !allergies && !medicalNotes && !specialNeeds && !immunizationStatus && !physicianName" class="text-gray-400 italic">
+                <div v-if="!allergies && !medicalNotes && !specialNeeds && !immunizationStatus" class="text-gray-400 italic">
                   No medical information provided
                 </div>
               </div>
