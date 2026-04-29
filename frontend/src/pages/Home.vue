@@ -1,42 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
-const caseStudies = [
-  {
-    name: 'Amazon Leasing',
-    category: 'Luxury Automotive',
-    tagline: 'A 40-year-old brokerage, reborn digital-first.',
-    description:
-      "A cinematic Vue 3 storefront backed by Amazon Leasing's proprietary 35-year residual-value database. Qualified exotic-car buyers self-model a lease in under 60 seconds — without a phone call.",
-    image: '/case-studies/amazon-leasing.png',
-    stack: ['Vue 3', 'Pinia', 'Residual-Value DB', 'Railway'],
-    link: 'https://amazonleasing-v3-production.up.railway.app',
-    linkLabel: 'View live'
-  },
-  {
-    name: 'Overflow',
-    category: 'Consumer SaaS',
-    tagline: 'The daily practice for the woman ready to receive.',
-    description:
-      'An AI journaling and manifestation app built for the feminine wealth-mindset audience. One Next.js codebase ships to web, iOS, and Android — with Stripe billing, Supabase auth, and OpenAI-powered daily reflections.',
-    image: '/case-studies/overflow.png',
-    stack: ['Next.js 16', 'Supabase', 'Capacitor', 'OpenAI', 'Stripe'],
-    link: 'https://overflow-pitch.vercel.app',
-    linkLabel: 'View live'
-  },
-  {
-    name: 'ProdComm',
-    category: 'Film & Television',
-    tagline: 'The AI production office, live on Hollywood sets.',
-    description:
-      'A dedicated production phone number that answers crew calls in 70+ languages, distributes SMS call sheets with live confirmation tracking, and e-signs production documents — replacing a stack of spreadsheets and paper contracts with one system.',
-    image: '/case-studies/prodcomm.png',
-    stack: ['Vue 3', 'Express', 'Twilio', 'ElevenLabs', 'OpenAI'],
-    link: 'https://prodcomm.com',
-    linkLabel: 'Visit prodcomm.com'
-  }
-]
-
 const capabilities = [
   {
     icon: 'pi pi-box',
@@ -133,24 +97,6 @@ const differentiators = [
             Start a project
             <i class="pi pi-arrow-right text-xs"></i>
           </RouterLink>
-          <a href="#work" class="criton-btn-ghost">
-            See our work
-            <i class="pi pi-arrow-down text-xs"></i>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- TRUST STRIP -->
-    <section class="border-y border-[color:var(--criton-border)] bg-[color:var(--criton-surface)]">
-      <div class="max-w-6xl mx-auto px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="criton-eyebrow text-[color:var(--criton-text-dim)]">Shipped for</p>
-        <div class="flex flex-wrap gap-x-10 gap-y-3 justify-center items-center">
-          <span class="font-display italic text-lg md:text-xl text-[color:var(--criton-ivory)]">Amazon Leasing</span>
-          <span class="text-[color:var(--criton-border-bright)]">·</span>
-          <span class="font-display italic text-lg md:text-xl text-[color:var(--criton-ivory)]">Overflow</span>
-          <span class="text-[color:var(--criton-border-bright)]">·</span>
-          <span class="font-display italic text-lg md:text-xl text-[color:var(--criton-ivory)]">ProdComm</span>
         </div>
       </div>
     </section>
@@ -180,73 +126,6 @@ const differentiators = [
               {{ cap.description }}
             </p>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SELECTED WORK -->
-    <section id="work" class="py-24 md:py-32 border-t border-[color:var(--criton-border)] bg-[color:var(--criton-surface)]">
-      <div class="max-w-6xl mx-auto px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-          <div class="max-w-2xl">
-            <p class="criton-eyebrow mb-4">Selected work</p>
-            <h2 class="font-display font-bold text-4xl md:text-5xl leading-tight">
-              Products in production,<br />
-              <span class="italic text-[color:var(--criton-text-muted)]">not in pitch decks.</span>
-            </h2>
-          </div>
-          <p class="text-sm text-[color:var(--criton-text-muted)] max-w-sm md:text-right">
-            Three recent builds across luxury retail, consumer wellness, and film production —
-            each with its own voice, shipped end-to-end by Criton.
-          </p>
-        </div>
-
-        <div class="space-y-6">
-          <article
-            v-for="(study, idx) in caseStudies"
-            :key="study.name"
-            class="grid md:grid-cols-5 gap-8 md:gap-12 items-center"
-          >
-            <!-- Screenshot -->
-            <div
-              class="md:col-span-3 case-frame aspect-[16/10]"
-              :class="{ 'md:order-2': idx % 2 === 1 }"
-            >
-              <img :src="study.image" :alt="`${study.name} screenshot`" loading="lazy" />
-            </div>
-
-            <!-- Copy -->
-            <div class="md:col-span-2">
-              <p class="criton-eyebrow mb-3">{{ study.category }}</p>
-              <h3 class="font-display font-bold text-3xl md:text-4xl leading-tight mb-4">
-                {{ study.name }}
-              </h3>
-              <p class="font-display italic text-xl text-[color:var(--criton-ivory)] mb-5 leading-snug">
-                {{ study.tagline }}
-              </p>
-              <p class="text-sm text-[color:var(--criton-text-muted)] leading-relaxed mb-6">
-                {{ study.description }}
-              </p>
-              <div class="flex flex-wrap gap-2 mb-6">
-                <span
-                  v-for="s in study.stack"
-                  :key="s"
-                  class="text-[11px] tracking-wider uppercase px-2.5 py-1 rounded border border-[color:var(--criton-border)] text-[color:var(--criton-text-dim)]"
-                >
-                  {{ s }}
-                </span>
-              </div>
-              <a
-                :href="study.link"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 text-[color:var(--criton-gold-bright)] hover:text-[color:var(--criton-ivory)] text-sm font-medium transition-colors"
-              >
-                {{ study.linkLabel }}
-                <i class="pi pi-arrow-up-right text-xs"></i>
-              </a>
-            </div>
-          </article>
         </div>
       </div>
     </section>

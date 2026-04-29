@@ -28,23 +28,6 @@ const stats = [
   { value: 'Full-Stack', label: 'Design to Deployment' },
 ]
 
-const projects = [
-  {
-    title: 'ProdComm',
-    subtitle: 'AI Production Office for Film & TV',
-    externalUrl: 'https://prodcomm.com',
-  },
-  {
-    title: 'Amazon Leasing',
-    subtitle: 'Luxury Automotive Platform',
-    externalUrl: 'https://amazonleasing-v3-production.up.railway.app',
-  },
-  {
-    title: 'Overflow',
-    subtitle: 'AI Journaling & Manifestation App',
-    externalUrl: 'https://overflow-pitch.vercel.app',
-  },
-]
 </script>
 
 <template>
@@ -172,38 +155,6 @@ const projects = [
             <h3 class="font-display text-xl font-bold text-[color:var(--criton-ivory)] mb-3">{{ belief.title }}</h3>
             <p class="text-sm text-[color:var(--criton-text-muted)] leading-relaxed">{{ belief.description }}</p>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PLATFORMS IN PRODUCTION -->
-    <section class="py-24 md:py-32 border-t border-[color:var(--criton-border)]">
-      <div class="max-w-6xl mx-auto px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <p class="criton-eyebrow mb-4">Our work</p>
-          <h2 class="font-display font-bold text-3xl md:text-4xl leading-tight">
-            Platforms in<br />
-            <span class="italic text-[color:var(--criton-text-muted)]">Production</span>
-          </h2>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-6">
-          <a
-            v-for="project in projects"
-            :key="project.title"
-            :href="project.externalUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="criton-card rounded-lg p-8 group"
-          >
-            <h3 class="font-display text-xl font-bold text-[color:var(--criton-ivory)] mb-2 group-hover:text-[color:var(--criton-gold)] transition-colors">
-              {{ project.title }}
-            </h3>
-            <p class="text-sm text-[color:var(--criton-text-muted)] mb-4">{{ project.subtitle }}</p>
-            <span class="inline-flex items-center gap-2 text-[color:var(--criton-gold-bright)] text-sm font-medium">
-              Visit Site <i class="pi pi-arrow-up-right text-xs"></i>
-            </span>
-          </a>
         </div>
       </div>
     </section>
