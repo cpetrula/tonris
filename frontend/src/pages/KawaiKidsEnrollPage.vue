@@ -19,6 +19,7 @@ const childFirstName = ref('')
 const childLastName = ref('')
 const childDateOfBirth = ref('')
 const childGender = ref('')
+const pottyTrained = ref('')
 const programPreference = ref('')
 const preferredLocation = ref('')
 const schedulePreference = ref('')
@@ -31,12 +32,14 @@ const guardianLastName = ref('')
 const guardianEmail = ref('')
 const guardianPhone = ref('')
 const guardianRelationship = ref('')
+const guardianEmployer = ref('')
 const guardianAddress = ref('')
 const hasSecondaryGuardian = ref(false)
 const secondaryGuardianFirstName = ref('')
 const secondaryGuardianLastName = ref('')
 const secondaryGuardianPhone = ref('')
 const secondaryGuardianRelationship = ref('')
+const secondaryGuardianEmployer = ref('')
 
 // Step 3: Medical
 const allergies = ref('')
@@ -44,6 +47,7 @@ const medicalNotes = ref('')
 const specialNeeds = ref('')
 const immunizationStatus = ref('')
 const additionalNotes = ref('')
+const referredBy = ref('')
 
 // Options
 const programOptions = [
@@ -62,9 +66,9 @@ const scheduleOptions = [
 ]
 
 const locationOptions = [
-  { label: 'Montebello', value: 'MTB' },
-  { label: 'Alhambra', value: 'ALH' },
-  { label: 'Both locations', value: 'BOTH' },
+  { label: 'Montebello Home Childcare', value: 'MTB' },
+  { label: 'Alhambra Childcare Center', value: 'ALH' },
+  { label: 'Open to both', value: 'BOTH' },
 ]
 
 // School Age is Montebello-only — hide the Location select entirely when selected
@@ -174,6 +178,7 @@ async function handleSubmit() {
       childLastName: childLastName.value,
       childDateOfBirth: childDateOfBirth.value,
       childGender: childGender.value || undefined,
+      pottyTrained: pottyTrained.value || undefined,
       programPreference: programPreference.value,
       preferredLocation: preferredLocation.value || undefined,
       schedulePreference: schedulePreference.value || undefined,
@@ -184,15 +189,18 @@ async function handleSubmit() {
       guardianEmail: guardianEmail.value,
       guardianPhone: guardianPhone.value,
       guardianRelationship: guardianRelationship.value || undefined,
+      guardianEmployer: guardianEmployer.value || undefined,
       guardianAddress: guardianAddress.value || undefined,
       secondaryGuardianFirstName: secondaryGuardianFirstName.value || undefined,
       secondaryGuardianLastName: secondaryGuardianLastName.value || undefined,
       secondaryGuardianPhone: secondaryGuardianPhone.value || undefined,
       secondaryGuardianRelationship: secondaryGuardianRelationship.value || undefined,
+      secondaryGuardianEmployer: secondaryGuardianEmployer.value || undefined,
       allergies: allergies.value || undefined,
       medicalNotes: medicalNotes.value || undefined,
       specialNeeds: specialNeeds.value || undefined,
       immunizationStatus: immunizationStatus.value || undefined,
+      referredBy: referredBy.value || undefined,
       additionalNotes: additionalNotes.value || undefined,
     })
 
@@ -363,6 +371,20 @@ async function handleSubmit() {
             </div>
 
             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Is your child potty trained?</label>
+              <div class="flex items-center gap-6">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="pottyTrained" value="yes" class="text-purple-600" />
+                  <span class="text-sm text-gray-700">Yes</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="pottyTrained" value="no" class="text-purple-600" />
+                  <span class="text-sm text-gray-700">No</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Program *</label>
               <Select v-model="programPreference" :options="programOptions" optionLabel="label" optionValue="value" placeholder="Select a program" class="w-full" />
             </div>
@@ -370,7 +392,7 @@ async function handleSubmit() {
             <div v-if="locationApplies">
               <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Location *</label>
               <Select v-model="preferredLocation" :options="locationOptions" optionLabel="label" optionValue="value" placeholder="Select a location" class="w-full" />
-              <p class="text-xs text-gray-500 mt-1">Choose <strong>Both locations</strong> if you're open to whichever has availability.</p>
+              <p class="text-xs text-gray-500 mt-1">Choose <strong>Open to both</strong> if you're open to whichever has availability.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -385,9 +407,9 @@ async function handleSubmit() {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Hours <span class="text-gray-400 font-normal">(optional)</span></label>
-              <InputText v-model="preferredHours" placeholder="e.g., 7-6, 8-5:30, ANY" class="w-full" />
-              <p class="text-xs text-gray-500 mt-1">If you have specific drop-off / pick-up times in mind, share them here.</p>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Drop-off / Pick-up Times <span class="text-gray-400 font-normal">(optional)</span></label>
+              <InputText v-model="preferredHours" placeholder="e.g., 7am–6pm, 8:30–5, ANY" class="w-full" />
+              <p class="text-xs text-gray-500 mt-1">Kawai Kids hours of operation are 7am – 6pm.</p>
             </div>
           </div>
         </div>
@@ -426,6 +448,10 @@ async function handleSubmit() {
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Relationship to Child</label>
                 <Select v-model="guardianRelationship" :options="relationshipOptions" optionLabel="label" optionValue="value" placeholder="Select" class="w-full" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Employer</label>
+                <InputText v-model="guardianEmployer" placeholder="Where you work" class="w-full" />
               </div>
             </div>
 
@@ -468,6 +494,10 @@ async function handleSubmit() {
                   <Select v-model="secondaryGuardianRelationship" :options="relationshipOptions" optionLabel="label" optionValue="value" placeholder="Select" class="w-full" />
                 </div>
               </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Employer</label>
+                <InputText v-model="secondaryGuardianEmployer" placeholder="Where they work" class="w-full" />
+              </div>
             </div>
           </div>
         </div>
@@ -503,6 +533,11 @@ async function handleSubmit() {
             </div>
 
             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">How did you hear about Kawai Kids?</label>
+              <InputText v-model="referredBy" placeholder="e.g., Yelp, Google, friend's referral, drove by" class="w-full" />
+            </div>
+
+            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
               <Textarea v-model="additionalNotes" rows="2" placeholder="Anything else you'd like us to know" class="w-full" />
             </div>
@@ -529,6 +564,7 @@ async function handleSubmit() {
                 <div v-if="preferredHours"><span class="text-gray-500">Hours:</span> <span class="font-medium text-gray-900">{{ preferredHours }}</span></div>
                 <div v-if="preferredStartDate"><span class="text-gray-500">Start Date:</span> <span class="font-medium text-gray-900">{{ preferredStartDate }}</span></div>
                 <div v-if="childGender"><span class="text-gray-500">Gender:</span> <span class="font-medium text-gray-900 capitalize">{{ childGender }}</span></div>
+                <div v-if="pottyTrained"><span class="text-gray-500">Potty trained:</span> <span class="font-medium text-gray-900 capitalize">{{ pottyTrained }}</span></div>
               </div>
             </div>
 
@@ -540,12 +576,14 @@ async function handleSubmit() {
                 <div><span class="text-gray-500">Email:</span> <span class="font-medium text-gray-900">{{ guardianEmail }}</span></div>
                 <div><span class="text-gray-500">Phone:</span> <span class="font-medium text-gray-900">{{ guardianPhone }}</span></div>
                 <div v-if="guardianRelationship"><span class="text-gray-500">Relationship:</span> <span class="font-medium text-gray-900 capitalize">{{ guardianRelationship }}</span></div>
+                <div v-if="guardianEmployer"><span class="text-gray-500">Employer:</span> <span class="font-medium text-gray-900">{{ guardianEmployer }}</span></div>
               </div>
               <div v-if="hasSecondaryGuardian && secondaryGuardianFirstName" class="mt-3 pt-3 border-t border-blue-200">
                 <p class="text-xs text-blue-600 font-medium mb-1">Secondary Guardian</p>
                 <div class="text-sm">
                   {{ secondaryGuardianFirstName }} {{ secondaryGuardianLastName }}
                   <span v-if="secondaryGuardianPhone"> — {{ secondaryGuardianPhone }}</span>
+                  <span v-if="secondaryGuardianEmployer"> — {{ secondaryGuardianEmployer }}</span>
                 </div>
               </div>
             </div>
@@ -564,9 +602,9 @@ async function handleSubmit() {
               </div>
             </div>
 
-            <div v-if="additionalNotes" class="bg-gray-50 rounded-xl p-5">
-              <h3 class="font-semibold text-gray-700 mb-2 text-sm" style="font-family: 'Fredoka', sans-serif;">Additional Notes</h3>
-              <p class="text-sm text-gray-600">{{ additionalNotes }}</p>
+            <div v-if="referredBy || additionalNotes" class="bg-gray-50 rounded-xl p-5 space-y-2 text-sm">
+              <div v-if="referredBy"><span class="text-gray-500">Referred by:</span> <span class="font-medium text-gray-900">{{ referredBy }}</span></div>
+              <div v-if="additionalNotes"><span class="text-gray-500">Additional Notes:</span> <span class="font-medium text-gray-900">{{ additionalNotes }}</span></div>
             </div>
           </div>
         </div>
