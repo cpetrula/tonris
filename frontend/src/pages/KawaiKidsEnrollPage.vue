@@ -22,6 +22,7 @@ const childGender = ref('')
 const programPreference = ref('')
 const preferredLocation = ref('')
 const schedulePreference = ref('')
+const preferredHours = ref('')
 const preferredStartDate = ref('')
 
 // Step 2: Guardian Info
@@ -176,6 +177,7 @@ async function handleSubmit() {
       programPreference: programPreference.value,
       preferredLocation: preferredLocation.value || undefined,
       schedulePreference: schedulePreference.value || undefined,
+      preferredHours: preferredHours.value.trim() || undefined,
       preferredStartDate: preferredStartDate.value || undefined,
       guardianFirstName: guardianFirstName.value,
       guardianLastName: guardianLastName.value,
@@ -381,6 +383,12 @@ async function handleSubmit() {
                 <InputText v-model="preferredStartDate" type="date" class="w-full" />
               </div>
             </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Hours <span class="text-gray-400 font-normal">(optional)</span></label>
+              <InputText v-model="preferredHours" placeholder="e.g., 7-6, 8-5:30, ANY" class="w-full" />
+              <p class="text-xs text-gray-500 mt-1">If you have specific drop-off / pick-up times in mind, share them here.</p>
+            </div>
           </div>
         </div>
 
@@ -518,6 +526,7 @@ async function handleSubmit() {
                 <div><span class="text-gray-500">Program:</span> <span class="font-medium text-gray-900">{{ programLabel }}</span></div>
                 <div v-if="preferredLocation"><span class="text-gray-500">Location:</span> <span class="font-medium text-gray-900">{{ locationLabel }}</span></div>
                 <div v-if="schedulePreference"><span class="text-gray-500">Schedule:</span> <span class="font-medium text-gray-900">{{ scheduleLabel }}</span></div>
+                <div v-if="preferredHours"><span class="text-gray-500">Hours:</span> <span class="font-medium text-gray-900">{{ preferredHours }}</span></div>
                 <div v-if="preferredStartDate"><span class="text-gray-500">Start Date:</span> <span class="font-medium text-gray-900">{{ preferredStartDate }}</span></div>
                 <div v-if="childGender"><span class="text-gray-500">Gender:</span> <span class="font-medium text-gray-900 capitalize">{{ childGender }}</span></div>
               </div>
