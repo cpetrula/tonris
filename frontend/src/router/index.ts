@@ -21,6 +21,7 @@ const KawaiKidsEnrollPage = () => import('@/pages/KawaiKidsEnrollPage.vue')
 const KawaiKidsTourPage = () => import('@/pages/KawaiKidsTourPage.vue')
 const EnrollmentsPage = () => import('@/pages/EnrollmentsPage.vue')
 const AmandaFrancesPitchPage = () => import('@/pages/AmandaFrancesPitchPage.vue')
+const ProdCommConstructionPage = () => import('@/pages/ProdCommConstructionPage.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -111,6 +112,12 @@ const routes: RouteRecordRaw[] = [
     path: '/amandafrances',
     name: 'amanda-frances-pitch',
     component: AmandaFrancesPitchPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/prodcomm-construction',
+    name: 'prodcomm-construction-pitch',
+    component: ProdCommConstructionPage,
     meta: { requiresAuth: false }
   },
   {
