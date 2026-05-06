@@ -98,8 +98,8 @@ const pilotMath = [
   { metric: 'JCPenney Salon footprint', value: '750+', unit: 'locations' },
   { metric: 'Average salon ticket', value: '$60–80', unit: 'per visit' },
   { metric: 'Industry after-hours miss rate', value: '30–40%', unit: 'of phone volume' },
-  { metric: 'Recovery scenario (1 call/wk/store)', value: '~$2.6M', unit: 'annual recovered revenue' },
-  { metric: 'Recovery scenario (5 calls/wk/store)', value: '~$13M', unit: 'annual recovered revenue' },
+  { metric: 'Conservative scenario (1 call/wk/store)', value: '~$2.6M', unit: 'annual recovered revenue' },
+  { metric: 'Mid-case scenario (2 calls/wk/store)', value: '~$5.3M', unit: 'annual recovered revenue' },
 ]
 </script>
 
