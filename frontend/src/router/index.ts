@@ -22,6 +22,7 @@ const KawaiKidsTourPage = () => import('@/pages/KawaiKidsTourPage.vue')
 const EnrollmentsPage = () => import('@/pages/EnrollmentsPage.vue')
 const AmandaFrancesPitchPage = () => import('@/pages/AmandaFrancesPitchPage.vue')
 const ProdCommConstructionPage = () => import('@/pages/ProdCommConstructionPage.vue')
+const JCPenneySalonPage = () => import('@/pages/JCPenneySalonPage.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -118,6 +119,12 @@ const routes: RouteRecordRaw[] = [
     path: '/prodcomm-construction',
     name: 'prodcomm-construction-pitch',
     component: ProdCommConstructionPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/jcpenneysalon',
+    name: 'jcpenneysalon-pitch',
+    component: JCPenneySalonPage,
     meta: { requiresAuth: false }
   },
   {
