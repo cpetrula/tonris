@@ -90,7 +90,7 @@ const valueProps = [
   {
     icon: 'pi pi-volume-up',
     title: 'Multilingual & low-friction',
-    body: 'Built on the same voice infrastructure already running on Hollywood sets in 70+ languages. Workers call. The system listens.'
+    body: 'Built on voice infrastructure that handles 70+ languages in real time. Workers call from any phone. No app, no portal, no training.'
   }
 ]
 </script>
@@ -133,7 +133,7 @@ const valueProps = [
         <div class="max-w-3xl mx-auto">
           <div class="criton-card rounded-xl p-7 md:p-9">
             <div class="flex items-center justify-between mb-5">
-              <p class="criton-eyebrow">Listen — actual incident intake</p>
+              <p class="criton-eyebrow">Listen — sample incident intake</p>
               <span class="text-xs text-[color:var(--criton-text-dim)] font-mono">
                 {{ fmt(currentTime) }} / {{ fmt(duration) }}
               </span>
@@ -392,8 +392,8 @@ const valueProps = [
           <span class="italic criton-accent">to find out?</span>
         </h2>
         <p class="text-lg text-[color:var(--criton-text-muted)] max-w-xl mx-auto mb-10 leading-relaxed">
-          Built by Criton — the studio behind ProdComm, already running this voice
-          infrastructure on production sets in 70+ languages.
+          Built by Criton — an AI studio in Los Angeles building voice
+          infrastructure for crew-driven, high-stakes environments.
         </p>
         <a
           href="mailto:tvazquez@criton.ai?subject=ProdComm%20Construction%20%E2%80%94%2015%20min"
