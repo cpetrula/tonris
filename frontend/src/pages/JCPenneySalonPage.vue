@@ -243,7 +243,7 @@ const pilotMath = [
                 </div>
               </div>
               <div class="font-mono text-[10px] text-gray-600 text-right leading-relaxed">
-                Booking ID: BKG-20260507-0930-MR<br />
+                Booking ID: BKG-20260507-0930-JR<br />
                 Captured: 2026-05-06 21:08:22 PT<br />
                 Source: voice_booking_line
               </div>
@@ -254,7 +254,7 @@ const pilotMath = [
             <div class="mb-6">
               <div class="text-[10px] uppercase tracking-[1.5px] text-gray-600 border-b border-gray-200 pb-1 mb-3 font-semibold">Customer</div>
               <div class="grid grid-cols-[180px_1fr] gap-y-2 gap-x-4 text-[14px]">
-                <div class="text-gray-600">Name</div><div>Maria Rodriguez</div>
+                <div class="text-gray-600">Name</div><div>Joseph Rodriguez</div>
                 <div class="text-gray-600">Phone</div><div class="font-mono">(818) 555-0142</div>
                 <div class="text-gray-600">SMS opt-in</div><div>Confirmed at intake</div>
               </div>
