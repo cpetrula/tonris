@@ -83,26 +83,6 @@ const beliefs = [
                 <p class="font-display text-2xl font-bold text-[color:var(--criton-ivory)] mt-2">Est. 2024</p>
                 <p class="text-[color:var(--criton-text-muted)]">Los Angeles, CA</p>
               </div>
-              <div class="space-y-4">
-                <div class="flex items-center gap-3 p-3 rounded-lg bg-[color:var(--criton-surface-2)] border border-[color:var(--criton-border)]">
-                  <div class="w-10 h-10 rounded-lg bg-[color:var(--criton-bg)] flex items-center justify-center">
-                    <i class="pi pi-box text-[color:var(--criton-gold)]"></i>
-                  </div>
-                  <div>
-                    <p class="font-display text-xl font-bold text-[color:var(--criton-ivory)]">3</p>
-                    <p class="text-sm text-[color:var(--criton-text-muted)]">Platforms Shipped</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3 p-3 rounded-lg bg-[color:var(--criton-surface-2)] border border-[color:var(--criton-border)]">
-                  <div class="w-10 h-10 rounded-lg bg-[color:var(--criton-bg)] flex items-center justify-center">
-                    <i class="pi pi-check-circle text-[color:var(--criton-gold)]"></i>
-                  </div>
-                  <div>
-                    <p class="font-display text-xl font-bold text-[color:var(--criton-ivory)]">100%</p>
-                    <p class="text-sm text-[color:var(--criton-text-muted)]">In Production</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
