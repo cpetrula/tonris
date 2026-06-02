@@ -39,12 +39,6 @@ function closeMobileMenu() {
           <!-- Desktop Nav -->
           <div class="hidden md:flex items-center gap-8">
             <RouterLink
-              to="/work"
-              class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors"
-            >
-              Work
-            </RouterLink>
-            <RouterLink
               to="/about"
               class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors"
             >
@@ -91,7 +85,7 @@ function closeMobileMenu() {
           class="md:hidden border-t border-[color:var(--criton-border)] py-4 space-y-1"
         >
           <RouterLink
-            v-for="item in ['work', 'about', 'faq', 'contact']"
+            v-for="item in ['about', 'faq', 'contact']"
             :key="item"
             :to="`/${item}`"
             class="block px-3 py-2 text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] capitalize"
@@ -151,11 +145,6 @@ function closeMobileMenu() {
           <div class="md:col-span-3">
             <h3 class="criton-eyebrow mb-4 text-[color:var(--criton-text-dim)]">Studio</h3>
             <ul class="space-y-2.5">
-              <li>
-                <RouterLink to="/work" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors">
-                  Work
-                </RouterLink>
-              </li>
               <li>
                 <RouterLink to="/about" class="text-sm text-[color:var(--criton-text-muted)] hover:text-[color:var(--criton-gold-bright)] transition-colors">
                   About

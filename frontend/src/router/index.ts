@@ -9,7 +9,6 @@ const Register = () => import('@/pages/Register.vue')
 const SignUpPage = () => import('@/pages/SignUpPage.vue')
 const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
 const SetNewPasswordPage = () => import('@/pages/SetNewPasswordPage.vue')
-const HowItWorksPage = () => import('@/pages/HowItWorksPage.vue')
 const FAQPage = () => import('@/pages/FAQPage.vue')
 const AboutPage = () => import('@/pages/AboutPage.vue')
 const ContactPage = () => import('@/pages/ContactPage.vue')
@@ -81,12 +80,6 @@ const routes: RouteRecordRaw[] = [
         path: 'set-new-password',
         name: 'set-new-password',
         component: SetNewPasswordPage,
-        meta: { requiresAuth: false }
-      },
-      {
-        path: 'work',
-        name: 'work',
-        component: HowItWorksPage,
         meta: { requiresAuth: false }
       },
       {
