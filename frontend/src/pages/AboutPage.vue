@@ -22,12 +22,6 @@ const beliefs = [
   },
 ]
 
-const stats = [
-  { value: '3', label: 'Platforms Shipped' },
-  { value: '100%', label: 'In Production' },
-  { value: 'Full-Stack', label: 'Design to Deployment' },
-]
-
 </script>
 
 <template>
@@ -48,22 +42,6 @@ const stats = [
           We're based in Los Angeles. Our platforms are in production today, handling real calls,
           generating real content, and running real operations.
         </p>
-      </div>
-    </section>
-
-    <!-- STATS STRIP -->
-    <section class="border-y border-[color:var(--criton-border)] bg-[color:var(--criton-surface)]">
-      <div class="max-w-6xl mx-auto px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-3 gap-8 text-center">
-          <div v-for="stat in stats" :key="stat.label">
-            <div class="font-display text-3xl md:text-4xl font-bold text-[color:var(--criton-gold)] mb-1">
-              {{ stat.value }}
-            </div>
-            <div class="text-sm text-[color:var(--criton-text-muted)] uppercase tracking-wider">
-              {{ stat.label }}
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
