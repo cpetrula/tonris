@@ -6,8 +6,8 @@ import { onMounted } from 'vue'
 export const contact = {
   email: 'info@criton.ai',
   mailto: 'mailto:info@criton.ai?subject=Pharmavite%20%C3%97%20Criton',
-  phone: '(818) 531-6200',
-  tel: 'tel:+18185316200'
+  phone: '(805) 300-1857',
+  tel: 'tel:+18053001857'
 }
 
 export const hero = {
