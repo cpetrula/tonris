@@ -25,6 +25,7 @@ const JCPenneySalonPage = () => import('@/pages/JCPenneySalonPage.vue')
 const PharmDaylight = () => import('@/pages/pharm/PharmDaylight.vue')
 const PharmLabNotebook = () => import('@/pages/pharm/PharmLabNotebook.vue')
 const PharmStudioProof = () => import('@/pages/pharm/PharmStudioProof.vue')
+const PharmBatchRecord = () => import('@/pages/pharm/PharmBatchRecord.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -139,6 +140,12 @@ const routes: RouteRecordRaw[] = [
     path: '/pharm3',
     name: 'pharm3-pitch',
     component: PharmStudioProof,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/pharm4',
+    name: 'pharm4-pitch',
+    component: PharmBatchRecord,
     meta: { requiresAuth: false }
   },
   {

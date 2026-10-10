@@ -16,7 +16,7 @@ const route = useRoute()
       class="switcher-link"
       :class="{ active: route.path === v.path }"
     >
-      {{ v.label }}
+      {{ v.label.charAt(0) }}<span class="switcher-name">{{ v.label.slice(1) }}</span>
     </RouterLink>
   </nav>
 </template>
@@ -64,6 +64,7 @@ const route = useRoute()
 }
 @media (max-width: 480px) {
   .switcher-label { display: none; }
-  .switcher-link { padding: 8px 10px; font-size: 12px; }
+  .switcher-link { padding: 8px 14px; font-size: 13px; }
+  .switcher-name { display: none; }
 }
 </style>

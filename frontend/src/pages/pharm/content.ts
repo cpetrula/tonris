@@ -154,7 +154,8 @@ export const disclaimer =
 export const variants = [
   { path: '/pharm', label: 'A · Daylight' },
   { path: '/pharm2', label: 'B · Lab Notebook' },
-  { path: '/pharm3', label: 'C · Studio Proof' }
+  { path: '/pharm3', label: 'C · Studio Proof' },
+  { path: '/pharm4', label: 'D · Batch Record' }
 ]
 
 // Private page setup: noindex, title, and Google Fonts loaded with a <link>
