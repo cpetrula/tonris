@@ -127,6 +127,64 @@ export const regulated = [
   }
 ]
 
+// For the platform / integration team: how a Criton build fits the systems they already run.
+// Deliberately generic — no named vendors or internal systems.
+export const stack = {
+  experience: 'Our team works hands-on with SQL Server and enterprise integration and middleware.',
+  points: [
+    {
+      title: 'Connects through what you run',
+      description:
+        'We use your existing integration tools, APIs, and database views. No new shadow databases.'
+    },
+    {
+      title: 'Least privilege',
+      description:
+        'Read-only by default, scoped to the data one workflow needs, with single sign-on through your identity provider.'
+    },
+    {
+      title: 'Fits your release process',
+      description:
+        'Separate environments, versioned releases, and rollback, through your change management.'
+    },
+    {
+      title: 'Observable from day one',
+      description: 'Logs, monitoring, and alerts your team can see — not a black box.'
+    },
+    {
+      title: 'Built to hand off',
+      description:
+        'Runbooks, architecture docs, and a walkthrough with your platform team before we step back.'
+    }
+  ]
+}
+
+export const platformIdeas = [
+  {
+    tag: 'Platform',
+    title: 'Plain-English questions over reporting data',
+    problem: 'People wait on report requests for questions the data could already answer.',
+    approach:
+      'An assistant that turns a question into a read-only query against approved reporting views — and shows the query it ran.',
+    measure: 'Report requests deflected and answers checked against source.'
+  },
+  {
+    tag: 'Platform',
+    title: 'Integration and job-failure triage',
+    problem: 'Failed integration and database jobs pile up in logs and inboxes.',
+    approach:
+      'An agent that groups failures, finds the likely cause, and drafts the ticket. A person decides what happens next.',
+    measure: 'Time to triage and repeat failures caught.'
+  },
+  {
+    tag: 'Platform',
+    title: 'Answers from your internal system docs',
+    problem: 'Knowledge about internal systems lives in runbooks and a few people’s heads.',
+    approach: 'An assistant that answers from your runbooks and documentation and cites the page it used.',
+    measure: 'Questions answered without an escalation.'
+  }
+]
+
 // Illustration of a first engagement — not a past client project.
 export const example = {
   meta: [

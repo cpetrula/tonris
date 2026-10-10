@@ -3,7 +3,7 @@
 import PharmSwitcher from './PharmSwitcher.vue'
 import {
   contact, hero, proof, proofFootnote, capabilities, ideas, ideasNote,
-  process, regulated, example, team, disclaimer, usePitchPage
+  process, regulated, example, team, disclaimer, stack, platformIdeas, usePitchPage
 } from './content'
 
 usePitchPage(
@@ -115,6 +115,28 @@ const startIdeas = ideas.slice(0, 3)
             <p>{{ r.description }}</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Platform team -->
+    <section class="dl-section dl-wrap">
+      <p class="dl-eyebrow">For your platform team</p>
+      <h2 class="dl-h2">How it fits your stack.</h2>
+      <p class="dl-lede">{{ stack.experience }}</p>
+      <div class="dl-grid-3 dl-stack">
+        <div v-for="pt in stack.points" :key="pt.title" class="dl-stack-item">
+          <h3 class="dl-h3">{{ pt.title }}</h3>
+          <p>{{ pt.description }}</p>
+        </div>
+      </div>
+      <h3 class="dl-h3 dl-sub">Where platform work could start</h3>
+      <div class="dl-grid-3">
+        <article v-for="idea in platformIdeas" :key="idea.title" class="dl-card">
+          <p class="dl-tag">{{ idea.tag }}</p>
+          <h3 class="dl-h3">{{ idea.title }}</h3>
+          <p>{{ idea.approach }}</p>
+          <p class="dl-measure"><strong>We'd measure:</strong> {{ idea.measure }}</p>
+        </article>
       </div>
     </section>
 
@@ -290,6 +312,11 @@ const startIdeas = ideas.slice(0, 3)
 .dl-steps li { border-top: 3px solid var(--amber); padding-top: 20px; }
 .dl-step-num { display: block; font: 600 14px 'Montserrat', sans-serif; color: var(--amber-deep); margin-bottom: 10px; }
 
+.dl-stack { margin: 36px 0 56px; }
+.dl-stack-item { border-left: 3px solid var(--amber); padding-left: 18px; }
+.dl-stack-item p { color: var(--muted); font-size: 16px; }
+.dl-sub { margin-bottom: 20px; }
+.dl-split { border-top: 1px solid #e7e2d8; }
 .dl-split { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
 .dl-caps { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 24px; }
 .dl-team { display: grid; gap: 20px; margin-top: 28px; }

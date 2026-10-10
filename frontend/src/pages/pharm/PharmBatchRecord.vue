@@ -6,7 +6,7 @@
 // The SOP in the demo is a labeled sample.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import PharmSwitcher from './PharmSwitcher.vue'
-import { contact, ideas, team, usePitchPage } from './content'
+import { contact, ideas, platformIdeas, stack, team, usePitchPage } from './content'
 
 usePitchPage(
   'Batch Record No. 001 — Criton.AI',
@@ -106,6 +106,15 @@ function signOff(i: number) {
   record(`Answer ${i + 1} signed off by ${reviewerName.value}`, 'sign')
 }
 const answerDone = computed(() => active.value !== null && typed.value.length >= sim[active.value]!.a.length)
+
+// ---- Installation qualification checklist ------------------------------
+const verified = ref<Record<string, string>>({})
+function verify(title: string) {
+  if (verified.value[title]) return
+  verified.value = { ...verified.value, [title]: reviewerName.value }
+  record(`IQ check verified by ${reviewerName.value}: ${title}`, 'sign')
+}
+const allIdeas = [...ideas, ...platformIdeas]
 
 // ---- Release --------------------------------------------------------------
 const released = ref(false)
@@ -265,7 +274,7 @@ const batch = [
         <!-- Certificate of analysis -->
         <section class="br-section" data-step="STEP 03 — Certificate of analysis">
           <p class="br-mono br-step">Step 03 · Certificate of analysis</p>
-          <h2 class="br-h2">Four places to start. Results pending.</h2>
+          <h2 class="br-h2">Seven places to start. Results pending.</h2>
           <p class="br-lede">{{ ideasNote }}</p>
           <div class="br-table-wrap">
             <table class="br-coa">
@@ -278,7 +287,7 @@ const batch = [
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="idea in ideas" :key="idea.title">
+                <tr v-for="idea in allIdeas" :key="idea.title">
                   <td><span class="br-mono br-tag">{{ idea.tag }}</span>{{ idea.title }}</td>
                   <td>{{ idea.measure }}</td>
                   <td>{{ idea.approach }}</td>
@@ -289,9 +298,29 @@ const batch = [
           </div>
         </section>
 
+        <!-- Installation qualification -->
+        <section class="br-section" data-step="STEP 04 — Installation qualification">
+          <p class="br-mono br-step">Step 04 · Installation qualification</p>
+          <h2 class="br-h2">It fits the line<br />you already run.</h2>
+          <p class="br-lede">{{ stack.experience }} Check each requirement off as you read. Each check goes in the log.</p>
+          <ol class="br-iq">
+            <li v-for="(pt, i) in stack.points" :key="pt.title" :class="{ done: verified[pt.title] }">
+              <span class="br-mono br-iq-num">IQ-{{ String(i + 1).padStart(2, '0') }}</span>
+              <div>
+                <h3 class="br-iq-title">{{ pt.title }}</h3>
+                <p>{{ pt.description }}</p>
+              </div>
+              <button class="br-iq-check" :aria-pressed="!!verified[pt.title]" @click="verify(pt.title)">
+                <span class="br-box" aria-hidden="true">{{ verified[pt.title] ? '✓' : '' }}</span>
+                <span class="br-mono">{{ verified[pt.title] ? `Verified · ${verified[pt.title]}` : 'Verify' }}</span>
+              </button>
+            </li>
+          </ol>
+        </section>
+
         <!-- Proposal -->
-        <section class="br-section" data-step="STEP 04 — Pilot batch">
-          <p class="br-mono br-step">Step 04 · Proposal</p>
+        <section class="br-section" data-step="STEP 05 — Pilot batch">
+          <p class="br-mono br-step">Step 05 · Proposal</p>
           <h2 class="br-h2">Don't commission a project.<br />Run a pilot batch.</h2>
           <ol class="br-timeline">
             <li v-for="b in batch" :key="b.when" :class="{ open: b.open }">
@@ -302,8 +331,8 @@ const batch = [
         </section>
 
         <!-- Release -->
-        <section class="br-section br-release" data-step="STEP 05 — Release">
-          <p class="br-mono br-step">Step 05 · Release</p>
+        <section class="br-section br-release" data-step="STEP 06 — Release">
+          <p class="br-mono br-step">Step 06 · Release</p>
           <h2 class="br-h2">Release this proposal.</h2>
           <p class="br-lede">Signing opens an email to us with your name on it. Tell us the workflow you'd start with.</p>
           <div class="br-release-row">
@@ -532,6 +561,18 @@ const batch = [
 .br-tag { display: block; color: var(--klein); margin-bottom: 4px; font-size: 10px; }
 .br-pending { font: 600 12px 'IBM Plex Mono', monospace; color: var(--klein); text-transform: uppercase; white-space: nowrap; }
 
+/* Installation qualification */
+.br-iq { list-style: none; margin: 32px 0 0; padding: 0; border: 2px solid var(--ink); background: #fff; }
+.br-iq li { display: grid; grid-template-columns: 80px 1fr auto; gap: 20px; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--ink); }
+.br-iq li:last-child { border-bottom: 0; }
+.br-iq li.done { background: #eef1fb; }
+.br-iq-num { color: var(--klein); }
+.br-iq-title { font: 800 20px/1.2 'Archivo', sans-serif; margin: 0 0 4px; }
+.br-iq p { color: var(--soft); font-size: 15px; }
+.br-iq-check { display: flex; align-items: center; gap: 10px; background: none; border: 0; cursor: pointer; color: var(--klein); padding: 6px; }
+.br-box { width: 24px; height: 24px; border: 2px solid var(--klein); display: grid; place-items: center; font-weight: 900; }
+.br-iq li.done .br-box { background: var(--klein); color: #fff; }
+
 /* Timeline */
 .br-timeline { list-style: none; margin: 0; padding: 0; }
 .br-timeline li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 32px; align-items: baseline; border-top: 1px solid var(--ink); padding: 14px 0; }
@@ -627,6 +668,7 @@ const batch = [
   .br-sim { grid-template-columns: 1fr; }
   .br-sim-qs { border-right: 0; border-bottom: 2px solid var(--ink); }
   .br-timeline li { grid-template-columns: 1fr; gap: 4px; }
+  .br-iq li { grid-template-columns: 1fr; gap: 8px; }
   .br-stamp { font-size: 44px; top: auto; bottom: 16px; }
   .br-log {
     position: fixed;

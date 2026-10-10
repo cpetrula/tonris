@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import PharmSwitcher from './PharmSwitcher.vue'
 import {
   contact, hero, proof, proofFootnote, capabilities, ideas, ideasNote,
-  process, regulated, example, team, disclaimer, usePitchPage
+  process, regulated, example, team, disclaimer, stack, platformIdeas, usePitchPage
 } from './content'
 
 usePitchPage(
@@ -13,6 +13,7 @@ usePitchPage(
 )
 
 const openIdea = ref<number | null>(0)
+const openPlatform = ref<number | null>(null)
 const marquee = [...capabilities.map((c) => c.title), ...proof.map((p) => `${p.value} — ${p.label}`)]
 </script>
 
@@ -23,6 +24,7 @@ const marquee = [...capabilities.map((c) => c.title), ...proof.map((p) => `${p.v
       <nav class="sp-links">
         <a href="#ideas">Ideas</a>
         <a href="#process">Process</a>
+        <a href="#stack">Stack</a>
         <a :href="contact.mailto">Contact</a>
       </nav>
     </header>
@@ -113,6 +115,33 @@ const marquee = [...capabilities.map((c) => c.title), ...proof.map((p) => `${p.v
           <p>{{ step.description }}</p>
         </div>
       </div>
+    </section>
+
+    <!-- Stack -->
+    <section id="stack" class="sp-wrap sp-section">
+      <p class="sp-mono sp-eyebrow">For your platform team</p>
+      <h2 class="sp-h2">How it fits your stack.</h2>
+      <p class="sp-note">{{ stack.experience }}</p>
+      <div class="sp-stack">
+        <div v-for="pt in stack.points" :key="pt.title" class="sp-card">
+          <h3 class="sp-h3">{{ pt.title }}</h3>
+          <p>{{ pt.description }}</p>
+        </div>
+      </div>
+      <ul class="sp-rows sp-platform">
+        <li v-for="(idea, i) in platformIdeas" :key="idea.title" :class="{ open: openPlatform === i }">
+          <button class="sp-row" :aria-expanded="openPlatform === i" @click="openPlatform = openPlatform === i ? null : i">
+            <span class="sp-mono sp-row-tag">{{ idea.tag }}</span>
+            <span class="sp-row-title">{{ idea.title }}</span>
+            <span class="sp-row-arrow" aria-hidden="true">→</span>
+          </button>
+          <div v-show="openPlatform === i" class="sp-row-body">
+            <p><strong>Problem.</strong> {{ idea.problem }}</p>
+            <p><strong>Approach.</strong> {{ idea.approach }}</p>
+            <p><strong>Measure.</strong> {{ idea.measure }}</p>
+          </div>
+        </li>
+      </ul>
     </section>
 
     <!-- Team -->
@@ -261,6 +290,7 @@ const marquee = [...capabilities.map((c) => c.title), ...proof.map((p) => `${p.v
 .sp-card p { color: var(--muted); }
 .sp-step { color: var(--gold) !important; margin-bottom: 18px !important; }
 
+.sp-stack { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin: 32px 0 48px; }
 .sp-team { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 32px; }
 .sp-person { display: flex; align-items: center; gap: 18px; }
 .sp-avatar {

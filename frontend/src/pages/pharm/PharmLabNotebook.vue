@@ -3,7 +3,7 @@
 import PharmSwitcher from './PharmSwitcher.vue'
 import {
   contact, hero, proof, proofFootnote, capabilities, ideas, ideasNote,
-  process, regulated, example, team, disclaimer, usePitchPage
+  process, regulated, example, team, disclaimer, stack, platformIdeas, usePitchPage
 } from './content'
 
 usePitchPage(
@@ -111,9 +111,35 @@ usePitchPage(
       </dl>
     </section>
 
+    <!-- Integration -->
+    <section class="ln-wrap ln-section">
+      <div class="ln-rule"><span class="ln-mono">06 · Integration</span></div>
+      <h2 class="ln-h2">How it fits your stack.</h2>
+      <p class="ln-note">{{ stack.experience }}</p>
+      <dl class="ln-controls">
+        <div v-for="pt in stack.points" :key="pt.title">
+          <dt class="ln-h3">{{ pt.title }}</dt>
+          <dd>{{ pt.description }}</dd>
+        </div>
+      </dl>
+      <div class="ln-hyps ln-platform">
+        <article v-for="(idea, i) in platformIdeas" :key="idea.title" class="ln-card">
+          <p class="ln-mono ln-tag">H{{ ideas.length + i + 1 }} · {{ idea.tag }}</p>
+          <h3 class="ln-h3">{{ idea.title }}</h3>
+          <table class="ln-table">
+            <tbody>
+              <tr><th class="ln-mono">Problem</th><td>{{ idea.problem }}</td></tr>
+              <tr><th class="ln-mono">Approach</th><td>{{ idea.approach }}</td></tr>
+              <tr><th class="ln-mono">Measure</th><td>{{ idea.measure }}</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </div>
+    </section>
+
     <!-- Capabilities + team -->
     <section class="ln-wrap ln-section">
-      <div class="ln-rule"><span class="ln-mono">06 · Capabilities and team</span></div>
+      <div class="ln-rule"><span class="ln-mono">07 · Capabilities and team</span></div>
       <div class="ln-split">
         <ul class="ln-caps">
           <li v-for="c in capabilities" :key="c.title">
@@ -258,6 +284,8 @@ usePitchPage(
 .ln-controls > div { border-top: 1px solid var(--rule); padding-block: 20px; }
 .ln-controls dd { margin: 0; color: var(--muted); }
 
+.ln-platform { margin-top: 32px; }
+.ln-platform > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 .ln-split { display: grid; grid-template-columns: 1.4fr 1fr; gap: 56px; margin-top: 32px; }
 .ln-caps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
 .ln-caps p { color: var(--muted); }
