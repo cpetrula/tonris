@@ -22,6 +22,9 @@ const EnrollmentsPage = () => import('@/pages/EnrollmentsPage.vue')
 const AmandaFrancesPitchPage = () => import('@/pages/AmandaFrancesPitchPage.vue')
 const ProdCommConstructionPage = () => import('@/pages/ProdCommConstructionPage.vue')
 const JCPenneySalonPage = () => import('@/pages/JCPenneySalonPage.vue')
+const PharmDaylight = () => import('@/pages/pharm/PharmDaylight.vue')
+const PharmLabNotebook = () => import('@/pages/pharm/PharmLabNotebook.vue')
+const PharmStudioProof = () => import('@/pages/pharm/PharmStudioProof.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -118,6 +121,24 @@ const routes: RouteRecordRaw[] = [
     path: '/jcpenneysalon',
     name: 'jcpenneysalon-pitch',
     component: JCPenneySalonPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/pharm',
+    name: 'pharm-pitch',
+    component: PharmDaylight,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/pharm2',
+    name: 'pharm2-pitch',
+    component: PharmLabNotebook,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/pharm3',
+    name: 'pharm3-pitch',
+    component: PharmStudioProof,
     meta: { requiresAuth: false }
   },
   {
