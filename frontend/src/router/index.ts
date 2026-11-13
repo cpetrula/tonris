@@ -26,6 +26,7 @@ const PharmDaylight = () => import('@/pages/pharm/PharmDaylight.vue')
 const PharmLabNotebook = () => import('@/pages/pharm/PharmLabNotebook.vue')
 const PharmStudioProof = () => import('@/pages/pharm/PharmStudioProof.vue')
 const PharmBatchRecord = () => import('@/pages/pharm/PharmBatchRecord.vue')
+const MattParkerMockupPage = () => import('@/pages/MattParkerMockupPage.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -146,6 +147,12 @@ const routes: RouteRecordRaw[] = [
     path: '/pharm4',
     name: 'pharm4-pitch',
     component: PharmBatchRecord,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/mattparker',
+    name: 'mattparker-mockup',
+    component: MattParkerMockupPage,
     meta: { requiresAuth: false }
   },
   {
