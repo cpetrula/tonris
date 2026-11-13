@@ -14,12 +14,12 @@ const thread = [
   { me: false, good: true, text: 'Matt has a battery on the truck. He is on the way, about 20 minutes.' },
 ]
 const photos = [
-  { src: '/mattparker/roadside.jpg', alt: 'A woman stranded on the roadside with her car hood up', caption: 'Stopped on the shoulder' },
-  { src: '/mattparker/family.jpg', alt: 'Matt with a young woman next to her car', caption: 'Back on the road' },
-  { src: '/mattparker/free-car.jpg', alt: 'A woman holding a FREE CAR sign in the truck with Matt', caption: 'A free car' },
-  { src: '/mattparker/dad-girls.jpg', alt: 'A dad walking along the road with two girls', caption: 'A dad and two girls, walking' },
-  { src: '/mattparker/ride.jpg', alt: 'Matt giving an older man a ride', caption: 'A ride home' },
-  { src: '/mattparker/neighbors.jpg', alt: 'A family in their front yard', caption: 'Neighbors helping neighbors' },
+  { src: '/mp-assets/roadside.jpg', alt: 'A woman stranded on the roadside with her car hood up', caption: 'Stopped on the shoulder' },
+  { src: '/mp-assets/family.jpg', alt: 'Matt with a young woman next to her car', caption: 'Back on the road' },
+  { src: '/mp-assets/free-car.jpg', alt: 'A woman holding a FREE CAR sign in the truck with Matt', caption: 'A free car' },
+  { src: '/mp-assets/dad-girls.jpg', alt: 'A dad walking along the road with two girls', caption: 'A dad and two girls, walking' },
+  { src: '/mp-assets/ride.jpg', alt: 'Matt giving an older man a ride', caption: 'A ride home' },
+  { src: '/mp-assets/neighbors.jpg', alt: 'A family in their front yard', caption: 'Neighbors helping neighbors' },
 ]
 const shown = ref(0)
 const threadEl = ref<HTMLElement | null>(null)
@@ -80,7 +80,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
     <header class="p1-nav">
       <div class="p1-wrap p1-nav-in">
-        <a href="#top" class="p1-lockup" aria-label="Parker's Mobile Mechanics"><img src="/mattparker/logo.png" alt="Parker's Mobile Mechanics" class="p1-logo-img" /></a>
+        <a href="#top" class="p1-lockup" aria-label="Parker's Mobile Mechanics"><img src="/mp-assets/logo.png" alt="Parker's Mobile Mechanics" class="p1-logo-img" /></a>
         <nav class="p1-links">
           <a href="#how">How it works</a>
           <a href="#give">Give</a>
@@ -104,8 +104,8 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
           <p class="p1-fine">In danger or in a live lane? Call 911 first.</p>
         </div>
         <figure class="p1-hero-photo">
-          <img src="/mattparker/logo.png" alt="" class="p1-hero-logo" aria-hidden="true" />
-          <img src="/mattparker/matt-truck.jpg" alt="Matthew Parker with his YouTube Silver Play Button in front of the Parker's truck" />
+          <img src="/mp-assets/logo.png" alt="" class="p1-hero-logo" aria-hidden="true" />
+          <img src="/mp-assets/matt-truck.jpg" alt="Matthew Parker with his YouTube Silver Play Button in front of the Parker's truck" />
           <figcaption class="p1-badge">
             <b>2.57M</b>
             <span>people follow Matt's free repairs</span>
@@ -252,7 +252,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
     <footer class="p1-foot">
       <div class="p1-wrap p1-foot-in">
-        <span class="p1-lockup p1-lockup-foot"><img src="/mattparker/logo.png" alt="Parker's Mobile Mechanics" class="p1-logo-img" /></span>
+        <span class="p1-lockup p1-lockup-foot"><img src="/mp-assets/logo.png" alt="Parker's Mobile Mechanics" class="p1-logo-img" /></span>
         <span>Tulsa, Oklahoma · Matthewparker4415@gmail.com</span>
         <span>
           <a href="https://youtube.com/@ParkersMobile" target="_blank" rel="noopener">YouTube</a>
