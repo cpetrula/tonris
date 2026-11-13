@@ -13,6 +13,14 @@ const thread = [
   { me: true, photo: true, text: 'Battery light is on' },
   { me: false, good: true, text: 'Matt has a battery on the truck. He is on the way, about 20 minutes.' },
 ]
+const photos = [
+  { src: '/mattparker/roadside.jpg', alt: 'A woman stranded on the roadside with her car hood up', caption: 'Stopped on the shoulder' },
+  { src: '/mattparker/family.jpg', alt: 'Matt with a young woman next to her car', caption: 'Back on the road' },
+  { src: '/mattparker/free-car.jpg', alt: 'A woman holding a FREE CAR sign in the truck with Matt', caption: 'A free car' },
+  { src: '/mattparker/dad-girls.jpg', alt: 'A dad walking along the road with two girls', caption: 'A dad and two girls, walking' },
+  { src: '/mattparker/ride.jpg', alt: 'Matt giving an older man a ride', caption: 'A ride home' },
+  { src: '/mattparker/neighbors.jpg', alt: 'A family in their front yard', caption: 'Neighbors helping neighbors' },
+]
 const shown = ref(0)
 const threadEl = ref<HTMLElement | null>(null)
 const notice = ref('')
@@ -84,17 +92,39 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
     <!-- 1. Make them care -->
     <section id="top" class="p1-hero">
-      <div class="p1-wrap">
-        <p class="p1-eyebrow">Tulsa · day or night</p>
-        <h1 class="p1-h1">Broken down.<br />Kids in the back.<br />Nobody to call.</h1>
-        <p class="p1-lede">Now there is. Text Parker's, and help is on the way.</p>
-        <div class="p1-ctas">
-          <button class="p1-btn p1-btn-ink" @click="mock('Text the help line')">Text (918) HELP-NOW</button>
-          <a href="#give" class="p1-link">Help someone else →</a>
+      <div class="p1-wrap p1-hero-in">
+        <div class="p1-hero-copy">
+          <p class="p1-eyebrow">Tulsa · day or night</p>
+          <h1 class="p1-h1">Broken down.<br />Kids in the back.<br />Nobody to call.</h1>
+          <p class="p1-lede">Now there is. Text Parker's, and help is on the way.</p>
+          <div class="p1-ctas">
+            <button class="p1-btn p1-btn-ink" @click="mock('Text the help line')">Text (918) HELP-NOW</button>
+            <a href="#give" class="p1-link">Help someone else →</a>
+          </div>
+          <p class="p1-fine">In danger or in a live lane? Call 911 first.</p>
         </div>
-        <p class="p1-fine">In danger or in a live lane? Call 911 first.</p>
+        <figure class="p1-hero-photo">
+          <img src="/mattparker/matt-truck.jpg" alt="Matthew Parker with his YouTube Silver Play Button in front of the Parker's truck" />
+          <figcaption class="p1-badge">
+            <b>2.57M</b>
+            <span>people follow Matt's free repairs</span>
+          </figcaption>
+          <figcaption class="p1-badge p1-badge-live">
+            <i></i> Matt is on a call in Broken Arrow
+          </figcaption>
+        </figure>
       </div>
       <div class="p1-band" aria-hidden="true"><span></span><span></span></div>
+    </section>
+
+    <!-- Real moments -->
+    <section class="p1-reel" aria-label="Moments from Matt's videos">
+      <div class="p1-reel-track">
+        <a v-for="(p, i) in [...photos, ...photos]" :key="i" :aria-hidden="i >= photos.length" class="p1-reel-item" href="https://youtube.com/@ParkersMobile" target="_blank" rel="noopener">
+          <img :src="p.src" :alt="p.alt" loading="lazy" />
+          <span>{{ p.caption }}</span>
+        </a>
+      </div>
     </section>
 
     <!-- 2. Show the product -->
@@ -281,6 +311,25 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-btn-gold { background: var(--gold); color: var(--ink); margin-top: 28px; }
 .p1-link { color: var(--ink); font-weight: 600; font-size: 17px; text-decoration: none; border-bottom: 2px solid var(--ink); padding-bottom: 2px; }
 .p1-fine { margin-top: 28px !important; font-size: 14px; opacity: .7; }
+.p1-hero-in { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; position: relative; z-index: 1; }
+.p1-hero .p1-h1 { font-size: clamp(48px, 6.2vw, 82px); }
+.p1-hero-photo { position: relative; margin: 0; }
+.p1-hero-photo img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: 40% 30%; border-radius: 32px; border: 6px solid var(--ink); box-shadow: 0 40px 80px rgba(0,0,0,.25); transform: rotate(2deg); }
+.p1-badge { position: absolute; left: -36px; bottom: 48px; background: var(--ink); color: #fff; border-radius: 20px; padding: 14px 18px; box-shadow: 0 16px 40px rgba(0,0,0,.3); max-width: 220px; }
+.p1-badge b { display: block; font-family: 'Anton', sans-serif; font-weight: 400; font-size: 38px; line-height: 1; color: var(--gold); }
+.p1-badge span { font-size: 13px; color: #ddd; }
+.p1-badge-live { left: auto; right: -20px; bottom: auto; top: 28px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; max-width: none; padding: 10px 14px; border-radius: 999px; }
+.p1-badge-live i { width: 9px; height: 9px; border-radius: 50%; background: #e2433a; box-shadow: 0 0 0 0 rgba(226,67,58,.6); animation: p1-pulse 1.6s infinite; }
+@keyframes p1-pulse { 0% { box-shadow: 0 0 0 0 rgba(226,67,58,.55); } 100% { box-shadow: 0 0 0 10px rgba(226,67,58,0); } }
+
+.p1-reel { background: var(--ink); padding: 28px 0; overflow: hidden; }
+.p1-reel-track { display: flex; gap: 16px; width: max-content; animation: p1-scroll 60s linear infinite; padding-left: 16px; }
+.p1-reel:hover .p1-reel-track { animation-play-state: paused; }
+.p1-reel-item { position: relative; width: 320px; flex: none; border-radius: 18px; overflow: hidden; text-decoration: none; }
+.p1-reel-item img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.p1-reel-item span { position: absolute; left: 12px; bottom: 10px; background: var(--gold); color: var(--ink); font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+@keyframes p1-scroll { to { transform: translateX(-50%); } }
+
 .p1-band { position: absolute; left: -5%; right: -5%; bottom: 46px; height: 64px; transform: rotate(-3deg); }
 .p1-band span { display: block; height: 12px; background: var(--ink); }
 .p1-band span + span { height: 22px; background: var(--teal); margin-top: 8px; }
@@ -367,7 +416,12 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
 @media (max-width: 900px) {
   .p1-links { display: none; }
-  .p1-hero { padding: 72px 0 130px; }
+  .p1-hero { padding: 64px 0 130px; }
+  .p1-hero-in { grid-template-columns: 1fr; gap: 48px; }
+  .p1-hero-photo { max-width: 420px; width: 100%; margin: 0 auto; }
+  .p1-badge { left: -8px; }
+  .p1-badge-live { right: -6px; }
+  .p1-reel-item { width: 240px; }
   .p1-show, .p1-matt, .p1-proof, .p1-give { padding: 88px 0; }
   .p1-show-in, .p1-matt-in { grid-template-columns: 1fr; gap: 48px; }
   .p1-phone { max-width: 360px; margin: 0 auto; width: 100%; }
@@ -383,5 +437,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 @media (prefers-reduced-motion: reduce) {
   .p1-msg-enter-active { transition: none; }
   .p1-typing i { animation: none; }
+  .p1-reel-track { animation: none; }
+  .p1-badge-live i { animation: none; }
 }
 </style>
