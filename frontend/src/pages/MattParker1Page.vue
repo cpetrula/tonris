@@ -80,7 +80,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
     <header class="p1-nav">
       <div class="p1-wrap p1-nav-in">
-        <a href="#top" class="p1-logo"><b>PARKER'S</b><i>Mobile Mechanics</i></a>
+        <a href="#top" class="p1-lockup" aria-label="Parker's Mobile Mechanics"><img src="/mattparker/gear.svg" alt="" class="p1-gear" /><span class="p1-word"><b>PARKER'S</b><i>Mobile Mechanics</i></span></a>
         <nav class="p1-links">
           <a href="#how">How it works</a>
           <a href="#give">Give</a>
@@ -104,6 +104,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
           <p class="p1-fine">In danger or in a live lane? Call 911 first.</p>
         </div>
         <figure class="p1-hero-photo">
+          <img src="/mattparker/gear.svg" alt="" class="p1-hero-gear" aria-hidden="true" />
           <img src="/mattparker/matt-truck.jpg" alt="Matthew Parker with his YouTube Silver Play Button in front of the Parker's truck" />
           <figcaption class="p1-badge">
             <b>2.57M</b>
@@ -251,7 +252,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
     <footer class="p1-foot">
       <div class="p1-wrap p1-foot-in">
-        <span class="p1-logo p1-logo-light"><b>PARKER'S</b><i>Mobile Mechanics</i></span>
+        <span class="p1-lockup p1-lockup-foot"><img src="/mattparker/gear.svg" alt="" class="p1-gear" /><span class="p1-word"><b>PARKER'S</b><i>Mobile Mechanics</i></span></span>
         <span>Tulsa, Oklahoma · Matthewparker4415@gmail.com</span>
         <span>
           <a href="https://youtube.com/@ParkersMobile" target="_blank" rel="noopener">YouTube</a>
@@ -289,6 +290,14 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
 .p1-nav { position: sticky; top: 0; z-index: 20; background: rgba(247, 179, 43, .92); backdrop-filter: saturate(1.4) blur(12px); }
 .p1-nav-in { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.p1-lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.p1-gear { width: 46px; height: 46px; display: block; }
+.p1-word { display: flex; flex-direction: column; align-items: flex-start; line-height: .9; }
+.p1-word b { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 22px; letter-spacing: 1px; background: #5fc7c4; color: var(--ink); padding: 2px 8px 1px; border: 2px solid var(--ink); border-radius: 6px; transform: skewX(-6deg); }
+.p1-word i { font-family: 'Kaushan Script', cursive; font-style: normal; font-size: 15px; color: #f29a2e; -webkit-text-stroke: .6px var(--ink); margin: 2px 0 0 10px; }
+.p1-lockup-foot .p1-word i { -webkit-text-stroke: 0; }
+.p1-hero-gear { position: absolute; z-index: 2; width: 112px !important; height: 112px; left: -40px; top: -36px; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; aspect-ratio: auto !important; transform: none !important; filter: drop-shadow(0 10px 18px rgba(0,0,0,.3)); animation: p1-spin 24s linear infinite; }
+@keyframes p1-spin { to { transform: rotate(360deg); } }
 .p1-logo { display: flex; flex-direction: column; line-height: .9; color: var(--ink); text-decoration: none; }
 .p1-logo b { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 24px; letter-spacing: 1px; }
 .p1-logo i { font-family: 'Kaushan Script', cursive; font-style: normal; font-size: 14px; color: var(--teal-deep); }
@@ -420,7 +429,8 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
   .p1-hero-in { grid-template-columns: 1fr; gap: 48px; }
   .p1-hero-photo { max-width: 420px; width: 100%; margin: 0 auto; }
   .p1-badge { left: -8px; }
-  .p1-badge-live { right: -6px; }
+  .p1-hero-gear { width: 84px !important; height: 84px; left: -12px; top: -30px; }
+  .p1-badge-live { left: auto; right: -6px; top: 22px; }
   .p1-reel-item { width: 240px; }
   .p1-show, .p1-matt, .p1-proof, .p1-give { padding: 88px 0; }
   .p1-show-in, .p1-matt-in { grid-template-columns: 1fr; gap: 48px; }
@@ -438,6 +448,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
   .p1-msg-enter-active { transition: none; }
   .p1-typing i { animation: none; }
   .p1-reel-track { animation: none; }
+  .p1-hero-gear { animation: none; }
   .p1-badge-live i { animation: none; }
 }
 </style>
