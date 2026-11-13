@@ -296,7 +296,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-word b { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 22px; letter-spacing: 1px; background: #5fc7c4; color: var(--ink); padding: 2px 8px 1px; border: 2px solid var(--ink); border-radius: 6px; transform: skewX(-6deg); }
 .p1-word i { font-family: 'Kaushan Script', cursive; font-style: normal; font-size: 15px; color: #f29a2e; -webkit-text-stroke: .6px var(--ink); margin: 2px 0 0 10px; }
 .p1-lockup-foot .p1-word i { -webkit-text-stroke: 0; }
-.p1-hero-gear { position: absolute; z-index: 2; width: 112px !important; height: 112px; left: -40px; top: -36px; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; aspect-ratio: auto !important; transform: none !important; filter: drop-shadow(0 10px 18px rgba(0,0,0,.3)); animation: p1-spin 24s linear infinite; }
+.p1-hero-gear { position: absolute; z-index: 2; width: 112px !important; height: 112px; left: -40px; top: -36px; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; aspect-ratio: auto !important; transform: none !important; filter: drop-shadow(0 10px 18px rgba(0,0,0,.3)); }
 @keyframes p1-spin { to { transform: rotate(360deg); } }
 .p1-logo { display: flex; flex-direction: column; line-height: .9; color: var(--ink); text-decoration: none; }
 .p1-logo b { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 24px; letter-spacing: 1px; }
