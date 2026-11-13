@@ -27,6 +27,8 @@ const PharmLabNotebook = () => import('@/pages/pharm/PharmLabNotebook.vue')
 const PharmStudioProof = () => import('@/pages/pharm/PharmStudioProof.vue')
 const PharmBatchRecord = () => import('@/pages/pharm/PharmBatchRecord.vue')
 const MattParkerMockupPage = () => import('@/pages/MattParkerMockupPage.vue')
+const MattParker1Page = () => import('@/pages/MattParker1Page.vue')
+const MattParker2Page = () => import('@/pages/MattParker2Page.vue')
 
 // Admin Dashboard Pages
 const DashboardPage = () => import('@/pages/DashboardPage.vue')
@@ -153,6 +155,18 @@ const routes: RouteRecordRaw[] = [
     path: '/mattparker',
     name: 'mattparker-mockup',
     component: MattParkerMockupPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/mattparker1',
+    name: 'mattparker1-mockup',
+    component: MattParker1Page,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/mattparker2',
+    name: 'mattparker2-mockup',
+    component: MattParker2Page,
     meta: { requiresAuth: false }
   },
   {
