@@ -49,7 +49,7 @@ onMounted(() => {
     m.content = 'noindex, nofollow'
     document.head.appendChild(m)
   }
-  document.title = "Parker's Mobile Mechanics: website mockup 1"
+  document.title = "Parker's Mobile Mechanics: website mockup"
   const href = 'https://fonts.googleapis.com/css2?family=Anton&family=Kaushan+Script&family=Inter:wght@400;500;600;700;800&display=swap'
   if (!document.querySelector(`link[href="${href}"]`)) {
     const link = document.createElement('link')
