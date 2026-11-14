@@ -95,7 +95,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
       <div class="p1-wrap p1-hero-in">
         <div class="p1-hero-copy">
           <p class="p1-eyebrow">Tulsa · day or night</p>
-          <h1 class="p1-h1">Stranded?<br />Text Matt.</h1>
+          <h1 class="p1-h1">Stranded?<br /><span class="p1-gold">Text Matt.</span></h1>
           <p class="p1-lede">He's fixed cars for free for families across Tulsa, and 2.57 million people watch him do it.</p>
           <div class="p1-ctas">
             <button class="p1-btn p1-btn-ink" @click="mock('Text the help line')">Text (918) HELP-NOW</button>
@@ -415,6 +415,26 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 999px; font-size: 14px; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
 .p1-fade-enter-active, .p1-fade-leave-active { transition: opacity .2s; }
 .p1-fade-enter-from, .p1-fade-leave-to { opacity: 0; }
+
+/* Dark hero: Matt's photo fills the right half and fades into the black */
+.p1-hero { background: var(--ink); color: #fff; }
+.p1-hero .p1-h1 { color: #fff; }
+.p1-gold { color: var(--gold); }
+.p1-hero .p1-lede { font-size: 21px; line-height: 1.5; font-weight: 500; max-width: 30em; text-wrap: pretty; color: #e6e6e6; }
+.p1-hero .p1-eyebrow { color: var(--teal); opacity: 1; }
+.p1-hero .p1-fine { color: #aaa; }
+.p1-hero .p1-btn-ink { background: var(--gold); color: var(--ink); }
+.p1-hero .p1-link { color: #fff; border-color: #fff; }
+@media (min-width: 901px) {
+  .p1-hero { padding: 150px 0 190px; }
+  .p1-hero .p1-h1 { font-size: clamp(64px, 8vw, 124px); }
+  .p1-hero-in { grid-template-columns: 1fr 1fr; position: static; }
+  .p1-hero-copy { position: relative; z-index: 2; }
+  .p1-hero-photo { position: absolute !important; right: 0; top: 0; bottom: 0; width: 50vw; }
+  .p1-hero-photo img:not(.p1-hero-logo) { height: 100%; aspect-ratio: auto; border: 0; border-radius: 0; box-shadow: none; transform: none; object-position: 18% 25%; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%); mask-image: linear-gradient(to right, transparent 0, #000 14%); }
+  .p1-hero-logo { left: auto !important; right: 40px; top: auto !important; bottom: 210px; width: 200px !important; }
+  .p1-badge-live { right: 40px; top: 40px; }
+}
 
 @media (max-width: 900px) {
   .p1-links { display: none; }
