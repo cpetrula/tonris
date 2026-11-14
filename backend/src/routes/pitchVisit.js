@@ -1,6 +1,5 @@
 // Texts the owner when someone opens a private pitch page (for example /mattparker).
 // The page sends a beacon on load; the owner's own devices opt out with ?me=1.
-const env = require('../config/env');
 const logger = require('../utils/logger');
 
 const PAGES = new Set(['mattparker']);
@@ -67,8 +66,9 @@ async function handler(req, res) {
     if (!PAGES.has(page) || BOT_UA.test(ua)) return;
 
     const to = (process.env.PITCH_VISIT_PHONES || '').split(',').map((p) => p.trim()).filter(Boolean);
-    if (!to.length || !env.TWILIO_SMS_ACCOUNT_SID || !env.TWILIO_SMS_AUTH_TOKEN || !env.TWILIO_SMS_PHONE_NUMBER) {
-      logger.warn('pitch visit: PITCH_VISIT_PHONES or Twilio SMS settings missing');
+    const { PITCH_TWILIO_ACCOUNT_SID: acct, PITCH_TWILIO_KEY_SID: keySid, PITCH_TWILIO_KEY_SECRET: keySecret, PITCH_TWILIO_FROM: from } = process.env;
+    if (!to.length || !acct || !keySid || !keySecret || !from) {
+      logger.warn('pitch visit: PITCH_VISIT_PHONES or PITCH_TWILIO_* settings missing');
       return;
     }
 
@@ -95,11 +95,12 @@ async function handler(req, res) {
     if (how) lines.push(`How: ${how}`);
     lines.push(`Visit ${sentToday} today.`);
 
-    const twilio = require('twilio')(env.TWILIO_SMS_ACCOUNT_SID, env.TWILIO_SMS_AUTH_TOKEN);
+    // A send-only restricted API key, separate from Criton's own Twilio account.
+    const twilio = require('twilio')(keySid, keySecret, { accountSid: acct });
     for (const phone of to) {
       await twilio.messages.create({
         body: lines.join('\n'),
-        from: env.TWILIO_SMS_PHONE_NUMBER,
+        from,
         to: phone.startsWith('+') ? phone : `+1${phone}`,
       });
     }
