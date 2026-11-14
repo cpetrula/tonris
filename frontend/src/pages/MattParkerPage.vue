@@ -497,4 +497,12 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .pd-cta p { color: #ddd; margin: 0; font-size: 16px; }
 .pd-give { background: var(--gold); color: var(--ink); padding: 14px 40px; }
 @media (max-width: 900px) { .pd-row { grid-template-columns: 1fr 1fr; } .pd-item:nth-child(2) { border-right: 0; } .pd-item:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.12); } .pd-cta { flex-direction: column; align-items: stretch; text-align: center; } }
+
+/* Logo pattern in black areas */
+.p1-hero, .p1-proof, .p1-foot { position: relative; isolation: isolate; }
+.p1-hero::before, .p1-proof::before, .p1-foot::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: url(/mp-assets/logo-pattern.png) 0 0 / 1400px 560px repeat; }
+.p1-hero::before { opacity: .2; }
+@media (min-width: 901px) { .p1-hero::before { right: 50%; } }
+.p1-proof::before { opacity: .3; -webkit-mask-image: radial-gradient(ellipse 36% 42% at 50% 50%, transparent 72%, #000 100%); mask-image: radial-gradient(ellipse 36% 42% at 50% 50%, transparent 72%, #000 100%); }
+.p1-foot::before { opacity: .3; background: url(/mp-assets/logo-outline-tilt.png) 2% 30% / 110px auto no-repeat, url(/mp-assets/logo-outline-tilt.png) 6% 80% / 80px auto no-repeat, url(/mp-assets/logo-outline-tilt.png) 94% 20% / 80px auto no-repeat, url(/mp-assets/logo-outline-tilt.png) 98% 75% / 110px auto no-repeat; }
 </style>
