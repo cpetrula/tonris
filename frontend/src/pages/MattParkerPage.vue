@@ -219,16 +219,16 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
         <h2 class="p1-h2">Cover the next family.</h2>
         <p class="p1-body p1-center p1-balance">Pick what you pay for. When it helps someone, you get a text.</p>
         <div class="pd-band">
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:2%;top:14px;width:150px;transform:translate(-50%,0) rotate(-14deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:19%;top:150px;width:120px;transform:translate(-50%,0) rotate(10deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:30%;top:20px;width:130px;transform:translate(-50%,0) rotate(6deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:2%;top:14px;width:150px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:19%;top:150px;width:120px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:30%;top:20px;width:130px;transform:translate(-50%,0) rotate(-8deg)" />
           <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:44%;top:200px;width:150px;transform:translate(-50%,0) rotate(-8deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:52%;top:40px;width:120px;transform:translate(-50%,0) rotate(-16deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:66%;top:170px;width:140px;transform:translate(-50%,0) rotate(12deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:75%;top:10px;width:150px;transform:translate(-50%,0) rotate(-6deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:88%;top:140px;width:130px;transform:translate(-50%,0) rotate(16deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:8%;top:230px;width:130px;transform:translate(-50%,0) rotate(8deg)" />
-          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:92%;top:250px;width:110px;transform:translate(-50%,0) rotate(-12deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:52%;top:40px;width:120px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:66%;top:170px;width:140px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:75%;top:10px;width:150px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:88%;top:140px;width:130px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:8%;top:230px;width:130px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:92%;top:250px;width:110px;transform:translate(-50%,0) rotate(-8deg)" />
           <div class="pd-row">
             <button class="pd-item" @click="mock('Give a battery')"><svg class="pd-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><path d="M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1"/><path d="m11 7-3 5h4l-3 5"/><path d="M22 11v2"/></svg><b>$150</b><span>A battery</span></button>
             <button class="pd-item" @click="mock('Give a hotel night')"><svg class="pd-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></svg><b>$89</b><span>A hotel night</span></button>
@@ -484,7 +484,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-balance { text-wrap: balance; }
 .pd-band { position: relative; }
 .pd-row, .pd-cta { position: relative; z-index: 1; }
-.pd-mark { position: absolute; z-index: 0; opacity: .16; pointer-events: none; }
+.pd-mark { position: absolute; z-index: 0; opacity: .26; pointer-events: none; }
 .pd-band { background: var(--ink); color: #fff; margin: 56px calc(50% - 50vw) 0; overflow: hidden; }
 .pd-row { display: grid; grid-template-columns: repeat(4, 1fr); padding: 0 max(16px, calc(50% - 516px)); }
 .pd-item { background: none; border: 0; color: #fff; font: inherit; cursor: pointer; padding: 44px 16px 36px; border-right: 1px solid rgba(255,255,255,.12); transition: background .15s ease; }
