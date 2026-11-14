@@ -95,8 +95,8 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
       <div class="p1-wrap p1-hero-in">
         <div class="p1-hero-copy">
           <p class="p1-eyebrow">Tulsa · day or night</p>
-          <h1 class="p1-h1">Broken down.<br />Kids in the back.<br />Nobody to call.</h1>
-          <p class="p1-lede">Now there is. Text Parker's, and help is on the way.</p>
+          <h1 class="p1-h1">Stranded?<br />Text Matt.</h1>
+          <p class="p1-lede">He's fixed cars for free for families across Tulsa, and 2.57 million people watch him do it.</p>
           <div class="p1-ctas">
             <button class="p1-btn p1-btn-ink" @click="mock('Text the help line')">Text (918) HELP-NOW</button>
             <a href="#give" class="p1-link">Help someone else →</a>
@@ -106,10 +106,6 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
         <figure class="p1-hero-photo">
           <img src="/mp-assets/logo.png" alt="" class="p1-hero-logo" aria-hidden="true" />
           <img src="/mp-assets/matt-truck.jpg" alt="Matthew Parker with his YouTube Silver Play Button in front of the Parker's truck" />
-          <figcaption class="p1-badge">
-            <b>2.57M</b>
-            <span>people follow Matt's free repairs</span>
-          </figcaption>
           <figcaption class="p1-badge p1-badge-live">
             <i></i> Matt is on a call in Broken Arrow
           </figcaption>
