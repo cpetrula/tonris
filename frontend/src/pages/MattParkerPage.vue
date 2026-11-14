@@ -217,12 +217,28 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
       <div class="p1-wrap">
         <p class="p1-kicker">Give</p>
         <h2 class="p1-h2">Cover the next family.</h2>
-        <p class="p1-body p1-center">Pick what you pay for. When it helps someone, you get a text.</p>
-        <div class="p1-gifts">
-          <button class="p1-gift" @click="mock('Give a battery')"><b>$150</b><span>A battery</span></button>
-          <button class="p1-gift" @click="mock('Give a hotel night')"><b>$89</b><span>A hotel night</span></button>
-          <button class="p1-gift" @click="mock('Give a tank of gas')"><b>$60</b><span>A tank of gas</span></button>
-          <button class="p1-gift" @click="mock('Give a tire')"><b>$120</b><span>A tire</span></button>
+        <p class="p1-body p1-center p1-balance">Pick what you pay for. When it helps someone, you get a text.</p>
+        <div class="pd-band">
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:2%;top:14px;width:150px;transform:translate(-50%,0) rotate(-14deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:19%;top:150px;width:120px;transform:translate(-50%,0) rotate(10deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:30%;top:20px;width:130px;transform:translate(-50%,0) rotate(6deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:44%;top:200px;width:150px;transform:translate(-50%,0) rotate(-8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:52%;top:40px;width:120px;transform:translate(-50%,0) rotate(-16deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:66%;top:170px;width:140px;transform:translate(-50%,0) rotate(12deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:75%;top:10px;width:150px;transform:translate(-50%,0) rotate(-6deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:88%;top:140px;width:130px;transform:translate(-50%,0) rotate(16deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:8%;top:230px;width:130px;transform:translate(-50%,0) rotate(8deg)" />
+          <img src="/mp-assets/logo-outline.png" alt="" aria-hidden="true" class="pd-mark" style="left:92%;top:250px;width:110px;transform:translate(-50%,0) rotate(-12deg)" />
+          <div class="pd-row">
+            <button class="pd-item" @click="mock('Give a battery')"><svg class="pd-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><path d="M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1"/><path d="m11 7-3 5h4l-3 5"/><path d="M22 11v2"/></svg><b>$150</b><span>A battery</span></button>
+            <button class="pd-item" @click="mock('Give a hotel night')"><svg class="pd-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></svg><b>$89</b><span>A hotel night</span></button>
+            <button class="pd-item" @click="mock('Give a tank of gas')"><svg class="pd-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 22h12"/><path d="M4 9h10"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg><b>$60</b><span>A tank of gas</span></button>
+            <button class="pd-item" @click="mock('Give a tire')"><svg class="pd-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6M4.9 4.9l4.3 4.3M14.8 14.8l4.3 4.3M19.1 4.9l-4.3 4.3M9.2 14.8l-4.3 4.3"/></svg><b>$120</b><span>A tire</span></button>
+          </div>
+          <div class="pd-cta">
+            <p>Every gift goes to one family Matt is helping, and you get a text when it does.</p>
+            <button class="p1-btn pd-give" @click="mock('Give')">Give</button>
+          </div>
         </div>
         <p class="p1-alt">
           Have a car to give? <button class="p1-textbtn" @click="mock('Donate a car')">Donate a car</button>
@@ -464,4 +480,21 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
   .p1-reel-track { animation: none; }
   .p1-badge-live i { animation: none; }
 }
+
+.p1-balance { text-wrap: balance; }
+.pd-band { position: relative; }
+.pd-row, .pd-cta { position: relative; z-index: 1; }
+.pd-mark { position: absolute; z-index: 0; opacity: .08; pointer-events: none; }
+.pd-band { background: var(--ink); color: #fff; border-radius: 28px; margin-top: 48px; overflow: hidden; }
+.pd-row { display: grid; grid-template-columns: repeat(4, 1fr); }
+.pd-item { background: none; border: 0; color: #fff; font: inherit; cursor: pointer; padding: 44px 16px 36px; border-right: 1px solid rgba(255,255,255,.12); transition: background .15s ease; }
+.pd-item:last-child { border-right: 0; }
+.pd-item:hover { background: rgba(247,179,43,.08); }
+.pd-ico { width: 44px; height: 44px; color: var(--gold); display: block; margin: 0 auto 18px; }
+.pd-item b { display: block; font-family: 'Anton', sans-serif; font-weight: 400; font-size: 44px; line-height: 1; }
+.pd-item span { display: block; margin-top: 8px; color: #bbb; font-weight: 500; }
+.pd-cta { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 36px; background: rgba(255,255,255,.04); border-top: 3px solid var(--gold); text-align: left; }
+.pd-cta p { color: #ddd; margin: 0; font-size: 16px; }
+.pd-give { background: var(--gold); color: var(--ink); padding: 14px 40px; }
+@media (max-width: 900px) { .pd-row { grid-template-columns: 1fr 1fr; } .pd-item:nth-child(2) { border-right: 0; } .pd-item:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.12); } .pd-cta { flex-direction: column; align-items: stretch; text-align: center; } }
 </style>
