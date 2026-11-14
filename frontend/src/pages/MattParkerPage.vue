@@ -422,7 +422,8 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-hours b { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 44px; color: var(--ink); }
 .p1-hours small { color: var(--gray); font-size: 15px; }
 
-.p1-foot { background: var(--ink); color: #bdbdbd; padding: 40px 0; font-size: 14px; }
+.p1-foot { background: var(--ink); color: #bdbdbd; padding: 40px 0; min-height: 210px; display: flex; align-items: center; font-size: 14px; }
+.p1-foot > .p1-wrap { width: 100%; }
 .p1-foot-in { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
 .p1-foot a { color: #fff; text-decoration: none; margin-left: 16px; }
 
@@ -502,5 +503,5 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-hero::before { opacity: .2; }
 @media (min-width: 901px) { .p1-hero::before { right: 50%; } }
 .p1-proof::before { opacity: .3; -webkit-mask-image: radial-gradient(ellipse 36% 42% at 50% 50%, transparent 72%, #000 100%); mask-image: radial-gradient(ellipse 36% 42% at 50% 50%, transparent 72%, #000 100%); }
-.p1-foot::before { opacity: .3; background: url(/mp-assets/logo-outline-tilt.png) 2% 30% / 110px auto no-repeat, url(/mp-assets/logo-outline-tilt.png) 6% 80% / 80px auto no-repeat, url(/mp-assets/logo-outline-tilt.png) 94% 20% / 80px auto no-repeat, url(/mp-assets/logo-outline-tilt.png) 98% 75% / 110px auto no-repeat; }
+.p1-foot::before { opacity: .3; }
 </style>
