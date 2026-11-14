@@ -474,7 +474,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-balance { text-wrap: balance; }
 .pd-band { position: relative; }
 .pd-row, .pd-cta { position: relative; z-index: 1; }
-.pd-band::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .26; background: url(/mp-assets/logo-pattern.png) center top / 190px 210px repeat; }
+.pd-band::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .26; background: url(/mp-assets/logo-brick.png) center top / 190px 210px repeat; }
 .pd-band { background: var(--ink); color: #fff; margin: 56px calc(50% - 50vw) 0; overflow: hidden; }
 .pd-row { display: grid; grid-template-columns: repeat(4, 1fr); padding: 0 max(16px, calc(50% - 516px)); }
 .pd-item { background: none; border: 0; color: #fff; font: inherit; cursor: pointer; padding: 44px 16px 36px; border-right: 1px solid rgba(255,255,255,.12); transition: background .15s ease; }
@@ -490,7 +490,7 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 
 /* Logo pattern in black areas */
 .p1-hero, .p1-proof, .p1-foot { position: relative; isolation: isolate; }
-.p1-hero::before, .p1-proof::before, .p1-foot::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: url(/mp-assets/logo-pattern.png) center top / 190px 210px repeat; }
+.p1-hero::before, .p1-proof::before, .p1-foot::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: url(/mp-assets/logo-brick.png) center top / 190px 210px repeat; }
 .p1-hero::before { opacity: .2; }
 @media (min-width: 901px) { .p1-hero::before { right: 50%; } }
 .p1-proof::before { opacity: .3; -webkit-mask-image: radial-gradient(ellipse 36% 42% at 50% 50%, transparent 72%, #000 100%); mask-image: radial-gradient(ellipse 36% 42% at 50% 50%, transparent 72%, #000 100%); }
