@@ -484,16 +484,16 @@ onBeforeUnmount(() => { window.clearInterval(timer); observer?.disconnect() })
 .p1-balance { text-wrap: balance; }
 .pd-band { position: relative; }
 .pd-row, .pd-cta { position: relative; z-index: 1; }
-.pd-mark { position: absolute; z-index: 0; opacity: .08; pointer-events: none; }
-.pd-band { background: var(--ink); color: #fff; border-radius: 28px; margin-top: 48px; overflow: hidden; }
-.pd-row { display: grid; grid-template-columns: repeat(4, 1fr); }
+.pd-mark { position: absolute; z-index: 0; opacity: .16; pointer-events: none; }
+.pd-band { background: var(--ink); color: #fff; margin: 56px calc(50% - 50vw) 0; overflow: hidden; }
+.pd-row { display: grid; grid-template-columns: repeat(4, 1fr); padding: 0 max(16px, calc(50% - 516px)); }
 .pd-item { background: none; border: 0; color: #fff; font: inherit; cursor: pointer; padding: 44px 16px 36px; border-right: 1px solid rgba(255,255,255,.12); transition: background .15s ease; }
 .pd-item:last-child { border-right: 0; }
 .pd-item:hover { background: rgba(247,179,43,.08); }
 .pd-ico { width: 44px; height: 44px; color: var(--gold); display: block; margin: 0 auto 18px; }
 .pd-item b { display: block; font-family: 'Anton', sans-serif; font-weight: 400; font-size: 44px; line-height: 1; }
 .pd-item span { display: block; margin-top: 8px; color: #bbb; font-weight: 500; }
-.pd-cta { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 36px; background: rgba(255,255,255,.04); border-top: 3px solid var(--gold); text-align: left; }
+.pd-cta { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px max(20px, calc(50% - 480px)); background: rgba(255,255,255,.04); border-top: 3px solid var(--gold); text-align: left; }
 .pd-cta p { color: #ddd; margin: 0; font-size: 16px; }
 .pd-give { background: var(--gold); color: var(--ink); padding: 14px 40px; }
 @media (max-width: 900px) { .pd-row { grid-template-columns: 1fr 1fr; } .pd-item:nth-child(2) { border-right: 0; } .pd-item:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.12); } .pd-cta { flex-direction: column; align-items: stretch; text-align: center; } }
