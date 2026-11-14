@@ -41,6 +41,14 @@ const mock = (what: string) => {
 }
 
 onMounted(() => {
+  // Texts Tony when someone else opens this page. Open it once with ?me=1 on your own devices to opt out.
+  try {
+    if (new URLSearchParams(location.search).has('me')) localStorage.setItem('mpMe', '1')
+    if (!localStorage.getItem('mpMe') && !navigator.webdriver) {
+      const body = JSON.stringify({ page: 'mattparker', ref: document.referrer, tz: Intl.DateTimeFormat().resolvedOptions().timeZone })
+      navigator.sendBeacon('/api/public/pitch-visit', new Blob([body], { type: 'application/json' }))
+    }
+  } catch { /* storage blocked: skip */ }
   const robots = document.querySelector('meta[name="robots"]')
   if (robots) robots.setAttribute('content', 'noindex, nofollow')
   else {

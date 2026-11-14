@@ -230,6 +230,9 @@ app.post('/api/webhooks/elevenlabs/enrollments',
   aiController.handleElevenLabsCreateEnrollmentWebhook
 );
 
+// Pitch page visit alerts (no auth, before tenantMiddleware)
+app.post('/api/public/pitch-visit', express.json({ limit: '2kb', type: '*/*' }), require('./routes/pitchVisit').handler);
+
 // Public enrollment routes (no auth required, before tenantMiddleware)
 app.use('/api/public/enrollments', express.json(), publicEnrollmentRoutes);
 
